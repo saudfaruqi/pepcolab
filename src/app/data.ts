@@ -13,14 +13,17 @@ export interface Product {
   categorySlug: string
   mg: string
   description: string
+  descriptionHtml?: string
   longDesc?: string
-purity?: number
-lot?: string
+  purity?: number
+  lot?: string
   price: number
   oldPrice?: number
   testDate: string
   sequence?: string
   badge?: 'popular' | 'new' | 'sale' | 'bestseller'
+  image?: string        // ← add
+  imageAlt?: string     // ← add
   color: {
     bg: string
     accent: string
@@ -28,12 +31,11 @@ lot?: string
     pillText: string
     purityBar: string
     btn: string
-    vialFrom: string   // add this
-    vialTo: string 
+    vialFrom: string
+    vialTo: string
   }
   inStock: boolean
   stockCount: number
-  // Shopify variant ID — populated from Storefront API in production
   variantId?: string
 }
 

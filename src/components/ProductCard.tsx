@@ -56,103 +56,114 @@ export default function ProductCard({ product: p, featured = false }: Props) {
           : '0 2px 12px rgba(0,0,0,.04)',
       }}
     >
-      {/* ── Image / Vial area ── */}
-      <Link href={`/products/${p.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+{/* ── Image / Vial area ── */}
+<Link href={`/products/${p.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+  <div
+    style={{
+      position: 'relative',
+      height: 'clamp(160px, 30vw, 240px)',
+      width: '100%',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: p.image
+        ? 'transparent'
+        : `radial-gradient(circle at top, rgba(255,255,255,.9), transparent 45%),
+           linear-gradient(to bottom, ${p.color.bg}, #f7f5f1)`,
+    }}
+  >
+    {p.image ? (
+      // ── Shopify product image ──
+      <img
+        src={p.image}
+        alt={p.imageAlt ?? p.name}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+          transform: hovered ? 'scale(1.04)' : 'scale(1)',
+          transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
+        }}
+      />
+    ) : (
+      // ── Fallback vial ──
+      <>
         <div
           style={{
-            position: 'relative',
-            /* Fluid height: taller on desktop, compact on mobile */
-            height: 'clamp(160px, 30vw, 240px)',
-            width: '100%',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: `
-              radial-gradient(circle at top, rgba(255,255,255,.9), transparent 45%),
-              linear-gradient(to bottom, ${p.color.bg}, #f7f5f1)
-            `,
+            position: 'absolute',
+            top: 12, left: 14,
+            fontSize: 'clamp(28px, 6vw, 42px)',
+            fontWeight: 700,
+            letterSpacing: '-.08em',
+            color: 'rgba(13,13,13,.04)',
+            lineHeight: 1,
+            userSelect: 'none',
           }}
         >
-          {/* faint product number */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 12,
-              left: 14,
-              fontSize: 'clamp(28px, 6vw, 42px)',
-              fontWeight: 700,
-              letterSpacing: '-.08em',
-              color: 'rgba(13,13,13,.04)',
-              lineHeight: 1,
-              userSelect: 'none',
-            }}
-          >
-            0{p.id}
-          </div>
-
-          {/* Vial – adapts to available space */}
-          <div
-            style={{
-              transform: hovered ? 'translateY(-6px) scale(1.04)' : 'translateY(0) scale(1)',
-              transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
-            }}
-          >
-            <Vial
-              fromColor={p.color.vialFrom}
-              toColor={p.color.vialTo}
-              mg={p.mg}
-              size="lg"
-            />
-          </div>
-
-          {/* badge */}
-          {p.badge && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '.12em',
-                textTransform: 'uppercase',
-                color: 'rgba(13,13,13,.42)',
-              }}
-            >
-              {p.badge}
-            </div>
-          )}
-
-          {/* out of stock overlay */}
-          {!p.inStock && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'rgba(245,245,243,.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(13,13,13,.45)',
-                  background: 'rgba(255,255,255,.85)',
-                  padding: '5px 14px',
-                }}
-              >
-                Out of stock
-              </span>
-            </div>
-          )}
+          0{p.id}
         </div>
-      </Link>
+        <div
+          style={{
+            transform: hovered ? 'translateY(-6px) scale(1.04)' : 'translateY(0) scale(1)',
+            transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
+          }}
+        >
+          <Vial
+            fromColor={p.color.vialFrom}
+            toColor={p.color.vialTo}
+            mg={p.mg}
+            size="lg"
+          />
+        </div>
+      </>
+    )}
+
+    {/* badge — always on top */}
+    {p.badge && (
+      <div
+        style={{
+          position: 'absolute',
+          top: 12, right: 12,
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '.12em',
+          textTransform: 'uppercase',
+          color: p.image ? '#fff' : 'rgba(13,13,13,.42)',
+          background: p.image ? 'rgba(0,0,0,.45)' : 'transparent',
+          padding: p.image ? '3px 8px' : '0',
+          borderRadius: p.image ? 4 : 0,
+        }}
+      >
+        {p.badge}
+      </div>
+    )}
+
+    {/* out of stock overlay */}
+    {!p.inStock && (
+      <div
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(245,245,243,.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11, fontWeight: 700,
+            letterSpacing: '.1em', textTransform: 'uppercase',
+            color: 'rgba(13,13,13,.45)',
+            background: 'rgba(255,255,255,.85)',
+            padding: '5px 14px',
+          }}
+        >
+          Out of stock
+        </span>
+      </div>
+    )}
+  </div>
+</Link>
 
       {/* ── Content ── */}
       <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>

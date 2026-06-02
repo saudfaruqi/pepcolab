@@ -310,3 +310,83 @@ h1, h2, h3, h4, h5 {
 
 /* Toast */
 .toast { animation: slideInRight 0.25s ease; }
+
+
+
+.shopify-description p        { margin-bottom: 1.2em; }
+.shopify-description ul       { padding-left: 1.4em; margin-bottom: 1.2em; }
+.shopify-description ol       { padding-left: 1.4em; margin-bottom: 1.2em; }
+.shopify-description li       { margin-bottom: 0.4em; }
+.shopify-description strong   { color: #111827; font-weight: 700; }
+.shopify-description h2       { font-size: 1.2em; font-weight: 700; margin: 1.4em 0 0.6em; color: #111827; }
+.shopify-description h3       { font-size: 1.05em; font-weight: 700; margin: 1.2em 0 0.5em; color: #111827; }
+.shopify-description a        { color: #2563eb; text-decoration: underline; }
+
+
+.shopify-desc {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #626A85;
+}
+
+/* Paragraphs */
+.shopify-desc p {
+  margin-bottom: 1.1em;
+}
+
+/* Bold headings like "BPC-157 Research Peptide 5mg" */
+.shopify-desc p strong,
+.shopify-desc strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0D0F14;
+  margin-bottom: 6px;
+}
+
+/* Table */
+.shopify-desc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+  font-size: 12px;
+}
+
+.shopify-desc thead tr {
+  background: #F3F5FB;
+  border-radius: 8px;
+}
+
+.shopify-desc th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #AAB3C8;
+  border-bottom: 1px solid #E5EAF5;
+}
+
+.shopify-desc td {
+  padding: 10px 14px;
+  color: #626A85;
+  border-bottom: 1px solid #F3F5FB;
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.shopify-desc td:first-child {
+  font-weight: 600;
+  color: #0D0F14;
+  width: 38%;
+  white-space: nowrap;
+}
+
+.shopify-desc tr:last-child td {
+  border-bottom: none;
+}
+
+.shopify-desc tr:hover td {
+  background: #FAFBFF;
+}
