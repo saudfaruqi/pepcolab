@@ -249,13 +249,13 @@ type NormalisedProduct = {
   stockCount: number
   image?: string
   imageAlt: string
-  badge?: string
+  badge?: "popular" | "new" | "sale" | "bestseller"
   tags: string[]
   // ── Add these ──
   category: string
   categorySlug: string
   description: string
-  testDate?: string
+  testDate: string
   purity?: number
   lot?: string
   sequence?: string
@@ -544,7 +544,15 @@ export default function PepcoLabPage() {
   const isTablet = useIsTablet()
 
   useEffect(() => {
-    DATA_PRODUCTS().then(setProducts).catch(console.error)
+    DATA_PRODUCTS().then((raw) => {
+      const normalized = raw.map((p) => ({
+        ...p,
+        badge: (p.badge && ["popular", "new", "sale", "bestseller"].includes(p.badge) 
+          ? p.badge 
+          : undefined) as "popular" | "new" | "sale" | "bestseller" | undefined,
+      }))
+      setProducts(normalized)
+    }).catch(console.error)
   }, [])
 
   // ── Derived from products — INSIDE component ───────────────────────────

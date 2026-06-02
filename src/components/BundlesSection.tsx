@@ -44,7 +44,15 @@ export default function BundlesSection() {
   const [products, setProducts] = React.useState<Product[]>([])
 
   useEffect(() => {
-    getProducts().then(setProducts)
+    getProducts().then((raw) => {
+      const normalized = raw.map((p) => ({
+        ...p,
+        badge: (p.badge && ["popular", "new", "sale", "bestseller"].includes(p.badge)
+          ? p.badge
+          : undefined) as "popular" | "new" | "sale" | "bestseller" | undefined,
+      }))
+      setProducts(normalized)
+    })
   }, [])
 
   useEffect(() => {
