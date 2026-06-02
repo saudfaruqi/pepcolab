@@ -47,6 +47,7 @@ export default async function ProductPage({ params }: Props) {
     shortName: shopifyProduct.title,
     category: shopifyProduct.tags?.[0] || '',
     categorySlug: shopifyProduct.tags?.[0]?.toLowerCase().replace(/\s+/g, '-') || '',
+    badge: undefined as "popular" | "new" | "sale" | "bestseller" | undefined,
     color: {
       bg: '#f5f5f5',
       accent: '#3b82f6',
