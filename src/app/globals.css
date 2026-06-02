@@ -313,15 +313,7 @@ h1, h2, h3, h4, h5 {
 
 
 
-.shopify-description p        { margin-bottom: 1.2em; }
-.shopify-description ul       { padding-left: 1.4em; margin-bottom: 1.2em; }
-.shopify-description ol       { padding-left: 1.4em; margin-bottom: 1.2em; }
-.shopify-description li       { margin-bottom: 0.4em; }
-.shopify-description strong   { color: #111827; font-weight: 700; }
-.shopify-description h2       { font-size: 1.2em; font-weight: 700; margin: 1.4em 0 0.6em; color: #111827; }
-.shopify-description h3       { font-size: 1.05em; font-weight: 700; margin: 1.2em 0 0.5em; color: #111827; }
-.shopify-description a        { color: #2563eb; text-decoration: underline; }
-
+/* ── Shopify HTML description ─────────────────────────────────────────── */
 
 .shopify-desc {
   font-size: 13px;
@@ -329,32 +321,60 @@ h1, h2, h3, h4, h5 {
   color: #626A85;
 }
 
-/* Paragraphs */
 .shopify-desc p {
   margin-bottom: 1.1em;
 }
 
-/* Bold headings like "BPC-157 Research Peptide 5mg" */
-.shopify-desc p strong,
+/* Strong should be INLINE, not block */
 .shopify-desc strong {
-  display: block;
+  font-weight: 700;
+  color: #0D0F14;
+}
+
+/* Headings (h2/h3 from Shopify rich text) */
+.shopify-desc h2 {
   font-size: 14px;
   font-weight: 700;
   color: #0D0F14;
-  margin-bottom: 6px;
+  margin: 1.4em 0 0.5em;
+  letter-spacing: -.01em;
+}
+
+.shopify-desc h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0D0F14;
+  margin: 1.2em 0 0.4em;
+}
+
+/* Lists */
+.shopify-desc ul,
+.shopify-desc ol {
+  padding-left: 1.4em;
+  margin-bottom: 1.1em;
+}
+
+.shopify-desc li {
+  margin-bottom: 0.35em;
+  color: #626A85;
+}
+
+/* Links */
+.shopify-desc a {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 /* Table */
 .shopify-desc table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 18px;
+  margin-top: 16px;
+  margin-bottom: 16px;
   font-size: 12px;
-}
-
-.shopify-desc thead tr {
-  background: #F3F5FB;
-  border-radius: 8px;
+  border: 1px solid #E5EAF5;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .shopify-desc th {
@@ -365,6 +385,7 @@ h1, h2, h3, h4, h5 {
   letter-spacing: .08em;
   text-transform: uppercase;
   color: #AAB3C8;
+  background: #F8F9FC;
   border-bottom: 1px solid #E5EAF5;
 }
 
@@ -379,8 +400,7 @@ h1, h2, h3, h4, h5 {
 .shopify-desc td:first-child {
   font-weight: 600;
   color: #0D0F14;
-  width: 38%;
-  white-space: nowrap;
+  width: 36%;
 }
 
 .shopify-desc tr:last-child td {
