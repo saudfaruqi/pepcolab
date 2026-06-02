@@ -3,19 +3,11 @@ import Footer from '@/components/Footer'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
 
-import {
-  ChevronRight,
-  ShieldCheck,
-  Truck,
-  RotateCcw,
-} from 'lucide-react'
-
+import { ChevronRight, ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 
 interface Props {
-  params: {
-    slug: string
-  }
+  params: { slug: string }
 }
 
 export async function generateStaticParams() {
@@ -28,7 +20,7 @@ export default async function ProductPage({ params }: Props) {
 
   if (!shopifyProduct) {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'Georgia, serif', fontSize: 18 }}>
         Product not found
       </div>
     )
@@ -55,239 +47,241 @@ export default async function ProductPage({ params }: Props) {
     },
   }
 
-  // All images from Shopify for the gallery
   const images = shopifyProduct.images ?? []
+  const firstSentence = shopifyProduct.description?.split('.')[0]?.trim()
 
   return (
     <>
       <Nav />
 
-      <main style={{ background: '#fafafa', minHeight: '100vh' }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px 20px 100px' }}>
+      <main style={{ background: '#fff', minHeight: '100vh' }}>
 
-          {/* Breadcrumb */}
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: '#9ca3af', marginBottom: 36 }}>
+        {/* Breadcrumb */}
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 20px 0' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: '#9ca3af' }}>
             <a href="/" style={{ color: '#9ca3af', textDecoration: 'none' }}>Home</a>
             <ChevronRight size={12} />
             <a href="/products" style={{ color: '#9ca3af', textDecoration: 'none' }}>Products</a>
             <ChevronRight size={12} />
             <span style={{ color: '#374151' }}>{shopifyProduct.title}</span>
           </div>
+        </div>
 
-          {/* Main layout */}
-          <div className="product-layout">
+        {/* Main grid */}
+        <div
+          className="product-page-grid"
+          style={{ maxWidth: 1400, margin: '0 auto', padding: '24px 20px 80px' }}
+        >
 
-            {/* ── LEFT: Image panel ── */}
-            <div style={{ position: 'sticky', top: 90 }}>
-              <div
-                style={{
-                  borderRadius: 28,
-                  overflow: 'hidden',
-                  border: '1px solid #e5e7eb',
-                  background: images.length > 0 ? '#fff' : 'linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%)',
-                  minHeight: 480,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                }}
-              >
-                {images.length > 0 ? (
-                  // Show Shopify product image
-                  <img
-                    src={images[0].url}
-                    alt={images[0].alt || shopifyProduct.title}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                      minHeight: 480,
-                    }}
-                  />
-                ) : (
-                  // Fallback: vial illustration
-                  <>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        width: 300,
-                        height: 300,
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle,#2563eb20,transparent)',
-                        filter: 'blur(50px)',
-                      }}
-                    />
-                    <Vial
-                      mg={shopifyProduct.mg || '5mg'}
-                      size="xl"
-                      fromColor="#2563eb"
-                      toColor="#7c3aed"
-                    />
-                  </>
-                )}
+          {/* LEFT: image */}
+          <div className="product-image-col">
 
-                {/* Purity badge overlay */}
-                {shopifyProduct.purity && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 20,
-                      right: 20,
-                      background: 'rgba(255,255,255,.95)',
-                      backdropFilter: 'blur(8px)',
-                      padding: '12px 16px',
-                      borderRadius: 14,
-                      boxShadow: '0 8px 24px rgba(0,0,0,.10)',
-                      border: '1px solid rgba(255,255,255,.8)',
-                    }}
-                  >
-                    <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 2 }}>
-                      Purity
-                    </div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#0d0d0d', lineHeight: 1 }}>
-                      {shopifyProduct.purity}%
-                    </div>
+            {/* Main image */}
+            <div style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              border: '1px solid #f0f0f0',
+              background: images.length > 0 ? '#fafafa' : 'linear-gradient(180deg,#f8fafc,#eef2ff)',
+              aspectRatio: '1 / 1',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+            }}>
+              {images.length > 0 ? (
+                <img
+                  src={images[0].url}
+                  alt={images[0].alt || shopifyProduct.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    display: 'block',
+                    padding: 20,
+                  }}
+                />
+              ) : (
+                <>
+                  <div style={{
+                    position: 'absolute', width: 260, height: 260, borderRadius: '50%',
+                    background: 'radial-gradient(circle,#2563eb18,transparent)', filter: 'blur(50px)',
+                  }} />
+                  <Vial mg={shopifyProduct.mg || '5mg'} size="xl" fromColor="#2563eb" toColor="#7c3aed" />
+                </>
+              )}
+
+              {shopifyProduct.purity && (
+                <div style={{
+                  position: 'absolute', top: 14, right: 14,
+                  background: 'rgba(255,255,255,.96)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  boxShadow: '0 4px 16px rgba(0,0,0,.08)',
+                  border: '1px solid #f0f0f0',
+                }}>
+                  <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 2 }}>
+                    Purity
                   </div>
-                )}
-              </div>
-
-              {/* Thumbnail row — only if multiple images */}
-              {images.length > 1 && (
-                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                  {images.slice(0, 5).map((img, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        width: 72,
-                        height: 72,
-                        borderRadius: 12,
-                        overflow: 'hidden',
-                        border: i === 0 ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <img
-                        src={img.url}
-                        alt={img.alt || shopifyProduct.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                    </div>
-                  ))}
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0d0d0d', lineHeight: 1 }}>
+                    {shopifyProduct.purity}%
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* ── RIGHT: Product info ── */}
-            <div>
-              {/* Category tag */}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  padding: '6px 14px',
-                  borderRadius: 999,
-                  background: '#eff6ff',
-                  color: '#2563eb',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '.06em',
-                  textTransform: 'uppercase',
-                  marginBottom: 16,
-                }}
-              >
-                {shopifyProduct.tags?.[0] || 'Research Compound'}
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}>
+                {images.slice(0, 6).map((img, i) => (
+                  <div key={i} style={{
+                    width: 64, height: 64, flexShrink: 0, borderRadius: 10, overflow: 'hidden',
+                    border: i === 0 ? '2px solid #2563eb' : '1px solid #e5e7eb',
+                    background: '#fafafa',
+                  }}>
+                    <img src={img.url} alt={img.alt || ''} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
+                  </div>
+                ))}
               </div>
+            )}
 
-              {/* Title */}
-              <h1
-                style={{
-                  fontSize: 'clamp(34px,5vw,58px)',
-                  lineHeight: 1,
-                  marginBottom: 8,
-                  fontWeight: 800,
-                  letterSpacing: '-0.05em',
-                  color: '#0d0d0d',
-                  fontFamily: 'Georgia, serif',
-                }}
-              >
-                {shopifyProduct.title}
-              </h1>
-
-              {/* Lot / batch */}
-              {shopifyProduct.lot && (
-                <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 20, fontWeight: 500 }}>
-                  Batch {shopifyProduct.lot}
-                  {shopifyProduct.testDate && ` · Tested ${shopifyProduct.testDate}`}
+            {/* Trust list — desktop only, sits below image */}
+            <div className="trust-list-desktop">
+              {[
+                { icon: <ShieldCheck size={15} />, text: 'HPLC-verified purity testing' },
+                { icon: <Truck size={15} />, text: 'Cold-chain temperature-controlled shipping' },
+                { icon: <RotateCcw size={15} />, text: 'Full batch traceability & COA' },
+              ].map(({ icon, text }) => (
+                <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#6b7280' }}>
+                  <span style={{ color: '#2563eb', flexShrink: 0 }}>{icon}</span>
+                  {text}
                 </div>
-              )}
-
-              {/* Short description */}
-              {shopifyProduct.descriptionHtml ? (
-                <div>
-                  <p style={{ fontSize: 15, lineHeight: 1.8, color: '#6b7280', marginBottom: 24, maxWidth: 480 }}>
-                    {shopifyProduct.description?.split('.')[0]?.trim()}.
-                  </p>
-                </div>
-              ) : null}
-              
-
-              {/* Trust pills */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 28 }}>
-                <TrustPill icon={<ShieldCheck size={13} />} text="HPLC Verified" />
-                <TrustPill icon={<Truck size={13} />} text="Cold-Chain Shipping" />
-                <TrustPill icon={<RotateCcw size={13} />} text="Batch Traceable" />
-              </div>
-
-              {/* Shopify cart actions + tabs */}
-              <ProductActions product={product} />
+              ))}
             </div>
           </div>
 
-          {/* ── Specifications ── */}
-          <section style={{ marginTop: 80 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-              <h2 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-.03em' }}>
-                Specifications
-              </h2>
-              <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+          {/* RIGHT: info */}
+          <div className="product-info-col">
+
+            {/* Category pill */}
+            <div style={{
+              display: 'inline-flex', padding: '5px 12px', borderRadius: 999,
+              background: '#eff6ff', color: '#2563eb',
+              fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+              marginBottom: 14,
+            }}>
+              {shopifyProduct.tags?.[0] || 'Research Compound'}
             </div>
 
-            <div className="spec-grid">
-              <Spec label="Product" value={shopifyProduct.title} />
-              <Spec label="Amount" value={shopifyProduct.mg || '5mg'} />
-              <Spec label="Purity" value={shopifyProduct.purity ? `${shopifyProduct.purity}%` : 'N/A'} />
-              <Spec label="Lot Number" value={shopifyProduct.lot || 'N/A'} />
-              <Spec label="Test Date" value={shopifyProduct.testDate || 'N/A'} />
-              <Spec label="Availability" value={shopifyProduct.inStock ? 'In Stock' : 'Out of Stock'} />
-              <Spec label="Grade" value="Research Use Only" />
-              <Spec label="Dispatch" value="Same-day if ordered before 3pm" />
-              <Spec label="Shipping" value="Cold-chain, temperature controlled" />
+            {/* Title */}
+            <h1 style={{
+              fontSize: 'clamp(26px, 4vw, 50px)',
+              lineHeight: 1.05,
+              marginBottom: 6,
+              fontWeight: 800,
+              letterSpacing: '-0.04em',
+              color: '#0d0d0d',
+              fontFamily: 'Georgia, serif',
+            }}>
+              {shopifyProduct.title}
+            </h1>
+
+            {/* Batch info */}
+            {(shopifyProduct.lot || shopifyProduct.testDate) && (
+              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 16, fontWeight: 500 }}>
+                {shopifyProduct.lot && `Batch ${shopifyProduct.lot}`}
+                {shopifyProduct.lot && shopifyProduct.testDate && ' · '}
+                {shopifyProduct.testDate && `Tested ${shopifyProduct.testDate}`}
+              </div>
+            )}
+
+            {/* One-liner */}
+            {firstSentence && (
+              <p style={{
+                fontSize: 14, lineHeight: 1.75, color: '#6b7280',
+                marginBottom: 20,
+              }}>
+                {firstSentence}.
+              </p>
+            )}
+
+            {/* Trust pills — mobile only */}
+            <div className="trust-pills-mobile">
+              <TrustPill icon={<ShieldCheck size={12} />} text="HPLC Verified" />
+              <TrustPill icon={<Truck size={12} />} text="Cold-Chain" />
+              <TrustPill icon={<RotateCcw size={12} />} text="COA Included" />
             </div>
-          </section>
+
+            <div style={{ height: 1, background: '#f0f0f0', marginBottom: 24 }} />
+
+            <ProductActions product={product} />
+          </div>
         </div>
 
         <style>{`
-          .product-layout {
+          * { box-sizing: border-box; }
+          img { max-width: 100%; display: block; }
+
+          .product-page-grid {
             display: grid;
-            gap: 50px;
+            grid-template-columns: 1fr;
+            gap: 28px;
           }
 
-          .spec-grid {
-            display: grid;
-            gap: 12px;
-            grid-template-columns: repeat(2, 1fr);
+          .product-image-col {
+            width: 100%;
           }
 
-          @media (min-width: 1024px) {
-            .product-layout {
+          .trust-list-desktop {
+            display: none;
+          }
+
+          .trust-pills-mobile {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+          }
+
+          @media (min-width: 900px) {
+            .product-page-grid {
               grid-template-columns: 1fr 1fr;
+              gap: 60px;
               align-items: start;
             }
 
-            .spec-grid {
-              grid-template-columns: repeat(3, 1fr);
+            .product-image-col {
+              position: sticky;
+              top: 80px;
+            }
+
+            .trust-list-desktop {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              margin-top: 24px;
+            }
+
+            .trust-pills-mobile {
+              display: none;
             }
           }
+
+          /* Shopify HTML description */
+          .shopify-desc p              { margin-bottom: 1em; font-size: 13px; line-height: 1.85; color: #626A85; }
+          .shopify-desc strong         { font-weight: 700; color: #0D0F14; }
+          .shopify-desc ul             { padding-left: 1.4em; margin-bottom: 1em; }
+          .shopify-desc li             { margin-bottom: 0.4em; font-size: 13px; color: #626A85; line-height: 1.7; }
+          .shopify-desc table          { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+          .shopify-desc th             { text-align: left; padding: 9px 12px; font-size: 10px; font-weight: 700;
+                                         letter-spacing: .08em; text-transform: uppercase; color: #AAB3C8;
+                                         background: #F8F9FC; border-bottom: 1px solid #E5EAF5; }
+          .shopify-desc td             { padding: 9px 12px; color: #626A85; border-bottom: 1px solid #F3F5FB;
+                                         vertical-align: top; line-height: 1.6; }
+          .shopify-desc td:first-child { font-weight: 600; color: #0D0F14; width: 36%; }
+          .shopify-desc tr:last-child td { border-bottom: none; }
+          .shopify-desc tr:hover td    { background: #FAFBFF; }
         `}</style>
       </main>
 
@@ -298,51 +292,13 @@ export default async function ProductPage({ params }: Props) {
 
 function TrustPill({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '7px 14px',
-        borderRadius: 999,
-        background: '#f9fafb',
-        border: '1px solid #e5e7eb',
-        fontSize: 12,
-        fontWeight: 600,
-        color: '#374151',
-      }}
-    >
-      {icon}
-      {text}
-    </div>
-  )
-}
-
-function TrustItem({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#374151' }}>
-      {icon}
-      <span style={{ fontSize: 14 }}>{text}</span>
-    </div>
-  )
-}
-
-function Spec({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        background: '#fff',
-        border: '1px solid #e5e7eb',
-        borderRadius: 16,
-        padding: '18px 20px',
-      }}
-    >
-      <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-        {label}
-      </div>
-      <div style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>
-        {value}
-      </div>
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '6px 12px', borderRadius: 999,
+      background: '#f9fafb', border: '1px solid #e5e7eb',
+      fontSize: 11, fontWeight: 600, color: '#374151',
+    }}>
+      {icon}{text}
     </div>
   )
 }
