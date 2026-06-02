@@ -8,7 +8,7 @@ const PRIVATE_TOKEN =
   typeof window === 'undefined'
     ? process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN
     : null
-
+ 
 const API_VERSION = '2024-04'
 const API_URL = `https://${DOMAIN}/api/${API_VERSION}/graphql.json`
 
