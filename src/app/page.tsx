@@ -1,7 +1,7 @@
 "use client";
 import Nav from "@/components/Nav";
 import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react"
-import { HeroCinematic } from "@/components/HeroSections";
+import HeroCinematic from '@/components/HeroSections'
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";

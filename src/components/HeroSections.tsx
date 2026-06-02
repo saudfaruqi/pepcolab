@@ -1,27 +1,40 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
+import Link from 'next/link'
 
-export function HeroCinematic() {
-  const headingRef = useRef<HTMLHeadingElement>(null)
-
+export default function HeroCinematic() {
   useEffect(() => {
     ;(async () => {
       try {
         const gsap = (await import('gsap')).default
 
         gsap.fromTo(
-          '.hero-item',
+          '.hero-fade',
           {
             opacity: 0,
-            y: 30,
+            y: 40,
           },
           {
             opacity: 1,
             y: 0,
-            duration: 1,
             stagger: 0.12,
+            duration: 1,
             ease: 'power3.out',
+          }
+        )
+
+        gsap.fromTo(
+          '.hero-video',
+          {
+            opacity: 0,
+            scale: 0.92,
+          },
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 1.6,
+            ease: 'power4.out',
           }
         )
       } catch {}
@@ -31,155 +44,221 @@ export function HeroCinematic() {
   return (
     <section
       style={{
-        background: '#0A0A0A',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '120px 0',
+        position: 'relative',
+        background: '#050505',
         overflow: 'hidden',
       }}
     >
+      {/* Background Effects */}
       <div
         style={{
-          width: '100%',
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 20% 30%, rgba(255,255,255,.05), transparent 35%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'absolute',
+          right: '-200px',
+          top: '20%',
+          width: 500,
+          height: 500,
+          borderRadius: '50%',
+          background:
+            'radial-gradient(circle, rgba(255,255,255,.08), transparent 70%)',
+          filter: 'blur(120px)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
           maxWidth: 1440,
           margin: '0 auto',
-          padding: '0 clamp(24px,5vw,80px)',
+          padding: '60px 20px 40px',
         }}
       >
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.1fr 1fr',
-            gap: 80,
-            alignItems: 'center',
+            gridTemplateColumns: '1fr',
+            gap: 40,
           }}
+          className="hero-layout"
         >
-          {/* LEFT */}
+          {/* LEFT CONTENT */}
           <div>
 
+            {/* Heading */}
             <h1
-              ref={headingRef}
-              className="hero-item"
+              className="hero-fade"
               style={{
-                fontSize: 'clamp(64px,8vw,120px)',
-                lineHeight: '.9',
-                letterSpacing: '-.08em',
                 color: '#fff',
-                fontWeight: 700,
-                marginBottom: 32,
+                fontWeight: 800,
+                lineHeight: 0.92,
+                letterSpacing: '-0.08em',
+                fontSize: 'clamp(42px,8vw,90px)',
+                marginBottom: 24,
               }}
             >
               Research
-              <br />
-              Compounds
               <br />
               Without
               <br />
               Compromise.
             </h1>
 
+            {/* Description */}
             <p
-              className="hero-item"
+              className="hero-fade"
               style={{
                 color: 'rgba(255,255,255,.65)',
-                fontSize: 18,
-                lineHeight: 1.8,
+                fontSize: 'clamp(12px,2vw,16px)',
+                lineHeight: 1.2,
                 maxWidth: 520,
-                marginBottom: 40,
+                marginBottom: 36,
               }}
             >
-              Pharmaceutical-grade compounds backed by
-              independent testing, transparent batch verification,
-              and temperature-controlled delivery.
+              Premium research compounds manufactured to exceptional
+              standards and verified through independent laboratory testing.
+              Transparent batch data, pharmaceutical-grade quality, and
+              temperature-controlled fulfilment.
             </p>
 
+            {/* CTA Buttons */}
             <div
-              className="hero-item"
+              className="hero-fade"
               style={{
                 display: 'flex',
+                flexDirection: 'column',
                 gap: 14,
-                flexWrap: 'wrap',
-                marginBottom: 60,
+                marginBottom: 50,
               }}
             >
-              <a
+              <Link
                 href="/products"
                 style={{
+                  height: 58,
+                  borderRadius: 999,
                   background: '#fff',
                   color: '#000',
-                  height: 56,
-                  padding: '0 28px',
-                  borderRadius: 999,
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   textDecoration: 'none',
                   fontWeight: 700,
+                  fontSize: 15,
                 }}
               >
-                Explore Products
-              </a>
+                Explore Research Compounds
+              </Link>
 
-              <a
+              <Link
                 href="/certificates"
                 style={{
-                  border: '1px solid rgba(255,255,255,.15)',
-                  color: '#fff',
-                  height: 56,
-                  padding: '0 28px',
+                  height: 58,
                   borderRadius: 999,
-                  display: 'inline-flex',
+                  border: '1px solid rgba(255,255,255,.12)',
+                  background: 'rgba(255,255,255,.03)',
+                  color: '#fff',
+                  display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   textDecoration: 'none',
+                  backdropFilter: 'blur(20px)',
+                  fontWeight: 600,
+                  fontSize: 15,
                 }}
               >
-                View COA Certificates
-              </a>
+                View Laboratory Certificates
+              </Link>
             </div>
 
+            {/* Stats */}
             <div
-              className="hero-item"
+              className="hero-fade"
               style={{
-                display: 'flex',
-                gap: 40,
-                flexWrap: 'wrap',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3,1fr)',
+                gap: 20,
+                maxWidth: 500,
               }}
             >
-              {[
-                ['99%+', 'Purity'],
-                ['2400+', 'Researchers'],
-                ['24hr', 'Cold Dispatch'],
-              ].map(([value, label]) => (
-                <div key={label}>
-                  <div
-                    style={{
-                      color: '#fff',
-                      fontSize: 36,
-                      fontWeight: 700,
-                      letterSpacing: '-.05em',
-                    }}
-                  >
-                    {value}
-                  </div>
-
-                  <div
-                    style={{
-                      color: 'rgba(255,255,255,.45)',
-                      textTransform: 'uppercase',
-                      fontSize: 11,
-                      letterSpacing: '.12em',
-                    }}
-                  >
-                    {label}
-                  </div>
+              <div>
+                <div
+                  style={{
+                    color: '#fff',
+                    fontSize: 28,
+                    fontWeight: 800,
+                    marginBottom: 4,
+                  }}
+                >
+                  99%+
                 </div>
-              ))}
+
+                <div
+                  style={{
+                    color: 'rgba(255,255,255,.55)',
+                    fontSize: 12,
+                  }}
+                >
+                  Verified Purity
+                </div>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    color: '#fff',
+                    fontSize: 28,
+                    fontWeight: 800,
+                    marginBottom: 4,
+                  }}
+                >
+                  24h
+                </div>
+
+                <div
+                  style={{
+                    color: 'rgba(255,255,255,.55)',
+                    fontSize: 12,
+                  }}
+                >
+                  UK Dispatch
+                </div>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    color: '#fff',
+                    fontSize: 28,
+                    fontWeight: 800,
+                    marginBottom: 4,
+                  }}
+                >
+                  COA
+                </div>
+
+                <div
+                  style={{
+                    color: 'rgba(255,255,255,.55)',
+                    fontSize: 12,
+                  }}
+                >
+                  Batch Verified
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* RIGHT */}
+          {/* RIGHT VIDEO */}
           <div
-            className="hero-item"
+            className="hero-video"
             style={{
               position: 'relative',
             }}
@@ -187,27 +266,86 @@ export function HeroCinematic() {
             <div
               style={{
                 position: 'absolute',
-                inset: '-20%',
+                inset: '-15%',
                 background:
                   'radial-gradient(circle, rgba(255,255,255,.08), transparent 70%)',
-                filter: 'blur(80px)',
+                filter: 'blur(120px)',
+                pointerEvents: 'none',
               }}
             />
 
-            <img
-              src="/pepco1.png"
-              alt="Research Laboratory"
+            <div
               style={{
-                width: '100%',
-                height: '760px',
-                objectFit: 'cover',
+                position: 'relative',
+                overflow: 'hidden',
                 borderRadius: 32,
-                display: 'block',
+                border: '1px solid rgba(255,255,255,.08)',
+                background: '#0d0d0d',
+                boxShadow:
+                  '0 60px 140px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04)',
               }}
-            />
+            >
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                style={{
+                  width: '100%',
+                  height: '400px',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              >
+                <source src="/pepcolabvideo.mp4" type="video/mp4" />
+              </video>
+
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(to top, rgba(0,0,0,.45), transparent 45%)',
+                }}
+              />
+
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 24,
+                  left: 24,
+                  right: 24,
+                }}
+              >
+
+                <div
+                  style={{
+                    color: 'rgba(255,255,255,.65)',
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Every batch independently tested and fully traceable.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Desktop Layout */}
+      <style jsx>{`
+        @media (min-width: 1024px) {
+          .hero-layout {
+            grid-template-columns: 1.05fr 1fr !important;
+            align-items: center;
+            gap: 40px !important;
+          }
+          .hero-video video {
+            height: 620px !important;
+          }
+        }
+      `}</style>
     </section>
   )
 }
