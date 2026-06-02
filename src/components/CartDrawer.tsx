@@ -283,14 +283,24 @@ export default function CartDrawer() {
                       gap: 14,
                     }}
                   >
-                    <div
-                      style={{
-                        width: 70,
-                        height: 70,
-                        borderRadius: 14,
-                        background: '#f7f7f5',
-                      }}
-                    />
+                  <div
+                    style={{
+                      width: 70,
+                      height: 70,
+                      borderRadius: 14,
+                      background: '#f7f7f5',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {line.image ? (
+                      <img
+                        src={line.image}
+                        alt={line.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }}
+                      />
+                    ) : null}
+                  </div>
 
                     <div style={{ flex: 1 }}>
                       <div
@@ -342,17 +352,31 @@ export default function CartDrawer() {
                             padding: 4,
                           }}
                         >
-                          <button>
-                            <Minus size={12} />
-                          </button>
+                        <button
+                          onClick={() => updateQty(line.id, line.quantity - 1)}
+                          disabled={loading}
+                          style={{ 
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', padding: '0 4px'
+                          }}
+                        >
+                          <Minus size={12} />
+                        </button>
 
-                          <span>
-                            {line.quantity}
-                          </span>
+                        <span style={{ minWidth: 16, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
+                          {line.quantity}
+                        </span>
 
-                          <button>
-                            <Plus size={12} />
-                          </button>
+                        <button
+                          onClick={() => updateQty(line.id, line.quantity + 1)}
+                          disabled={loading}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', padding: '0 4px'
+                          }}
+                        >
+                          <Plus size={12} />
+                        </button>
                         </div>
 
                         <div
