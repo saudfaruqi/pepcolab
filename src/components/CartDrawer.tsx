@@ -90,8 +90,6 @@ export default function CartDrawer() {
           width: 'min(100vw,460px)',
           background:
             'linear-gradient(to bottom,#fafaf9,#f5f5f3)',
-          boxShadow:
-            '-40px 0 80px rgba(0,0,0,.18)',
           zIndex: 1001,
           display: 'flex',
           flexDirection: 'column',
