@@ -1,87 +1,480 @@
 'use client'
-'use client'
-import AnnouncementBar from '@/components/AnnouncementBar'
+
+import { useMemo, useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import { PRODUCTS } from '@/app/data'
-import { Download, CheckCircle2, Search } from 'lucide-react'
+import {getProducts} from '@/lib/shopify'
+import {
+  Search,
+  Download,
+  CheckCircle2,
+  ShieldCheck,
+  FlaskConical,
+  FileText,
+  ArrowRight,
+} from 'lucide-react'
 
 export default function CertificatesPage() {
+  const [query, setQuery] = useState('')
+  const [products, setProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await getProducts()
+      setProducts(data)
+    }
+    loadProducts()
+  }, [])
+
+  const filteredProducts = useMemo(() => {
+    if (!query) return products
+
+    const q = query.toLowerCase()
+
+    return products.filter(
+      (p: any) =>
+        p.name.toLowerCase().includes(q) ||
+        p.lot?.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+    )
+  }, [query, products])
+
+  const avgPurity =
+    products.length > 0
+      ? products.reduce((acc: number, p: any) => acc + (p.purity ?? 99), 0) /
+        products.length
+      : 0
+
   return (
     <>
-      
       <Nav />
-      <main>
-        {/* Hero */}
-        <div className="border-b border-border bg-ink text-white py-14 px-6 lg:px-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-[11px] font-medium tracking-[1.2px] uppercase text-blue-400 mb-3">Transparency</div>
-            <h1 className="font-serif text-[44px] tracking-[-1.5px] text-white mb-4">COA Library</h1>
-            <p className="text-[15px] text-gray-400 font-light max-w-xl mb-8">
-              Every batch certificate, publicly searchable. Enter a lot number to retrieve the full Certificate of Analysis, HPLC trace, and mass spec report.
-            </p>
-            <div className="flex max-w-xl gap-3">
-              <div className="flex-1 relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
-                <input
-                  type="text"
-                  placeholder="Enter lot number, e.g. PEP-2412-07"
-                  className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-[8px] text-[13px] text-white placeholder:text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                />
+
+      <main
+        style={{
+          background: '#f7f7f5',
+          minHeight: '100vh',
+        }}
+      >
+        {/* HERO */}
+
+        <section
+          style={{
+            borderBottom: '1px solid rgba(13,13,13,.08)',
+            background:
+              'linear-gradient(to bottom, #ffffff 0%, #f7f7f5 100%)',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1400,
+              margin: '0 auto',
+              padding: '80px 24px 72px',
+            }}
+          >
+            <div
+              style={{
+                maxWidth: 760,
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '.14em',
+                  textTransform: 'uppercase',
+                  color: '#2563EB',
+                  marginBottom: 18,
+                }}
+              >
+                <ShieldCheck size={14} />
+                Research Transparency
               </div>
-              <button className="flex items-center gap-2 bg-blue-600 text-white text-[13px] font-medium px-6 py-3 rounded-[8px] hover:bg-blue-700 transition-colors">
-                Verify
-              </button>
+
+              <h1
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: 'clamp(42px,7vw,72px)',
+                  lineHeight: 0.95,
+                  letterSpacing: '-.06em',
+                  margin: '0 0 20px',
+                  color: '#0d0d0d',
+                }}
+              >
+                Certificate
+                <br />
+                Library
+              </h1>
+
+              <p
+                style={{
+                  fontSize: 16,
+                  lineHeight: 1.8,
+                  color: 'rgba(13,13,13,.58)',
+                  maxWidth: 620,
+                  marginBottom: 40,
+                }}
+              >
+                Every PepcoLab batch is independently tested and publicly
+                published. Search any lot number to retrieve purity data,
+                HPLC analysis, and laboratory verification records.
+              </p>
+
+              {/* Search */}
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    flex: '1 1 420px',
+                  }}
+                >
+                  <Search
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'rgba(13,13,13,.35)',
+                    }}
+                  />
+
+                  <input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Search lot number, peptide or category..."
+                    style={{
+                      width: '100%',
+                      height: 56,
+                      borderRadius: 14,
+                      border: '1px solid rgba(13,13,13,.12)',
+                      background: '#fff',
+                      padding: '0 18px 0 46px',
+                      fontSize: 14,
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <button
+                  style={{
+                    height: 56,
+                    padding: '0 28px',
+                    borderRadius: 14,
+                    border: 'none',
+                    background: '#0d0d0d',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Verify Batch
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Table */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
-          <div className="text-[13px] font-medium text-ink mb-4">{PRODUCTS.length} certificates published</div>
-          <div className="border border-border rounded-[14px] overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-canvas-off border-b border-border">
-                <tr>
-                  {['Product', 'Lot Number', 'Purity', 'Test Date', 'Lab', 'Status', 'Download'].map(h => (
-                    <th key={h} className="text-left text-[11px] font-medium tracking-[0.6px] uppercase text-steel-light px-5 py-3.5 first:rounded-tl-[14px]">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {PRODUCTS.map((p, i) => (
-                  <tr key={p.id} className={`border-b border-border-light last:border-none ${i % 2 === 0 ? '' : 'bg-canvas-off/50'}`}>
-                    <td className="px-5 py-3.5">
-                      <div className="text-[13px] font-medium text-ink">{p.name}</div>
-                      <div className="text-[11px] text-steel-light">{p.category}</div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono text-[12px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{p.lot}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-[13px] font-medium text-green-600">{p.purity}%</span>
-                    </td>
-                    <td className="px-5 py-3.5 text-[13px] text-steel">{p.testDate}</td>
-                    <td className="px-5 py-3.5 text-[13px] text-steel">Eurofins UK</td>
-                    <td className="px-5 py-3.5">
-                      <span className="flex items-center gap-1 text-[11px] text-green-600 font-medium">
-                        <CheckCircle2 size={12} /> Pass
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <button className="flex items-center gap-1 text-[12px] text-blue-600 hover:text-blue-700 font-medium">
-                        <Download size={13} /> PDF
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* STATS */}
+
+        <section>
+          <div
+            style={{
+              maxWidth: 1400,
+              margin: '0 auto',
+              padding: '32px 24px',
+            }}
+          >
+            <div
+              style={{
+                display: 'grid',
+                gap: 16,
+                gridTemplateColumns:
+                  'repeat(auto-fit,minmax(220px,1fr))',
+              }}
+            >
+              {[
+                {
+                  label: 'Published COAs',
+                  value: products.length,
+                  icon: FileText,
+                },
+                {
+                  label: 'Average Purity',
+                  value: `${avgPurity.toFixed(1)}%`,
+                  icon: FlaskConical,
+                },
+                {
+                  label: 'Verified Batches',
+                  value: products.length,
+                  icon: CheckCircle2,
+                },
+              ].map(stat => (
+                <div
+                  key={stat.label}
+                  style={{
+                    background: '#fff',
+                    borderRadius: 18,
+                    padding: 24,
+                    border: '1px solid rgba(13,13,13,.08)',
+                  }}
+                >
+                  <stat.icon
+                    size={18}
+                    style={{
+                      marginBottom: 18,
+                      color: '#2563EB',
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      fontSize: 34,
+                      fontWeight: 700,
+                      letterSpacing: '-.05em',
+                      marginBottom: 6,
+                    }}
+                  >
+                    {stat.value}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: 'rgba(13,13,13,.55)',
+                    }}
+                  >
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* CERTIFICATES */}
+
+        <section>
+          <div
+            style={{
+              maxWidth: 1400,
+              margin: '0 auto',
+              padding: '0 24px 80px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 24,
+                flexWrap: 'wrap',
+                gap: 12,
+              }}
+            >
+              <h2
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: 34,
+                  margin: 0,
+                  letterSpacing: '-.05em',
+                }}
+              >
+                Published Certificates
+              </h2>
+
+              <div
+                style={{
+                  fontSize: 13,
+                  color: 'rgba(13,13,13,.45)',
+                }}
+              >
+                {filteredProducts.length} results
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gap: 18,
+                gridTemplateColumns:
+                  'repeat(auto-fill,minmax(320px,1fr))',
+              }}
+            >
+              {filteredProducts.map(getProducts => (
+                <div
+                  key={getProducts.id}
+                  style={{
+                    background: '#fff',
+                    borderRadius: 20,
+                    padding: 24,
+                    border: '1px solid rgba(13,13,13,.08)',
+                    transition: '.2s',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginBottom: 20,
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          textTransform: 'uppercase',
+                          letterSpacing: '.12em',
+                          color: 'rgba(13,13,13,.35)',
+                          marginBottom: 6,
+                        }}
+                      >
+                        {getProducts.category}
+                      </div>
+
+                      <h3
+                        style={{
+                          fontSize: 20,
+                          margin: 0,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {getProducts.name}
+                      </h3>
+                    </div>
+
+                    <CheckCircle2
+                      size={22}
+                      color="#16A34A"
+                    />
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 16,
+                      marginBottom: 22,
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'rgba(13,13,13,.4)',
+                        }}
+                      >
+                        Lot Number
+                      </div>
+
+                      <div
+                        style={{
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          marginTop: 4,
+                        }}
+                      >
+                        {getProducts.lot}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'rgba(13,13,13,.4)',
+                        }}
+                      >
+                        Purity
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: '#16A34A',
+                          marginTop: 4,
+                        }}
+                      >
+                        {getProducts.purity}%
+                      </div>
+                    </div>
+
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'rgba(13,13,13,.4)',
+                        }}
+                      >
+                        Test Date
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 13,
+                          marginTop: 4,
+                        }}
+                      >
+                        {getProducts.testDate}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'rgba(13,13,13,.4)',
+                        }}
+                      >
+                        Laboratory
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 13,
+                          marginTop: 4,
+                        }}
+                      >
+                        Eurofins UK
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    style={{
+                      width: '100%',
+                      height: 48,
+                      borderRadius: 12,
+                      border: '1px solid rgba(13,13,13,.08)',
+                      background: '#fafafa',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Download size={15} />
+                    Download COA PDF
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
+
       <Footer />
     </>
   )

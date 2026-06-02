@@ -1,411 +1,391 @@
 'use client'
+
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { X, Minus, Plus, ShoppingBag, ArrowRight, Trash2 } from 'lucide-react'
+import {
+  X,
+  Minus,
+  Plus,
+  ArrowRight,
+  ShoppingBag,
+  Trash2,
+  ShieldCheck,
+  Snowflake,
+  FlaskConical,
+} from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 
+const FREE_SHIPPING = 75
+
 export default function CartDrawer() {
-  const { open, lines, subtotal, totalQuantity, loading, error, closeCart, removeItem, updateQty, checkout, clearError } = useCart()
+  const {
+    open,
+    lines,
+    subtotal,
+    totalQuantity,
+    loading,
+    error,
+    closeCart,
+    removeItem,
+    updateQty,
+    checkout,
+    clearError,
+  } = useCart()
+
   const drawerRef = useRef<HTMLDivElement>(null)
 
-  // Lock body scroll when open
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = open ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
     }
   }, [open])
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) closeCart()
+      if (e.key === 'Escape') closeCart()
     }
+
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [open, closeCart])
 
-  // Focus trap
-  useEffect(() => {
-    if (open) {
-      drawerRef.current?.focus()
+    return () => {
+      window.removeEventListener('keydown', handler)
     }
-  }, [open])
+  }, [closeCart])
 
-  if (!open && lines.length === 0) return null
+  const progress = Math.min(
+    (subtotal / FREE_SHIPPING) * 100,
+    100
+  )
 
   return (
     <>
-      {/* ── Backdrop ── */}
+      {/* Backdrop */}
+
       <div
         onClick={closeCart}
-        aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(13,13,13,.45)',
+          background: 'rgba(0,0,0,.45)',
+          backdropFilter: 'blur(6px)',
           zIndex: 1000,
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity .3s ease',
-          backdropFilter: 'blur(2px)',
+          transition: '.3s',
         }}
       />
 
-      {/* ── Drawer panel ── */}
-      <div
+      {/* Drawer */}
+
+      <aside
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Shopping cart"
-        tabIndex={-1}
         style={{
           position: 'fixed',
           top: 0,
           right: 0,
           bottom: 0,
-          /* Full-width on mobile, capped on desktop */
-          width: 'min(100vw, 440px)',
-          background: '#f5f5f3',
+          width: 'min(100vw,460px)',
+          background:
+            'linear-gradient(to bottom,#fafaf9,#f5f5f3)',
+          boxShadow:
+            '-40px 0 80px rgba(0,0,0,.18)',
           zIndex: 1001,
           display: 'flex',
           flexDirection: 'column',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform .35s cubic-bezier(.22,1,.36,1)',
-          outline: 'none',
+          transform: open
+            ? 'translateX(0)'
+            : 'translateX(100%)',
+          transition:
+            'transform .45s cubic-bezier(.22,1,.36,1)',
         }}
       >
-        {/* ── Header ── */}
+        {/* Header */}
+
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '20px 20px 18px',
-            borderBottom: '1px solid rgba(13,13,13,.1)',
-            flexShrink: 0,
+            background: '#0b0b0b',
+            color: '#fff',
+            padding: '28px 24px',
+            borderBottom:
+              '1px solid rgba(255,255,255,.08)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShoppingBag size={18} style={{ color: '#0d0d0d' }} />
-            <span
-              style={{
-                fontFamily: 'Georgia, serif',
-                fontSize: 18,
-                fontWeight: 700,
-                letterSpacing: '-.03em',
-                color: '#0d0d0d',
-              }}
-            >
-              Cart
-            </span>
-            {totalQuantity > 0 && (
-              <span
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+            }}
+          >
+            <div>
+              <div
                 style={{
                   fontSize: 11,
-                  fontWeight: 700,
-                  background: '#0d0d0d',
-                  color: '#fff',
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  letterSpacing: '.2em',
+                  textTransform: 'uppercase',
+                  opacity: .45,
+                  marginBottom: 6,
                 }}
               >
-                {totalQuantity}
-              </span>
-            )}
+                Research Order
+              </div>
+
+              <h2
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: 32,
+                  margin: 0,
+                }}
+              >
+                Cart
+              </h2>
+            </div>
+
+            <button
+              onClick={closeCart}
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                border:
+                  '1px solid rgba(255,255,255,.12)',
+                background: 'transparent',
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={16} />
+            </button>
           </div>
 
-          <button
-            onClick={closeCart}
-            aria-label="Close cart"
+          <div
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              border: '1px solid rgba(13,13,13,.15)',
-              background: 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#0d0d0d',
-              transition: 'background .15s',
-              flexShrink: 0,
+              marginTop: 12,
+              fontSize: 13,
+              opacity: .65,
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(13,13,13,.06)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <X size={16} />
-          </button>
+            {totalQuantity} item
+            {totalQuantity !== 1 ? 's' : ''}
+          </div>
         </div>
 
-        {/* ── Error banner ── */}
+        {/* Error */}
+
         {error && (
           <div
             style={{
               background: '#FEF2F2',
-              borderBottom: '1px solid rgba(220,38,38,.2)',
-              padding: '10px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-              flexShrink: 0,
+              padding: 12,
             }}
           >
-            <span style={{ fontSize: 12.5, color: '#DC2626' }}>{error}</span>
-            <button
-              onClick={clearError}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: 0 }}
-            >
-              <X size={13} />
-            </button>
+            {error}
           </div>
         )}
 
-        {/* ── Lines ── */}
+        {/* Content */}
+
         <div
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '16px 20px',
-            WebkitOverflowScrolling: 'touch',
+            padding: 20,
           }}
         >
           {lines.length === 0 ? (
-            /* Empty state */
             <div
               style={{
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '100%',
-                gap: 16,
                 textAlign: 'center',
-                padding: '40px 0',
               }}
             >
-              <ShoppingBag
-                size={48}
-                style={{ color: 'rgba(13,13,13,.15)', strokeWidth: 1.5 }}
-              />
-              <div>
-                <div
-                  style={{
-                    fontFamily: 'Georgia, serif',
-                    fontSize: 18,
-                    fontWeight: 700,
-                    letterSpacing: '-.03em',
-                    color: '#0d0d0d',
-                    marginBottom: 6,
-                  }}
-                >
-                  Your cart is empty
-                </div>
-                <div style={{ fontSize: 13, color: 'rgba(13,13,13,.5)', lineHeight: 1.6 }}>
-                  Add research-grade peptides to get started.
-                </div>
+              <div
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: '50%',
+                  background:
+                    'linear-gradient(135deg,#eef2fd,#dbeafe)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 24,
+                }}
+              >
+                <ShoppingBag size={40} />
               </div>
+
+              <h3
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: 24,
+                }}
+              >
+                Research Cart Empty
+              </h3>
+
+              <p
+                style={{
+                  maxWidth: 260,
+                  opacity: .6,
+                  lineHeight: 1.7,
+                }}
+              >
+                Add verified compounds and
+                laboratory products to begin
+                your order.
+              </p>
+
               <Link
                 href="/products"
                 onClick={closeCart}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 13,
-                  fontWeight: 600,
+                  marginTop: 20,
                   background: '#0d0d0d',
                   color: '#fff',
-                  padding: '12px 24px',
+                  padding: '14px 24px',
+                  borderRadius: 999,
                   textDecoration: 'none',
-                  borderRadius: 40,
-                  marginTop: 4,
                 }}
               >
-                Browse Peptides <ArrowRight size={13} />
+                Browse Catalogue
               </Link>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {lines.map(line => (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+              }}
+            >
+              {lines.map((line) => (
                 <div
                   key={line.id}
                   style={{
                     background: '#fff',
-                    border: '1px solid rgba(13,13,13,.08)',
-                    padding: '14px 16px',
-                    display: 'flex',
-                    gap: 14,
-                    alignItems: 'flex-start',
-                    opacity: loading ? 0.6 : 1,
-                    transition: 'opacity .2s',
+                    borderRadius: 18,
+                    padding: 16,
+                    border:
+                      '1px solid rgba(13,13,13,.06)',
+                    boxShadow:
+                      '0 8px 30px rgba(0,0,0,.04)',
                   }}
                 >
-                  {/* Product image or placeholder */}
                   <div
                     style={{
-                      width: 60,
-                      height: 60,
-                      flexShrink: 0,
-                      background: 'rgba(13,13,13,.04)',
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 22,
-                      overflow: 'hidden',
+                      gap: 14,
                     }}
                   >
-                    {line.image ? (
-                      <img
-                        src={line.image}
-                        alt={line.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      '🧪'
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <Link
-                      href={`/products/${line.slug}`}
-                      onClick={closeCart}
-                      style={{
-                        fontFamily: 'Georgia, serif',
-                        fontSize: 15,
-                        fontWeight: 700,
-                        letterSpacing: '-.02em',
-                        color: '#0d0d0d',
-                        textDecoration: 'none',
-                        display: 'block',
-                        marginBottom: 2,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {line.title}
-                    </Link>
-                    <div style={{ fontSize: 11.5, color: 'rgba(13,13,13,.45)', marginBottom: 10 }}>
-                      {line.variantTitle}
-                    </div>
-
-                    {/* Qty controls + price row */}
                     <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 10,
+                        width: 70,
+                        height: 70,
+                        borderRadius: 14,
+                        background: '#f7f7f5',
                       }}
-                    >
-                      {/* Quantity stepper */}
+                    />
+
+                    <div style={{ flex: 1 }}>
                       <div
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          border: '1px solid rgba(13,13,13,.12)',
-                          background: '#f5f5f3',
+                          fontSize: 10,
+                          textTransform: 'uppercase',
+                          letterSpacing: '.12em',
+                          opacity: .4,
                         }}
                       >
-                        <button
-                          onClick={() => updateQty(line.id, line.quantity - 1)}
-                          disabled={loading}
-                          aria-label="Decrease quantity"
-                          style={{
-                            width: 30,
-                            height: 30,
-                            border: 'none',
-                            background: 'none',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#0d0d0d',
-                          }}
-                        >
-                          <Minus size={11} />
-                        </button>
-                        <span
-                          style={{
-                            minWidth: 24,
-                            textAlign: 'center',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: '#0d0d0d',
-                          }}
-                        >
-                          {line.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQty(line.id, line.quantity + 1)}
-                          disabled={loading}
-                          aria-label="Increase quantity"
-                          style={{
-                            width: 30,
-                            height: 30,
-                            border: 'none',
-                            background: 'none',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#0d0d0d',
-                          }}
-                        >
-                          <Plus size={11} />
-                        </button>
+                        Research Compound
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        {/* Line total */}
-                        <span
-                          style={{
-                            fontFamily: 'Georgia, serif',
-                            fontSize: 16,
-                            fontWeight: 700,
-                            letterSpacing: '-.02em',
-                            color: '#0d0d0d',
-                          }}
-                        >
-                          £{(line.price * line.quantity).toFixed(2)}
-                        </span>
+                      <h3
+                        style={{
+                          fontFamily:
+                            'Georgia, serif',
+                          fontSize: 18,
+                          margin: '6px 0',
+                        }}
+                      >
+                        {line.title}
+                      </h3>
 
-                        {/* Remove */}
-                        <button
-                          onClick={() => removeItem(line.id)}
-                          disabled={loading}
-                          aria-label={`Remove ${line.title} from cart`}
+                      <div
+                        style={{
+                          fontSize: 12,
+                          opacity: .5,
+                        }}
+                      >
+                        {line.variantTitle}
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 14,
+                          display: 'flex',
+                          justifyContent:
+                            'space-between',
+                        }}
+                      >
+                        <div
                           style={{
-                            width: 28,
-                            height: 28,
-                            border: 'none',
-                            background: 'none',
-                            cursor: loading ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'rgba(13,13,13,.3)',
-                            transition: 'color .15s',
-                            borderRadius: 4,
+                            gap: 6,
+                            background: '#f7f7f5',
+                            borderRadius: 999,
+                            padding: 4,
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#DC2626')}
-                          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(13,13,13,.3)')}
                         >
-                          <Trash2 size={14} />
-                        </button>
+                          <button>
+                            <Minus size={12} />
+                          </button>
+
+                          <span>
+                            {line.quantity}
+                          </span>
+
+                          <button>
+                            <Plus size={12} />
+                          </button>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily:
+                                'Georgia, serif',
+                              fontWeight: 700,
+                            }}
+                          >
+                            £
+                            {(
+                              line.price *
+                              line.quantity
+                            ).toFixed(2)}
+                          </span>
+
+                          <button
+                            onClick={() =>
+                              removeItem(line.id)
+                            }
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -415,142 +395,92 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* ── Footer: totals + checkout ── */}
+        {/* Footer */}
+
         {lines.length > 0 && (
           <div
             style={{
-              borderTop: '1px solid rgba(13,13,13,.1)',
-              padding: '18px 20px 24px',
-              flexShrink: 0,
-              background: '#f5f5f3',
+              background:
+                'rgba(255,255,255,.88)',
+              backdropFilter: 'blur(20px)',
+              borderTop:
+                '1px solid rgba(13,13,13,.08)',
+              padding: 20,
             }}
           >
-            {/* Free dispatch threshold */}
-            {subtotal < 75 && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: 'rgba(13,13,13,.55)',
-                  marginBottom: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <span>❄️</span>
-                <span>
-                  Add{' '}
-                  <strong style={{ color: '#0d0d0d' }}>
-                    £{(75 - subtotal).toFixed(2)}
-                  </strong>{' '}
-                  more for free cold-chain dispatch
-                </span>
-              </div>
-            )}
 
-            {subtotal >= 75 && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: '#0A7B45',
-                  fontWeight: 600,
-                  marginBottom: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <span>✓</span> Free cold-chain dispatch applied
-              </div>
-            )}
+            {/* Total */}
 
-            {/* Subtotal */}
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 14,
+                justifyContent:
+                  'space-between',
+                marginBottom: 18,
               }}
             >
-              <span style={{ fontSize: 13, color: 'rgba(13,13,13,.55)', fontWeight: 500 }}>
-                Subtotal ({totalQuantity} item{totalQuantity !== 1 ? 's' : ''})
-              </span>
-              <span
+              <span>Subtotal</span>
+
+              <strong
                 style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: 22,
-                  fontWeight: 700,
-                  letterSpacing: '-.03em',
-                  color: '#0d0d0d',
+                  fontFamily:
+                    'Georgia, serif',
+                  fontSize: 24,
                 }}
               >
                 £{subtotal.toFixed(2)}
-              </span>
+              </strong>
             </div>
 
-            {/* Checkout button */}
             <button
               onClick={checkout}
-              disabled={loading}
               style={{
                 width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                background: loading ? 'rgba(13,13,13,.3)' : '#0d0d0d',
+                height: 58,
+                borderRadius: 16,
+                border: 0,
+                background:
+                  'linear-gradient(135deg,#0d0d0d,#222)',
                 color: '#fff',
-                fontSize: 14,
-                fontWeight: 600,
-                letterSpacing: '.04em',
-                padding: '16px 24px',
-                border: 'none',
-                cursor: loading ? 'wait' : 'pointer',
-                fontFamily: 'inherit',
-                transition: 'background .2s',
-                marginBottom: 10,
-              }}
-            >
-              {loading ? 'Processing…' : <>Checkout <ArrowRight size={15} /></>}
-            </button>
-
-            {/* Continue shopping */}
-            <button
-              onClick={closeCart}
-              style={{
-                width: '100%',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'rgba(13,13,13,.5)',
-                background: 'none',
-                border: 'none',
+                fontWeight: 700,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 8,
                 cursor: 'pointer',
-                padding: '8px 0',
-                fontFamily: 'inherit',
-                letterSpacing: '.03em',
-                transition: 'color .15s',
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#0d0d0d')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(13,13,13,.5)')}
             >
-              Continue shopping
+              Secure Checkout
+              <ArrowRight size={16} />
             </button>
-
-            <p
-              style={{
-                fontSize: 11,
-                color: 'rgba(13,13,13,.35)',
-                textAlign: 'center', 
-                marginTop: 12,
-                lineHeight: 1.6,
-              }}
-            >
-              Taxes calculated at checkout. For Research Use Only.
-            </p>
           </div>
         )}
-      </div>
+      </aside>
     </>
   )
-} 
+}
+
+function TrustItem({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode
+  label: string
+}) {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: 10,
+        background: '#fff',
+        borderRadius: 12,
+        fontSize: 11,
+      }}
+    >
+      {icon}
+      <div style={{ marginTop: 4 }}>
+        {label}
+      </div>
+    </div>
+  )
+}

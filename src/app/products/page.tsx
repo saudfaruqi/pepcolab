@@ -1,20 +1,24 @@
+
+//products/page.tsx
+
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductsSection from '@/components/ProductsSection'
 
 export const metadata: Metadata = {
-  title: 'All Peptides — PepcoLab',
+  title: 'Research Peptides — PepcoLab',
   description:
-    '40+ research-grade peptides, independently tested and cold-chain dispatched across the UK. Every batch has a public COA.',
+    'Research-grade peptides independently verified and publicly certified.',
 }
 
 const IMGS = {
-  hero: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=1400&q=80&auto=format&fit=crop',
-  lab1: 'https://images.unsplash.com/photo-1581093450021-4a7360e9a6b5?w=600&q=80&auto=format&fit=crop',
-  lab2: 'https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=600&q=80&auto=format&fit=crop',
-  coldchain: 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80&auto=format&fit=crop',
-  scientist: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80&auto=format&fit=crop',
+  hero:
+    'https://images.unsplash.com/photo-1532187643603-ba119ca4109e?w=2000&q=80&auto=format&fit=crop',
+  lab:
+    'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1400&q=80&auto=format&fit=crop',
+  scientist:
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80&auto=format&fit=crop',
 }
 
 export default function ProductsPage() {
@@ -22,123 +26,160 @@ export default function ProductsPage() {
     <>
       <Nav />
 
-      <main style={{ background: '#f5f5f3', minHeight: '100vh' }}>
+      <main
+        style={{
+          background: '#fff',
+          overflow: 'hidden',
+        }}
+      >
+        {/* ====================================================== */}
+        {/* HERO */}
+        {/* ====================================================== */}
 
-        {/* ── Hero header ── */}
-        <div
+        <section
           style={{
             position: 'relative',
-            borderBottom: '1px solid rgba(13,13,13,.1)',
-            overflow: 'hidden',
+            minHeight: '88vh',
+            background: '#090909',
+            display: 'flex',
+            alignItems: 'center',
+            borderBottom: '1px solid rgba(255,255,255,.06)',
           }}
         >
-          {/* Background lab photo */}
+          <img
+            src={IMGS.hero}
+            alt=""
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: 0.18,
+            }}
+          />
+
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              backgroundImage: `url(${IMGS.hero})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center 30%',
-              opacity: 0.1,
+              background:
+                'linear-gradient(to bottom, rgba(0,0,0,.4), rgba(0,0,0,.8))',
             }}
           />
+
           <div
             style={{
               position: 'relative',
-              maxWidth: 1400,
+              zIndex: 2,
+              maxWidth: 1500,
               margin: '0 auto',
-              padding: '42px 24px 56px',
+              width: '100%',
+              padding: 'clamp(20px,2vw,70px)',
             }}
           >
-            <p
+            <div
               style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '.16em',
-                textTransform: 'uppercase',
-                color: 'rgba(13,13,13,.4)',
-                marginBottom: 12,
+                maxWidth: 760,
               }}
             >
-              Catalogue
-            </p>
-            <h1
-              style={{
-                fontFamily: 'Georgia, serif',
-                fontSize: 'clamp(36px,5vw,72px)',
-                fontWeight: 700,
-                letterSpacing: '-.05em',
-                lineHeight: 0.96,
-                margin: '0 0 16px',
-                color: '#0d0d0d',
-              }}
-            >
-              All Peptides
-            </h1>
-            <p
-              style={{
-                fontSize: 15,
-                color: 'rgba(13,13,13,.55)',
-                lineHeight: 1.75,
-                maxWidth: 520,
-                margin: 0,
-              }}
-            >
-              40+ research-grade compounds, independently verified by Eurofins
-              UK, cold-chain dispatched. Every batch certificate is publicly
-              searchable.
-            </p>
+              <div
+                style={{
+                  fontSize: 11,
+                  letterSpacing: '.24em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,.4)',
+                  fontWeight: 700,
+                  marginBottom: 28,
+                }}
+              >
+                Research Catalogue
+              </div>
 
-            {/* Stats row */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 36 }}>
-              {[
-                ['99%+', 'Average purity'],
-                ['Eurofins UK', 'Independent lab'],
-                ['Same-day', 'Cold-chain dispatch'],
-                ['40+', 'Active compounds'],
-              ].map(([val, label]) => (
-                <div key={label}>
-                  <div
-                    style={{
-                      fontFamily: 'Georgia, serif',
-                      fontSize: 22,
-                      fontWeight: 700,
-                      letterSpacing: '-.03em',
-                      color: '#0d0d0d',
-                    }}
-                  >
-                    {val}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 500,
-                      letterSpacing: '.06em',
-                      textTransform: 'uppercase',
-                      color: 'rgba(13,13,13,.4)',
-                      marginTop: 2,
-                    }}
-                  >
-                    {label}
-                  </div>
-                </div>
-              ))}
+              <h1
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: 'clamp(56px,9vw,120px)',
+                  lineHeight: 0.9,
+                  letterSpacing: '-.07em',
+                  color: '#fff',
+                  margin: '0 0 24px',
+                }}
+              >
+                Research
+                <br />
+                Peptides
+              </h1>
+
+              <p
+                style={{
+                  fontSize: 18,
+                  lineHeight: 1.9,
+                  color: 'rgba(255,255,255,.55)',
+                  maxWidth: 620,
+                  marginBottom: 40,
+                }}
+              >
+                Independently verified peptide compounds manufactured for
+                laboratory and scientific research. Every batch includes public
+                purity documentation and certificate verification.
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <a
+                  href="#catalogue"
+                  style={{
+                    background: '#fff',
+                    color: '#000',
+                    textDecoration: 'none',
+                    padding: '16px 20px',
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: '.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Browse Catalogue
+                </a>
+
+                <a
+                  href="/certificates"
+                  style={{
+                    border: '1px solid rgba(255,255,255,.12)',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    padding: '16px 30px',
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: '.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  View Certificates
+                </a>
+              </div>
             </div>
+
           </div>
-        </div>
+        </section>
 
-        {/* ── Products grid with filters ── */}
-        <div style={{ paddingTop: 40 }}>
-          <ProductsSection showAll />
-        </div>
+        {/* ====================================================== */}
+        {/* TRUST STRIP */}
+        {/* ====================================================== */}
 
-        {/* ── Bottom trust section ── */}
-        <div
+        <section
           style={{
-            background: '#0d0d0d',
-            padding: '72px 64px',
-            borderTop: '1px solid rgba(255,255,255,.06)',
+            background: '#fff',
+            borderBottom: '1px solid rgba(13,13,13,.08)',
+            padding: '36px 14px',
           }}
         >
           <div
@@ -146,128 +187,174 @@ export default function ProductsPage() {
               maxWidth: 1400,
               margin: '0 auto',
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 64,
+              gridTemplateColumns:
+                'repeat(auto-fit,minmax(260px,1fr))',
+              gap: 20,
+            }}
+          >
+            {[
+              {
+                title: 'Independent Verification',
+                desc: 'Purity and identity testing documented for every lot.',
+              },
+              {
+                title: 'Cold-Chain Dispatch',
+                desc: 'Temperature-conscious packaging and rapid fulfilment.',
+              },
+              {
+                title: 'Public COA Library',
+                desc: 'Batch certificates searchable by product and lot.',
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                style={{
+                  padding: '28px 14px',
+                  background: '#fafafa',
+                  border: '1px solid rgba(13,13,13,.06)',
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 700,
+                    marginBottom: 10,
+                    fontSize: 15,
+                  }}
+                >
+                  {item.title}
+                </div>
+
+                <div
+                  style={{
+                    color: 'rgba(13,13,13,.55)',
+                    lineHeight: 1.8,
+                    fontSize: 13,
+                  }}
+                >
+                  {item.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ====================================================== */}
+        {/* PRODUCTS */}
+        {/* ====================================================== */}
+
+        <section
+          id="catalogue"
+          style={{
+            paddingTop: 50,
+            paddingBottom: 50,
+            background: '#f7f7f5',
+          }}
+        >
+          <ProductsSection showAll />
+        </section>
+
+        {/* ====================================================== */}
+        {/* RESEARCH STANDARDS */}
+        {/* ====================================================== */}
+
+        <section
+          style={{
+            background: '#0b0b0b',
+            color: '#fff',
+            padding: 'clamp(20px,5vw,70px) 24px',
+          }}
+        >
+          <div
+            className='flex lg:flex-row flex-col'
+            style={{
+              maxWidth: 1400,
+              margin: '0 auto',
+              gap: 40,
               alignItems: 'center',
             }}
           >
             <div>
               <div
                 style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '.16em',
+                  fontSize: 11,
+                  letterSpacing: '.22em',
                   textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,.28)',
-                  marginBottom: 16,
+                  color: 'rgba(255,255,255,.35)',
+                  marginBottom: 20,
                 }}
               >
-                Our Verification Process
+                Research Standards
               </div>
+
               <h2
                 style={{
                   fontFamily: 'Georgia, serif',
-                  fontSize: 'clamp(26px,3vw,42px)',
-                  fontWeight: 700,
-                  letterSpacing: '-.04em',
-                  lineHeight: 1.05,
-                  color: '#fff',
-                  margin: '0 0 16px',
+                  fontSize: 'clamp(42px,5vw,72px)',
+                  lineHeight: .95,
+                  letterSpacing: '-.06em',
+                  margin: '0 0 24px',
                 }}
               >
-                Every batch.{' '}
-                <em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,.35)' }}>
-                  No exceptions.
-                </em>
+                Built around
+                <br />
+                transparency.
               </h2>
+
               <p
                 style={{
-                  fontSize: 13.5,
-                  color: 'rgba(255,255,255,.45)',
-                  lineHeight: 1.75,
-                  maxWidth: 360,
-                  margin: '0 0 28px',
+                  maxWidth: 520,
+                  lineHeight: 1.9,
+                  color: 'rgba(255,255,255,.55)',
+                  fontSize: 15,
+                  marginBottom: 40,
                 }}
               >
-                Before any compound ships, it passes independent HPLC and
-                mass-spectrometry analysis at Eurofins UK. The certificate is
-                published immediately and searchable by lot number.
+                Every product listing is connected to batch documentation,
+                laboratory verification records and purity analysis data.
+                Researchers can independently verify every lot before purchase.
               </p>
+
               <a
                 href="/certificates"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
+                  padding: '15px 28px',
+                  borderRadius: 999,
                   background: '#fff',
-                  color: '#0d0d0d',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  letterSpacing: '.05em',
-                  padding: '13px 28px',
-                  border: '1.5px solid #fff',
+                  color: '#000',
                   textDecoration: 'none',
-                  borderRadius: 40,
-                  transition: 'opacity .15s',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  letterSpacing: '.08em',
+                  textTransform: 'uppercase',
                 }}
               >
-                View COA Library
+                Explore COA Library
               </a>
             </div>
 
-            {/* 2×2 photo grid */}
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 8,
+                position: 'relative',
+                height: 620,
+                overflow: 'hidden',
+                borderRadius: 28,
               }}
             >
-              {[IMGS.lab1, IMGS.lab2, IMGS.coldchain, IMGS.scientist].map(
-                (src, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      position: 'relative',
-                      height: 160,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <img
-                      src={src}
-                      alt=""
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        filter: 'brightness(.6) grayscale(20%)',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 10,
-                        left: 10,
-                        fontSize: 9,
-                        fontWeight: 700,
-                        letterSpacing: '.1em',
-                        textTransform: 'uppercase',
-                        color: 'rgba(255,255,255,.7)',
-                        background: 'rgba(0,0,0,.4)',
-                        padding: '3px 8px',
-                      }}
-                    >
-                      {
-                        ['Synthesis', 'HPLC Analysis', 'Cold Chain', 'Verification'][
-                          i
-                        ]
-                      }
-                    </div>
-                  </div>
-                )
-              )}
+              <img
+                src={IMGS.lab}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
             </div>
           </div>
-        </div>
+        </section>
+
       </main>
 
       <Footer />

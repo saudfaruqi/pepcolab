@@ -1,3 +1,5 @@
+// shopify.ts
+
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 
@@ -64,7 +66,7 @@ export interface ShopifyProductVariant {
   price: ShopifyMoneyV2
   compareAtPrice: ShopifyMoneyV2 | null
   availableForSale: boolean
-  quantityAvailable: number
+  quantityAvailable?: number // optional until unauthenticated_read_product_inventory scope is granted
 }
 
 export interface ShopifyImage {
@@ -247,12 +249,15 @@ export async function updateCartLine(
 
 export async function getCart(cartId: string): Promise<ShopifyCart | null> {
   try {
-    const data = await shopifyFetch<{ cart: ShopifyCart | null }>(/* GraphQL */ `
-      ${CART_FIELDS}
-      query getCart($cartId: ID!) {
-        cart(id: $cartId) { ...CartFields }
-      }
-    `, { cartId })
+    const data = await shopifyFetch<{ cart: ShopifyCart | null }>(
+      /* GraphQL */ `
+        ${CART_FIELDS}
+        query getCart($cartId: ID!) {
+          cart(id: $cartId) { ...CartFields }
+        }
+      `,
+      { cartId }
+    )
     return data.cart
   } catch {
     return null
@@ -275,38 +280,70 @@ export async function getCartCheckoutUrl(cartId: string): Promise<string> {
 
 // ─── Product queries ───────────────────────────────────────────────────────
 
-/** Normalise a Shopify product into the shape the UI expects */
 export function normaliseProduct(node: ShopifyProduct) {
   const variant = node.variants.edges[0]?.node
   const image = node.images.edges[0]?.node
+
   const meta = Object.fromEntries(
     (node.metafields ?? [])
       .filter(Boolean)
       .map((m) => [m!.key, m!.value])
   )
 
+  const tags = node.tags ?? []
+
   return {
     shopifyId: node.id,
+    id: node.id,
     handle: node.handle,
+    slug: node.handle,
     title: node.title,
+    name: node.title,
+    shortName: node.title,
+
+    mg: variant?.title ?? '5mg',
     description: node.description,
     descriptionHtml: node.descriptionHtml,
-    tags: node.tags,
+    tags,
+
+    category: tags[0] ?? '',
+    categorySlug: tags[0]
+      ? tags[0].toLowerCase().replace(/\s+/g, '-')
+      : '',
+    badge: tags.includes('popular') ? 'popular' : undefined,
+
     variantId: variant?.id ?? '',
     price: parseFloat(variant?.price.amount ?? '0'),
     oldPrice: variant?.compareAtPrice
       ? parseFloat(variant.compareAtPrice.amount)
       : undefined,
+
     inStock: variant?.availableForSale ?? false,
+    // NOTE: stockCount will be 0 until unauthenticated_read_product_inventory
+    // scope is enabled in Shopify Admin → Apps → Storefront API scopes.
+    // Once enabled, add `quantityAvailable` back to the GraphQL queries below
+    // and change this line to: variant?.quantityAvailable ?? 0
     stockCount: variant?.quantityAvailable ?? 0,
+
     image: image?.url,
     imageAlt: image?.altText ?? node.title,
-    // PepcoLab-specific metafields
+
     purity: meta['purity'] ? parseFloat(meta['purity']) : undefined,
     lot: meta['lot'] ?? undefined,
     testDate: meta['test_date'] ?? undefined,
     sequence: meta['sequence'] ?? undefined,
     longDesc: meta['long_desc'] ?? undefined,
+
+    color: {
+      bg: '#f0f4ff',
+      accent: '#1A56DB',
+      pill: '#e0e7ff',
+      pillText: '#3b82f6',
+      purityBar: '#8b5cf6',
+      btn: '#1A56DB',
+      vialFrom: '#3b82f6',
+      vialTo: '#8b5cf6',
+    },
   }
 }
 
@@ -327,7 +364,6 @@ export async function getProducts(first = 40) {
                     price { amount currencyCode }
                     compareAtPrice { amount currencyCode }
                     availableForSale
-                    quantityAvailable
                   }
                 }
               }
@@ -347,7 +383,7 @@ export async function getProducts(first = 40) {
       }
     `,
     { first },
-    { revalidate: 60 }   // ISR: revalidate every 60s
+    { revalidate: 60 }
   )
 
   return data.products.edges.map(({ node }) => normaliseProduct(node))
@@ -366,7 +402,6 @@ export async function getProductByHandle(handle: string) {
                 price { amount currencyCode }
                 compareAtPrice { amount currencyCode }
                 availableForSale
-                quantityAvailable
               }
             }
           }

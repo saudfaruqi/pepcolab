@@ -1,94 +1,332 @@
 'use client'
-import { useState } from 'react'
-import AnnouncementBar from '@/components/AnnouncementBar'
+
+import { useMemo, useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import { Calculator, Search, Bot, GitCompare } from 'lucide-react'
+import {getProducts} from '@/lib/shopify'
+import {
+  Calculator,
+  Search,
+  CheckCircle2,
+  FlaskConical,
+  Beaker,
+  ShieldCheck,
+} from 'lucide-react'
 
-function ReconstitutionCalc() {
-  const [peptide, setPeptide] = useState('')
-  const [targetConc, setTargetConc] = useState('')
-  const [volume, setVolume] = useState<number | null>(null)
+function ToolCard({
+  title,
+  description,
+  icon,
+  children,
+}: {
+  title: string
+  description: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-3xl border border-zinc-200 bg-white p-6 lg:p-8">
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+          {icon}
+        </div>
 
-  const calculate = () => {
-    const mg = parseFloat(peptide)
-    const conc = parseFloat(targetConc)
-    if (mg && conc) {
-      setVolume((mg * 1000) / conc)
-    }
-  }
+        <div>
+          <h3 className="text-lg font-semibold text-zinc-900">{title}</h3>
+          <p className="text-sm text-zinc-500">{description}</p>
+        </div>
+      </div>
+
+      {children}
+    </div>
+  )
+}
+
+function ReconstitutionCalculator() {
+  const [mg, setMg] = useState('')
+  const [target, setTarget] = useState('1000')
+
+  const result = useMemo(() => {
+    const peptideMg = Number(mg)
+    const concentration = Number(target)
+
+    if (!peptideMg || !concentration) return null
+
+    return (peptideMg * 1000) / concentration
+  }, [mg, target])
 
   return (
-    <div className="bg-white border border-border rounded-[16px] p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-50 rounded-[10px] flex items-center justify-center">
-          <Calculator size={19} className="text-blue-600" />
-        </div>
+    <ToolCard
+      title="Reconstitution Calculator"
+      description="Calculate bacteriostatic water volume."
+      icon={<FlaskConical size={20} />}
+    >
+      <div className="space-y-4">
         <div>
-          <div className="text-[15px] font-semibold text-ink">Reconstitution Calculator</div>
-          <div className="text-[12px] text-steel-light">Calculate solvent volume for any concentration</div>
+          <label className="mb-2 block text-sm font-medium">
+            Peptide Amount (mg)
+          </label>
+          <input
+            type="number"
+            value={mg}
+            onChange={(e) => setMg(e.target.value)}
+            placeholder="5"
+            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
+          />
         </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Target Concentration (mcg/mL)
+          </label>
+          <input
+            type="number"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
+          />
+        </div>
+
+        {result && (
+          <div className="rounded-2xl bg-zinc-50 p-5 text-center">
+            <div className="text-sm text-zinc-500 mb-1">
+              Add bacteriostatic water
+            </div>
+
+            <div className="text-4xl font-bold tracking-tight">
+              {result.toFixed(2)} mL
+            </div>
+
+            <div className="text-sm text-zinc-500 mt-2">
+              {(result * 1000).toFixed(0)} µL
+            </div>
+          </div>
+        )}
       </div>
-      <div className="grid sm:grid-cols-2 gap-4 mb-5">
-        <div>
-          <label className="block text-[12px] font-medium text-ink mb-1.5">Peptide amount (mg)</label>
-          <input type="number" value={peptide} onChange={e => setPeptide(e.target.value)} placeholder="e.g. 5" className="w-full text-[13px] px-3.5 py-2.5 border border-border rounded-[8px] bg-canvas-off focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-        </div>
-        <div>
-          <label className="block text-[12px] font-medium text-ink mb-1.5">Target concentration (mcg/mL)</label>
-          <input type="number" value={targetConc} onChange={e => setTargetConc(e.target.value)} placeholder="e.g. 1000" className="w-full text-[13px] px-3.5 py-2.5 border border-border rounded-[8px] bg-canvas-off focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-        </div>
+    </ToolCard>
+  )
+}
+
+function DoseCalculator() {
+  const [concentration, setConcentration] = useState('')
+  const [dose, setDose] = useState('')
+
+  const units = useMemo(() => {
+    const conc = Number(concentration)
+    const targetDose = Number(dose)
+
+    if (!conc || !targetDose) return null
+
+    return targetDose / conc
+  }, [concentration, dose])
+
+  return (
+    <ToolCard
+      title="Dose Calculator"
+      description="Convert desired dose into injection volume."
+      icon={<Beaker size={20} />}
+    >
+      <div className="space-y-4">
+        <input
+          type="number"
+          value={concentration}
+          onChange={(e) => setConcentration(e.target.value)}
+          placeholder="Concentration (mcg/mL)"
+          className="w-full rounded-xl border px-4 py-3"
+        />
+
+        <input
+          type="number"
+          value={dose}
+          onChange={(e) => setDose(e.target.value)}
+          placeholder="Desired dose (mcg)"
+          className="w-full rounded-xl border px-4 py-3"
+        />
+
+        {units && (
+          <div className="rounded-2xl bg-zinc-50 p-5 text-center">
+            <div className="text-sm text-zinc-500">
+              Required Volume
+            </div>
+
+            <div className="text-4xl font-bold">
+              {units.toFixed(2)} mL
+            </div>
+          </div>
+        )}
       </div>
-      <button onClick={calculate} className="w-full bg-blue-600 text-white text-[13px] font-medium py-2.5 rounded-[8px] hover:bg-blue-700 transition-colors btn-press mb-5">
-        Calculate
-      </button>
-      {volume !== null && (
-        <div className="bg-blue-50 border border-blue-100 rounded-[10px] p-4 text-center">
-          <div className="text-[13px] text-blue-600 font-medium mb-1">Add this volume of bacteriostatic water:</div>
-          <div className="text-[36px] font-semibold tracking-tight text-blue-700">{volume.toFixed(2)} <span className="text-[18px]">mL</span></div>
-          <div className="text-[12px] text-blue-500 mt-1">= {(volume * 1000).toFixed(0)} µL</div>
+    </ToolCard>
+  )
+}
+
+function BatchVerifier() {
+  const [query, setQuery] = useState('')
+  const [products, setProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    getProducts().then(setProducts)
+  }, [])
+
+  const result = useMemo(() => {
+    if (!query) return null
+
+    return products.find((p) =>
+      p.lot?.toLowerCase().includes(query.toLowerCase())
+    )
+  }, [query, products])
+
+  return (
+    <ToolCard
+      title="Batch Verifier"
+      description="Search any published lot number."
+      icon={<ShieldCheck size={20} />}
+    >
+      <div className="space-y-4">
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+          />
+
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="PEP-2412-07"
+            className="w-full rounded-xl border pl-11 pr-4 py-3 outline-none focus:border-black"
+          />
         </div>
-      )}
-    </div>
+
+        {query && (
+          <>
+            {result ? (
+              <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
+                <div className="flex items-center gap-2 text-green-700 font-medium mb-3">
+                  <CheckCircle2 size={18} />
+                  Batch Verified
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <strong>Product:</strong> {result.name}
+                  </div>
+
+                  <div>
+                    <strong>Lot:</strong> {result.lot}
+                  </div>
+
+                  <div>
+                    <strong>Purity:</strong> {result.purity}%
+                  </div>
+
+                  <div>
+                    <strong>Test Date:</strong> {result.testDate}
+                  </div>
+
+                  <div>
+                    <strong>Status:</strong> Passed
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-600">
+                No batch found.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </ToolCard>
+  )
+}
+
+function PurityCalculator() {
+  const [actual, setActual] = useState('')
+  const [expected, setExpected] = useState('')
+
+  const purity = useMemo(() => {
+    const a = Number(actual)
+    const e = Number(expected)
+
+    if (!a || !e) return null
+
+    return (a / e) * 100
+  }, [actual, expected])
+
+  return (
+    <ToolCard
+      title="Purity Calculator"
+      description="Calculate purity percentage."
+      icon={<Calculator size={20} />}
+    >
+      <div className="space-y-4">
+        <input
+          type="number"
+          value={actual}
+          onChange={(e) => setActual(e.target.value)}
+          placeholder="Measured amount"
+          className="w-full rounded-xl border px-4 py-3"
+        />
+
+        <input
+          type="number"
+          value={expected}
+          onChange={(e) => setExpected(e.target.value)}
+          placeholder="Expected amount"
+          className="w-full rounded-xl border px-4 py-3"
+        />
+
+        {purity && (
+          <div className="rounded-2xl bg-zinc-50 p-5 text-center">
+            <div className="text-sm text-zinc-500">Calculated Purity</div>
+
+            <div className="text-4xl font-bold">
+              {purity.toFixed(2)}%
+            </div>
+          </div>
+        )}
+      </div>
+    </ToolCard>
   )
 }
 
 export default function ToolsPage() {
   return (
     <>
-      
       <Nav />
-      <main>
-        <div className="border-b border-border bg-canvas-warm py-12 px-6 lg:px-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-[11px] font-medium tracking-[1.2px] uppercase text-steel-light mb-2">Research tools</div>
-            <h1 className="font-serif text-[44px] tracking-[-1.5px] text-ink">Tools & Calculators</h1>
-            <p className="text-[15px] text-steel font-light mt-2 max-w-xl">Interactive research tools built for lab professionals.</p>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
-          <div className="grid lg:grid-cols-2 gap-6">
-            <ReconstitutionCalc />
-            {/* Batch verifier */}
-            <div className="bg-white border border-border rounded-[16px] p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-green-50 rounded-[10px] flex items-center justify-center">
-                  <Search size={19} className="text-green-600" />
-                </div>
-                <div>
-                  <div className="text-[15px] font-semibold text-ink">Batch Verifier</div>
-                  <div className="text-[12px] text-steel-light">Look up any lot number instantly</div>
-                </div>
-              </div>
-              <label className="block text-[12px] font-medium text-ink mb-1.5">Lot number</label>
-              <input type="text" placeholder="e.g. PEP-2412-07" className="w-full text-[13px] px-3.5 py-2.5 border border-border rounded-[8px] bg-canvas-off mb-4 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100" />
-              <button className="w-full bg-green-600 text-white text-[13px] font-medium py-2.5 rounded-[8px] hover:bg-green-700 transition-colors btn-press">
-                Verify Batch
-              </button>
+
+      <main className="min-h-screen bg-zinc-50">
+        {/* Hero */}
+        <section className="border-b bg-white">
+          <div className="mx-auto max-w-7xl px-6 py-20 lg:px-12">
+            <div className="max-w-3xl">
+              <span className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
+                Research Utilities
+              </span>
+
+              <h1 className="mt-4 text-5xl lg:text-7xl font-serif tracking-tight text-zinc-900">
+                Lab Tools
+              </h1>
+
+              <p className="mt-6 text-lg text-zinc-600 leading-relaxed">
+                Practical calculators and verification tools for peptide
+                researchers. Fast, accurate, and designed for day-to-day
+                laboratory workflows.
+              </p>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Tools */}
+        <section className="mx-auto max-w-7xl px-6 py-12 lg:px-12">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ReconstitutionCalculator />
+            <DoseCalculator />
+            <BatchVerifier />
+            <PurityCalculator />
+          </div>
+        </section>
       </main>
+
       <Footer />
     </>
   )

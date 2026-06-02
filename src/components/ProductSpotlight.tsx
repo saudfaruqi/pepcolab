@@ -1,336 +1,503 @@
 'use client'
-import Link from 'next/link'
-import { ArrowRight, ShieldCheck, FileText, Zap } from 'lucide-react'
-import Vial from '@/components/Vial'
-import { PRODUCTS } from '@/app/data'
 
-const IMG = 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=80&auto=format&fit=crop'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import {
+  ArrowRight,
+  ShieldCheck,
+  FlaskConical,
+  FileCheck,
+  Sparkles,
+} from 'lucide-react'
+
+import { getProducts } from '@/lib/shopify'
+import Vial from '@/components/Vial'
 
 export default function ProductSpotlight() {
-  // Spotlight the first "new" product, or fallback to PRODUCTS[0]
-  const featured =
-    PRODUCTS.find(p => p.badge === 'new') ?? PRODUCTS[0]
+  const [featured, setFeatured] = useState<any>(null)
+  const [purity, setPurity] = useState(99)
+
+  useEffect(() => {
+    getProducts().then((products) => {
+      const prod = products[0]
+      setFeatured(prod)
+      setPurity(prod?.purity ?? 99)
+    })
+  }, [])
+
+  if (!featured) return null
 
   return (
     <section
       style={{
-        borderBottom: '1px solid rgba(13,13,13,.1)',
-        background: '#f5f5f3',
-        padding: '0 0 0',
+        background: '#f7f7f5',
+        borderBottom: '1px solid rgba(0,0,0,.08)',
         overflow: 'hidden',
       }}
     >
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 64px' }}>
+      <div
+        style={{
+          maxWidth: 1440,
+          margin: '0 auto',
+          padding:
+            'clamp(60px,8vw,120px) clamp(20px,4vw,64px)',
+        }}
+      >
         {/* Eyebrow */}
+
         <div
           style={{
-            padding: '48px 0 24px',
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: 700,
-            letterSpacing: '.16em',
+            letterSpacing: '.18em',
             textTransform: 'uppercase',
-            color: 'rgba(13,13,13,.4)',
+            color: featured.color.accent,
+            marginBottom: 28,
           }}
         >
-          Featured this month
+          Featured Research Compound
         </div>
 
-        {/* Spotlight card */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            background: '#0d0d0d',
-            marginBottom: 48,
-            overflow: 'hidden',
-            minHeight: 460,
-          }}
-        >
-          {/* ── Left: text ── */}
-          <div
-            style={{
-              padding: '56px 56px 56px 56px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '.1em',
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,.45)',
-                background: 'rgba(255,255,255,.08)',
-                padding: '5px 14px',
-                borderRadius: 40,
-                width: 'fit-content',
-                marginBottom: 24,
-              }}
-            >
-              Most researched
-            </span>
+        {/* Main Layout */}
 
-            <h3
+        <div className="spotlight-grid">
+          {/* LEFT */}
+
+          <div>
+            {featured.badge && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 16px',
+                  borderRadius: 999,
+                  background: featured.color.bg,
+                  color: featured.color.accent,
+                  fontWeight: 700,
+                  fontSize: 11,
+                  letterSpacing: '.08em',
+                  textTransform: 'uppercase',
+                  marginBottom: 24,
+                }}
+              >
+                <Sparkles size={12} />
+                {featured.badge}
+              </div>
+            )}
+
+            <h2
               style={{
-                fontFamily: 'Georgia, serif',
-                fontSize: 'clamp(36px,4vw,56px)',
+                margin: 0,
+                fontSize: 'clamp(44px,6vw,88px)',
+                lineHeight: '.95',
+                letterSpacing: '-.06em',
                 fontWeight: 700,
-                lineHeight: 1.0,
-                letterSpacing: '-.05em',
-                color: '#fff',
-                margin: '0 0 16px',
+                color: '#0d0d0d',
               }}
             >
-              {featured.name}
-              <br />
-              <span style={{ color: 'rgba(255,255,255,.35)' }}>{featured.mg}</span>
-            </h3>
+              {featured.shortName}
+            </h2>
+
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 20,
+                color: 'rgba(13,13,13,.45)',
+                fontWeight: 500,
+              }}
+            >
+              {featured.mg}
+            </div>
 
             <p
               style={{
-                fontSize: 14,
-                color: 'rgba(255,255,255,.5)',
-                lineHeight: 1.8,
-                maxWidth: 360,
-                margin: '0 0 28px',
+                marginTop: 28,
+                maxWidth: 600,
+                fontSize: 16,
+                lineHeight: 1.9,
+                color: 'rgba(13,13,13,.68)',
               }}
             >
-              {featured.longDesc ?? featured.description} Independently tested
-              to {featured.purity ?? 99}% purity. HPLC and mass-spec verified.
-              Lot {featured.lot ?? 'N/A'}.
+              {featured.longDesc ??
+                featured.description}
             </p>
 
-            {/* Data pills */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
-              {[
-                { Icon: ShieldCheck, label: `${featured.purity ?? 99}% purity` },
-                { Icon: FileText,    label: 'COA published' },
-                {
-                  Icon: Zap,
-                  label: featured.inStock
-                    ? `In stock · ${featured.stockCount ?? '—'} units`
-                    : 'Out of stock',
-                },
-              ].map(({ Icon, label }) => (
-                <span
-                  key={label}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 12,
-                    color: '#fff',
-                    background: 'rgba(255,255,255,.1)',
-                    padding: '7px 14px',
-                    borderRadius: 40,
-                  }}
-                >
-                  <Icon size={11} style={{ opacity: 0.7 }} />
-                  {label}
-                </span>
-              ))}
+            {/* Scientific data */}
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(2,minmax(0,1fr))',
+                gap: 14,
+                marginTop: 34,
+                maxWidth: 620,
+              }}
+            >
+              <MetricCard
+                label="Purity"
+                value={`${purity}%`}
+              />
+
+              <MetricCard
+                label="Batch"
+                value={featured.lot ?? 'N/A'}
+              />
+
+              <MetricCard
+                label="Category"
+                value={featured.category}
+              />
+
+              <MetricCard
+                label="Tested"
+                value={featured.testDate}
+              />
             </div>
 
-            {/* Price + CTA */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            {/* Trust Row */}
+
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                marginTop: 32,
+              }}
+            >
+              <TrustPill
+                icon={<ShieldCheck size={14} />}
+                text="HPLC Verified"
+              />
+
+              <TrustPill
+                icon={<FileCheck size={14} />}
+                text="COA Available"
+              />
+
+              <TrustPill
+                icon={<FlaskConical size={14} />}
+                text="Research Grade"
+              />
+            </div>
+
+            {/* CTA */}
+
+            <div
+              style={{
+                marginTop: 42,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 28,
+                flexWrap: 'wrap',
+              }}
+            >
               <div>
                 {featured.oldPrice && (
                   <div
                     style={{
-                      fontSize: 13,
-                      textDecoration: 'line-through',
-                      color: 'rgba(255,255,255,.25)',
-                      marginBottom: 2,
+                      fontSize: 15,
+                      color:
+                        'rgba(13,13,13,.35)',
+                      textDecoration:
+                        'line-through',
                     }}
                   >
-                    £{featured.oldPrice.toFixed(2)}
+                    £
+                    {featured.oldPrice.toFixed(
+                      2
+                    )}
                   </div>
                 )}
+
                 <div
                   style={{
-                    fontFamily: 'Georgia, serif',
-                    fontSize: 38,
+                    fontSize: 52,
                     fontWeight: 700,
-                    letterSpacing: '-.04em',
-                    color: '#fff',
                     lineHeight: 1,
+                    letterSpacing:
+                      '-.05em',
+                    color: '#0d0d0d',
                   }}
                 >
-                  £{featured.price.toFixed(2)}
-                </div>
-                <div
-                  style={{ fontSize: 11, color: 'rgba(255,255,255,.3)', marginTop: 4 }}
-                >
-                  + free dispatch over £75
+                  £
+                  {featured.price.toFixed(
+                    2
+                  )}
                 </div>
               </div>
+
               <Link
                 href={`/products/${featured.slug}`}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 8,
-                  background: '#fff',
-                  color: '#0d0d0d',
-                  fontSize: 13,
+                  gap: 10,
+                  padding:
+                    '16px 28px',
+                  borderRadius: 999,
+                  textDecoration:
+                    'none',
+                  background:
+                    featured.color.accent,
+                  color: '#fff',
                   fontWeight: 700,
-                  letterSpacing: '.04em',
-                  padding: '14px 28px',
-                  textDecoration: 'none',
-                  borderRadius: 40,
-                  flexShrink: 0,
-                  transition: 'opacity .15s',
                 }}
               >
-                View product <ArrowRight size={14} />
+                View Compound
+                <ArrowRight size={16} />
               </Link>
             </div>
           </div>
 
-          {/* ── Right: visual ── */}
+          {/* RIGHT */}
+
           <div
             style={{
               position: 'relative',
+              minHeight: 650,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              overflow: 'hidden',
-              minHeight: 400,
             }}
           >
-            {/* Lab photo backdrop */}
+            {/* background glow */}
+
             <div
               style={{
                 position: 'absolute',
-                inset: 0,
-                backgroundImage: `url(${IMG})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                opacity: 0.2,
-              }}
-            />
-            {/* Gradient overlay */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: `linear-gradient(135deg, ${featured.color.vialTo}44, transparent 60%)`,
-              }}
-            />
-            {/* Glow orb */}
-            <div
-              style={{
-                position: 'absolute',
-                width: 280,
-                height: 280,
+                width: 500,
+                height: 500,
                 borderRadius: '50%',
-                background: `radial-gradient(circle, ${featured.color.vialTo}33 0%, transparent 70%)`,
-                filter: 'blur(40px)',
+                background: `radial-gradient(circle,
+                  ${featured.color.vialTo}55 0%,
+                  transparent 70%)`,
+                filter: 'blur(70px)',
               }}
             />
 
-            {/* Vials */}
-            <div
-              style={{
-                position: 'relative',
-                zIndex: 1,
-                display: 'flex',
-                alignItems: 'flex-end',
-                gap: 24,
-              }}
-            >
-              <div style={{ opacity: 0.6, transform: 'translateY(-20px)' }}>
-                <Vial
-                  fromColor={featured.color.vialFrom}
-                  toColor={featured.color.vialTo}
-                  mg={featured.mg}
-                  size="lg"
-                />
-              </div>
-              <Vial
-                fromColor={featured.color.vialFrom}
-                toColor={featured.color.vialTo}
-                mg={featured.mg}
-                size="xl"
-              />
-              <div style={{ opacity: 0.6, transform: 'translateY(10px)' }}>
-                <Vial
-                  fromColor={featured.color.vialFrom}
-                  toColor={featured.color.vialTo}
-                  mg={featured.mg}
-                  size="lg"
-                />
-              </div>
-            </div>
+            {/* data card */}
 
-            {/* Floating purity card */}
             <div
               style={{
                 position: 'absolute',
-                top: 24,
-                right: 24,
-                background: 'rgba(255,255,255,.1)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,.15)',
-                padding: '16px 20px',
+                top: 40,
+                right: 0,
+                width: 220,
+                background: '#fff',
+                border:
+                  '1px solid rgba(0,0,0,.08)',
+                borderRadius: 24,
+                padding: 24,
+                zIndex: 5,
+                boxShadow:
+                  '0 30px 80px rgba(0,0,0,.08)',
               }}
             >
               <div
                 style={{
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: 700,
-                  letterSpacing: '.14em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,.4)',
-                  marginBottom: 6,
+                  letterSpacing:
+                    '.12em',
+                  textTransform:
+                    'uppercase',
+                  color:
+                    'rgba(13,13,13,.4)',
                 }}
               >
                 Purity Analysis
               </div>
+
               <div
                 style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: 32,
+                  fontSize: 42,
                   fontWeight: 700,
-                  letterSpacing: '-.04em',
-                  color: '#fff',
+                  marginTop: 8,
                   lineHeight: 1,
                 }}
               >
-                {featured.purity ?? 99}%
+                {purity}%
               </div>
-              <div
-                style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', marginTop: 4 }}
-              >
-                HPLC verified · Lot {featured.lot ?? 'N/A'}
-              </div>
-              {/* Purity bar */}
+
               <div
                 style={{
-                  marginTop: 10,
-                  height: 2,
-                  background: 'rgba(255,255,255,.1)',
+                  marginTop: 16,
+                  height: 6,
+                  background:
+                    'rgba(0,0,0,.08)',
+                  borderRadius: 999,
                   overflow: 'hidden',
                 }}
               >
                 <div
                   style={{
+                    width: `${purity}%`,
                     height: '100%',
-                    width: `${featured.purity ?? 99}%`,
-                    background: '#fff',
-                    opacity: 0.7,
+                    background:
+                      featured.color.accent,
                   }}
+                />
+              </div>
+
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 12,
+                  color:
+                    'rgba(13,13,13,.5)',
+                }}
+              >
+                Lot {featured.lot}
+              </div>
+            </div>
+
+            {/* vials */}
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 30,
+                zIndex: 2,
+              }}
+            >
+              <div
+                style={{
+                  opacity: 0.55,
+                  transform:
+                    'translateY(25px)',
+                }}
+              >
+                <Vial
+                  size="lg"
+                  mg={featured.mg}
+                  fromColor={
+                    featured.color.vialFrom
+                  }
+                  toColor={
+                    featured.color.vialTo
+                  }
+                />
+              </div>
+
+              <Vial
+                size="xl"
+                mg={featured.mg}
+                fromColor={
+                  featured.color.vialFrom
+                }
+                toColor={
+                  featured.color.vialTo
+                }
+              />
+
+              <div
+                style={{
+                  opacity: 0.55,
+                  transform:
+                    'translateY(10px)',
+                }}
+              >
+                <Vial
+                  size="lg"
+                  mg={featured.mg}
+                  fromColor={
+                    featured.color.vialFrom
+                  }
+                  toColor={
+                    featured.color.vialTo
+                  }
                 />
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .spotlight-grid {
+          display: grid;
+          grid-template-columns: 1.1fr 0.9fr;
+          gap: 60px;
+          align-items: center;
+        }
+
+        @media (max-width: 980px) {
+          .spotlight-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </section>
+  )
+}
+
+function MetricCard({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div
+      style={{
+        background: '#fff',
+        border: '1px solid rgba(0,0,0,.08)',
+        padding: 18,
+        borderRadius: 20,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          textTransform: 'uppercase',
+          letterSpacing: '.12em',
+          color: 'rgba(13,13,13,.4)',
+          marginBottom: 8,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          fontSize: 15,
+          fontWeight: 700,
+          color: '#0d0d0d',
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function TrustPill({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode
+  text: string
+}) {
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '10px 16px',
+        borderRadius: 999,
+        background: '#fff',
+        border: '1px solid rgba(0,0,0,.08)',
+        fontSize: 13,
+        fontWeight: 600,
+      }}
+    >
+      {icon}
+      {text}
+    </div>
   )
 }

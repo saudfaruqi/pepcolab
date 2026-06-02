@@ -1,7 +1,9 @@
 'use client'
 import { ArrowRight } from 'lucide-react'
 import { useRef, useEffect } from 'react'
-import { BUNDLES, PRODUCTS } from '@/app/data'
+import React from 'react'
+import { BUNDLES } from '@/app/data'
+import { getProducts } from '@/lib/shopify'
 import type { Product } from '@/app/data'
 
 const BUNDLE_IMGS: Record<string, string> = {
@@ -39,6 +41,12 @@ function AnimatedCard({ children, delay }: { children: React.ReactNode; delay: n
 
 export default function BundlesSection() {
   const headerRef = useRef<HTMLDivElement>(null)
+  const [products, setProducts] = React.useState<Product[]>([])
+
+  useEffect(() => {
+    getProducts().then(setProducts)
+  }, [])
+
   useEffect(() => {
     const el = headerRef.current
     if (!el) return
@@ -75,7 +83,7 @@ export default function BundlesSection() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {BUNDLES.map((bundle, idx) => {
             const prods = bundle.products
-              .map(slug => PRODUCTS.find(p => p.slug === slug))
+              .map((slug: string) => products.find((p: Product) => p.slug === slug))
               .filter((p): p is Product => p !== undefined)
             return (
               <a
