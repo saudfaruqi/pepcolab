@@ -325,8 +325,13 @@ export function normaliseProduct(node: ShopifyProduct) {
     // and change this line to: variant?.quantityAvailable ?? 0
     stockCount: variant?.quantityAvailable ?? 0,
 
-    image: image?.url,
-    imageAlt: image?.altText ?? node.title,
+    images: node.images.edges.map(({ node }) => ({
+      url: node.url,
+      alt: node.altText ?? '',
+    })),
+
+    image: node.images.edges[0]?.node?.url,
+    imageAlt: node.images.edges[0]?.node?.altText ?? node.title,
 
     purity: meta['purity'] ? parseFloat(meta['purity']) : undefined,
     lot: meta['lot'] ?? undefined,
