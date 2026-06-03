@@ -180,9 +180,9 @@ export default function Nav() {
       hasDropdown: true,
       items: [
         {
-          label: 'All Peptides',
+          label: 'All Compounds',
           href: '/products',
-          sub: products.length > 0 ? `${products.length} compounds` : undefined,
+          sub: products.length > 0 ? `${products.length} compounds available` : 'Browse catalogue',
         },
         ...Object.entries(CATEGORY_LABELS).map(([slug, label]) => ({
           label,
@@ -191,37 +191,35 @@ export default function Nav() {
             ? `${categoryCounts[slug]} product${categoryCounts[slug] !== 1 ? 's' : ''}`
             : undefined,
         })),
-        { label: 'Bundles & Stacks', href: '/bundles', sub: undefined as string | undefined },
-      ],
+        { label: 'Bundles & Stacks', href: '/bundles', sub: 'Save 10% on combinations' },
+      ] as { label: string; href: string; sub?: string }[],
     },
     {
-      label: 'Lab Certificates',
-      href: '/certificates',
-      hasDropdown: false,
-      items: [] as { label: string; href: string; sub?: string }[],
-    },
-    {
-      label: 'Research Hub',
+      label: 'Research',
       href: '/research',
       hasDropdown: true,
       items: [
-        { label: 'Research Guides',     href: '/research',         sub: 'Protocols & references' },
-        { label: 'Guides',              href: '/guides',           sub: 'In-depth usage guides'  },
-        { label: 'Published Studies',   href: '/research#studies', sub: 'Peer-reviewed links'    },
-        { label: 'Reconstitution Calc', href: '/tools#calculator', sub: 'Instant dosage tool'    },
-      ],
+        { label: 'Research Hub',        href: '/research',   sub: 'Protocols & references'  },
+        { label: 'Guides',              href: '/guides',     sub: 'In-depth usage guides'   },
+        { label: 'Lab Certificates',    href: '/certificates', sub: 'Batch COAs & testing'  },
+        { label: 'Reconstitution Calc', href: '/tools',      sub: 'Dosage calculator tool'  },
+      ] as { label: string; href: string; sub?: string }[],
     },
     {
-      label: 'Tools',
-      href: '/tools',
+      label: 'About',
+      href: '/about',
       hasDropdown: false,
       items: [] as { label: string; href: string; sub?: string }[],
     },
     {
-      label: 'FAQ',
+      label: 'Support',
       href: '/faq',
-      hasDropdown: false,
-      items: [] as { label: string; href: string; sub?: string }[],
+      hasDropdown: true,
+      items: [
+        { label: 'FAQ',            href: '/faq',      sub: 'Common questions answered'  },
+        { label: 'Contact Us',     href: '/contact',  sub: 'Get in touch with our team' },
+        { label: 'Shipping Info',  href: '/shipping', sub: 'Delivery & tracking'        },
+      ] as { label: string; href: string; sub?: string }[],
     },
   ]
 
