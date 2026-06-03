@@ -152,8 +152,8 @@ export default function ProductsSection({
     <section
       style={{
         padding: showAll
-          ? '0 0 100px'
-          : '72px 0',
+          ? '0 0 50px'
+          : '32px 0',
       }}
     >
       <div
