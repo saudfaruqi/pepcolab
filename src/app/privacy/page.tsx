@@ -74,73 +74,260 @@ export default function PrivacyPolicyPage() {
         </section>
 
         {/* Policy */}
-        <section className="bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-24 space-y-14 text-neutral-600 leading-8">
-            <div>
-              <h2 className="font-serif text-4xl text-neutral-950 mb-4">
-                Information We Collect
-              </h2>
-              <p>
-                We may collect personal details such as your name, email
-                address, billing information, and order history when you
-                interact with our services.
-              </p>
-            </div>
+<section className="bg-white">
+  <div className="max-w-5xl mx-auto px-6 lg:px-12 py-20">
 
-            <div>
-              <h2 className="font-serif text-4xl text-neutral-950 mb-4">
-                How We Use Your Information
-              </h2>
-              <p>
-                Your information is used to process orders, provide customer
-                support, improve our services, and communicate important
-                updates.
-              </p>
-            </div>
+    <div className="mb-16">
+      <div className="inline-flex items-center rounded-full border border-neutral-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+        Last Updated • July 2026
+      </div>
+    </div>
 
-            <div>
-              <h2 className="font-serif text-4xl text-neutral-950 mb-4">
-                Cookies & Tracking
-              </h2>
-              <p>
-                We use cookies to improve user experience, analyze traffic,
-                and maintain website functionality. You may disable cookies in
-                your browser settings.
-              </p>
-            </div>
+    <div className="space-y-16">
 
-            <div>
-              <h2 className="font-serif text-4xl text-neutral-950 mb-4">
-                Data Protection
-              </h2>
-              <p>
-                We implement appropriate technical and organizational measures
-                to protect your data against unauthorized access or misuse.
-              </p>
-            </div>
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          1. Introduction
+        </h2>
 
-            <div>
-              <h2 className="font-serif text-4xl text-neutral-950 mb-4">
-                Third Parties
-              </h2>
-              <p>
-                We may use trusted third-party providers for payment processing,
-                shipping, and analytics. These providers are required to handle
-                data securely.
-              </p>
-            </div>
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            PepcoLab Ltd ("PepcoLab", "we", "us", or "our") is committed
+            to protecting and respecting your privacy. This Privacy Policy
+            explains how we collect, use, disclose, store, and protect
+            personal information obtained through our website, products,
+            services, and communications.
+          </p>
 
-            <div>
-              <h2 className="font-serif text-4xl text-neutral-950 mb-4">
-                Your Rights
-              </h2>
-              <p>
-                You may request access, correction, or deletion of your personal
-                data by contacting our support team.
-              </p>
-            </div>
-          </div>
-        </section>
+          <p>
+            We process personal information in accordance with applicable
+            data protection legislation, including the UK General Data
+            Protection Regulation ("UK GDPR"), the Data Protection Act
+            2018, and other applicable privacy laws.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          2. Information We Collect
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            We may collect the following categories of information:
+          </p>
+
+          <ul className="space-y-3 list-disc pl-6">
+            <li>Full name</li>
+            <li>Email address</li>
+            <li>Billing address</li>
+            <li>Shipping address</li>
+            <li>Telephone number</li>
+            <li>Order and transaction history</li>
+            <li>Account and authentication information</li>
+            <li>Website usage and analytics data</li>
+            <li>Customer service communications</li>
+            <li>Technical information including IP address, browser type, device information and log data</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          3. How We Use Personal Information
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>We use personal information for legitimate business purposes including:</p>
+
+          <ul className="space-y-3 list-disc pl-6">
+            <li>Processing and fulfilling orders</li>
+            <li>Providing customer support</li>
+            <li>Responding to enquiries</li>
+            <li>Preventing fraud and abuse</li>
+            <li>Improving website functionality and performance</li>
+            <li>Complying with legal and regulatory obligations</li>
+            <li>Maintaining security and platform integrity</li>
+            <li>Sending service-related communications</li>
+            <li>Sending marketing communications where legally permitted or consented to</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          4. Lawful Basis for Processing
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            Under UK GDPR and applicable data protection laws, we process
+            personal information on one or more of the following lawful
+            bases:
+          </p>
+
+          <ul className="space-y-3 list-disc pl-6">
+            <li>Performance of a contract</li>
+            <li>Compliance with legal obligations</li>
+            <li>Legitimate business interests</li>
+            <li>Consent where required</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          5. Cookies & Tracking Technologies
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            Our website may use cookies, analytics tools, and similar
+            technologies to improve functionality, analyse traffic,
+            remember preferences, and enhance user experience.
+          </p>
+
+          <p>
+            You may control cookies through your browser settings.
+            Disabling certain cookies may affect website functionality.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          6. Third-Party Service Providers
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            We may engage trusted third-party providers to support our
+            operations, including:
+          </p>
+
+          <ul className="space-y-3 list-disc pl-6">
+            <li>Payment processors</li>
+            <li>E-commerce infrastructure providers</li>
+            <li>Hosting providers</li>
+            <li>Analytics providers</li>
+            <li>Shipping and logistics partners</li>
+            <li>Email communication platforms</li>
+          </ul>
+
+          <p>
+            These providers are contractually required to process data in
+            accordance with applicable privacy and security requirements.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          7. International Data Transfers
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            Some service providers may process information outside the
+            United Kingdom or European Economic Area. Where such transfers
+            occur, appropriate safeguards will be implemented as required
+            by applicable data protection laws.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          8. Data Retention
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            Personal information is retained only for as long as
+            reasonably necessary to fulfil the purposes described in this
+            policy, comply with legal obligations, resolve disputes, and
+            enforce agreements.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          9. Security Measures
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            We maintain appropriate technical and organisational measures
+            designed to protect personal information against accidental
+            loss, unauthorised access, misuse, disclosure, alteration, or
+            destruction.
+          </p>
+
+          <p>
+            No internet transmission or storage system can be guaranteed
+            to be completely secure, and we cannot guarantee absolute
+            security.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          10. Your Privacy Rights
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            Subject to applicable law, you may have the right to:
+          </p>
+
+          <ul className="space-y-3 list-disc pl-6">
+            <li>Access personal information</li>
+            <li>Correct inaccurate information</li>
+            <li>Request deletion of information</li>
+            <li>Restrict processing</li>
+            <li>Object to processing</li>
+            <li>Request data portability</li>
+            <li>Withdraw consent where processing is based on consent</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          11. Research Use Notice
+        </h2>
+
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            Products offered by PepcoLab are supplied exclusively for
+            laboratory research purposes. Product purchases, enquiries,
+            and communications may be reviewed for compliance, fraud
+            prevention, safety, legal obligations, and operational
+            requirements.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          12. Contact Information
+        </h2>
+
+        <div className="rounded-3xl border border-neutral-200 p-8">
+          <p className="text-neutral-600 leading-8">
+            Questions regarding this Privacy Policy or personal data
+            requests may be submitted through our Contact page or by
+            contacting our support team.
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
 
         {/* CTA */}
         <section className="bg-neutral-950 text-white">

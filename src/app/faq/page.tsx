@@ -1,9 +1,16 @@
 'use client'
+
 import { useState } from 'react'
-import AnnouncementBar from '@/components/AnnouncementBar'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import { ChevronDown } from 'lucide-react'
+import {
+  ChevronDown,
+  Search,
+  ShieldCheck,
+  FlaskConical,
+  Truck,
+  FileCheck,
+} from 'lucide-react'
 
 const FAQS = [
   {
@@ -12,72 +19,335 @@ const FAQS = [
   },
   {
     q: 'How is purity tested and verified?',
-    a: 'Every batch is tested by Eurofins Scientific UK, an independent accredited third-party laboratory. We use High-Performance Liquid Chromatography (HPLC) for purity analysis and mass spectrometry (MS) to confirm the peptide sequence. Results are published publicly — no selective disclosure.',
+    a: 'Every batch is independently tested using validated analytical methods including HPLC and Mass Spectrometry. Results are published publicly through our Certificate Library.',
   },
   {
     q: 'What is a Certificate of Analysis (COA)?',
-    a: 'A COA is a document issued by the testing laboratory confirming the identity, purity, and quality of a specific batch. Our COAs include: HPLC chromatogram, mass spec confirmation, endotoxin levels, moisture content, and test date. Every batch COA is publicly searchable via our COA Library.',
+    a: 'A COA confirms identity, purity, quality and analytical testing results for a specific batch. Each certificate contains laboratory verification data and batch-specific information.',
   },
   {
     q: 'How are peptides shipped?',
-    a: 'All peptides are dispatched cold-chain using pharmaceutical-grade insulated packaging with cold packs. Orders placed before 2pm Monday–Friday are dispatched the same day via tracked UK courier. We do not ship internationally at this time.',
+    a: 'Orders are dispatched using insulated packaging and tracked courier services. Orders placed before the daily cut-off are processed the same working day.',
   },
   {
     q: 'What is your return policy?',
-    a: 'Due to the research-grade nature of our products, we cannot accept returns of opened products. If you receive a damaged or incorrect order, please contact us within 48 hours of delivery with photographs and we will arrange a replacement.',
+    a: 'Due to the specialist nature of research products, opened products cannot be returned. Damaged or incorrect orders should be reported within 48 hours.',
   },
   {
     q: 'How should peptides be stored?',
-    a: 'Lyophilised (freeze-dried) peptides should be stored at -20°C in a sealed, dry environment away from light. Once reconstituted, peptides in bacteriostatic water can typically be stored at 4°C for up to 4 weeks, or at -20°C for longer periods. Always refer to the product-specific storage guide.',
+    a: 'Store lyophilised peptides according to product-specific guidance. Most products should be kept in a cool, dry environment away from light.',
   },
   {
     q: 'Do you offer custom synthesis?',
-    a: 'We are exploring custom peptide synthesis for research institutions. If you are a qualified research organisation with specific requirements, please contact us at research@pepcolab.co.uk with your specifications.',
+    a: 'Custom peptide synthesis solutions may be available for qualified institutions. Contact our research team for further information.',
   },
   {
     q: 'Is PepcoLab UK registered?',
-    a: 'Yes, PepcoLab Ltd is a registered UK company. All products are dispatched from within the United Kingdom and comply with UK research chemical regulations.',
+    a: 'Yes. PepcoLab operates as a registered UK business and supplies research materials intended solely for laboratory use.',
   },
 ]
 
 export default function FAQPage() {
-  const [open, setOpen] = useState<number | null>(null)
+  const [open, setOpen] = useState<number | null>(0)
+  const [search, setSearch] = useState('')
+
+  const filteredFaqs = FAQS.filter(
+    (faq) =>
+      faq.q.toLowerCase().includes(search.toLowerCase()) ||
+      faq.a.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <>
-      
       <Nav />
-      <main>
-        <div className="border-b border-border bg-canvas-warm py-12 px-6 lg:px-12">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-[11px] font-medium tracking-[1.2px] uppercase text-steel-light mb-2">Help</div>
-            <h1 className="font-serif text-[44px] tracking-[-1.5px] text-ink">Frequently Asked Questions</h1>
+
+      <main
+        style={{
+          background: '#050505',
+          minHeight: '100vh',
+        }}
+      >
+        {/* HERO */}
+        <section
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            padding: '80px 20px 60px',
+            borderBottom: '1px solid rgba(255,255,255,.08)',
+          }}
+        >
+          {/* Glow */}
+          <div
+            style={{
+              position: 'absolute',
+              width: 600,
+              height: 600,
+              top: -250,
+              right: -250,
+              borderRadius: '50%',
+              background:
+                'radial-gradient(circle, rgba(59,130,246,.15), transparent 70%)',
+              filter: 'blur(120px)',
+            }}
+          />
+
+          <div
+            style={{
+              maxWidth: 1200,
+              margin: '0 auto',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                borderRadius: 999,
+                background: 'rgba(255,255,255,.05)',
+                border: '1px solid rgba(255,255,255,.08)',
+                marginBottom: 24,
+              }}
+            >
+              <ShieldCheck size={14} color="#60A5FA" />
+              <span
+                style={{
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: '.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Knowledge Base
+              </span>
+            </div>
+
+            <h1
+              style={{
+                color: '#fff',
+                fontSize: 'clamp(42px,8vw,84px)',
+                lineHeight: '.92',
+                letterSpacing: '-.06em',
+                fontWeight: 700,
+                maxWidth: 900,
+                marginBottom: 24,
+              }}
+            >
+              Frequently Asked
+              <br />
+              Questions
+            </h1>
+
+            <p
+              style={{
+                color: 'rgba(255,255,255,.65)',
+                fontSize: 18,
+                lineHeight: 1.8,
+                maxWidth: 700,
+              }}
+            >
+              Everything you need to know about our research compounds,
+              testing standards, laboratory documentation and shipping
+              procedures.
+            </p>
           </div>
-        </div>
-        <div className="max-w-3xl mx-auto px-6 lg:px-12 py-12">
-          <div className="flex flex-col divide-y divide-border">
-            {FAQS.map((faq, i) => (
-              <div key={i} className="py-5">
-                <button
-                  className="w-full flex items-center justify-between gap-4 text-left"
-                  onClick={() => setOpen(open === i ? null : i)}
+        </section>
+
+        {/* STATS */}
+        <section
+          style={{
+            padding: '30px 20px',
+            borderBottom: '1px solid rgba(255,255,255,.08)',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1200,
+              margin: '0 auto',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
+              gap: 16,
+            }}
+          >
+            {[
+              {
+                icon: FlaskConical,
+                title: 'Research Grade',
+                text: 'Laboratory Standards',
+              },
+              {
+                icon: FileCheck,
+                title: 'COA Verified',
+                text: 'Batch Documentation',
+              },
+              {
+                icon: ShieldCheck,
+                title: 'Independent Testing',
+                text: 'Third-Party Verified',
+              },
+              {
+                icon: Truck,
+                title: 'Tracked Delivery',
+                text: 'Fast Dispatch',
+              },
+            ].map((item, idx) => {
+              const Icon = item.icon
+
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    padding: 20,
+                    borderRadius: 20,
+                    background: 'rgba(255,255,255,.03)',
+                    border: '1px solid rgba(255,255,255,.08)',
+                  }}
                 >
-                  <span className="text-[15px] font-medium text-ink">{faq.q}</span>
+                  <Icon size={20} color="#60A5FA" />
+                  <div
+                    style={{
+                      color: '#fff',
+                      marginTop: 14,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                  <div
+                    style={{
+                      color: 'rgba(255,255,255,.55)',
+                      fontSize: 13,
+                      marginTop: 4,
+                    }}
+                  >
+                    {item.text}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* SEARCH */}
+        <section
+          style={{
+            padding: '40px 20px 20px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 900,
+              margin: '0 auto',
+              position: 'relative',
+            }}
+          >
+            <Search
+              size={18}
+              style={{
+                position: 'absolute',
+                left: 20,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'rgba(255,255,255,.4)',
+              }}
+            />
+
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search FAQs..."
+              style={{
+                width: '100%',
+                height: 62,
+                borderRadius: 20,
+                border: '1px solid rgba(255,255,255,.08)',
+                background: 'rgba(255,255,255,.04)',
+                color: '#fff',
+                paddingLeft: 55,
+                fontSize: 16,
+                outline: 'none',
+              }}
+            />
+          </div>
+        </section>
+
+        {/* FAQS */}
+        <section
+          style={{
+            padding: '20px 20px 80px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 900,
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}
+          >
+            {filteredFaqs.map((faq, i) => (
+              <div
+                key={i}
+                style={{
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                  background: 'rgba(255,255,255,.03)',
+                  border: '1px solid rgba(255,255,255,.08)',
+                  backdropFilter: 'blur(16px)',
+                }}
+              >
+                <button
+                  onClick={() => setOpen(open === i ? null : i)}
+                  style={{
+                    width: '100%',
+                    padding: '24px',
+                    background: 'transparent',
+                    border: 'none',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    color: '#fff',
+                    fontSize: 17,
+                    fontWeight: 600,
+                    textAlign: 'left',
+                  }}
+                >
+                  {faq.q}
+
                   <ChevronDown
-                    size={16}
-                    className={`text-steel-light flex-shrink-0 transition-transform ${open === i ? 'rotate-180' : ''}`}
+                    size={18}
+                    style={{
+                      transform:
+                        open === i
+                          ? 'rotate(180deg)'
+                          : 'rotate(0deg)',
+                      transition: '.3s',
+                    }}
                   />
                 </button>
+
                 {open === i && (
-                  <p className="text-[14px] text-steel font-light leading-[1.8] mt-4">
+                  <div
+                    style={{
+                      padding: '0 24px 24px',
+                      color: 'rgba(255,255,255,.65)',
+                      lineHeight: 1.8,
+                      fontSize: 15,
+                    }}
+                  >
                     {faq.a}
-                  </p>
+                  </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       </main>
+
       <Footer />
     </>
   )

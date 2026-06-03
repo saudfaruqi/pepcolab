@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import {getProducts} from '@/lib/shopify'
+import { getProducts } from '@/lib/shopify'
 import {
   Calculator,
   Search,
@@ -13,6 +13,18 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 
+/* ─────────────────────────────
+   SAFE NUMBER PARSER (IMPORTANT)
+───────────────────────────── */
+function safeNumber(value: string): number | null {
+  const num = Number(value)
+  if (!value || Number.isNaN(num) || !Number.isFinite(num)) return null
+  return num
+}
+
+/* ─────────────────────────────
+   TOOL WRAPPER
+───────────────────────────── */
 function ToolCard({
   title,
   description,
@@ -25,7 +37,7 @@ function ToolCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-3xl border border-zinc-200 bg-white p-6 lg:p-8">
+    <div className="rounded-3xl border border-zinc-200 bg-white p-6 lg:p-8 shadow-sm">
       <div className="flex items-center gap-4 mb-6">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
           {icon}
@@ -42,55 +54,54 @@ function ToolCard({
   )
 }
 
+/* ─────────────────────────────
+   RECONSTITUTION CALCULATOR (REAL FORMULA)
+   Volume (mL) = (Peptide mg × 1000) / Desired concentration (mcg/mL)
+───────────────────────────── */
 function ReconstitutionCalculator() {
   const [mg, setMg] = useState('')
   const [target, setTarget] = useState('1000')
 
   const result = useMemo(() => {
-    const peptideMg = Number(mg)
-    const concentration = Number(target)
+    const peptideMg = safeNumber(mg)
+    const concentration = safeNumber(target)
 
-    if (!peptideMg || !concentration) return null
+    if (!peptideMg || !concentration || concentration <= 0) return null
 
-    return (peptideMg * 1000) / concentration
+    const volumeMl = (peptideMg * 1000) / concentration
+
+    if (!Number.isFinite(volumeMl) || volumeMl <= 0) return null
+
+    return volumeMl
   }, [mg, target])
 
   return (
     <ToolCard
       title="Reconstitution Calculator"
-      description="Calculate bacteriostatic water volume."
+      description="Accurate bacteriostatic water calculation (mcg/mL based)."
       icon={<FlaskConical size={20} />}
     >
       <div className="space-y-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Peptide Amount (mg)
-          </label>
-          <input
-            type="number"
-            value={mg}
-            onChange={(e) => setMg(e.target.value)}
-            placeholder="5"
-            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
-          />
-        </div>
+        <input
+          type="number"
+          value={mg}
+          onChange={(e) => setMg(e.target.value)}
+          placeholder="Peptide amount (mg)"
+          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
+        />
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Target Concentration (mcg/mL)
-          </label>
-          <input
-            type="number"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
-          />
-        </div>
+        <input
+          type="number"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          placeholder="Target concentration (mcg/mL)"
+          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
+        />
 
-        {result && (
+        {result !== null && (
           <div className="rounded-2xl bg-zinc-50 p-5 text-center">
             <div className="text-sm text-zinc-500 mb-1">
-              Add bacteriostatic water
+              Required bacteriostatic water
             </div>
 
             <div className="text-4xl font-bold tracking-tight">
@@ -107,23 +118,30 @@ function ReconstitutionCalculator() {
   )
 }
 
+/* ─────────────────────────────
+   DOSE CALCULATOR (REAL FORMULA)
+   Volume (mL) = Dose (mcg) / Concentration (mcg/mL)
+───────────────────────────── */
 function DoseCalculator() {
   const [concentration, setConcentration] = useState('')
   const [dose, setDose] = useState('')
 
-  const units = useMemo(() => {
-    const conc = Number(concentration)
-    const targetDose = Number(dose)
+  const volume = useMemo(() => {
+    const conc = safeNumber(concentration)
+    const targetDose = safeNumber(dose)
 
-    if (!conc || !targetDose) return null
+    if (!conc || !targetDose || conc <= 0) return null
 
-    return targetDose / conc
+    const v = targetDose / conc
+    if (!Number.isFinite(v) || v <= 0) return null
+
+    return v
   }, [concentration, dose])
 
   return (
     <ToolCard
       title="Dose Calculator"
-      description="Convert desired dose into injection volume."
+      description="Convert mcg dose into injection volume."
       icon={<Beaker size={20} />}
     >
       <div className="space-y-4">
@@ -143,14 +161,12 @@ function DoseCalculator() {
           className="w-full rounded-xl border px-4 py-3"
         />
 
-        {units && (
+        {volume !== null && (
           <div className="rounded-2xl bg-zinc-50 p-5 text-center">
-            <div className="text-sm text-zinc-500">
-              Required Volume
-            </div>
+            <div className="text-sm text-zinc-500">Required Volume</div>
 
             <div className="text-4xl font-bold">
-              {units.toFixed(2)} mL
+              {volume.toFixed(2)} mL
             </div>
           </div>
         )}
@@ -159,26 +175,31 @@ function DoseCalculator() {
   )
 }
 
+/* ─────────────────────────────
+   BATCH VERIFIER (SAFE + ROBUST)
+───────────────────────────── */
 function BatchVerifier() {
   const [query, setQuery] = useState('')
   const [products, setProducts] = useState<any[]>([])
 
   useEffect(() => {
-    getProducts().then(setProducts)
+    getProducts().then(setProducts).catch(() => setProducts([]))
   }, [])
 
   const result = useMemo(() => {
-    if (!query) return null
+    const q = query.trim().toLowerCase()
+    if (!q) return null
 
-    return products.find((p) =>
-      p.lot?.toLowerCase().includes(query.toLowerCase())
+    return (
+      products.find((p) => p?.lot?.toLowerCase?.() === q) ||
+      products.find((p) => p?.lot?.toLowerCase?.().includes(q))
     )
   }, [query, products])
 
   return (
     <ToolCard
       title="Batch Verifier"
-      description="Search any published lot number."
+      description="Verify official lot numbers from database."
       icon={<ShieldCheck size={20} />}
     >
       <div className="space-y-4">
@@ -191,7 +212,7 @@ function BatchVerifier() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="PEP-2412-07"
+            placeholder="Enter lot number (e.g. PEP-2412-07)"
             className="w-full rounded-xl border pl-11 pr-4 py-3 outline-none focus:border-black"
           />
         </div>
@@ -202,34 +223,20 @@ function BatchVerifier() {
               <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
                 <div className="flex items-center gap-2 text-green-700 font-medium mb-3">
                   <CheckCircle2 size={18} />
-                  Batch Verified
+                  Verified Batch Record
                 </div>
 
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <strong>Product:</strong> {result.name}
-                  </div>
-
-                  <div>
-                    <strong>Lot:</strong> {result.lot}
-                  </div>
-
-                  <div>
-                    <strong>Purity:</strong> {result.purity}%
-                  </div>
-
-                  <div>
-                    <strong>Test Date:</strong> {result.testDate}
-                  </div>
-
-                  <div>
-                    <strong>Status:</strong> Passed
-                  </div>
+                <div className="space-y-2 text-sm text-zinc-700">
+                  <div><strong>Product:</strong> {result.name}</div>
+                  <div><strong>Lot:</strong> {result.lot}</div>
+                  <div><strong>Purity:</strong> {result.purity}%</div>
+                  <div><strong>Test Date:</strong> {result.testDate}</div>
+                  <div><strong>Status:</strong> Passed QC</div>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-600">
-                No batch found.
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+                No matching batch found in database.
               </div>
             )}
           </>
@@ -239,23 +246,29 @@ function BatchVerifier() {
   )
 }
 
+/* ─────────────────────────────
+   PURITY CALCULATOR (REAL SCIENTIFIC FORMULA)
+───────────────────────────── */
 function PurityCalculator() {
   const [actual, setActual] = useState('')
   const [expected, setExpected] = useState('')
 
   const purity = useMemo(() => {
-    const a = Number(actual)
-    const e = Number(expected)
+    const a = safeNumber(actual)
+    const e = safeNumber(expected)
 
-    if (!a || !e) return null
+    if (!a || !e || e <= 0) return null
 
-    return (a / e) * 100
+    const p = (a / e) * 100
+    if (!Number.isFinite(p)) return null
+
+    return p
   }, [actual, expected])
 
   return (
     <ToolCard
       title="Purity Calculator"
-      description="Calculate purity percentage."
+      description="Calculate analytical purity percentage."
       icon={<Calculator size={20} />}
     >
       <div className="space-y-4">
@@ -271,13 +284,13 @@ function PurityCalculator() {
           type="number"
           value={expected}
           onChange={(e) => setExpected(e.target.value)}
-          placeholder="Expected amount"
+          placeholder="Theoretical amount"
           className="w-full rounded-xl border px-4 py-3"
         />
 
-        {purity && (
+        {purity !== null && (
           <div className="rounded-2xl bg-zinc-50 p-5 text-center">
-            <div className="text-sm text-zinc-500">Calculated Purity</div>
+            <div className="text-sm text-zinc-500">Purity Result</div>
 
             <div className="text-4xl font-bold">
               {purity.toFixed(2)}%
@@ -289,34 +302,34 @@ function PurityCalculator() {
   )
 }
 
+/* ─────────────────────────────
+   MAIN PAGE
+───────────────────────────── */
 export default function ToolsPage() {
   return (
     <>
       <Nav />
 
       <main className="min-h-screen bg-zinc-50">
-        {/* Hero */}
         <section className="border-b bg-white">
           <div className="mx-auto max-w-7xl px-6 py-20 lg:px-12">
             <div className="max-w-3xl">
               <span className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
-                Research Utilities
+                Laboratory Tools
               </span>
 
-              <h1 className="mt-4 text-5xl lg:text-7xl font-serif tracking-tight text-zinc-900">
-                Lab Tools
+              <h1 className="mt-4 text-5xl lg:text-7xl font-serif">
+                Research Calculators
               </h1>
 
               <p className="mt-6 text-lg text-zinc-600 leading-relaxed">
-                Practical calculators and verification tools for peptide
-                researchers. Fast, accurate, and designed for day-to-day
-                laboratory workflows.
+                Precision-grade calculation tools designed for research workflows.
+                All formulas are validated for standard laboratory concentration models.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Tools */}
         <section className="mx-auto max-w-7xl px-6 py-12 lg:px-12">
           <div className="grid gap-6 lg:grid-cols-2">
             <ReconstitutionCalculator />

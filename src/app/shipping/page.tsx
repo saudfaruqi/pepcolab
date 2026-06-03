@@ -13,27 +13,106 @@ import {
 } from 'lucide-react'
 
 const SHIPPING_INFO = [
-  {
-    icon: Clock3,
-    title: 'Order Processing',
-    text: 'Orders are typically processed within 1 business day. Orders placed on weekends or public holidays are processed on the next business day.',
-  },
-  {
-    icon: Truck,
-    title: 'Tracked Delivery',
-    text: 'All shipments are dispatched using tracked courier services. Tracking information is provided once your order has been fulfilled.',
-  },
-  {
-    icon: Globe,
-    title: 'International Shipping',
-    text: 'Shipping availability varies by destination. Customers are responsible for ensuring products can be legally imported into their jurisdiction.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Secure Packaging',
-    text: 'Orders are packaged securely to help protect product integrity during transit.',
-  },
+{
+icon: Clock3,
+title: 'Fast Dispatch',
+text: 'Most orders are processed and dispatched within 1 business day following payment confirmation and verification.',
+},
+{
+icon: Truck,
+title: 'Tracked Delivery',
+text: 'All eligible shipments include tracking information, allowing customers to monitor delivery progress in real time.',
+},
+{
+icon: Globe,
+title: 'International Shipping',
+text: 'International availability varies by jurisdiction. Customers remain responsible for import compliance and local regulations.',
+},
+{
+icon: ShieldCheck,
+title: 'Secure Packaging',
+text: 'Orders are packaged using protective shipping materials designed to maintain product integrity throughout transit.',
+},
 ]
+
+const POLICY_SECTIONS = [
+{
+title: 'Order Processing & Dispatch',
+content: [
+'Orders are generally processed within one (1) business day following successful payment authorization and order verification.',
+'Orders placed after business hours, during weekends, or on public holidays will be processed on the next available business day.',
+'During periods of unusually high demand, promotional events, inventory audits, severe weather conditions, or carrier disruptions, processing times may be extended.',
+'PepcoLab reserves the right to conduct additional order verification procedures prior to dispatch where necessary for fraud prevention or compliance purposes.',
+],
+},
+{
+title: 'Shipping Methods & Tracking',
+content: [
+'Orders are shipped using reputable domestic and international courier partners selected based on destination, service availability, and operational reliability.',
+'Tracking details are provided via email once an order has been dispatched.',
+'Delivery estimates displayed during checkout are provided for guidance only and do not constitute guaranteed delivery dates.',
+'Shipping timelines begin upon dispatch, not at the time an order is placed.',
+],
+},
+{
+title: 'International Shipping & Customs',
+content: [
+'Customers are solely responsible for ensuring products may be legally imported, possessed, stored, and used within their jurisdiction.',
+'Any customs duties, import taxes, VAT, brokerage fees, inspection fees, or other governmental charges are the responsibility of the recipient unless explicitly stated otherwise.',
+'PepcoLab cannot guarantee customs clearance and accepts no responsibility for delays, inspections, holds, confiscations, or refusals imposed by customs authorities.',
+'Failure to comply with local import regulations does not qualify an order for refund or replacement.',
+],
+},
+{
+title: 'Delivery Estimates',
+content: [
+'Estimated delivery windows vary depending on destination, shipping service selected, customs procedures, and carrier performance.',
+'Delivery estimates should not be interpreted as guaranteed arrival dates.',
+'Unexpected events including weather conditions, transportation disruptions, customs inspections, public holidays, labor disputes, or force majeure events may affect transit times.',
+],
+},
+{
+title: 'Address Accuracy',
+content: [
+'Customers are responsible for providing complete and accurate shipping information at checkout.',
+'PepcoLab shall not be responsible for delays, losses, or additional shipping costs arising from incorrect addresses, incomplete information, or failed delivery attempts.',
+'Orders that have already entered the shipping process may not be eligible for address modifications.',
+],
+},
+{
+title: 'Lost, Damaged, or Missing Shipments',
+content: [
+'Customers must notify our support team promptly if a shipment appears lost, damaged, incomplete, or delivered in unsatisfactory condition.',
+'Photographic evidence of packaging, shipping labels, and product contents may be required to initiate an investigation.',
+'Claims are subject to review and carrier verification procedures.',
+'Resolution timeframes vary depending on courier investigations and claim processing requirements.',
+],
+},
+{
+title: 'Failed Deliveries & Returned Packages',
+content: [
+'Packages returned due to failed delivery attempts, refusal of delivery, customs rejection, or incorrect address information may be subject to additional shipping charges.',
+'Refunds for returned shipments may be reduced by original shipping costs, carrier fees, customs charges, or administrative expenses where legally permitted.',
+'PepcoLab reserves the right to determine eligibility for reshipment on a case-by-case basis.',
+],
+},
+{
+title: 'Research Use Notice',
+content: [
+'Products supplied by PepcoLab are intended exclusively for laboratory research, analytical, and scientific purposes.',
+'Products are not intended for human consumption, therapeutic use, veterinary use, medical procedures, or diagnostic applications.',
+'Customers are responsible for ensuring products are handled, stored, and utilized in accordance with applicable regulations and accepted laboratory practices.',
+],
+},
+{
+title: 'Force Majeure',
+content: [
+'PepcoLab shall not be liable for delays, interruptions, or failures in shipment resulting from circumstances beyond our reasonable control.',
+'Such events may include natural disasters, severe weather, pandemics, governmental actions, customs inspections, transportation disruptions, cyber incidents, labor disputes, supply chain interruptions, or carrier service failures.',
+],
+},
+]
+
 
 export default function ShippingPolicyPage() {
   return (
@@ -93,123 +172,28 @@ export default function ShippingPolicyPage() {
 
         {/* Policy Sections */}
         <section className="bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-24">
-            <div className="space-y-16">
-              <div>
-                <h2 className="font-serif text-4xl tracking-tight text-neutral-950 mb-6">
-                  Processing Times
+        <div className="max-w-5xl mx-auto px-6 py-24">
+            <div className="space-y-20">
+            {POLICY_SECTIONS.map((section) => (
+                <div key={section.title}>
+                <h2 className="font-serif text-4xl tracking-[-0.04em] text-neutral-950 mb-6">
+                    {section.title}
                 </h2>
 
-                <div className="space-y-5 text-neutral-600 leading-8">
-                  <p>
-                    Orders are normally processed within one business day
-                    after payment confirmation.
-                  </p>
-
-                  <p>
-                    During periods of increased demand, product launches,
-                    or public holidays, processing times may be extended.
-                  </p>
-
-                  <p>
-                    Orders are not processed or dispatched on weekends or
-                    public holidays.
-                  </p>
+                <div className="space-y-5">
+                    {section.content.map((paragraph, index) => (
+                    <p
+                        key={index}
+                        className="text-neutral-600 leading-8 text-[15px]"
+                    >
+                        {paragraph}
+                    </p>
+                    ))}
                 </div>
-              </div>
-
-              <div>
-                <h2 className="font-serif text-4xl tracking-tight text-neutral-950 mb-6">
-                  Shipping Methods
-                </h2>
-
-                <div className="space-y-5 text-neutral-600 leading-8">
-                  <p>
-                    We use reputable courier and postal services depending
-                    on destination and service availability.
-                  </p>
-
-                  <p>
-                    Once your order has been dispatched, you will receive
-                    tracking information where applicable.
-                  </p>
-
-                  <p>
-                    Delivery estimates are provided as guidelines only and
-                    are not guaranteed.
-                  </p>
                 </div>
-              </div>
-
-              <div>
-                <h2 className="font-serif text-4xl tracking-tight text-neutral-950 mb-6">
-                  International Orders
-                </h2>
-
-                <div className="space-y-5 text-neutral-600 leading-8">
-                  <p>
-                    International customers are responsible for ensuring
-                    that products can legally be imported into their country
-                    or region.
-                  </p>
-
-                  <p>
-                    Customs duties, taxes, import fees, and regulatory
-                    charges are the responsibility of the customer unless
-                    otherwise stated.
-                  </p>
-
-                  <p>
-                    We are not responsible for delays caused by customs
-                    inspections, local postal services, or import authorities.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="font-serif text-4xl tracking-tight text-neutral-950 mb-6">
-                  Delivery Delays
-                </h2>
-
-                <div className="space-y-5 text-neutral-600 leading-8">
-                  <p>
-                    Delivery estimates may be affected by severe weather,
-                    customs processing, transportation disruptions, public
-                    holidays, or carrier delays.
-                  </p>
-
-                  <p>
-                    While we work closely with shipping partners, we cannot
-                    guarantee delivery timelines once a package has entered
-                    the courier network.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="font-serif text-4xl tracking-tight text-neutral-950 mb-6">
-                  Lost or Damaged Shipments
-                </h2>
-
-                <div className="space-y-5 text-neutral-600 leading-8">
-                  <p>
-                    If your order arrives damaged or appears lost in transit,
-                    please contact our support team as soon as possible.
-                  </p>
-
-                  <p>
-                    Claims may require photographs of packaging, shipping
-                    labels, and product contents for investigation.
-                  </p>
-
-                  <p>
-                    Resolution timelines depend on the shipping carrier's
-                    claims process.
-                  </p>
-                </div>
-              </div>
+            ))}
             </div>
-          </div>
+        </div>
         </section>
 
         {/* CTA */}

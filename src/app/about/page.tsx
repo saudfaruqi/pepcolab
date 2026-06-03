@@ -13,44 +13,32 @@ import {
 } from 'lucide-react'
 
 const STATS = [
-  {
-    value: '99%+',
-    label: 'Average Purity',
-  },
-  {
-    value: '40+',
-    label: 'Research Compounds',
-  },
-  {
-    value: '100%',
-    label: 'COA Transparency',
-  },
-  {
-    value: '24h',
-    label: 'Dispatch Target',
-  },
+  { value: '99%+', label: 'Avg. Verified Purity' },
+  { value: '40+', label: 'Research Compounds' },
+  { value: '100%', label: 'Batch COA Coverage' },
+  { value: '<24h', label: 'Processing Target' },
 ]
 
 const VALUES = [
   {
     icon: ShieldCheck,
-    title: 'Transparency',
-    text: 'Every batch includes publicly accessible testing data, certificates of analysis, and purity verification.',
+    title: 'Verified Transparency',
+    text: 'Each batch is supported by documented analytical data including purity and identity verification where applicable.',
   },
   {
     icon: FlaskConical,
-    title: 'Research First',
-    text: 'Our catalogue is curated around compounds actively studied within modern peptide research.',
+    title: 'Research-Focused Catalogue',
+    text: 'Our product range is structured exclusively for laboratory and non-clinical scientific research applications.',
   },
   {
     icon: FileCheck,
-    title: 'Independent Testing',
-    text: 'Every production batch undergoes third-party analytical verification before release.',
+    title: 'Independent Testing Standards',
+    text: 'Where applicable, third-party analytical testing is conducted to support consistency and batch verification.',
   },
   {
     icon: Microscope,
-    title: 'Scientific Standards',
-    text: 'Strict quality-control processes ensure consistency, traceability, and reproducibility.',
+    title: 'Controlled Quality Systems',
+    text: 'We apply standardized handling and documentation procedures to maintain traceability and reproducibility.',
   },
 ]
 
@@ -59,43 +47,44 @@ export default function AboutPage() {
     <>
       <Nav />
 
-      <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b border-neutral-200 bg-[#f7f6f3]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.08),transparent_40%)]" />
+      <main className="bg-white text-neutral-900">
 
-          <div className="max-w-7xl mx-auto px-2 lg:px-12 py-24 relative">
+        {/* HERO */}
+        <section className="relative border-b border-neutral-200 bg-[#f7f6f3] overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.08),transparent_45%)]" />
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-28 relative">
             <div className="max-w-3xl">
-              <div className="text-[11px] uppercase tracking-[0.18em] font-semibold text-neutral-500 mb-4">
-                About PepcoLab
-              </div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 font-semibold mb-4">
+                About Us
+              </p>
 
-              <h1 className="font-serif text-[clamp(48px,8vw,88px)] leading-[0.95] tracking-[-0.06em] text-neutral-950 mb-8">
-                Research
+              <h1 className="font-serif text-[clamp(44px,6vw,86px)] leading-[0.95] tracking-[-0.06em] text-neutral-950 mb-8">
+                Built for
                 <br />
-                without compromise.
+                research integrity.
               </h1>
 
               <p className="text-[17px] leading-8 text-neutral-600 max-w-2xl">
-                PepcoLab was built around a simple principle: researchers
-                should have access to verified compounds backed by transparent
-                analytical data, rigorous quality control, and dependable
-                batch-to-batch consistency.
+                We operate a research supply platform focused on providing
+                clearly documented, batch-traceable compounds intended strictly
+                for laboratory and scientific investigation. Our emphasis is on
+                transparency, reproducibility, and controlled quality systems.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Stats */}
+        {/* STATS */}
         <section className="border-b border-neutral-200 bg-white">
           <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
               {STATS.map(stat => (
                 <div key={stat.label}>
                   <div className="font-serif text-5xl lg:text-6xl tracking-[-0.06em] text-neutral-950">
                     {stat.value}
                   </div>
-                  <div className="mt-2 text-sm text-neutral-500 uppercase tracking-[0.12em]">
+                  <div className="mt-2 text-[11px] uppercase tracking-[0.16em] text-neutral-500">
                     {stat.label}
                   </div>
                 </div>
@@ -104,80 +93,78 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Story */}
+        {/* STORY */}
         <section className="bg-white">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-24">
-            <div className="grid lg:grid-cols-2 gap-16 items-start">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500 font-semibold mb-3">
-                  Our Story
-                </div>
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-24 grid lg:grid-cols-2 gap-16">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mb-3">
+                Our Background
+              </p>
 
-                <h2 className="font-serif text-5xl tracking-[-0.05em] text-neutral-950 mb-6">
-                  Built for serious research.
-                </h2>
-              </div>
+              <h2 className="font-serif text-5xl tracking-[-0.05em] text-neutral-950">
+                A response to inconsistent research standards.
+              </h2>
+            </div>
 
-              <div className="space-y-6 text-neutral-600 leading-8">
-                <p>
-                  The peptide industry has historically suffered from
-                  inconsistent quality standards, incomplete documentation,
-                  and limited transparency around testing practices.
-                </p>
+            <div className="space-y-6 text-neutral-600 leading-8">
+              <p>
+                The research peptide and fine chemical sector has historically
+                lacked standardized transparency, particularly in relation to
+                batch verification and analytical reporting.
+              </p>
 
-                <p>
-                  PepcoLab was founded to address those challenges by creating
-                  a research-focused platform where analytical verification is
-                  treated as a requirement rather than a marketing feature.
-                </p>
+              <p>
+                This gap creates uncertainty for researchers who rely on
+                reproducible materials for controlled laboratory studies.
+              </p>
 
-                <p>
-                  Every product released through our catalogue is linked to
-                  documented batch data, enabling researchers to verify purity,
-                  identity, and testing history before beginning work.
-                </p>
+              <p>
+                Our platform was developed to address this issue through
+                structured documentation, verifiable batch data, and consistent
+                quality procedures.
+              </p>
 
-                <p>
-                  Our objective is straightforward: provide reliable research
-                  materials supported by data researchers can trust.
-                </p>
-              </div>
+              <p>
+                Each product is associated with traceable production
+                information intended to support scientific evaluation and
+                reproducibility.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Values */}
+        {/* VALUES */}
         <section className="bg-[#faf9f7] border-y border-neutral-200">
           <div className="max-w-7xl mx-auto px-6 lg:px-12 py-24">
             <div className="max-w-2xl mb-14">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500 font-semibold mb-3">
-                Why Researchers Choose Us
-              </div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mb-3">
+                Core Principles
+              </p>
 
               <h2 className="font-serif text-5xl tracking-[-0.05em] text-neutral-950">
-                Data-backed quality at every stage.
+                Standards that guide every batch.
               </h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {VALUES.map(item => {
-                const Icon = item.icon
+              {VALUES.map(v => {
+                const Icon = v.icon
 
                 return (
                   <div
-                    key={item.title}
+                    key={v.title}
                     className="bg-white border border-neutral-200 rounded-3xl p-8"
                   >
                     <div className="w-12 h-12 rounded-2xl bg-neutral-100 flex items-center justify-center mb-5">
                       <Icon size={20} />
                     </div>
 
-                    <h3 className="text-xl font-semibold text-neutral-950 mb-3">
-                      {item.title}
+                    <h3 className="text-xl font-semibold mb-3 text-neutral-950">
+                      {v.title}
                     </h3>
 
                     <p className="text-neutral-600 leading-7">
-                      {item.text}
+                      {v.text}
                     </p>
                   </div>
                 )
@@ -186,87 +173,40 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Quality */}
+        {/* QUALITY */}
         <section className="bg-white">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-24">
-            <div className="grid lg:grid-cols-2 gap-16">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500 font-semibold mb-3">
-                  Quality Assurance
-                </div>
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-24 grid lg:grid-cols-2 gap-16">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mb-3">
+                Quality Framework
+              </p>
 
-                <h2 className="font-serif text-5xl tracking-[-0.05em] text-neutral-950 mb-6">
-                  Every batch verified.
-                </h2>
-
-                <p className="text-neutral-600 leading-8">
-                  We maintain strict quality-control procedures and publish
-                  testing information wherever possible to support complete
-                  research transparency.
-                </p>
-              </div>
-
-              <div className="space-y-5">
-                {[
-                  'Identity verification',
-                  'Purity analysis',
-                  'Certificate of Analysis publication',
-                  'Batch traceability',
-                  'Lot-specific documentation',
-                  'Transparent reporting standards',
-                ].map(item => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-4 border-b border-neutral-200 pb-5"
-                  >
-                    <CheckCircle2
-                      size={18}
-                      className="text-emerald-600 flex-shrink-0"
-                    />
-                    <span className="text-neutral-700">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Timeline */}
-        <section className="bg-[#0d0d0d] text-white">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-24">
-            <div className="max-w-3xl mb-16">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-semibold mb-3">
-                Growth
-              </div>
-
-              <h2 className="font-serif text-5xl tracking-[-0.05em]">
-                Continuing to expand.
+              <h2 className="font-serif text-5xl tracking-[-0.05em] text-neutral-950 mb-6">
+                Documented verification at each stage.
               </h2>
+
+              <p className="text-neutral-600 leading-8">
+                Our quality framework is designed to ensure traceability and
+                consistency across production, handling, and distribution
+                stages.
+              </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-10">
+            <div className="space-y-5">
               {[
-                {
-                  year: '2023',
-                  text: 'Foundation and initial catalogue launch.',
-                },
-                {
-                  year: '2024',
-                  text: 'Expanded testing transparency and documentation.',
-                },
-                {
-                  year: '2025',
-                  text: 'Broader peptide catalogue and public COA library.',
-                },
+                'Identity confirmation where applicable',
+                'Purity and composition analysis',
+                'Batch-level traceability records',
+                'Structured COA documentation',
+                'Controlled storage and handling procedures',
+                'Standardized reporting practices',
               ].map(item => (
-                <div key={item.year}>
-                  <div className="font-serif text-5xl text-white mb-4">
-                    {item.year}
-                  </div>
-
-                  <p className="text-white/60 leading-7">
-                    {item.text}
-                  </p>
+                <div
+                  key={item}
+                  className="flex items-start gap-4 border-b border-neutral-200 pb-5"
+                >
+                  <CheckCircle2 size={18} className="text-emerald-600 mt-1" />
+                  <span className="text-neutral-700 leading-7">{item}</span>
                 </div>
               ))}
             </div>
@@ -274,30 +214,32 @@ export default function AboutPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-white">
+        <section className="bg-neutral-950 text-white">
           <div className="max-w-5xl mx-auto px-6 py-24 text-center">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500 font-semibold mb-4">
-              Explore
-            </div>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-4">
+              Explore Catalogue
+            </p>
 
-            <h2 className="font-serif text-5xl tracking-[-0.05em] text-neutral-950 mb-6">
-              Browse our research catalogue.
+            <h2 className="font-serif text-5xl tracking-[-0.05em] mb-6">
+              Access verified research compounds.
             </h2>
 
-            <p className="text-neutral-600 max-w-2xl mx-auto leading-8 mb-10">
-              Discover research compounds supported by transparent testing,
-              published batch information, and rigorous quality standards.
+            <p className="text-white/60 max-w-2xl mx-auto leading-8 mb-10">
+              Browse our catalogue of research materials supported by structured
+              documentation, batch traceability, and quality control
+              procedures.
             </p>
 
             <Link
               href="/products"
-              className="inline-flex items-center gap-3 bg-neutral-950 text-white px-8 py-4 rounded-full text-sm font-medium hover:opacity-90 transition"
+              className="inline-flex items-center gap-3 bg-white text-neutral-950 px-8 py-4 rounded-full text-sm font-medium hover:opacity-90 transition"
             >
               View Products
               <ArrowRight size={16} />
             </Link>
           </div>
         </section>
+
       </main>
 
       <Footer />
