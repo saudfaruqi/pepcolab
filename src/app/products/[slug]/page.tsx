@@ -161,7 +161,6 @@ export default async function ProductPage({ params }: Props) {
               fontWeight: 800,
               letterSpacing: '-0.04em',
               color: '#0d0d0d',
-              fontFamily: 'Georgia, serif',
               wordBreak: 'break-word',
             }}>
               {shopifyProduct.title}
