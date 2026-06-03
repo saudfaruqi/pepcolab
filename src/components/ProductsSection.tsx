@@ -16,6 +16,7 @@ const KNOWN_CATEGORIES: { slug: string; label: string }[] = [
   { slug: 'anti-ageing', label: 'Anti-Ageing' },
   { slug: 'skin',        label: 'Skin & Repair'},
   { slug: 'neuro',       label: 'Neuro'       },
+  { slug: 'accessories',  label: 'Accessories'  },
   { slug: 'immune',      label: 'Immune'      },
 ]
 
