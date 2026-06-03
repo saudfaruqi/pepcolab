@@ -594,7 +594,7 @@ export default function Nav() {
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#0d0d0d' }}>{p.name}</div>
                       <div style={{ fontSize: 11, color: 'rgba(13,13,13,.4)' }}>{p.category}</div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', flexShrink: 0 }}>£{p.price.toFixed(2)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', flexShrink: 0 }}>AED{p.price.toFixed(2)}</div>
                   </a>
                 ))}
                 <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(13,13,13,.07)' }}>

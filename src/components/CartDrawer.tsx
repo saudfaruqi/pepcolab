@@ -396,7 +396,7 @@ export default function CartDrawer() {
                               fontWeight: 700,
                             }}
                           >
-                            £
+                            AED
                             {(
                               line.price *
                               line.quantity
@@ -453,7 +453,7 @@ export default function CartDrawer() {
                   fontSize: 24,
                 }}
               >
-                £{subtotal.toFixed(2)}
+                AED{subtotal.toFixed(2)}
               </strong>
             </div>
 

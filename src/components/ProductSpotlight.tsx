@@ -204,7 +204,7 @@ export default function ProductSpotlight() {
                         'line-through',
                     }}
                   >
-                    £
+                    AED
                     {featured.oldPrice.toFixed(
                       2
                     )}
@@ -221,7 +221,7 @@ export default function ProductSpotlight() {
                     color: '#0d0d0d',
                   }}
                 >
-                  £
+                  AED
                   {featured.price.toFixed(
                     2
                   )}

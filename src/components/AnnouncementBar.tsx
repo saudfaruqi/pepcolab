@@ -3,13 +3,13 @@ import { X } from 'lucide-react'
 import { useState } from 'react'
 
 const ITEMS = [
-  '✦ Free UK dispatch on orders over £75',
+  '✦ Free UK dispatch on orders over AED75',
   '✦ Cold-chain verified packaging on every order',
   '✦ New: GLP-2 (Tera) now in stock',
   '✦ Same-day dispatch on orders before 2 pm',
   '✦ Eurofins-verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',
-  '✦ Free UK dispatch on orders over £75',
+  '✦ Free UK dispatch on orders over AED75',
   '✦ Cold-chain verified packaging on every order',
   '✦ New: GLP-2 (Tera) now in stock',
   '✦ Same-day dispatch on orders before 2 pm',

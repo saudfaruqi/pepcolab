@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(price: number): string {
-  return `£${price.toFixed(2)}`
+  return `AED${price.toFixed(2)}`
 }
 
 export function formatPurity(purity: number): string {

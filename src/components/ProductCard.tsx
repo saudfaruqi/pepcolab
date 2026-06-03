@@ -234,7 +234,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
                 display: 'block',
                 marginBottom: 1,
               }}>
-                £{p.oldPrice.toFixed(2)}
+                AED{p.oldPrice.toFixed(2)}
               </span>
             )}
             <span style={{
@@ -243,7 +243,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               lineHeight: 1,
               color: '#0d0d0d',
             }}>
-              £{p.price.toFixed(2)}
+              AED{p.price.toFixed(2)}
             </span>
           </div>
 
