@@ -75,12 +75,12 @@ const REVIEWS = [
 
 // Compound research areas — abstract gradient tiles, no stock photos
 const AREAS = [
-  { label: "Tissue Repair",     sub: "BPC-157, TB-500",         from: "#1a3a5c", to: "#2d6a9f" },
-  { label: "Metabolic Health",  sub: "GLP-1, Semaglutide",      from: "#1a3d2e", to: "#2d8a5e" },
-  { label: "Skin & Collagen",   sub: "GHK-Cu, Epithalon",       from: "#3d2a1a", to: "#8a5a2d" },
-  { label: "Cognitive Support", sub: "Selank, Semax",           from: "#2a1a3d", to: "#5a2d8a" },
-  { label: "Longevity",         sub: "Epithalon, Thymosin",     from: "#3d1a2a", to: "#8a2d5a" },
-  { label: "Pain & Inflammation",sub: "BPC-157, Thymosin β4",   from: "#1a3d3d", to: "#2d8a8a" },
+  { label: "Tissue Repair",     sub: "BPC-157, TB-500",         from: "#000", to: "#111" },
+  { label: "Metabolic Health",  sub: "GLP-1, Semaglutide",      from: "#000", to: "#111" },
+  { label: "Skin & Collagen",   sub: "GHK-Cu, Epithalon",       from: "#000", to: "#111" },
+  { label: "Cognitive Support", sub: "Selank, Semax",           from: "#000", to: "#111" },
+  { label: "Longevity",         sub: "Epithalon, Thymosin",     from: "#000", to: "#111" },
+  { label: "Pain & Inflammation",sub: "BPC-157, Thymosin β4",   from: "#000", to: "#111" },
 ];
 
 // ─── Vial SVG ─────────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ export default function PepcoLabPage() {
           gap:20px;
         }
         @media(max-width:768px) {
-          .products-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+          .products-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
         }
         .stack-card { transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease; }
         .stack-card:hover { transform:translateY(-8px); border-color:rgba(255,255,255,.16) !important; box-shadow:0 30px 60px rgba(0,0,0,.4); }
@@ -266,7 +266,7 @@ export default function PepcoLabPage() {
 
       {/* ── Products ── */}
       <section style={{ background: "#fff", padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 clamp(16px,3vw,32px)" }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 clamp(16px,1vw,32px)" }}>
           <FadeUp style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 16 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(13,13,13,.4)", marginBottom: 10 }}>Catalogue</div>
@@ -285,61 +285,81 @@ export default function PepcoLabPage() {
         </div>
       </section>
 
+
       {/* ── Research Stacks ── */}
-      <section style={{ background: "#0A0A0A", padding: "clamp(80px,10vw,140px) 0" }}>
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,4vw,60px)" }}>
-          <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(50px,6vw,90px)" }}>
+      <section style={{ background: "#0A0A0A", padding: "clamp(60px,8vw,140px) 0" }}>
+        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px,4vw,60px)" }}>
+          <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(40px,6vw,90px)" }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.35)", marginBottom: 16 }}>Research Stacks</div>
-            <h2 style={{ fontSize: "clamp(40px,6vw,84px)", lineHeight: ".92", letterSpacing: "-.07em", color: "#fff", fontWeight: 700, margin: "0 0 20px" }}>Purpose-built<br />compound stacks.</h2>
-            <p style={{ fontSize: 17, lineHeight: 1.85, color: "rgba(255,255,255,.55)", maxWidth: 520 }}>Curated combinations, independently tested, bundled for specific research objectives. 10% saving versus individual pricing.</p>
+            <h2 style={{ fontSize: "clamp(36px,6vw,84px)", lineHeight: ".92", letterSpacing: "-.07em", color: "#fff", fontWeight: 700, margin: "0 0 16px" }}>Purpose-built<br />compound stacks.</h2>
+            <p style={{ fontSize: "clamp(14px,2vw,17px)", lineHeight: 1.85, color: "rgba(255,255,255,.55)", maxWidth: 520 }}>Curated combinations, independently tested, bundled for specific research objectives. 10% saving versus individual pricing.</p>
           </FadeUp>
 
           {products.length < 3 ? (
             <div className="stacks-grid">
-              {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:28, height:480, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
+              {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:28, height:420, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
             </div>
           ) : (
             <div className="stacks-grid">
               {BUNDLES.map((b, bi) => (
                 <FadeUp key={b.id} delay={bi * 0.1}>
-                  <div className="stack-card" style={{ background: "#111111", border: "1px solid rgba(255,255,255,.07)", borderRadius: 28, overflow: "hidden", height: "100%" }}>
-                    {/* Visual */}
-                    <div style={{ background: "#161616", padding: "40px 30px", display: "flex", alignItems: "center", justifyContent: "center", gap: 28, minHeight: 220, position: "relative", overflow: "hidden" }}>
-                      <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse at 50% 120%, ${b.products[0]?.from ?? "#3b82f6"}22, transparent 60%)` }} />
+                  <div className="stack-card" style={{ background: "#111111", border: "1px solid rgba(255,255,255,.07)", borderRadius: 24, overflow: "hidden" }}>
+
+                    {/* Visual — uniform square tiles, no size mismatch */}
+                    <div style={{
+                      background: "#161616",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 20,
+                      padding: "32px 24px",
+                      minHeight: 180,
+                      position: "relative",
+                      overflow: "hidden",
+                    }}>
+                      <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse at 50% 110%, ${b.products[0]?.from ?? "#3b82f6"}28, transparent 65%)` }} />
                       {b.products.map((p, pi) => (
-                        p.image
-                          ? <div key={p.id} style={{ width:80, height:80, borderRadius:14, overflow:"hidden", background:"#1e1e1e", flexShrink:0, position:"relative", zIndex:1 }}>
-                              <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", padding:6 }} />
-                            </div>
-                          : <div key={p.id} style={{ animation:`floatVial 3s ease ${pi*.4}s infinite`, position:"relative", zIndex:1 }}>
-                              <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="lg" />
-                            </div>
+                        <div key={p.id} style={{
+                          width: 72, height: 72,
+                          borderRadius: 14,
+                          overflow: "hidden",
+                          background: "rgba(255,255,255,.06)",
+                          flexShrink: 0,
+                          position: "relative", zIndex: 1,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          animation: `floatVial 3s ease ${pi * .4}s infinite`,
+                        }}>
+                          {p.image
+                            ? <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", padding:6 }} />
+                            : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="md" />
+                          }
+                        </div>
                       ))}
                     </div>
 
-                    <div style={{ padding: "28px 28px 32px" }}>
+                    <div style={{ padding: "22px 22px 26px" }}>
                       {/* Compound pills */}
-                      <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:16 }}>
+                      <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
                         {b.products.map(p => (
-                          <span key={p.id} style={{ fontSize:10, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", background:"rgba(255,255,255,.07)", color:"rgba(255,255,255,.5)", padding:"4px 10px", borderRadius:999 }}>{p.shortName}</span>
+                          <span key={p.id} style={{ fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", background:"rgba(255,255,255,.07)", color:"rgba(255,255,255,.45)", padding:"3px 9px", borderRadius:999 }}>{p.shortName}</span>
                         ))}
-                        <span style={{ fontSize:10, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", background:"rgba(200,153,42,.15)", color:"#C8992A", padding:"4px 10px", borderRadius:999 }}>Save 10%</span>
+                        <span style={{ fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", background:"rgba(200,153,42,.15)", color:"#C8992A", padding:"3px 9px", borderRadius:999 }}>Save 10%</span>
                       </div>
 
-                      <h3 style={{ fontSize:28, lineHeight:1, letterSpacing:"-.05em", color:"#fff", margin:"0 0 12px", fontWeight:700 }}>{b.name}</h3>
-                      <p style={{ color:"rgba(255,255,255,.55)", lineHeight:1.8, fontSize:14, margin:"0 0 24px", minHeight:64 }}>{b.desc}</p>
+                      <h3 style={{ fontSize:"clamp(20px,4vw,26px)", lineHeight:1.05, letterSpacing:"-.04em", color:"#fff", margin:"0 0 10px", fontWeight:700 }}>{b.name}</h3>
+                      <p style={{ color:"rgba(255,255,255,.5)", lineHeight:1.75, fontSize:13, margin:"0 0 20px" }}>{b.desc}</p>
 
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:20, borderTop:"1px solid rgba(255,255,255,.07)" }}>
-                        <div>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
-                            <span style={{ fontSize:28, fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>£{b.price}</span>
-                            <span style={{ fontSize:14, color:"rgba(255,255,255,.3)", textDecoration:"line-through" }}>£{b.originalPrice}</span>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, paddingTop:18, borderTop:"1px solid rgba(255,255,255,.07)" }}>
+                        <div style={{ minWidth:0 }}>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:7, flexWrap:"wrap" }}>
+                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>£{b.price}</span>
+                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>£{b.originalPrice}</span>
                           </div>
-                          <div style={{ fontSize:11, color:"rgba(255,255,255,.3)", marginTop:2 }}>{b.products.length} compounds · COA included</div>
+                          <div style={{ fontSize:11, color:"rgba(255,255,255,.28)", marginTop:2 }}>{b.products.length} compounds · COA included</div>
                         </div>
                         <button
                           onClick={() => addBundleToCart(b)}
-                          style={{ height:46, padding:"0 20px", borderRadius:999, border:"1px solid rgba(255,255,255,.14)", background:"rgba(255,255,255,.06)", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", letterSpacing:".06em", transition:".2s ease" }}
+                          style={{ height:40, padding:"0 16px", borderRadius:999, border:"1px solid rgba(255,255,255,.14)", background:"rgba(255,255,255,.06)", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", letterSpacing:".04em", transition:".2s ease", whiteSpace:"nowrap", flexShrink:0 }}
                           onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.12)"; }}
                           onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.06)"; }}
                         >
@@ -358,7 +378,7 @@ export default function PepcoLabPage() {
       {/* ── Why Pepco — 4-up diff strip ── */}
       <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
-          <FadeUp style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:40, marginBottom:64, alignItems:"end" }}>
+          <FadeUp style={{ gap:40, marginBottom:64, alignItems:"end" }}>
             <div>
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.38)", marginBottom:16 }}>Why Researchers Choose Pepco</div>
               <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#0D0D0D" }}>Standards you<br />can verify.</h2>
@@ -381,16 +401,6 @@ export default function PepcoLabPage() {
                 </div>
               ))}
             </div>
-          </FadeUp>
-
-          {/* Stats row */}
-          <FadeUp delay={0.2} style={{ display:"grid", gridTemplateColumns:"repeat(4,minmax(0,1fr))", gap:24, marginTop:56, paddingTop:48, borderTop:"1px solid rgba(13,13,13,.08)" }}>
-            {[["99%+","Verified Purity"],["2,400+","Researchers"],["24hr","Cold Dispatch"],["100%","Batch Transparency"]].map(([v,l]) => (
-              <div key={l}>
-                <div style={{ fontSize:"clamp(32px,4vw,52px)", fontWeight:700, letterSpacing:"-.06em", color:"#0D0D0D", marginBottom:6 }}>{v}</div>
-                <div style={{ fontSize:11, letterSpacing:".12em", textTransform:"uppercase", color:"rgba(13,13,13,.4)" }}>{l}</div>
-              </div>
-            ))}
           </FadeUp>
         </div>
       </section>
@@ -444,98 +454,103 @@ export default function PepcoLabPage() {
         </div>
       </section>
 
-      {/* ── Research Spotlight — dynamic from Shopify products[0] + [1] ── */}
-      {p1 && p2 && (
-        <section style={{ background:"#F7F5F1", padding:"clamp(80px,10vw,140px) 0", borderBottom:"1px solid rgba(13,13,13,.06)" }}>
-          <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
-            <div className="spotlight-grid">
+{/* ── Research Spotlight ── */}
+{p1 && p2 && (
+  <section style={{ background:"#F7F5F1", padding:"clamp(60px,8vw,140px) 0", borderBottom:"1px solid rgba(13,13,13,.06)" }}>
+    <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(16px,5vw,60px)" }}>
 
-              {/* LEFT */}
-              <FadeUp>
-                <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.38)", marginBottom:18 }}>Research Spotlight</div>
-                <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#0D0D0D", margin:"0 0 24px" }}>
-                  {p1.shortName} &<br />{p2.shortName}
-                </h2>
-                <p style={{ fontSize:17, lineHeight:1.9, color:"rgba(13,13,13,.58)", maxWidth:520, marginBottom:40 }}>
-                  {p1.description
-                    ? p1.description.slice(0,200).trim() + (p1.description.length > 200 ? "…" : "")
-                    : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
-                </p>
+      {/* Label */}
+      <FadeUp>
+        <div style={{ fontSize:10, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:14 }}>Research Spotlight</div>
+        <h2 style={{ fontSize:"clamp(32px,6vw,80px)", lineHeight:".92", letterSpacing:"-.06em", fontWeight:700, color:"#0D0D0D", margin:"0 0 clamp(32px,5vw,60px)" }}>
+          {p1.shortName} &amp;<br />{p2.shortName}
+        </h2>
+      </FadeUp>
 
-                {/* Stats */}
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:24, marginBottom:40, maxWidth:480 }}>
-                  {([
-                    [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
-                    ["COA", "Included"],
-                    ["24hr", "Dispatch"],
-                  ] as [string,string][]).map(([v,l]) => (
-                    <div key={l}>
-                      <div style={{ fontSize:isMobile?24:34, fontWeight:700, letterSpacing:"-.05em", color:"#0D0D0D", marginBottom:4 }}>{v}</div>
-                      <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"rgba(13,13,13,.4)" }}>{l}</div>
-                    </div>
-                  ))}
+      {/* Product cards — stacked on mobile, side by side on desktop */}
+      <FadeUp delay={0.05} style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"clamp(12px,2vw,20px)", marginBottom:"clamp(28px,4vw,48px)" }}>
+        {[p1, p2].map((p, i) => (
+          <div key={p.id} style={{
+            background:"#fff",
+            border:"1px solid rgba(13,13,13,.07)",
+            borderRadius:"clamp(16px,2vw,24px)",
+            overflow:"hidden",
+          }}>
+            {/* Image */}
+            <div style={{
+              aspectRatio:"1/1",
+              background:"linear-gradient(145deg,#FCFBF8,#EDE9E0)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              position:"relative", overflow:"hidden",
+              padding: 16,
+            }}>
+              <div style={{ position:"absolute", width:"70%", height:"70%", borderRadius:"50%", background:`radial-gradient(circle,${p.color.vialFrom}20,transparent 65%)`, top:"50%", left:"50%", transform:"translate(-50%,-50%)" }} />
+              {p.image ? (
+                <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", position:"relative", zIndex:1 }} />
+              ) : (
+                <div style={{ position:"relative", zIndex:1, animation:`floatVial ${3+i*.4}s ease ${i*.3}s infinite` }}>
+                  <Vial fromColor={p.color.vialFrom} toColor={p.color.vialTo} mg={p.mg} size={isMobile?"md":"lg"} />
                 </div>
-
-                <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-                  <button onClick={() => addToCart(p1)} disabled={!p1.inStock}
-                    style={{ height:52, padding:"0 28px", borderRadius:999, border:"none", background:"#0D0D0D", color:"#fff", fontSize:13, fontWeight:700, cursor:p1.inStock?"pointer":"not-allowed", opacity:p1.inStock?1:.45, letterSpacing:".04em" }}>
-                    {p1.inStock ? `Add ${p1.shortName}` : "Out of Stock"}
-                  </button>
-                  <button onClick={() => addToCart(p2)} disabled={!p2.inStock}
-                    style={{ height:52, padding:"0 24px", borderRadius:999, background:"transparent", border:"1.5px solid rgba(13,13,13,.15)", color:"#0D0D0D", fontSize:13, fontWeight:700, cursor:p2.inStock?"pointer":"not-allowed", opacity:p2.inStock?1:.45 }}>
-                    {p2.inStock ? `Add ${p2.shortName}` : "Out of Stock"}
-                  </button>
+              )}
+              {p.purity && (
+                <div style={{ position:"absolute", top:10, right:10, background:"rgba(255,255,255,.95)", backdropFilter:"blur(8px)", padding:"4px 8px", borderRadius:8, border:"1px solid #eee" }}>
+                  <div style={{ fontSize:7, color:"#aaa", fontWeight:700, textTransform:"uppercase", letterSpacing:".1em" }}>Purity</div>
+                  <div style={{ fontSize:13, fontWeight:800, color:"#0d0d0d", lineHeight:1 }}>{p.purity}%</div>
                 </div>
-                <div style={{ marginTop:20, fontSize:11, lineHeight:1.7, color:"rgba(13,13,13,.35)" }}>For laboratory and research purposes only. Not for human consumption.</div>
-              </FadeUp>
-
-              {/* RIGHT */}
-              <FadeUp delay={0.15}>
-                <div style={{ background:"#fff", border:"1px solid rgba(13,13,13,.07)", borderRadius:32, overflow:"hidden" }}>
-                  {/* Image / vial area */}
-                  <div style={{ minHeight:isMobile?280:460, display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(160deg,#FCFBF8,#EDE9E0)", position:"relative", padding:32 }}>
-                    <div style={{ position:"absolute", width:280, height:280, borderRadius:"50%", background:`radial-gradient(circle,${p1.color.vialFrom}18,transparent 65%)`, top:"50%", left:"50%", transform:"translate(-50%,-50%)" }} />
-                    {p1.image && p2.image ? (
-                      <div style={{ display:"flex", gap:20, position:"relative", zIndex:1 }}>
-                        {[p1,p2].map((p,pi) => (
-                          <div key={p.id} style={{ width:isMobile?110:160, height:isMobile?110:160, borderRadius:18, overflow:"hidden", background:"#f4f1ea", border:"1px solid rgba(13,13,13,.06)", flexShrink:0, animation:`floatVial ${3+pi*.5}s ease ${pi*.3}s infinite` }}>
-                            <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", padding:10 }} />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ display:"flex", gap:32, position:"relative", zIndex:1 }}>
-                        <div style={{ animation:"floatVial 3s ease 0s infinite" }}><Vial fromColor={p1.color.vialFrom} toColor={p1.color.vialTo} mg={p1.mg} size="lg"/></div>
-                        <div style={{ animation:"floatVial 3s ease .4s infinite" }}><Vial fromColor={p2.color.vialFrom} toColor={p2.color.vialTo} mg={p2.mg} size="lg"/></div>
-                      </div>
-                    )}
-                    {/* Purity badges */}
-                    {[p1,p2].map((p,i) => p.purity ? (
-                      <div key={p.id} style={{ position:"absolute", top:14, ...(i===0?{left:14}:{right:14}), background:"rgba(255,255,255,.95)", backdropFilter:"blur(10px)", padding:"6px 11px", borderRadius:10, boxShadow:"0 4px 16px rgba(0,0,0,.07)", border:"1px solid #eee" }}>
-                        <div style={{ fontSize:8, color:"#aaa", fontWeight:700, textTransform:"uppercase", letterSpacing:".1em" }}>Purity</div>
-                        <div style={{ fontSize:15, fontWeight:800, color:"#0d0d0d", lineHeight:1 }}>{p.purity}%</div>
-                      </div>
-                    ) : null)}
-                  </div>
-                  {/* Card footer */}
-                  <div style={{ padding:"24px 28px", borderTop:"1px solid rgba(13,13,13,.06)" }}>
-                    <div style={{ fontSize:11, fontWeight:700, letterSpacing:".12em", textTransform:"uppercase", color:"rgba(13,13,13,.4)", marginBottom:8 }}>Featured Combination</div>
-                    <div style={{ fontSize:22, fontWeight:700, letterSpacing:"-.04em", color:"#0D0D0D", marginBottom:10 }}>{p1.shortName} + {p2.shortName}</div>
-                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
-                      <span style={{ fontSize:20, fontWeight:700, color:"#0D0D0D" }}>£{(p1.price + p2.price).toFixed(2)}</span>
-                      <span style={{ fontSize:12, color:"rgba(13,13,13,.4)" }}>Both compounds · COA included</span>
-                    </div>
-                    <div style={{ fontSize:13, lineHeight:1.7, color:"rgba(13,13,13,.5)" }}>
-                      {p1.lot && p2.lot ? `Batch ${p1.lot} & ${p2.lot} — QR-linked certificates, cold-chain standards.` : "QR-linked certificates, cold-chain handling, full batch traceability."}
-                    </div>
-                  </div>
-                </div>
-              </FadeUp>
-
+              )}
+            </div>
+            {/* Info */}
+            <div style={{ padding:"clamp(12px,2vw,20px)" }}>
+              <div style={{ fontSize:9, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:6 }}>{p.category || "Research Compound"}</div>
+              <div style={{ fontSize:"clamp(13px,2.5vw,18px)", fontWeight:700, letterSpacing:"-.03em", color:"#0d0d0d", marginBottom:8, lineHeight:1.1 }}>{p.shortName}</div>
+              <div style={{ fontSize:"clamp(16px,3vw,22px)", fontWeight:700, color:"#0d0d0d", marginBottom:12 }}>£{p.price.toFixed(2)}</div>
+              <button
+                onClick={() => addToCart(p)}
+                disabled={!p.inStock}
+                style={{
+                  width:"100%", height:"clamp(38px,5vw,46px)",
+                  borderRadius:999, border:"none",
+                  background: p.inStock ? "#0d0d0d" : "rgba(13,13,13,.08)",
+                  color: p.inStock ? "#fff" : "rgba(13,13,13,.3)",
+                  fontSize:"clamp(11px,1.8vw,13px)", fontWeight:700,
+                  cursor: p.inStock ? "pointer" : "not-allowed",
+                  letterSpacing:".04em",
+                }}
+              >
+                {p.inStock ? `Add ${p.shortName}` : "Out of Stock"}
+              </button>
             </div>
           </div>
-        </section>
-      )}
+        ))}
+      </FadeUp>
+
+      {/* Stats row */}
+      <FadeUp delay={0.1} style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"clamp(12px,3vw,32px)", marginBottom:"clamp(24px,4vw,40px)", paddingTop:"clamp(24px,4vw,40px)", borderTop:"1px solid rgba(13,13,13,.08)" }}>
+        {([
+          [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
+          ["COA", "Included"],
+          ["24hr", "Dispatch"],
+        ] as [string,string][]).map(([v,l]) => (
+          <div key={l}>
+            <div style={{ fontSize:"clamp(22px,4vw,40px)", fontWeight:700, letterSpacing:"-.05em", color:"#0D0D0D", marginBottom:4 }}>{v}</div>
+            <div style={{ fontSize:"clamp(9px,1.2vw,11px)", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(13,13,13,.4)" }}>{l}</div>
+          </div>
+        ))}
+      </FadeUp>
+
+      {/* Description + disclaimer */}
+      <FadeUp delay={0.15}>
+        <p style={{ fontSize:"clamp(14px,2vw,17px)", lineHeight:1.85, color:"rgba(13,13,13,.55)", maxWidth:600, marginBottom:12 }}>
+          {p1.description
+            ? p1.description.slice(0,180).trim() + (p1.description.length > 180 ? "…" : "")
+            : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
+        </p>
+        <div style={{ fontSize:11, color:"rgba(13,13,13,.3)", lineHeight:1.6 }}>For laboratory and research purposes only. Not for human consumption.</div>
+      </FadeUp>
+
+    </div>
+  </section>
+)}
 
       {/* ── Research Areas — abstract gradient tiles ── */}
       <section style={{ background:"#0A0A0A", padding:"clamp(80px,10vw,140px) 0" }}>
@@ -587,7 +602,7 @@ export default function PepcoLabPage() {
               { title:"Research Tracking",      desc:"Full order history, COAs, batch verification anytime." },
               { title:"Priority Alerts",        desc:"Instant notifications for restocks and new compounds." },
             ].map((b) => (
-              <div key={b.title} style={{ background:"#111", padding:"28px 22px" }}>
+              <div key={b.title} style={{ background:"#111", padding:"28px 8px" }}>
                 <div style={{ fontSize:15, fontWeight:700, letterSpacing:"-.02em", color:"#fff", marginBottom:10 }}>{b.title}</div>
                 <div style={{ fontSize:13, lineHeight:1.75, color:"rgba(255,255,255,.4)" }}>{b.desc}</div>
                 <div style={{ marginTop:24, width:32, height:1, background:"rgba(255,255,255,.1)" }} />
@@ -603,43 +618,126 @@ export default function PepcoLabPage() {
       </section>
 
       {/* ── Newsletter ── */}
-      <section style={{ background:"#FAFAF8", padding:"clamp(60px,7vw,100px) 0" }}>
-        <div style={{ maxWidth:1240, margin:"0 auto", padding:"0 clamp(16px,3vw,32px)" }}>
+      <section style={{ background: "#FAFAF8", padding: "clamp(48px,6vw,100px) 0" }}>
+        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 clamp(16px,3vw,32px)" }}>
           <FadeUp>
-            <div style={{ background:"#0d0d0d", borderRadius:36, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:0 }}>
-                {/* LEFT */}
-                <div style={{ padding:isMobile?"40px 28px":"64px 60px", borderRight:isMobile?"none":"1px solid rgba(255,255,255,.08)" }}>
-                  <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.3)", marginBottom:16 }}>Research Updates</div>
-                  <h2 style={{ fontSize:"clamp(32px,4vw,56px)", lineHeight:".95", letterSpacing:"-.06em", fontWeight:700, color:"#fff", margin:"0 0 16px" }}>Stay ahead of<br />new releases.</h2>
-                  <p style={{ fontSize:15, lineHeight:1.85, color:"rgba(255,255,255,.45)", maxWidth:380 }}>Compound launches, batch COA updates, and fulfilment alerts — direct to your inbox. No noise.</p>
+            <div style={{ background: "#0d0d0d", borderRadius: 32, overflow: "hidden" }}>
+
+              {/* Main content */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                gap: 0,
+              }}>
+
+                {/* LEFT — headline only, tight */}
+                <div style={{
+                  padding: isMobile ? "36px 28px 24px" : "60px 56px",
+                  borderBottom: isMobile ? "1px solid rgba(255,255,255,.07)" : "none",
+                  borderRight: isMobile ? "none" : "1px solid rgba(255,255,255,.07)",
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.28)", marginBottom: 14 }}>
+                    Research Updates
+                  </div>
+                  <h2 style={{ fontSize: isMobile ? 32 : "clamp(32px,3.5vw,52px)", lineHeight: ".95", letterSpacing: "-.06em", fontWeight: 700, color: "#fff", margin: "0 0 14px" }}>
+                    Stay ahead of<br />new releases.
+                  </h2>
+                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "rgba(255,255,255,.4)", margin: 0, maxWidth: 340 }}>
+                    Compound launches, COA updates, and fulfilment alerts — direct to your inbox.
+                  </p>
                 </div>
-                {/* RIGHT */}
-                <div style={{ padding:isMobile?"0 28px 40px":"64px 60px", display:"flex", flexDirection:"column", justifyContent:"center", gap:16 }}>
-                  {["New compound launches","Batch-specific COA updates","Research announcements","Fulfilment & availability alerts"].map(item => (
-                    <div key={item} style={{ display:"flex", alignItems:"center", gap:12, fontSize:14, color:"rgba(255,255,255,.6)" }}>
-                      <div style={{ width:6, height:6, borderRadius:"50%", background:"#C8992A", flexShrink:0 }} />{item}
+
+                {/* RIGHT — form only, no bullet list on mobile */}
+                <div style={{
+                  padding: isMobile ? "24px 28px 32px" : "60px 56px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  gap: 12,
+                }}>
+
+                  {/* Bullets — hidden on mobile, shown on desktop */}
+                  {!isMobile && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 8 }}>
+                      {["New compound launches", "Batch-specific COA updates", "Research announcements", "Fulfilment & availability alerts"].map(item => (
+                        <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "rgba(255,255,255,.55)" }}>
+                          <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#C8992A", flexShrink: 0 }} />
+                          {item}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  <div style={{ display:"flex", gap:10, marginTop:8, flexDirection:isMobile?"column":"row" }}>
-                    <input type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)}
-                      style={{ flex:1, height:52, borderRadius:999, border:"1px solid rgba(255,255,255,.12)", padding:"0 20px", fontSize:14, outline:"none", background:"rgba(255,255,255,.06)", color:"#fff" }} />
-                    <button onClick={() => { if (email.includes("@")) { setSubbed(true); setEmail(""); } }}
-                      style={{ height:52, padding:"0 24px", borderRadius:999, border:"none", background:"#C8992A", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
-                      {subbed ? "✓ Subscribed" : "Get Updates"}
+                  )}
+
+                  {/* Email row — side by side even on mobile */}
+                  <div className="flex lg:flex-row flex-col" style={{ gap: 8 }}>
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      style={{
+                        flex: 1,
+                        minHeight: 48,
+                        width: "100%",
+                        borderRadius: 999,
+                        border: "1px solid rgba(255,255,255,.1)",
+                        padding: "0 18px",
+                        fontSize: 13,
+                        outline: "none",
+                        background: "rgba(255,255,255,.06)",
+                        color: "#fff",
+                        minWidth: 0,
+                      }}
+                    />
+                    <button
+                      onClick={() => { if (email.includes("@")) { setSubbed(true); setEmail(""); } }}
+                      style={{
+                        height: 48,
+                        padding: "0 20px",
+                        borderRadius: 999,
+                        border: "none",
+                        background: subbed ? "#0A7B45" : "#C8992A",
+                        color: "#fff",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        transition: "background .2s",
+                      }}
+                    >
+                      {subbed ? "✓ Done" : "Subscribe"}
                     </button>
                   </div>
-                  <div style={{ fontSize:11, color:"rgba(255,255,255,.25)", lineHeight:1.6 }}>No spam. Unsubscribe anytime.</div>
+
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.22)", lineHeight: 1.5 }}>
+                    No spam. Unsubscribe anytime.
+                  </div>
                 </div>
               </div>
-              <div style={{ borderTop:"1px solid rgba(255,255,255,.07)", padding:"18px 28px", display:"flex", gap:24, flexWrap:"wrap", justifyContent:"space-between", alignItems:"center" }}>
-                <div style={{ fontSize:12, color:"rgba(255,255,255,.3)" }}>Trusted by 2,400+ researchers across the UK.</div>
-                <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
-                  {["Independent Testing","Published COAs","Cold-Chain Fulfilment"].map(item => (
-                    <span key={item} style={{ fontSize:11, fontWeight:600, color:"rgba(255,255,255,.25)", letterSpacing:".06em", textTransform:"uppercase" }}>{item}</span>
-                  ))}
+
+              {/* Footer bar */}
+              <div style={{
+                borderTop: "1px solid rgba(255,255,255,.07)",
+                padding: "14px 28px",
+                display: "flex",
+                gap: 16,
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,.25)" }}>
+                  Trusted by 2,400+ researchers across the UK.
                 </div>
+                {!isMobile && (
+                  <div style={{ display: "flex", gap: 18 }}>
+                    {["Independent Testing", "Published COAs", "Cold-Chain Fulfilment"].map(item => (
+                      <span key={item} style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.2)", letterSpacing: ".08em", textTransform: "uppercase" }}>{item}</span>
+                    ))}
+                  </div>
+                )}
               </div>
+
             </div>
           </FadeUp>
         </div>

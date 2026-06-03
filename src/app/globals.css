@@ -410,3 +410,9 @@ h1, h2, h3, h4, h5 {
 .shopify-desc tr:hover td {
   background: #FAFBFF;
 }
+
+@media (max-width: 768px) {
+  .product-card-desc {
+    display: none !important;
+  }
+}

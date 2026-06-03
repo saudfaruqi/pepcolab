@@ -1,7 +1,3 @@
-
-
-// ProductCard.tsx
-
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -45,234 +41,238 @@ export default function ProductCard({ product: p, featured = false }: Props) {
       onMouseLeave={() => setHovered(false)}
       style={{
         position: 'relative',
-        background: '#f7f5f1',
-        borderRadius: 16,
+        background: '#fff',
+        borderRadius: 20,
         width: '100%',
         overflow: 'hidden',
+        border: '1px solid rgba(13,13,13,.07)',
         transition: 'transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0px)',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
         boxShadow: hovered
-          ? '0 16px 40px rgba(0,0,0,.09)'
-          : '0 2px 12px rgba(0,0,0,.04)',
+          ? '0 20px 48px rgba(0,0,0,.10)'
+          : '0 2px 8px rgba(0,0,0,.04)',
       }}
     >
-{/* ── Image / Vial area ── */}
-<Link href={`/products/${p.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
-  <div
-    style={{
-      position: 'relative',
-      height: 'clamp(160px, 30vw, 240px)',
-      width: '100%',
-      overflow: 'hidden',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: p.image
-        ? 'transparent'
-        : `radial-gradient(circle at top, rgba(255,255,255,.9), transparent 45%),
-           linear-gradient(to bottom, ${p.color.bg}, #f7f5f1)`,
-    }}
-  >
-    {p.image ? (
-      // ── Shopify product image ──
-      <img
-        src={p.image}
-        alt={p.imageAlt ?? p.name}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block',
-          transform: hovered ? 'scale(1.04)' : 'scale(1)',
-          transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
-        }}
-      />
-    ) : (
-      // ── Fallback vial ──
-      <>
+      {/* ── Image / Vial area ── */}
+      <Link href={`/products/${p.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
         <div
           style={{
-            position: 'absolute',
-            top: 12, left: 14,
-            fontSize: 'clamp(28px, 6vw, 42px)',
-            fontWeight: 700,
-            letterSpacing: '-.08em',
-            color: 'rgba(13,13,13,.04)',
-            lineHeight: 1,
-            userSelect: 'none',
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '1 / 1',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: p.image
+              ? '#f7f5f1'
+              : `linear-gradient(145deg, ${p.color.bg ?? '#eef2fd'}, #f0f0f8)`,
           }}
         >
-          0{p.id}
-        </div>
-        <div
-          style={{
-            transform: hovered ? 'translateY(-6px) scale(1.04)' : 'translateY(0) scale(1)',
-            transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
-          }}
-        >
-          <Vial
-            fromColor={p.color.vialFrom}
-            toColor={p.color.vialTo}
-            mg={p.mg}
-            size="lg"
-          />
-        </div>
-      </>
-    )}
+          {p.image ? (
+            <img
+              src={p.image}
+              alt={p.imageAlt ?? p.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                padding: '12px',
+                display: 'block',
+                transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
+              }}
+            />
+          ) : (
+            /* Vial fallback — centered, constrained, no watermark bleed */
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+                transform: hovered ? 'translateY(-4px) scale(1.04)' : 'translateY(0) scale(1)',
+                transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
+              }}
+            >
+              {/* subtle glow behind vial */}
+              <div style={{
+                position: 'absolute',
+                width: '60%',
+                height: '60%',
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${p.color.vialFrom ?? '#3b82f6'}30, transparent 70%)`,
+                filter: 'blur(20px)',
+              }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <Vial
+                  fromColor={p.color.vialFrom}
+                  toColor={p.color.vialTo}
+                  mg={p.mg}
+                  size="xl"
+                />
+              </div>
+            </div>
+          )}
 
-    {/* badge — always on top */}
-    {p.badge && (
-      <div
-        style={{
-          position: 'absolute',
-          top: 12, right: 12,
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: '.12em',
-          textTransform: 'uppercase',
-          color: p.image ? '#fff' : 'rgba(13,13,13,.42)',
-          background: p.image ? 'rgba(0,0,0,.45)' : 'transparent',
-          padding: p.image ? '3px 8px' : '0',
-          borderRadius: p.image ? 4 : 0,
-        }}
-      >
-        {p.badge}
-      </div>
-    )}
+          {/* Badge */}
+          {p.badge && (
+            <div style={{
+              position: 'absolute',
+              top: 10, right: 10,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '.1em',
+              textTransform: 'uppercase',
+              color: '#fff',
+              background: 'rgba(13,13,13,.55)',
+              backdropFilter: 'blur(6px)',
+              padding: '3px 9px',
+              borderRadius: 6,
+            }}>
+              {p.badge}
+            </div>
+          )}
 
-    {/* out of stock overlay */}
-    {!p.inStock && (
-      <div
-        style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(245,245,243,.7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <span
-          style={{
-            fontSize: 11, fontWeight: 700,
-            letterSpacing: '.1em', textTransform: 'uppercase',
-            color: 'rgba(13,13,13,.45)',
-            background: 'rgba(255,255,255,.85)',
-            padding: '5px 14px',
-          }}
-        >
-          Out of stock
-        </span>
-      </div>
-    )}
-  </div>
-</Link>
+          {/* Purity chip */}
+          {p.purity && (
+            <div style={{
+              position: 'absolute',
+              bottom: 10, left: 10,
+              fontSize: 10,
+              fontWeight: 700,
+              color: '#0d0d0d',
+              background: 'rgba(255,255,255,.9)',
+              backdropFilter: 'blur(8px)',
+              padding: '4px 9px',
+              borderRadius: 8,
+              letterSpacing: '.04em',
+              border: '1px solid rgba(13,13,13,.06)',
+            }}>
+              {p.purity}% pure
+            </div>
+          )}
+
+          {/* Out of stock overlay */}
+          {!p.inStock && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'rgba(245,245,243,.75)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                letterSpacing: '.12em', textTransform: 'uppercase',
+                color: 'rgba(13,13,13,.5)',
+                background: 'rgba(255,255,255,.9)',
+                padding: '5px 14px',
+                borderRadius: 6,
+              }}>
+                Out of stock
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
 
       {/* ── Content ── */}
-      <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
-        {/* category */}
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: '.14em',
-            textTransform: 'uppercase',
-            color: 'rgba(13,13,13,.34)',
-            marginBottom: 8,
-          }}
-        >
+      <div style={{ padding: '12px 6px 14px' }}>
+
+        {/* Category */}
+        <div style={{
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '.14em',
+          textTransform: 'uppercase',
+          color: 'rgba(13,13,13,.32)',
+          marginBottom: 6,
+        }}>
           {p.category}
         </div>
 
-        {/* name */}
+        {/* Name */}
         <Link href={`/products/${p.slug}`} style={{ textDecoration: 'none' }}>
-          <h3
-            style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: 'clamp(18px, 4vw, 24px)',
-              lineHeight: 1.05,
-              letterSpacing: '-.04em',
-              color: '#0d0d0d',
-              margin: '0 0 6px',
-            }}
-          >
+          <h3 style={{
+            fontSize: 'clamp(16px, 3.5vw, 22px)',
+            lineHeight: 1.1,
+            letterSpacing: '-.03em',
+            color: '#0d0d0d',
+            margin: '0 0 14px',
+          }}>
             {p.name}
           </h3>
         </Link>
 
-        {/* description – hidden on very small cards */}
-        <p
-          style={{
-            fontSize: 12.5,
-            lineHeight: 1.6,
-            color: 'rgba(13,13,13,.52)',
-            margin: '0 0 16px',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
+        {/* Description — hidden on mobile via CSS */}
+        <p className="product-card-desc" style={{
+          fontSize: 12,
+          lineHeight: 1.65,
+          color: 'rgba(13,13,13,.5)',
+          margin: '0 0 14px',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}>
           {p.description}
         </p>
 
-        {/* footer row */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          {/* price */}
+        {/* Footer */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 6,
+        }}>
           <div>
             {p.oldPrice && (
-              <span
-                style={{
-                  fontSize: 12,
-                  color: 'rgba(13,13,13,.3)',
-                  textDecoration: 'line-through',
-                  display: 'block',
-                  marginBottom: 2,
-                }}
-              >
+              <span style={{
+                fontSize: 11,
+                color: 'rgba(13,13,13,.28)',
+                textDecoration: 'line-through',
+                display: 'block',
+                marginBottom: 1,
+              }}>
                 £{p.oldPrice.toFixed(2)}
               </span>
             )}
-            <span
-              style={{
-                fontFamily: 'Georgia, serif',
-                fontSize: 'clamp(22px, 5vw, 28px)',
-                fontWeight: 700,
-                lineHeight: 1,
-                color: '#0d0d0d',
-              }}
-            >
+            <span style={{
+              fontSize: 'clamp(18px, 3w, 20px)',
+              fontWeight: 700,
+              lineHeight: 1,
+              color: '#0d0d0d',
+            }}>
               £{p.price.toFixed(2)}
             </span>
           </div>
 
-          {/* add to cart button */}
           <button
             onClick={handleAdd}
             disabled={!p.inStock}
             aria-label={added ? 'Added to cart' : `Add ${p.name} to cart`}
             style={{
-              width: 44,
-              height: 44,
-              minWidth: 44,
+              width: 40,
+              height: 40,
+              minWidth: 40,
               borderRadius: '50%',
               border: 'none',
-              background: added ? '#0A7B45' : !p.inStock ? 'rgba(13,13,13,.1)' : '#0d0d0d',
-              color: !p.inStock ? 'rgba(13,13,13,.3)' : '#fff',
+              background: added
+                ? '#0A7B45'
+                : !p.inStock
+                ? 'rgba(13,13,13,.08)'
+                : '#0d0d0d',
+              color: !p.inStock ? 'rgba(13,13,13,.25)' : '#fff',
               cursor: !p.inStock ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              transition: 'background .2s, transform .15s',
-              transform: hovered && p.inStock ? 'scale(1.06)' : 'scale(1)',
+              transition: 'background .2s ease, transform .2s ease',
+              transform: hovered && p.inStock && !added ? 'scale(1.08)' : 'scale(1)',
             }}
           >
-            {added ? <CheckCircle size={16} /> : <ShoppingCart size={16} />}
+            {added ? <CheckCircle size={13} /> : <ShoppingCart size={13} />}
           </button>
         </div>
       </div>

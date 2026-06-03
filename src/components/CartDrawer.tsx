@@ -87,7 +87,7 @@ export default function CartDrawer() {
           top: 0,
           right: 0,
           bottom: 0,
-          width: 'min(100vw,460px)',
+          width: '100%',
           background:
             'linear-gradient(to bottom,#fafaf9,#f5f5f3)',
           zIndex: 1001,
@@ -145,6 +145,9 @@ export default function CartDrawer() {
             <button
               onClick={closeCart}
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 width: 42,
                 height: 42,
                 borderRadius: '50%',
