@@ -297,7 +297,7 @@ export default function HeroCinematic() {
                   display: 'block',
                 }}
               >
-                <source src="/pepcolabvideo.mp4" type="video/mp4" />
+                <source src="/pepcovideo2.mp4" type="video/mp4" />
               </video>
 
               <div
