@@ -130,11 +130,11 @@ export default function ProductActions({ product: p }: Props) {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           {p.oldPrice && (
             <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#AAB3C8' }}>
-              AED{p.oldPrice.toFixed(2)}
+              AED {p.oldPrice.toFixed(2)}
             </span>
           )}
           <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.04em', color: '#0D0F14', lineHeight: 1 }}>
-            AED{p.price.toFixed(2)}
+            AED {p.price.toFixed(2)}
           </span>
         </div>
         {p.inStock ? (

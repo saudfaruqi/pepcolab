@@ -352,8 +352,8 @@ export default function PepcoLabPage() {
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, paddingTop:18, borderTop:"1px solid rgba(255,255,255,.07)" }}>
                         <div style={{ minWidth:0 }}>
                           <div style={{ display:"flex", alignItems:"baseline", gap:7, flexWrap:"wrap" }}>
-                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>AED{b.price}</span>
-                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>AED{b.originalPrice}</span>
+                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>AED {b.price}</span>
+                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>AED {b.originalPrice}</span>
                           </div>
                           <div style={{ fontSize:11, color:"rgba(255,255,255,.28)", marginTop:2 }}>{b.products.length} compounds · COA included</div>
                         </div>
@@ -503,7 +503,7 @@ export default function PepcoLabPage() {
             <div style={{ padding:"clamp(12px,2vw,20px)" }}>
               <div style={{ fontSize:9, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:6 }}>{p.category || "Research Compound"}</div>
               <div style={{ fontSize:"clamp(13px,2.5vw,18px)", fontWeight:700, letterSpacing:"-.03em", color:"#0d0d0d", marginBottom:8, lineHeight:1.1 }}>{p.shortName}</div>
-              <div style={{ fontSize:"clamp(16px,3vw,22px)", fontWeight:700, color:"#0d0d0d", marginBottom:12 }}>AED{p.price.toFixed(2)}</div>
+              <div style={{ fontSize:"clamp(16px,3vw,22px)", fontWeight:700, color:"#0d0d0d", marginBottom:12 }}>AED {p.price.toFixed(2)}</div>
               <button
                 onClick={() => addToCart(p)}
                 disabled={!p.inStock}

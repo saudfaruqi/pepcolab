@@ -123,7 +123,7 @@ export default function BundlesSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute top-3 right-3 text-[10px] font-semibold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    Save AED{bundle.save.toFixed(2)}
+                    Save AED {bundle.save.toFixed(2)}
                   </div>
                   <div className="absolute bottom-3 left-3 flex gap-1.5">
                     {prods.map((_, i) => (
@@ -139,7 +139,7 @@ export default function BundlesSection() {
                   <h3 className="text-[14.5px] font-medium text-[var(--ink)] group-hover:text-[var(--cobalt)] transition-colors mb-1">{bundle.name}</h3>
                   <p className="text-[12px] text-[var(--ink-30)] mb-4 flex-1">{bundle.desc}</p>
                   <div className="flex items-center justify-between">
-                    <span className="font-serif text-[19px] tracking-tight text-[var(--ink)]">AED{bundle.price.toFixed(2)}</span>
+                    <span className="font-serif text-[19px] tracking-tight text-[var(--ink)]">AED {bundle.price.toFixed(2)}</span>
                     <ArrowRight size={14} className="text-[var(--ink-30)] group-hover:text-[var(--cobalt)] group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </div>
