@@ -573,9 +573,6 @@ export default function PepcoLabPage() {
                     <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(255,255,255,.4)", marginBottom:40 }}>Research Area</div>
                     <h3 style={{ fontSize:isMobile?26:32, fontWeight:700, letterSpacing:"-.04em", color:"#fff", marginBottom:10, lineHeight:1 }}>{a.label}</h3>
                     <p style={{ fontSize:13, color:"rgba(255,255,255,.55)", marginBottom:28 }}>{a.sub}</p>
-                    <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700, color:"rgba(255,255,255,.6)", letterSpacing:".06em" }}>
-                      EXPLORE <span style={{ opacity:.5 }}>→</span>
-                    </div>
                   </div>
                 </div>
               </FadeUp>
