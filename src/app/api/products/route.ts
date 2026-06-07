@@ -14,20 +14,17 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   const { query, variables, buyerCountry } = await req.json()
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'X-Shopify-Storefront-Access-Token': TOKEN!,
-  }
-
-  // Safe to add here — this is a server-to-server request, no CORS preflight
-  if (buyerCountry) {
-    headers['Shopify-Storefront-Buyer-Country'] = buyerCountry
-  }
+  const contextualQuery = buyerCountry
+    ? query.replace(/^(\s*query\b)/, `$1 @inContext(country: ${buyerCountry})`)
+    : query
 
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ query, variables }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': TOKEN!,
+    },
+    body: JSON.stringify({ query: contextualQuery, variables }),
     cache: 'no-store',
   })
 

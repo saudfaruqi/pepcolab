@@ -27,19 +27,18 @@ export async function shopifyFetch<T = Record<string, unknown>>(
   const token = serverSide && PRIVATE_TOKEN ? PRIVATE_TOKEN : PUBLIC_TOKEN
   if (!token) throw new Error('Shopify access token is not configured')
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'X-Shopify-Storefront-Access-Token': token,
-  }
-
-  if (buyerCountry) {
-    headers['Shopify-Storefront-Buyer-Country'] = buyerCountry
-  }
+  // Inject @inContext into the query operation if a country is provided
+  const contextualQuery = buyerCountry
+    ? query.replace(/^(\s*query\b)/, `$1 @inContext(country: ${buyerCountry})`)
+    : query
 
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ query, variables }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': token,
+    },
+    body: JSON.stringify({ query: contextualQuery, variables }),
     ...(revalidate !== undefined ? { next: { revalidate } } : { cache: 'no-store' }),
   })
 
