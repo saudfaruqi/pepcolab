@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { ShoppingCart, Download, CheckCircle } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
+import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/app/data'
 
 interface Props { product: Product }
@@ -9,9 +10,12 @@ interface Props { product: Product }
 const TABS = ['Overview', 'Technical Specs', 'Storage', 'Disclaimer']
 
 export default function ProductActions({ product: p }: Props) {
-  const [added, setAdded] = useState(false)
+  const [added,     setAdded]     = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const { addItem } = useCart()
+
+  // Currency code embedded by normaliseProduct; fall back to "AED"
+  const currencyCode: string = (p as any).currencyCode ?? 'AED'
 
   const handleAdd = async () => {
     if (!p.inStock || added) return
@@ -80,11 +84,11 @@ export default function ProductActions({ product: p }: Props) {
         return (
           <div style={{ display: 'grid', gap: 8 }}>
             {[
-              { label: 'Short-term',        value: 'Refrigerate at 2–8°C' },
-              { label: 'Long-term',         value: 'Freeze at −20°C or below' },
+              { label: 'Short-term',           value: 'Refrigerate at 2–8°C' },
+              { label: 'Long-term',            value: 'Freeze at −20°C or below' },
               { label: 'After reconstitution', value: 'Use within 28 days, refrigerated' },
-              { label: 'Avoid',             value: 'Repeated freeze-thaw cycles' },
-              { label: 'Protect from',      value: 'Light and moisture' },
+              { label: 'Avoid',                value: 'Repeated freeze-thaw cycles' },
+              { label: 'Protect from',         value: 'Light and moisture' },
             ].map(({ label, value }) => (
               <div key={label} style={{
                 display: 'flex',
@@ -111,9 +115,7 @@ export default function ProductActions({ product: p }: Props) {
               'By purchasing, you confirm you are a qualified researcher and will use the product in compliance with all applicable laws.',
               'PepcoLab accepts no liability for misuse. All handling should be by trained personnel using appropriate safety equipment.',
             ].map((text, i) => (
-              <p key={i} style={{ fontSize: 12, lineHeight: 1.85, color: '#626A85', margin: 0 }}>
-                {text}
-              </p>
+              <p key={i} style={{ fontSize: 12, lineHeight: 1.85, color: '#626A85', margin: 0 }}>{text}</p>
             ))}
           </div>
         )
@@ -130,11 +132,11 @@ export default function ProductActions({ product: p }: Props) {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           {p.oldPrice && (
             <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#AAB3C8' }}>
-              AED {p.oldPrice.toFixed(2)}
+              {formatPrice(p.oldPrice, currencyCode)}
             </span>
           )}
           <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.04em', color: '#0D0F14', lineHeight: 1 }}>
-            AED {p.price.toFixed(2)}
+            {formatPrice(p.price, currencyCode)}
           </span>
         </div>
         {p.inStock ? (
@@ -210,9 +212,7 @@ export default function ProductActions({ product: p }: Props) {
             </button>
           ))}
         </div>
-        <div style={{ minHeight: 60 }}>
-          {tabContent()}
-        </div>
+        <div style={{ minHeight: 60 }}>{tabContent()}</div>
       </div>
     </>
   )

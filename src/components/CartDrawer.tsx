@@ -14,6 +14,7 @@ import {
   FlaskConical,
 } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
+import { formatPrice } from '@/lib/utils'
 
 const FREE_SHIPPING = 75
 
@@ -23,6 +24,7 @@ export default function CartDrawer() {
     lines,
     subtotal,
     totalQuantity,
+    currencyCode,
     loading,
     error,
     closeCart,
@@ -36,32 +38,20 @@ export default function CartDrawer() {
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
+    return () => { document.body.style.overflow = '' }
   }, [open])
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeCart()
-    }
-
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart() }
     window.addEventListener('keydown', handler)
-
-    return () => {
-      window.removeEventListener('keydown', handler)
-    }
+    return () => window.removeEventListener('keydown', handler)
   }, [closeCart])
 
-  const progress = Math.min(
-    (subtotal / FREE_SHIPPING) * 100,
-    100
-  )
+  const progress = Math.min((subtotal / FREE_SHIPPING) * 100, 100)
 
   return (
     <>
       {/* Backdrop */}
-
       <div
         onClick={closeCart}
         style={{
@@ -77,7 +67,6 @@ export default function CartDrawer() {
       />
 
       {/* Drawer */}
-
       <aside
         ref={drawerRef}
         role="dialog"
@@ -88,36 +77,24 @@ export default function CartDrawer() {
           right: 0,
           bottom: 0,
           width: '100%',
-          background:
-            'linear-gradient(to bottom,#fafaf9,#f5f5f3)',
+          background: 'linear-gradient(to bottom,#fafaf9,#f5f5f3)',
           zIndex: 1001,
           display: 'flex',
           flexDirection: 'column',
-          transform: open
-            ? 'translateX(0)'
-            : 'translateX(100%)',
-          transition:
-            'transform .45s cubic-bezier(.22,1,.36,1)',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform .45s cubic-bezier(.22,1,.36,1)',
         }}
       >
         {/* Header */}
-
         <div
           style={{
             background: '#0b0b0b',
             color: '#fff',
             padding: '28px 24px',
-            borderBottom:
-              '1px solid rgba(255,255,255,.08)',
+            borderBottom: '1px solid rgba(255,255,255,.08)',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-            }}
-          >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div
                 style={{
@@ -130,18 +107,8 @@ export default function CartDrawer() {
               >
                 Research Order
               </div>
-
-              <h2
-                style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: 32,
-                  margin: 0,
-                }}
-              >
-                Cart
-              </h2>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 32, margin: 0 }}>Cart</h2>
             </div>
-
             <button
               onClick={closeCart}
               style={{
@@ -151,8 +118,7 @@ export default function CartDrawer() {
                 width: 42,
                 height: 42,
                 borderRadius: '50%',
-                border:
-                  '1px solid rgba(255,255,255,.12)',
+                border: '1px solid rgba(255,255,255,.12)',
                 background: 'transparent',
                 color: '#fff',
                 cursor: 'pointer',
@@ -161,41 +127,18 @@ export default function CartDrawer() {
               <X size={16} />
             </button>
           </div>
-
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 13,
-              opacity: .65,
-            }}
-          >
-            {totalQuantity} item
-            {totalQuantity !== 1 ? 's' : ''}
+          <div style={{ marginTop: 12, fontSize: 13, opacity: .65 }}>
+            {totalQuantity} item{totalQuantity !== 1 ? 's' : ''}
           </div>
         </div>
 
         {/* Error */}
-
         {error && (
-          <div
-            style={{
-              background: '#FEF2F2',
-              padding: 12,
-            }}
-          >
-            {error}
-          </div>
+          <div style={{ background: '#FEF2F2', padding: 12 }}>{error}</div>
         )}
 
         {/* Content */}
-
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: 20,
-          }}
-        >
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           {lines.length === 0 ? (
             <div
               style={{
@@ -212,8 +155,7 @@ export default function CartDrawer() {
                   width: 90,
                   height: 90,
                   borderRadius: '50%',
-                  background:
-                    'linear-gradient(135deg,#eef2fd,#dbeafe)',
+                  background: 'linear-gradient(135deg,#eef2fd,#dbeafe)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -222,28 +164,12 @@ export default function CartDrawer() {
               >
                 <ShoppingBag size={40} />
               </div>
-
-              <h3
-                style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: 24,
-                }}
-              >
+              <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 24 }}>
                 Research Cart Empty
               </h3>
-
-              <p
-                style={{
-                  maxWidth: 260,
-                  opacity: .6,
-                  lineHeight: 1.7,
-                }}
-              >
-                Add verified compounds and
-                laboratory products to begin
-                your order.
+              <p style={{ maxWidth: 260, opacity: .6, lineHeight: 1.7 }}>
+                Add verified compounds and laboratory products to begin your order.
               </p>
-
               <Link
                 href="/products"
                 onClick={closeCart}
@@ -260,13 +186,7 @@ export default function CartDrawer() {
               </Link>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-              }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {lines.map((line) => (
                 <div
                   key={line.id}
@@ -274,36 +194,29 @@ export default function CartDrawer() {
                     background: '#fff',
                     borderRadius: 18,
                     padding: 16,
-                    border:
-                      '1px solid rgba(13,13,13,.06)',
-                    boxShadow:
-                      '0 8px 30px rgba(0,0,0,.04)',
+                    border: '1px solid rgba(13,13,13,.06)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,.04)',
                   }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 14,
-                    }}
-                  >
-                  <div
-                    style={{
-                      width: 70,
-                      height: 70,
-                      borderRadius: 14,
-                      background: '#f7f7f5',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {line.image ? (
-                      <img
-                        src={line.image}
-                        alt={line.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }}
-                      />
-                    ) : null}
-                  </div>
+                  <div style={{ display: 'flex', gap: 14 }}>
+                    <div
+                      style={{
+                        width: 70,
+                        height: 70,
+                        borderRadius: 14,
+                        background: '#f7f7f5',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {line.image ? (
+                        <img
+                          src={line.image}
+                          alt={line.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }}
+                        />
+                      ) : null}
+                    </div>
 
                     <div style={{ flex: 1 }}>
                       <div
@@ -316,33 +229,22 @@ export default function CartDrawer() {
                       >
                         Research Compound
                       </div>
-
                       <h3
                         style={{
-                          fontFamily:
-                            'Georgia, serif',
+                          fontFamily: 'Georgia, serif',
                           fontSize: 18,
                           margin: '6px 0',
                         }}
                       >
                         {line.title}
                       </h3>
-
-                      <div
-                        style={{
-                          fontSize: 12,
-                          opacity: .5,
-                        }}
-                      >
-                        {line.variantTitle}
-                      </div>
+                      <div style={{ fontSize: 12, opacity: .5 }}>{line.variantTitle}</div>
 
                       <div
                         style={{
                           marginTop: 14,
                           display: 'flex',
-                          justifyContent:
-                            'space-between',
+                          justifyContent: 'space-between',
                         }}
                       >
                         <div
@@ -355,59 +257,44 @@ export default function CartDrawer() {
                             padding: 4,
                           }}
                         >
-                        <button
-                          onClick={() => updateQty(line.id, line.quantity - 1)}
-                          disabled={loading}
-                          style={{ 
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', padding: '0 4px'
-                          }}
-                        >
-                          <Minus size={12} />
-                        </button>
-
-                        <span style={{ minWidth: 16, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
-                          {line.quantity}
-                        </span>
-
-                        <button
-                          onClick={() => updateQty(line.id, line.quantity + 1)}
-                          disabled={loading}
-                          style={{
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', padding: '0 4px'
-                          }}
-                        >
-                          <Plus size={12} />
-                        </button>
-                        </div>
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}
-                        >
-                          <span
+                          <button
+                            onClick={() => updateQty(line.id, line.quantity - 1)}
+                            disabled={loading}
                             style={{
-                              fontFamily:
-                                'Georgia, serif',
-                              fontWeight: 700,
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '0 4px',
                             }}
                           >
-                            AED 
-                            {(
-                              line.price *
-                              line.quantity
-                            ).toFixed(2)}
+                            <Minus size={12} />
+                          </button>
+                          <span style={{ minWidth: 16, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
+                            {line.quantity}
                           </span>
-
                           <button
-                            onClick={() =>
-                              removeItem(line.id)
-                            }
+                            onClick={() => updateQty(line.id, line.quantity + 1)}
+                            disabled={loading}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '0 4px',
+                            }}
                           >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700 }}>
+                            {formatPrice(line.price * line.quantity, currencyCode)}
+                          </span>
+                          <button onClick={() => removeItem(line.id)}>
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -421,39 +308,26 @@ export default function CartDrawer() {
         </div>
 
         {/* Footer */}
-
         {lines.length > 0 && (
           <div
             style={{
-              background:
-                'rgba(255,255,255,.88)',
+              background: 'rgba(255,255,255,.88)',
               backdropFilter: 'blur(20px)',
-              borderTop:
-                '1px solid rgba(13,13,13,.08)',
+              borderTop: '1px solid rgba(13,13,13,.08)',
               padding: 20,
             }}
           >
-
             {/* Total */}
-
             <div
               style={{
                 display: 'flex',
-                justifyContent:
-                  'space-between',
+                justifyContent: 'space-between',
                 marginBottom: 18,
               }}
             >
               <span>Subtotal</span>
-
-              <strong
-                style={{
-                  fontFamily:
-                    'Georgia, serif',
-                  fontSize: 24,
-                }}
-              >
-                AED {subtotal.toFixed(2)}
+              <strong style={{ fontFamily: 'Georgia, serif', fontSize: 24 }}>
+                {formatPrice(subtotal, currencyCode)}
               </strong>
             </div>
 
@@ -464,8 +338,7 @@ export default function CartDrawer() {
                 height: 58,
                 borderRadius: 16,
                 border: 0,
-                background:
-                  'linear-gradient(135deg,#0d0d0d,#222)',
+                background: 'linear-gradient(135deg,#0d0d0d,#222)',
                 color: '#fff',
                 fontWeight: 700,
                 display: 'flex',
@@ -485,13 +358,7 @@ export default function CartDrawer() {
   )
 }
 
-function TrustItem({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode
-  label: string
-}) {
+function TrustItem({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div
       style={{
@@ -503,9 +370,7 @@ function TrustItem({
       }}
     >
       {icon}
-      <div style={{ marginTop: 4 }}>
-        {label}
-      </div>
+      <div style={{ marginTop: 4 }}>{label}</div>
     </div>
   )
 }

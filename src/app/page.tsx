@@ -5,6 +5,7 @@ import HeroCinematic from "@/components/HeroSections";
 import ProductCard from "@/components/ProductCard";
 import { getProducts as DATA_PRODUCTS } from "@/lib/shopify";
 import { useCart } from "@/lib/cartContext";
+import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 
@@ -42,6 +43,7 @@ function useInView(rootMargin = "0px 0px -60px 0px") {
 type NormalisedProduct = {
   id: string; shopifyId: string; handle: string; slug: string; title: string;
   name: string; shortName: string; mg: string; variantId: string; price: number;
+  currencyCode: string;
   oldPrice?: number; inStock: boolean; stockCount: number; image?: string; imageAlt: string;
   badge?: "popular" | "new" | "sale" | "bestseller"; tags: string[];
   category: string; categorySlug: string; description: string; testDate: string;
@@ -73,13 +75,12 @@ const REVIEWS = [
   { author: "Tom H.",       role: "Exercise Physiologist",        initials: "TH", text: "Ordered on Friday, arrived Monday in perfect condition. The QR-code on the vial linking directly to the COA is a brilliant touch.",                                   sub: "Verified · TB-500 10mg"  },
 ];
 
-// Compound research areas — abstract gradient tiles, no stock photos
 const AREAS = [
-  { label: "Tissue Repair",     sub: "BPC-157, TB-500",         from: "#000", to: "#111" },
-  { label: "Metabolic Health",  sub: "GLP-1, Semaglutide",      from: "#000", to: "#111" },
-  { label: "Skin & Collagen",   sub: "GHK-Cu, Epithalon",       from: "#000", to: "#111" },
-  { label: "Cognitive Support", sub: "Selank, Semax",           from: "#000", to: "#111" },
-  { label: "Longevity",         sub: "Epithalon, Thymosin",     from: "#000", to: "#111" },
+  { label: "Tissue Repair",      sub: "BPC-157, TB-500",         from: "#000", to: "#111" },
+  { label: "Metabolic Health",   sub: "GLP-1, Semaglutide",      from: "#000", to: "#111" },
+  { label: "Skin & Collagen",    sub: "GHK-Cu, Epithalon",       from: "#000", to: "#111" },
+  { label: "Cognitive Support",  sub: "Selank, Semax",           from: "#000", to: "#111" },
+  { label: "Longevity",          sub: "Epithalon, Thymosin",     from: "#000", to: "#111" },
   { label: "Pain & Inflammation",sub: "BPC-157, Thymosin β4",   from: "#000", to: "#111" },
 ];
 
@@ -138,10 +139,10 @@ function FadeUp({ children, delay = 0, style = {} }: { children: React.ReactNode
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PepcoLabPage() {
-  const [email, setEmail]     = useState("");
-  const [subbed, setSubbed]   = useState(false);
+  const [email,    setEmail]    = useState("");
+  const [subbed,   setSubbed]   = useState(false);
   const [products, setProducts] = useState<NormalisedProduct[]>([]);
-  const [loaded, setLoaded]   = useState(false);
+  const [loaded,   setLoaded]   = useState(false);
 
   const { addItem } = useCart();
   const isMobile = useIsMobile();
@@ -150,11 +151,16 @@ export default function PepcoLabPage() {
     DATA_PRODUCTS().then((raw) => {
       setProducts(raw.map((p) => ({
         ...p,
+        currencyCode: p.currencyCode ?? 'AED',
         badge: (p.badge && ["popular","new","sale","bestseller"].includes(p.badge) ? p.badge : undefined) as NormalisedProduct["badge"],
       })));
       setLoaded(true);
     }).catch(console.error);
   }, []);
+
+  // Derive a single currency code from the first product for bundle prices.
+  // All products in one Shopify market share the same currency.
+  const storeCurrency = products[0]?.currencyCode ?? 'AED';
 
   const addToCart = useCallback((product: NormalisedProduct) => {
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
@@ -166,7 +172,7 @@ export default function PepcoLabPage() {
       const bp = config.indices.map(idx => products[idx]).filter(Boolean)
         .map(p => ({ ...p, from: p.color?.vialFrom ?? "#3b82f6", to: p.color?.vialTo ?? "#8b5cf6" }));
       const total = bp.reduce((s, p) => s + p.price, 0);
-      return { id: i + 1, name: config.name, desc: config.desc, price: (total * 0.9).toFixed(2), originalPrice: total.toFixed(2), products: bp };
+      return { id: i + 1, name: config.name, desc: config.desc, price: total * 0.9, originalPrice: total, products: bp };
     });
   }, [products]);
 
@@ -285,7 +291,6 @@ export default function PepcoLabPage() {
         </div>
       </section>
 
-
       {/* ── Research Stacks ── */}
       <section style={{ background: "#0A0A0A", padding: "clamp(60px,8vw,140px) 0" }}>
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px,4vw,60px)" }}>
@@ -305,7 +310,7 @@ export default function PepcoLabPage() {
                 <FadeUp key={b.id} delay={bi * 0.1}>
                   <div className="stack-card" style={{ background: "#111111", border: "1px solid rgba(255,255,255,.07)", borderRadius: 24, overflow: "hidden" }}>
 
-                    {/* Visual — uniform square tiles, no size mismatch */}
+                    {/* Visual */}
                     <div style={{
                       background: "#161616",
                       display: "flex",
@@ -352,8 +357,12 @@ export default function PepcoLabPage() {
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, paddingTop:18, borderTop:"1px solid rgba(255,255,255,.07)" }}>
                         <div style={{ minWidth:0 }}>
                           <div style={{ display:"flex", alignItems:"baseline", gap:7, flexWrap:"wrap" }}>
-                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>AED {b.price}</span>
-                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>AED {b.originalPrice}</span>
+                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>
+                              {formatPrice(b.price, storeCurrency)}
+                            </span>
+                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>
+                              {formatPrice(b.originalPrice, storeCurrency)}
+                            </span>
                           </div>
                           <div style={{ fontSize:11, color:"rgba(255,255,255,.28)", marginTop:2 }}>{b.products.length} compounds · COA included</div>
                         </div>
@@ -389,10 +398,10 @@ export default function PepcoLabPage() {
           <FadeUp delay={0.1}>
             <div className="diff-grid">
               {[
-                { n:"01", title:"HPLC-Verified",    desc:"Every compound tested by Eurofins UK. COA downloadable per batch."                              },
-                { n:"02", title:"COA Published",     desc:"Download the certificate of analysis for every product, every batch."                           },
-                { n:"03", title:"Cold-Chain",        desc:"Temperature-controlled packaging on every UK order, without exception."                         },
-                { n:"04", title:"Next-Day UK",       desc:"Order by 3pm for next-day tracked delivery across the United Kingdom."                          },
+                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Eurofins UK. COA downloadable per batch."        },
+                { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch."     },
+                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception."   },
+                { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom."    },
               ].map((d) => (
                 <div key={d.n} style={{ background:"#fff", padding:"36px 32px", position:"relative" }}>
                   <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", color:"rgba(13,13,13,.25)", marginBottom:28 }}>{d.n}</div>
@@ -405,7 +414,7 @@ export default function PepcoLabPage() {
         </div>
       </section>
 
-      {/* ── Reviews — marquee strip + featured ── */}
+      {/* ── Reviews ── */}
       <section style={{ background: "#fff", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)", overflow: "hidden" }}>
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ maxWidth:680, marginBottom:60 }}>
@@ -454,105 +463,103 @@ export default function PepcoLabPage() {
         </div>
       </section>
 
-{/* ── Research Spotlight ── */}
-{p1 && p2 && (
-  <section style={{ background:"#F7F5F1", padding:"clamp(60px,8vw,140px) 0", borderBottom:"1px solid rgba(13,13,13,.06)" }}>
-    <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(16px,5vw,60px)" }}>
+      {/* ── Research Spotlight ── */}
+      {p1 && p2 && (
+        <section style={{ background:"#F7F5F1", padding:"clamp(60px,8vw,140px) 0", borderBottom:"1px solid rgba(13,13,13,.06)" }}>
+          <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(16px,5vw,60px)" }}>
 
-      {/* Label */}
-      <FadeUp>
-        <div style={{ fontSize:10, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:14 }}>Research Spotlight</div>
-        <h2 style={{ fontSize:"clamp(32px,6vw,80px)", lineHeight:".92", letterSpacing:"-.06em", fontWeight:700, color:"#0D0D0D", margin:"0 0 clamp(32px,5vw,60px)" }}>
-          {p1.shortName} &amp;<br />{p2.shortName}
-        </h2>
-      </FadeUp>
+            <FadeUp>
+              <div style={{ fontSize:10, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:14 }}>Research Spotlight</div>
+              <h2 style={{ fontSize:"clamp(32px,6vw,80px)", lineHeight:".92", letterSpacing:"-.06em", fontWeight:700, color:"#0D0D0D", margin:"0 0 clamp(32px,5vw,60px)" }}>
+                {p1.shortName} &amp;<br />{p2.shortName}
+              </h2>
+            </FadeUp>
 
-      {/* Product cards — stacked on mobile, side by side on desktop */}
-      <FadeUp delay={0.05} style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"clamp(12px,2vw,20px)", marginBottom:"clamp(28px,4vw,48px)" }}>
-        {[p1, p2].map((p, i) => (
-          <div key={p.id} style={{
-            background:"#fff",
-            border:"1px solid rgba(13,13,13,.07)",
-            borderRadius:"clamp(16px,2vw,24px)",
-            overflow:"hidden",
-          }}>
-            {/* Image */}
-            <div style={{
-              aspectRatio:"1/1",
-              background:"linear-gradient(145deg,#FCFBF8,#EDE9E0)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              position:"relative", overflow:"hidden",
-              padding: 16,
-            }}>
-              <div style={{ position:"absolute", width:"70%", height:"70%", borderRadius:"50%", background:`radial-gradient(circle,${p.color.vialFrom}20,transparent 65%)`, top:"50%", left:"50%", transform:"translate(-50%,-50%)" }} />
-              {p.image ? (
-                <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", position:"relative", zIndex:1 }} />
-              ) : (
-                <div style={{ position:"relative", zIndex:1, animation:`floatVial ${3+i*.4}s ease ${i*.3}s infinite` }}>
-                  <Vial fromColor={p.color.vialFrom} toColor={p.color.vialTo} mg={p.mg} size={isMobile?"md":"lg"} />
+            <FadeUp delay={0.05} style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"clamp(12px,2vw,20px)", marginBottom:"clamp(28px,4vw,48px)" }}>
+              {[p1, p2].map((p, i) => (
+                <div key={p.id} style={{
+                  background:"#fff",
+                  border:"1px solid rgba(13,13,13,.07)",
+                  borderRadius:"clamp(16px,2vw,24px)",
+                  overflow:"hidden",
+                }}>
+                  {/* Image */}
+                  <div style={{
+                    aspectRatio:"1/1",
+                    background:"linear-gradient(145deg,#FCFBF8,#EDE9E0)",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    position:"relative", overflow:"hidden",
+                    padding: 16,
+                  }}>
+                    <div style={{ position:"absolute", width:"70%", height:"70%", borderRadius:"50%", background:`radial-gradient(circle,${p.color.vialFrom}20,transparent 65%)`, top:"50%", left:"50%", transform:"translate(-50%,-50%)" }} />
+                    {p.image ? (
+                      <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", position:"relative", zIndex:1 }} />
+                    ) : (
+                      <div style={{ position:"relative", zIndex:1, animation:`floatVial ${3+i*.4}s ease ${i*.3}s infinite` }}>
+                        <Vial fromColor={p.color.vialFrom} toColor={p.color.vialTo} mg={p.mg} size={isMobile?"md":"lg"} />
+                      </div>
+                    )}
+                    {p.purity && (
+                      <div style={{ position:"absolute", top:10, right:10, background:"rgba(255,255,255,.95)", backdropFilter:"blur(8px)", padding:"4px 8px", borderRadius:8, border:"1px solid #eee" }}>
+                        <div style={{ fontSize:7, color:"#aaa", fontWeight:700, textTransform:"uppercase", letterSpacing:".1em" }}>Purity</div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"#0d0d0d", lineHeight:1 }}>{p.purity}%</div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Info */}
+                  <div style={{ padding:"clamp(12px,2vw,20px)" }}>
+                    <div style={{ fontSize:9, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:6 }}>{p.category || "Research Compound"}</div>
+                    <div style={{ fontSize:"clamp(13px,2.5vw,18px)", fontWeight:700, letterSpacing:"-.03em", color:"#0d0d0d", marginBottom:8, lineHeight:1.1 }}>{p.shortName}</div>
+                    <div style={{ fontSize:"clamp(16px,3vw,22px)", fontWeight:700, color:"#0d0d0d", marginBottom:12 }}>
+                      {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
+                    </div>
+                    <button
+                      onClick={() => addToCart(p)}
+                      disabled={!p.inStock}
+                      style={{
+                        width:"100%", height:"clamp(38px,5vw,46px)",
+                        borderRadius:999, border:"none",
+                        background: p.inStock ? "#0d0d0d" : "rgba(13,13,13,.08)",
+                        color: p.inStock ? "#fff" : "rgba(13,13,13,.3)",
+                        fontSize:"clamp(11px,1.8vw,13px)", fontWeight:700,
+                        cursor: p.inStock ? "pointer" : "not-allowed",
+                        letterSpacing:".04em",
+                      }}
+                    >
+                      {p.inStock ? `Add ${p.shortName}` : "Out of Stock"}
+                    </button>
+                  </div>
                 </div>
-              )}
-              {p.purity && (
-                <div style={{ position:"absolute", top:10, right:10, background:"rgba(255,255,255,.95)", backdropFilter:"blur(8px)", padding:"4px 8px", borderRadius:8, border:"1px solid #eee" }}>
-                  <div style={{ fontSize:7, color:"#aaa", fontWeight:700, textTransform:"uppercase", letterSpacing:".1em" }}>Purity</div>
-                  <div style={{ fontSize:13, fontWeight:800, color:"#0d0d0d", lineHeight:1 }}>{p.purity}%</div>
+              ))}
+            </FadeUp>
+
+            {/* Stats row */}
+            <FadeUp delay={0.1} style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"clamp(12px,3vw,32px)", marginBottom:"clamp(24px,4vw,40px)", paddingTop:"clamp(24px,4vw,40px)", borderTop:"1px solid rgba(13,13,13,.08)" }}>
+              {([
+                [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
+                ["COA", "Included"],
+                ["24hr", "Dispatch"],
+              ] as [string,string][]).map(([v,l]) => (
+                <div key={l}>
+                  <div style={{ fontSize:"clamp(22px,4vw,40px)", fontWeight:700, letterSpacing:"-.05em", color:"#0D0D0D", marginBottom:4 }}>{v}</div>
+                  <div style={{ fontSize:"clamp(9px,1.2vw,11px)", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(13,13,13,.4)" }}>{l}</div>
                 </div>
-              )}
-            </div>
-            {/* Info */}
-            <div style={{ padding:"clamp(12px,2vw,20px)" }}>
-              <div style={{ fontSize:9, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", color:"rgba(13,13,13,.35)", marginBottom:6 }}>{p.category || "Research Compound"}</div>
-              <div style={{ fontSize:"clamp(13px,2.5vw,18px)", fontWeight:700, letterSpacing:"-.03em", color:"#0d0d0d", marginBottom:8, lineHeight:1.1 }}>{p.shortName}</div>
-              <div style={{ fontSize:"clamp(16px,3vw,22px)", fontWeight:700, color:"#0d0d0d", marginBottom:12 }}>AED {p.price.toFixed(2)}</div>
-              <button
-                onClick={() => addToCart(p)}
-                disabled={!p.inStock}
-                style={{
-                  width:"100%", height:"clamp(38px,5vw,46px)",
-                  borderRadius:999, border:"none",
-                  background: p.inStock ? "#0d0d0d" : "rgba(13,13,13,.08)",
-                  color: p.inStock ? "#fff" : "rgba(13,13,13,.3)",
-                  fontSize:"clamp(11px,1.8vw,13px)", fontWeight:700,
-                  cursor: p.inStock ? "pointer" : "not-allowed",
-                  letterSpacing:".04em",
-                }}
-              >
-                {p.inStock ? `Add ${p.shortName}` : "Out of Stock"}
-              </button>
-            </div>
+              ))}
+            </FadeUp>
+
+            <FadeUp delay={0.15}>
+              <p style={{ fontSize:"clamp(14px,2vw,17px)", lineHeight:1.85, color:"rgba(13,13,13,.55)", maxWidth:600, marginBottom:12 }}>
+                {p1.description
+                  ? p1.description.slice(0,180).trim() + (p1.description.length > 180 ? "…" : "")
+                  : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
+              </p>
+              <div style={{ fontSize:11, color:"rgba(13,13,13,.3)", lineHeight:1.6 }}>For laboratory and research purposes only. Not for human consumption.</div>
+            </FadeUp>
           </div>
-        ))}
-      </FadeUp>
+        </section>
+      )}
 
-      {/* Stats row */}
-      <FadeUp delay={0.1} style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"clamp(12px,3vw,32px)", marginBottom:"clamp(24px,4vw,40px)", paddingTop:"clamp(24px,4vw,40px)", borderTop:"1px solid rgba(13,13,13,.08)" }}>
-        {([
-          [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
-          ["COA", "Included"],
-          ["24hr", "Dispatch"],
-        ] as [string,string][]).map(([v,l]) => (
-          <div key={l}>
-            <div style={{ fontSize:"clamp(22px,4vw,40px)", fontWeight:700, letterSpacing:"-.05em", color:"#0D0D0D", marginBottom:4 }}>{v}</div>
-            <div style={{ fontSize:"clamp(9px,1.2vw,11px)", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(13,13,13,.4)" }}>{l}</div>
-          </div>
-        ))}
-      </FadeUp>
-
-      {/* Description + disclaimer */}
-      <FadeUp delay={0.15}>
-        <p style={{ fontSize:"clamp(14px,2vw,17px)", lineHeight:1.85, color:"rgba(13,13,13,.55)", maxWidth:600, marginBottom:12 }}>
-          {p1.description
-            ? p1.description.slice(0,180).trim() + (p1.description.length > 180 ? "…" : "")
-            : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
-        </p>
-        <div style={{ fontSize:11, color:"rgba(13,13,13,.3)", lineHeight:1.6 }}>For laboratory and research purposes only. Not for human consumption.</div>
-      </FadeUp>
-
-    </div>
-  </section>
-)}
-
-      {/* ── Research Areas — abstract gradient tiles ── */}
+      {/* ── Research Areas ── */}
       <section style={{ background:"#0A0A0A", padding:"clamp(80px,10vw,140px) 0" }}>
         <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:56, flexWrap:"wrap", gap:24 }}>
@@ -581,7 +588,7 @@ export default function PepcoLabPage() {
         </div>
       </section>
 
-      {/* ── Member Benefits — dark ── */}
+      {/* ── Member Benefits ── */}
       <section style={{ background:"#111", padding:"clamp(80px,9vw,120px) 0", borderBottom:"1px solid rgba(255,255,255,.06)" }}>
         <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:30, flexWrap:"wrap", marginBottom:52 }}>
@@ -619,23 +626,9 @@ export default function PepcoLabPage() {
         <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 clamp(16px,3vw,32px)" }}>
           <FadeUp>
             <div style={{ background: "#0d0d0d", borderRadius: 32, overflow: "hidden" }}>
-
-              {/* Main content */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                gap: 0,
-              }}>
-
-                {/* LEFT — headline only, tight */}
-                <div style={{
-                  padding: isMobile ? "36px 28px 24px" : "60px 56px",
-                  borderBottom: isMobile ? "1px solid rgba(255,255,255,.07)" : "none",
-                  borderRight: isMobile ? "none" : "1px solid rgba(255,255,255,.07)",
-                }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.28)", marginBottom: 14 }}>
-                    Research Updates
-                  </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 0 }}>
+                <div style={{ padding: isMobile ? "36px 28px 24px" : "60px 56px", borderBottom: isMobile ? "1px solid rgba(255,255,255,.07)" : "none", borderRight: isMobile ? "none" : "1px solid rgba(255,255,255,.07)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.28)", marginBottom: 14 }}>Research Updates</div>
                   <h2 style={{ fontSize: isMobile ? 32 : "clamp(32px,3.5vw,52px)", lineHeight: ".95", letterSpacing: "-.06em", fontWeight: 700, color: "#fff", margin: "0 0 14px" }}>
                     Stay ahead of<br />new releases.
                   </h2>
@@ -644,16 +637,7 @@ export default function PepcoLabPage() {
                   </p>
                 </div>
 
-                {/* RIGHT — form only, no bullet list on mobile */}
-                <div style={{
-                  padding: isMobile ? "24px 28px 32px" : "60px 56px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  gap: 12,
-                }}>
-
-                  {/* Bullets — hidden on mobile, shown on desktop */}
+                <div style={{ padding: isMobile ? "24px 28px 32px" : "60px 56px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
                   {!isMobile && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 8 }}>
                       {["New compound launches", "Batch-specific COA updates", "Research announcements", "Fulfilment & availability alerts"].map(item => (
@@ -665,67 +649,27 @@ export default function PepcoLabPage() {
                     </div>
                   )}
 
-                  {/* Email row — side by side even on mobile */}
                   <div className="flex lg:flex-row flex-col" style={{ gap: 8 }}>
                     <input
                       type="email"
                       placeholder="your@email.com"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      style={{
-                        flex: 1,
-                        minHeight: 48,
-                        width: "100%",
-                        borderRadius: 999,
-                        border: "1px solid rgba(255,255,255,.1)",
-                        padding: "0 18px",
-                        fontSize: 13,
-                        outline: "none",
-                        background: "rgba(255,255,255,.06)",
-                        color: "#fff",
-                        minWidth: 0,
-                      }}
+                      style={{ flex: 1, minHeight: 48, width: "100%", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", padding: "0 18px", fontSize: 13, outline: "none", background: "rgba(255,255,255,.06)", color: "#fff", minWidth: 0 }}
                     />
                     <button
                       onClick={() => { if (email.includes("@")) { setSubbed(true); setEmail(""); } }}
-                      style={{
-                        height: 48,
-                        padding: "0 20px",
-                        borderRadius: 999,
-                        border: "none",
-                        background: subbed ? "#0A7B45" : "#C8992A",
-                        color: "#fff",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
-                        transition: "background .2s",
-                      }}
+                      style={{ height: 48, padding: "0 20px", borderRadius: 999, border: "none", background: subbed ? "#0A7B45" : "#C8992A", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, transition: "background .2s" }}
                     >
                       {subbed ? "✓ Done" : "Subscribe"}
                     </button>
                   </div>
-
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.22)", lineHeight: 1.5 }}>
-                    No spam. Unsubscribe anytime.
-                  </div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.22)", lineHeight: 1.5 }}>No spam. Unsubscribe anytime.</div>
                 </div>
               </div>
 
-              {/* Footer bar */}
-              <div style={{
-                borderTop: "1px solid rgba(255,255,255,.07)",
-                padding: "14px 28px",
-                display: "flex",
-                gap: 16,
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,.25)" }}>
-                  Trusted by 2,400+ researchers across the UK.
-                </div>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,.07)", padding: "14px 28px", display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,.25)" }}>Trusted by 2,400+ researchers across the UK.</div>
                 {!isMobile && (
                   <div style={{ display: "flex", gap: 18 }}>
                     {["Independent Testing", "Published COAs", "Cold-Chain Fulfilment"].map(item => (
@@ -734,7 +678,6 @@ export default function PepcoLabPage() {
                   </div>
                 )}
               </div>
-
             </div>
           </FadeUp>
         </div>

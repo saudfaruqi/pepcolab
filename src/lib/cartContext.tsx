@@ -1,8 +1,3 @@
-
-
-
-// cartContext.tsx
-
 'use client'
 import {
   createContext,
@@ -43,6 +38,8 @@ interface CartState {
   lines: CartLine[]
   totalQuantity: number
   subtotal: number
+  /** ISO 4217 currency code sourced from the live Shopify cart response */
+  currencyCode: string
   open: boolean
   loading: boolean
   error: string | null
@@ -50,7 +47,7 @@ interface CartState {
 
 type Action =
   | { type: 'SET_CART_ID'; cartId: string }
-  | { type: 'SET_LINES'; lines: CartLine[]; total: number; qty: number }
+  | { type: 'SET_LINES'; lines: CartLine[]; total: number; qty: number; currencyCode?: string }
   | { type: 'SET_OPEN'; open: boolean }
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_ERROR'; error: string | null }
@@ -60,6 +57,7 @@ const init: CartState = {
   lines: [],
   totalQuantity: 0,
   subtotal: 0,
+  currencyCode: 'AED',
   open: false,
   loading: false,
   error: null,
@@ -70,7 +68,15 @@ function reducer(state: CartState, action: Action): CartState {
     case 'SET_CART_ID':
       return { ...state, cartId: action.cartId }
     case 'SET_LINES':
-      return { ...state, lines: action.lines, subtotal: action.total, totalQuantity: action.qty }
+      return {
+        ...state,
+        lines: action.lines,
+        subtotal: action.total,
+        totalQuantity: action.qty,
+        // Only update currencyCode when the API provides one; keep the
+        // existing value (including the localStorage-restored one) otherwise.
+        currencyCode: action.currencyCode ?? state.currencyCode,
+      }
     case 'SET_OPEN':
       return { ...state, open: action.open }
     case 'SET_LOADING':
@@ -84,27 +90,18 @@ function reducer(state: CartState, action: Action): CartState {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-const CART_ID_KEY = 'pepcolab_cart_id'
-const CART_LINES_KEY = 'pepcolab_cart_lines'
+const CART_ID_KEY       = 'pepcolab_cart_id'
+const CART_LINES_KEY    = 'pepcolab_cart_lines'
+const CART_CURRENCY_KEY = 'pepcolab_cart_currency'
 
 function safeLocalGet(key: string): string | null {
-  try {
-    return localStorage.getItem(key)
-  } catch {
-    return null
-  }
+  try { return localStorage.getItem(key) } catch { return null }
 }
-
 function safeLocalSet(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value)
-  } catch {}
+  try { localStorage.setItem(key, value) } catch {}
 }
-
 function safeLocalRemove(key: string) {
-  try {
-    localStorage.removeItem(key)
-  } catch {}
+  try { localStorage.removeItem(key) } catch {}
 }
 
 /** Map a Shopify CartLine node → our local CartLine shape */
@@ -123,16 +120,24 @@ function mapShopifyLine(node: ShopifyCartLine): CartLine {
 
 function computeTotals(lines: CartLine[]) {
   const total = lines.reduce((s, l) => s + l.price * l.quantity, 0)
-  const qty = lines.reduce((s, l) => s + l.quantity, 0)
+  const qty   = lines.reduce((s, l) => s + l.quantity, 0)
   return { total, qty }
 }
 
 /** Apply a real Shopify cart response to state */
-function applyCart(cart: ShopifyCart): { lines: CartLine[]; total: number; qty: number } {
-  const lines = cart.lines.edges.map(({ node }) => mapShopifyLine(node))
-  const total = parseFloat(cart.cost.subtotalAmount?.amount ?? cart.cost.totalAmount.amount)
-  const qty = cart.totalQuantity
-  return { lines, total, qty }
+function applyCart(cart: ShopifyCart): {
+  lines: CartLine[]
+  total: number
+  qty: number
+  currencyCode: string
+} {
+  const lines        = cart.lines.edges.map(({ node }) => mapShopifyLine(node))
+  const subtotalMoney = cart.cost.subtotalAmount ?? cart.cost.totalAmount
+  const total        = parseFloat(subtotalMoney.amount)
+  const qty          = cart.totalQuantity
+  // Prefer subtotalAmount currency; fall back to totalAmount
+  const currencyCode = subtotalMoney.currencyCode ?? cart.cost.totalAmount.currencyCode ?? 'AED'
+  return { lines, total, qty, currencyCode }
 }
 
 // ─── Context ───────────────────────────────────────────────────────────────
@@ -163,30 +168,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Initialise from localStorage on mount
   useEffect(() => {
-    const storedId = safeLocalGet(CART_ID_KEY)
-    const storedLines = safeLocalGet(CART_LINES_KEY)
+    const storedId       = safeLocalGet(CART_ID_KEY)
+    const storedLines    = safeLocalGet(CART_LINES_KEY)
+    const storedCurrency = safeLocalGet(CART_CURRENCY_KEY)
 
-    // Apply cached lines immediately for fast paint
+    // Apply cached lines + currency immediately for a fast first paint
     if (storedLines) {
       try {
         const lines: CartLine[] = JSON.parse(storedLines)
         const { total, qty } = computeTotals(lines)
-        dispatch({ type: 'SET_LINES', lines, total, qty })
+        dispatch({
+          type: 'SET_LINES',
+          lines,
+          total,
+          qty,
+          currencyCode: storedCurrency ?? undefined,
+        })
       } catch {}
     }
 
     if (storedId) {
       dispatch({ type: 'SET_CART_ID', cartId: storedId })
-      // Rehydrate from Shopify to ensure lines are accurate
+      // Rehydrate from Shopify to ensure lines + currency are accurate
       shopifyGetCart(storedId).then(cart => {
         if (cart) {
-          const { lines, total, qty } = applyCart(cart)
-          dispatch({ type: 'SET_LINES', lines, total, qty })
+          const { lines, total, qty, currencyCode } = applyCart(cart)
+          dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
           safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
+          safeLocalSet(CART_CURRENCY_KEY, currencyCode)
         } else {
-          // Cart expired / invalid – clear it
+          // Cart expired / invalid – clear everything
           safeLocalRemove(CART_ID_KEY)
           safeLocalRemove(CART_LINES_KEY)
+          safeLocalRemove(CART_CURRENCY_KEY)
           dispatch({ type: 'SET_CART_ID', cartId: '' })
           dispatch({ type: 'SET_LINES', lines: [], total: 0, qty: 0 })
         }
@@ -200,6 +214,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       safeLocalSet(CART_LINES_KEY, JSON.stringify(state.lines))
     }
   }, [state.lines])
+
+  // Persist currency whenever it changes
+  useEffect(() => {
+    if (state.currencyCode) {
+      safeLocalSet(CART_CURRENCY_KEY, state.currencyCode)
+    }
+  }, [state.currencyCode])
 
   // Ensure a cart exists and return its ID
   const ensureCart = useCallback(async (): Promise<string> => {
@@ -231,7 +252,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LOADING', loading: true })
       dispatch({ type: 'SET_ERROR', error: null })
 
-      // Optimistic update
+      // Optimistic update (currency unchanged until real response arrives)
       const existing = state.lines.find(l => l.variantId === variantId)
       const optimisticLines: CartLine[] = existing
         ? state.lines.map(l =>
@@ -256,10 +277,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       try {
         const cartId = await ensureCart()
-        const cart = await shopifyAddToCart(cartId, variantId, 1)
-        const { lines, total: realTotal, qty: realQty } = applyCart(cart)
-        dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty })
+        const cart   = await shopifyAddToCart(cartId, variantId, 1)
+        const { lines, total: realTotal, qty: realQty, currencyCode } = applyCart(cart)
+        dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty, currencyCode })
         safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
+        safeLocalSet(CART_CURRENCY_KEY, currencyCode)
       } catch (err) {
         // Roll back optimistic update
         const { total: prevTotal, qty: prevQty } = computeTotals(state.lines)
@@ -281,17 +303,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_ERROR', error: null })
 
       const prevLines = state.lines
-      const newLines = state.lines.filter(l => l.id !== lineId)
+      const newLines  = state.lines.filter(l => l.id !== lineId)
       const { total, qty } = computeTotals(newLines)
       dispatch({ type: 'SET_LINES', lines: newLines, total, qty })
 
       try {
-        // Skip real Shopify call for optimistic-only lines (not yet synced)
         if (!lineId.startsWith('optimistic-') && state.cartId) {
           const cart = await shopifyRemove(state.cartId, [lineId])
-          const { lines, total: realTotal, qty: realQty } = applyCart(cart)
-          dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty })
+          const { lines, total: realTotal, qty: realQty, currencyCode } = applyCart(cart)
+          dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty, currencyCode })
           safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
+          safeLocalSet(CART_CURRENCY_KEY, currencyCode)
         }
       } catch (err) {
         const { total: prevTotal, qty: prevQty } = computeTotals(prevLines)
@@ -315,16 +337,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_ERROR', error: null })
 
       const prevLines = state.lines
-      const newLines = state.lines.map(l => (l.id === lineId ? { ...l, quantity: qty } : l))
+      const newLines  = state.lines.map(l => (l.id === lineId ? { ...l, quantity: qty } : l))
       const { total, qty: totalQty } = computeTotals(newLines)
       dispatch({ type: 'SET_LINES', lines: newLines, total, qty: totalQty })
 
       try {
         if (!lineId.startsWith('optimistic-') && state.cartId) {
           const cart = await shopifyUpdateLine(state.cartId, lineId, qty)
-          const { lines, total: realTotal, qty: realQty } = applyCart(cart)
-          dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty })
+          const { lines, total: realTotal, qty: realQty, currencyCode } = applyCart(cart)
+          dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty, currencyCode })
           safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
+          safeLocalSet(CART_CURRENCY_KEY, currencyCode)
         }
       } catch (err) {
         const { total: prevTotal, qty: prevQty } = computeTotals(prevLines)
@@ -361,8 +384,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItem,
         removeItem,
         updateQty,
-        openCart: () => dispatch({ type: 'SET_OPEN', open: true }),
-        closeCart: () => dispatch({ type: 'SET_OPEN', open: false }),
+        openCart:   () => dispatch({ type: 'SET_OPEN', open: true }),
+        closeCart:  () => dispatch({ type: 'SET_OPEN', open: false }),
         checkout,
         clearError: () => dispatch({ type: 'SET_ERROR', error: null }),
       }}

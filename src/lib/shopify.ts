@@ -8,7 +8,7 @@ const PRIVATE_TOKEN =
   typeof window === 'undefined'
     ? process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN
     : null
- 
+
 const API_VERSION = '2024-04'
 const API_URL = `https://${DOMAIN}/api/${API_VERSION}/graphql.json`
 
@@ -17,7 +17,11 @@ const API_URL = `https://${DOMAIN}/api/${API_VERSION}/graphql.json`
 export async function shopifyFetch<T = Record<string, unknown>>(
   query: string,
   variables: Record<string, unknown> = {},
-  { serverSide = false, revalidate }: { serverSide?: boolean; revalidate?: number } = {}
+  {
+    serverSide = false,
+    revalidate,
+    buyerCountry,
+  }: { serverSide?: boolean; revalidate?: number; buyerCountry?: string } = {}
 ): Promise<T> {
   const token = serverSide && PRIVATE_TOKEN ? PRIVATE_TOKEN : PUBLIC_TOKEN
 
@@ -25,12 +29,18 @@ export async function shopifyFetch<T = Record<string, unknown>>(
     throw new Error('Shopify access token is not configured')
   }
 
+  // Build headers — include buyer country for market-aware pricing when provided
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Shopify-Storefront-Access-Token': token,
+  }
+  if (buyerCountry) {
+    headers['Shopify-Storefront-Buyer-Country'] = buyerCountry
+  }
+
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': token,
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
     // Next.js cache control
     ...(revalidate !== undefined
@@ -53,6 +63,52 @@ export async function shopifyFetch<T = Record<string, unknown>>(
   return json.data as T
 }
 
+// ─── Currency / Localization ───────────────────────────────────────────────
+
+export interface ShopifyLocalization {
+  country: {
+    isoCode: string
+    currency: {
+      isoCode: string
+      symbol: string
+    }
+  }
+}
+
+/**
+ * Detect the buyer's currency via Shopify's localization API.
+ * Falls back to "AED" if the request fails or returns nothing.
+ */
+export async function getLocalization(buyerCountry?: string): Promise<ShopifyLocalization> {
+  try {
+    const data = await shopifyFetch<{ localization: ShopifyLocalization }>(
+      /* GraphQL */ `
+        query getLocalization {
+          localization {
+            country {
+              isoCode
+              currency {
+                isoCode
+                symbol
+              }
+            }
+          }
+        }
+      `,
+      {},
+      { buyerCountry, revalidate: 3600 }
+    )
+    return data.localization
+  } catch {
+    return {
+      country: {
+        isoCode: 'AE',
+        currency: { isoCode: 'AED', symbol: 'AED' },
+      },
+    }
+  }
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export interface ShopifyMoneyV2 {
@@ -66,7 +122,7 @@ export interface ShopifyProductVariant {
   price: ShopifyMoneyV2
   compareAtPrice: ShopifyMoneyV2 | null
   availableForSale: boolean
-  quantityAvailable?: number // optional until unauthenticated_read_product_inventory scope is granted
+  quantityAvailable?: number
 }
 
 export interface ShopifyImage {
@@ -314,15 +370,13 @@ export function normaliseProduct(node: ShopifyProduct) {
 
     variantId: variant?.id ?? '',
     price: parseFloat(variant?.price.amount ?? '0'),
+    // Expose the currency code returned by the Storefront API for this variant
+    currencyCode: variant?.price.currencyCode ?? 'AED',
     oldPrice: variant?.compareAtPrice
       ? parseFloat(variant.compareAtPrice.amount)
       : undefined,
 
     inStock: variant?.availableForSale ?? false,
-    // NOTE: stockCount will be 0 until unauthenticated_read_product_inventory
-    // scope is enabled in Shopify Admin → Apps → Storefront API scopes.
-    // Once enabled, add `quantityAvailable` back to the GraphQL queries below
-    // and change this line to: variant?.quantityAvailable ?? 0
     stockCount: variant?.quantityAvailable ?? 0,
 
     images: node.images.edges.map(({ node }) => ({
@@ -352,7 +406,7 @@ export function normaliseProduct(node: ShopifyProduct) {
   }
 }
 
-export async function getProducts(first = 40) {
+export async function getProducts(first = 40, buyerCountry?: string) {
   const data = await shopifyFetch<{
     products: { edges: { node: ShopifyProduct }[] }
   }>(
@@ -388,7 +442,7 @@ export async function getProducts(first = 40) {
       }
     `,
     { first },
-    { revalidate: 60 }
+    { revalidate: 60, buyerCountry }  // ← add buyerCountry here
   )
 
   return data.products.edges.map(({ node }) => normaliseProduct(node))

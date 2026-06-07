@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ShoppingCart, CheckCircle } from 'lucide-react'
 import Vial from '@/components/Vial'
 import { useCart } from '@/lib/cartContext'
+import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/app/data'
 
 interface Props {
@@ -12,9 +13,13 @@ interface Props {
 }
 
 export default function ProductCard({ product: p, featured = false }: Props) {
-  const [added, setAdded] = useState(false)
+  const [added,   setAdded]   = useState(false)
   const [hovered, setHovered] = useState(false)
   const { addItem } = useCart()
+
+  // Use the currency code embedded in the product by normaliseProduct,
+  // falling back to "AED" for backwards-compatibility with older cached data.
+  const currencyCode: string = (p as any).currencyCode ?? 'AED'
 
   const handleAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -84,7 +89,6 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               }}
             />
           ) : (
-            /* Vial fallback — centered, constrained, no watermark bleed */
             <div
               style={{
                 display: 'flex',
@@ -96,7 +100,6 @@ export default function ProductCard({ product: p, featured = false }: Props) {
                 transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
               }}
             >
-              {/* subtle glow behind vial */}
               <div style={{
                 position: 'absolute',
                 width: '60%',
@@ -204,7 +207,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
           </h3>
         </Link>
 
-        {/* Description — hidden on mobile via CSS */}
+        {/* Description */}
         <p className="product-card-desc" style={{
           fontSize: 12,
           lineHeight: 1.65,
@@ -234,16 +237,16 @@ export default function ProductCard({ product: p, featured = false }: Props) {
                 display: 'block',
                 marginBottom: 1,
               }}>
-                AED {p.oldPrice.toFixed(2)}
+                {formatPrice(p.oldPrice, currencyCode)}
               </span>
             )}
             <span style={{
-              fontSize: 'clamp(18px, 3w, 20px)',
+              fontSize: 'clamp(18px, 3vw, 20px)',
               fontWeight: 700,
               lineHeight: 1,
               color: '#0d0d0d',
             }}>
-              AED {p.price.toFixed(2)}
+              {formatPrice(p.price, currencyCode)}
             </span>
           </div>
 
