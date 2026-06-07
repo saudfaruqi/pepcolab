@@ -149,19 +149,20 @@ export default function PepcoLabPage() {
   const { addItem } = useCart();
   const isMobile = useIsMobile();
 
-  const { country } = useCountry()
+  const { country, ready } = useCountry() 
 
-  useEffect(() => {
-    setLoaded(false);
-    DATA_PRODUCTS(40, country).then((raw) => {
-      setProducts(raw.map((p) => ({
-        ...p,
-        currencyCode: p.currencyCode ?? 'AED',
-        badge: (p.badge && ["popular","new","sale","bestseller"].includes(p.badge) ? p.badge : undefined) as NormalisedProduct["badge"],
-      })));
-      setLoaded(true);
-    }).catch(console.error);
-  }, [country]);
+useEffect(() => {
+  if (!ready) return  // ← add this guard
+  setLoaded(false);
+  DATA_PRODUCTS(40, country).then((raw) => {
+    setProducts(raw.map((p) => ({
+      ...p,
+      currencyCode: p.currencyCode ?? 'AED',
+      badge: (p.badge && ["popular","new","sale","bestseller"].includes(p.badge) ? p.badge : undefined) as NormalisedProduct["badge"],
+    })));
+    setLoaded(true);
+  }).catch(console.error);
+}, [country, ready]);  // ← add ready to deps
 
   const storeCurrency = products[0]?.currencyCode ?? 'AED';
 

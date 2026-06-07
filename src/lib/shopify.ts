@@ -27,13 +27,9 @@ export async function shopifyFetch<T = Record<string, unknown>>(
   const token = serverSide && PRIVATE_TOKEN ? PRIVATE_TOKEN : PUBLIC_TOKEN
   if (!token) throw new Error('Shopify access token is not configured')
 
-  // Inject @inContext into the query operation if a country is provided
-const contextualQuery = buyerCountry
-  ? query.replace(
-      /^(\s*query\s*\w*\s*(?:\([^)]*\))?)/,
-      `$1 @inContext(country: ${buyerCountry})`
-    )
-  : query
+  const contextualQuery = buyerCountry
+    ? injectInContext(query, buyerCountry)
+    : query
 
   const res = await fetch(API_URL, {
     method: 'POST',
@@ -51,6 +47,22 @@ const contextualQuery = buyerCountry
     throw new Error(`Shopify GraphQL Error: ${json.errors.map((e: { message: string }) => e.message).join(', ')}`)
   }
   return json.data as T
+}
+
+/**
+ * Injects @inContext(country: XX) after the query signature.
+ * Handles: query Foo, query Foo($var: Type!), anonymous query, multiline.
+ * Strategy: find the FIRST "{" that opens the operation body and insert before it.
+ */
+function injectInContext(query: string, country: string): string {
+  if (!query.trimStart().startsWith('query')) return query  // skip mutations
+  const braceIndex = query.indexOf('{')
+  if (braceIndex === -1) return query
+  return (
+    query.slice(0, braceIndex).trimEnd() +
+    ` @inContext(country: ${country}) ` +
+    query.slice(braceIndex)
+  )
 }
 
 // ─── Currency / Localization ───────────────────────────────────────────────
@@ -430,26 +442,24 @@ export function normaliseProduct(node: ShopifyProduct) {
 
 // shopify.ts — update getProducts to use the proxy when called client-side
 export async function getProducts(first = 40, buyerCountry?: string) {
-  const isServer = typeof window === 'undefined'
-
-  if (isServer) {
-    // Server components: direct fetch with private token (no CORS issue)
+  if (typeof window === 'undefined') {
+    // Server: fetch without country (used only for generateStaticParams)
     const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
       PRODUCTS_QUERY,
       { first },
       { revalidate: 60, serverSide: true }
     )
     return data.products.edges.map(({ node }) => normaliseProduct(node))
-  } else {
-    // Client components: go through the API proxy to avoid CORS
-    const { shopifyClientFetch } = await import('./shopifyClient')
-    const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
-      PRODUCTS_QUERY,
-      { first },
-      buyerCountry
-    )
-    return data.products.edges.map(({ node }) => normaliseProduct(node))
   }
+
+  // Client: always go through proxy with country
+  const { shopifyClientFetch } = await import('./shopifyClient')
+  const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
+    PRODUCTS_QUERY,
+    { first },
+    buyerCountry
+  )
+  return data.products.edges.map(({ node }) => normaliseProduct(node))
 }
 
 // Extract the query string to reuse in both paths
@@ -483,7 +493,6 @@ const PRODUCTS_QUERY = /* GraphQL */ `
   }
 `
 
-// shopify.ts — update getProductByHandle
 // shopify.ts — getProductByHandle, remove @inContext from the query string
 export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
   const data = await shopifyFetch<{ product: ShopifyProduct | null }>(

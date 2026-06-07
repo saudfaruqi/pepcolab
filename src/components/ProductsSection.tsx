@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react'
 import { getProducts } from '@/lib/shopify'
 import ProductCard from '@/components/ProductCard'
+import { useCountry } from '@/lib/countryContext'
 
 // ── These are the only valid category tags we recognise ──────────────────
 // Add to this list as you create new categories in Shopify
@@ -31,15 +32,17 @@ export default function ProductsSection({ showAll = false }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [allProducts, setAllProducts] = useState<any[]>([])
   const [loading,     setLoading]     = useState(true)
+  const { country, ready } = useCountry()
 
   const headRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    getProducts()
+    if (!ready) return  // ← wait for detection
+    getProducts(40, country)
       .then(p => { setAllProducts(p); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [])
+  }, [country, ready])  // ← add deps
 
   // Fade-in animation
   useEffect(() => {

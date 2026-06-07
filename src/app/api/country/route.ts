@@ -9,6 +9,12 @@ export async function GET(req: NextRequest) {
   if (vercelCountry) {
     return NextResponse.json({ country: vercelCountry })
   }
+
+  // Local dev override
+  if (process.env.DEV_COUNTRY) {
+    return NextResponse.json({ country: process.env.DEV_COUNTRY })
+  }
+
   try {
     const data = await shopifyFetch<{
       localization: { country: { isoCode: string } }

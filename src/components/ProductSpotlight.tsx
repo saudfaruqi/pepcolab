@@ -13,18 +13,21 @@ import {
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import Vial from '@/components/Vial'
+import { useCountry } from '@/lib/countryContext'
 
 export default function ProductSpotlight() {
   const [featured, setFeatured] = useState<any>(null)
   const [purity,   setPurity]   = useState(99)
+  const { country, ready } = useCountry()
 
   useEffect(() => {
-    getProducts().then((products) => {
+    if (!ready) return  // ← wait for detection
+    getProducts(40, country).then((products) => {
       const prod = products[0]
       setFeatured(prod)
       setPurity(prod?.purity ?? 99)
     })
-  }, [])
+  }, [country, ready])  // ← add deps
 
   if (!featured) return null
 

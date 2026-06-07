@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useCart } from '@/lib/cartContext'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
+import { useCountry } from '@/lib/countryContext'
 
 type Product = {
   shopifyId: string; handle: string; title: string; mg: string;
@@ -44,6 +45,7 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 
 export default function Nav() {
   const { totalQuantity, openCart } = useCart()
+  const { country, ready } = useCountry()
 
   const [mobileOpen,     setMobileOpen]     = useState(false)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
@@ -57,10 +59,11 @@ export default function Nav() {
   const dropTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    getProducts().then(raw =>
+    if (!ready) return  // ← wait for detection
+    getProducts(40, country).then(raw =>
       setProducts(raw.map(p => ({ ...p, id: p.shopifyId, slug: p.handle, name: p.title, category: p.tags[0] ?? '' })))
     )
-  }, [])
+  }, [country, ready]) 
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 8)

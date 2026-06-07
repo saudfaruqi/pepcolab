@@ -6,6 +6,8 @@ import { BUNDLES } from '@/app/data'
 import { getProducts } from '@/lib/shopify'
 import type { Product } from '@/app/data'
 
+import { useCountry } from '@/lib/countryContext'
+
 const BUNDLE_IMGS: Record<string, string> = {
   'b1': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80&auto=format&fit=crop',
   'b2': 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80&auto=format&fit=crop',
@@ -42,9 +44,11 @@ function AnimatedCard({ children, delay }: { children: React.ReactNode; delay: n
 export default function BundlesSection() {
   const headerRef = useRef<HTMLDivElement>(null)
   const [products, setProducts] = React.useState<Product[]>([])
+  const { country, ready } = useCountry()
 
   useEffect(() => {
-    getProducts().then((raw) => {
+    if (!ready) return  // ← wait for detection
+    getProducts(40, country).then((raw) => {
       const normalized = raw.map((p) => ({
         ...p,
         badge: (p.badge && ["popular", "new", "sale", "bestseller"].includes(p.badge)
@@ -53,7 +57,7 @@ export default function BundlesSection() {
       }))
       setProducts(normalized)
     })
-  }, [])
+  }, [country, ready])  // ← add deps
 
   useEffect(() => {
     const el = headerRef.current
