@@ -28,9 +28,12 @@ export async function shopifyFetch<T = Record<string, unknown>>(
   if (!token) throw new Error('Shopify access token is not configured')
 
   // Inject @inContext into the query operation if a country is provided
-  const contextualQuery = buyerCountry
-    ? query.replace(/^(\s*query\b)/, `$1 @inContext(country: ${buyerCountry})`)
-    : query
+const contextualQuery = buyerCountry
+  ? query.replace(
+      /^(\s*query\s*\w*\s*(?:\([^)]*\))?)/,
+      `$1 @inContext(country: ${buyerCountry})`
+    )
+  : query
 
   const res = await fetch(API_URL, {
     method: 'POST',

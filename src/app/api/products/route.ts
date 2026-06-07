@@ -14,9 +14,12 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   const { query, variables, buyerCountry } = await req.json()
 
-  const contextualQuery = buyerCountry
-    ? query.replace(/^(\s*query\b)/, `$1 @inContext(country: ${buyerCountry})`)
-    : query
+const contextualQuery = buyerCountry
+  ? query.replace(
+      /^(\s*query\s*\w*\s*(?:\([^)]*\))?)/,
+      `$1 @inContext(country: ${buyerCountry})`
+    )
+  : query
 
   const res = await fetch(API_URL, {
     method: 'POST',
