@@ -32,6 +32,10 @@ export async function shopifyFetch<T = Record<string, unknown>>(
     'X-Shopify-Storefront-Access-Token': token,
   }
 
+  if (buyerCountry) {
+    headers['Shopify-Storefront-Buyer-Country'] = buyerCountry
+  }
+
   const res = await fetch(API_URL, {
     method: 'POST',
     headers,
