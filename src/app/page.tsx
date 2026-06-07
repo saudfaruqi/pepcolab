@@ -9,6 +9,8 @@ import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 
+import { useCountry } from '@/lib/countryContext'
+
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
 function useIsMobile(bp = 768) {
@@ -147,8 +149,11 @@ export default function PepcoLabPage() {
   const { addItem } = useCart();
   const isMobile = useIsMobile();
 
+  const { country } = useCountry()
+
   useEffect(() => {
-    DATA_PRODUCTS().then((raw) => {
+    setLoaded(false);
+    DATA_PRODUCTS(40, country).then((raw) => {
       setProducts(raw.map((p) => ({
         ...p,
         currencyCode: p.currencyCode ?? 'AED',
@@ -156,10 +161,8 @@ export default function PepcoLabPage() {
       })));
       setLoaded(true);
     }).catch(console.error);
-  }, []);
+  }, [country]);
 
-  // Derive a single currency code from the first product for bundle prices.
-  // All products in one Shopify market share the same currency.
   const storeCurrency = products[0]?.currencyCode ?? 'AED';
 
   const addToCart = useCallback((product: NormalisedProduct) => {

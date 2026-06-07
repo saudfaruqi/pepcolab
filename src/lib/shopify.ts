@@ -14,6 +14,7 @@ const API_URL = `https://${DOMAIN}/api/${API_VERSION}/graphql.json`
 
 // ─── Core fetch ────────────────────────────────────────────────────────────
 
+// shopify.ts — update shopifyFetch signature and body
 export async function shopifyFetch<T = Record<string, unknown>>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -24,42 +25,25 @@ export async function shopifyFetch<T = Record<string, unknown>>(
   }: { serverSide?: boolean; revalidate?: number; buyerCountry?: string } = {}
 ): Promise<T> {
   const token = serverSide && PRIVATE_TOKEN ? PRIVATE_TOKEN : PUBLIC_TOKEN
+  if (!token) throw new Error('Shopify access token is not configured')
 
-  if (!token) {
-    throw new Error('Shopify access token is not configured')
-  }
-
-  // Build headers — include buyer country for market-aware pricing when provided
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Shopify-Storefront-Access-Token': token,
-  }
-  if (buyerCountry) {
-    headers['Shopify-Storefront-Buyer-Country'] = buyerCountry
   }
 
   const res = await fetch(API_URL, {
     method: 'POST',
     headers,
     body: JSON.stringify({ query, variables }),
-    // Next.js cache control
-    ...(revalidate !== undefined
-      ? { next: { revalidate } }
-      : { cache: 'no-store' }),
+    ...(revalidate !== undefined ? { next: { revalidate } } : { cache: 'no-store' }),
   })
 
-  if (!res.ok) {
-    throw new Error(`Shopify API HTTP ${res.status}: ${res.statusText}`)
-  }
-
+  if (!res.ok) throw new Error(`Shopify API HTTP ${res.status}: ${res.statusText}`)
   const json = await res.json()
-
   if (json.errors?.length) {
-    throw new Error(
-      `Shopify GraphQL Error: ${json.errors.map((e: { message: string }) => e.message).join(', ')}`
-    )
+    throw new Error(`Shopify GraphQL Error: ${json.errors.map((e: { message: string }) => e.message).join(', ')}`)
   }
-
   return json.data as T
 }
 
@@ -204,24 +188,56 @@ const CART_FIELDS = /* GraphQL */ `
   }
 `
 
-export async function createCart(): Promise<string> {
+
+
+
+// shopify.ts — add this mutation + update createCart
+
+export async function updateCartBuyerIdentity(
+  cartId: string,
+  countryCode: string
+): Promise<ShopifyCart> {
+  const data = await shopifyFetch<{
+    cartBuyerIdentityUpdate: { cart: ShopifyCart; userErrors: { message: string }[] }
+  }>(
+    /* GraphQL */ `
+      ${CART_FIELDS}
+      mutation cartBuyerIdentityUpdate($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+        cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+          cart { ...CartFields }
+          userErrors { field message }
+        }
+      }
+    `,
+    { cartId, buyerIdentity: { countryCode } }
+  )
+  if (data.cartBuyerIdentityUpdate.userErrors.length) {
+    throw new Error(data.cartBuyerIdentityUpdate.userErrors[0].message)
+  }
+  return data.cartBuyerIdentityUpdate.cart
+}
+
+// Update createCart to accept country at creation time
+export async function createCart(countryCode = 'AE'): Promise<string> {
   const data = await shopifyFetch<{
     cartCreate: { cart: { id: string }; userErrors: { message: string }[] }
-  }>(/* GraphQL */ `
-    mutation cartCreate {
-      cartCreate {
-        cart { id }
-        userErrors { field message }
+  }>(
+    /* GraphQL */ `
+      mutation cartCreate($input: CartInput!) {
+        cartCreate(input: $input) {
+          cart { id }
+          userErrors { field message }
+        }
       }
-    }
-  `)
-
+    `,
+    { input: { buyerIdentity: { countryCode } } }
+  )
   if (data.cartCreate.userErrors.length) {
     throw new Error(data.cartCreate.userErrors[0].message)
   }
-
   return data.cartCreate.cart.id
 }
+
 
 export async function addToCart(
   cartId: string,
@@ -406,52 +422,66 @@ export function normaliseProduct(node: ShopifyProduct) {
   }
 }
 
+// shopify.ts — update getProducts to use the proxy when called client-side
 export async function getProducts(first = 40, buyerCountry?: string) {
-  const data = await shopifyFetch<{
-    products: { edges: { node: ShopifyProduct }[] }
-  }>(
-    /* GraphQL */ `
-      query getProducts($first: Int!) {
-        products(first: $first) {
-          edges {
-            node {
-              id handle title description tags
-              variants(first: 1) {
-                edges {
-                  node {
-                    id title
-                    price { amount currencyCode }
-                    compareAtPrice { amount currencyCode }
-                    availableForSale
-                  }
-                }
-              }
-              images(first: 1) {
-                edges { node { url altText } }
-              }
-              metafields(identifiers: [
-                { namespace: "pepcolab", key: "purity" }
-                { namespace: "pepcolab", key: "lot" }
-                { namespace: "pepcolab", key: "test_date" }
-              ]) {
-                key value
+  const isServer = typeof window === 'undefined'
+
+  if (isServer) {
+    // Server components: direct fetch with private token (no CORS issue)
+    const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
+      PRODUCTS_QUERY,
+      { first },
+      { revalidate: 60, serverSide: true }
+    )
+    return data.products.edges.map(({ node }) => normaliseProduct(node))
+  } else {
+    // Client components: go through the API proxy to avoid CORS
+    const { shopifyClientFetch } = await import('./shopifyClient')
+    const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
+      PRODUCTS_QUERY,
+      { first },
+      buyerCountry
+    )
+    return data.products.edges.map(({ node }) => normaliseProduct(node))
+  }
+}
+
+// Extract the query string to reuse in both paths
+const PRODUCTS_QUERY = /* GraphQL */ `
+  query getProducts($first: Int!) {
+    products(first: $first) {
+      edges {
+        node {
+          id handle title description tags
+          variants(first: 1) {
+            edges {
+              node {
+                id title
+                price { amount currencyCode }
+                compareAtPrice { amount currencyCode }
+                availableForSale
               }
             }
           }
+          images(first: 1) {
+            edges { node { url altText } }
+          }
+          metafields(identifiers: [
+            { namespace: "pepcolab", key: "purity" }
+            { namespace: "pepcolab", key: "lot" }
+            { namespace: "pepcolab", key: "test_date" }
+          ]) { key value }
         }
       }
-    `,
-    { first },
-    { revalidate: 60, buyerCountry }  // ← add buyerCountry here
-  )
+    }
+  }
+`
 
-  return data.products.edges.map(({ node }) => normaliseProduct(node))
-}
-
-export async function getProductByHandle(handle: string) {
+// shopify.ts — update getProductByHandle
+export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
   const data = await shopifyFetch<{ product: ShopifyProduct | null }>(
     /* GraphQL */ `
-      query getProduct($handle: String!) {
+      query getProduct($handle: String!) @inContext(country: $country) {
         product(handle: $handle) {
           id handle title description descriptionHtml tags
           variants(first: 10) {
@@ -473,15 +503,12 @@ export async function getProductByHandle(handle: string) {
             { namespace: "pepcolab", key: "test_date" }
             { namespace: "pepcolab", key: "sequence" }
             { namespace: "pepcolab", key: "long_desc" }
-          ]) {
-            key value
-          }
+          ]) { key value }
         }
       }
     `,
     { handle },
-    { revalidate: 60 }
+    { revalidate: 60, buyerCountry }
   )
-
   return data.product ? normaliseProduct(data.product) : null
 }

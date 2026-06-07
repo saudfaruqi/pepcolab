@@ -14,19 +14,19 @@ import {
   updateCartLine as shopifyUpdateLine,
   getCart as shopifyGetCart,
   getCartCheckoutUrl,
+  updateCartBuyerIdentity,
   type ShopifyCart,
   type ShopifyCartLine,
 } from '@/lib/shopify'
+import { useCountry } from '@/lib/countryContext'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export interface CartLine {
-  /** Shopify cart line GID, e.g. gid://shopify/CartLine/... */
   id: string
   quantity: number
   variantId: string
   title: string
-  /** e.g. "5mg" */
   variantTitle: string
   price: number
   image?: string
@@ -38,7 +38,6 @@ interface CartState {
   lines: CartLine[]
   totalQuantity: number
   subtotal: number
-  /** ISO 4217 currency code sourced from the live Shopify cart response */
   currencyCode: string
   open: boolean
   loading: boolean
@@ -73,8 +72,6 @@ function reducer(state: CartState, action: Action): CartState {
         lines: action.lines,
         subtotal: action.total,
         totalQuantity: action.qty,
-        // Only update currencyCode when the API provides one; keep the
-        // existing value (including the localStorage-restored one) otherwise.
         currencyCode: action.currencyCode ?? state.currencyCode,
       }
     case 'SET_OPEN':
@@ -104,7 +101,6 @@ function safeLocalRemove(key: string) {
   try { localStorage.removeItem(key) } catch {}
 }
 
-/** Map a Shopify CartLine node → our local CartLine shape */
 function mapShopifyLine(node: ShopifyCartLine): CartLine {
   return {
     id: node.id,
@@ -124,19 +120,17 @@ function computeTotals(lines: CartLine[]) {
   return { total, qty }
 }
 
-/** Apply a real Shopify cart response to state */
 function applyCart(cart: ShopifyCart): {
   lines: CartLine[]
   total: number
   qty: number
   currencyCode: string
 } {
-  const lines        = cart.lines.edges.map(({ node }) => mapShopifyLine(node))
+  const lines         = cart.lines.edges.map(({ node }) => mapShopifyLine(node))
   const subtotalMoney = cart.cost.subtotalAmount ?? cart.cost.totalAmount
-  const total        = parseFloat(subtotalMoney.amount)
-  const qty          = cart.totalQuantity
-  // Prefer subtotalAmount currency; fall back to totalAmount
-  const currencyCode = subtotalMoney.currencyCode ?? cart.cost.totalAmount.currencyCode ?? 'AED'
+  const total         = parseFloat(subtotalMoney.amount)
+  const qty           = cart.totalQuantity
+  const currencyCode  = subtotalMoney.currencyCode ?? cart.cost.totalAmount.currencyCode ?? 'AED'
   return { lines, total, qty, currencyCode }
 }
 
@@ -166,38 +160,48 @@ const CartContext = createContext<CartCtx | null>(null)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, init)
 
-  // Initialise from localStorage on mount
+  // Must be called at the top level of the component, not inside effects
+  const { country } = useCountry()
+
+  // Initialise from localStorage and rehydrate from Shopify on mount.
+  // Also updates cart buyer identity so Shopify returns the correct currency.
   useEffect(() => {
     const storedId       = safeLocalGet(CART_ID_KEY)
     const storedLines    = safeLocalGet(CART_LINES_KEY)
     const storedCurrency = safeLocalGet(CART_CURRENCY_KEY)
 
-    // Apply cached lines + currency immediately for a fast first paint
+    // Fast first paint from cache
     if (storedLines) {
       try {
         const lines: CartLine[] = JSON.parse(storedLines)
         const { total, qty } = computeTotals(lines)
-        dispatch({
-          type: 'SET_LINES',
-          lines,
-          total,
-          qty,
-          currencyCode: storedCurrency ?? undefined,
-        })
+        dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode: storedCurrency ?? undefined })
       } catch {}
     }
 
     if (storedId) {
       dispatch({ type: 'SET_CART_ID', cartId: storedId })
-      // Rehydrate from Shopify to ensure lines + currency are accurate
-      shopifyGetCart(storedId).then(cart => {
+
+      // Rehydrate — also update buyer identity so the currency flips to the
+      // detected country (e.g. AED → GBP when the visitor is in the UK).
+      shopifyGetCart(storedId).then(async cart => {
         if (cart) {
-          const { lines, total, qty, currencyCode } = applyCart(cart)
-          dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
-          safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
-          safeLocalSet(CART_CURRENCY_KEY, currencyCode)
+          // Re-apply country context in case it changed since cart was created
+          try {
+            const updated = await updateCartBuyerIdentity(storedId, country)
+            const { lines, total, qty, currencyCode } = applyCart(updated)
+            dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
+            safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
+            safeLocalSet(CART_CURRENCY_KEY, currencyCode)
+          } catch {
+            // Identity update failed — at least apply what we already fetched
+            const { lines, total, qty, currencyCode } = applyCart(cart)
+            dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
+            safeLocalSet(CART_LINES_KEY, JSON.stringify(lines))
+            safeLocalSet(CART_CURRENCY_KEY, currencyCode)
+          }
         } else {
-          // Cart expired / invalid – clear everything
+          // Cart expired / invalid — clear everything
           safeLocalRemove(CART_ID_KEY)
           safeLocalRemove(CART_LINES_KEY)
           safeLocalRemove(CART_CURRENCY_KEY)
@@ -206,7 +210,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
       })
     }
-  }, [])
+  // Re-run when country resolves (async detection means it may start as 'AE')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country])
 
   // Persist lines to localStorage whenever they change
   useEffect(() => {
@@ -222,7 +228,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [state.currencyCode])
 
-  // Ensure a cart exists and return its ID
+  // Ensure a cart exists and return its ID.
+  // Creates a new cart with the buyer's country so pricing is correct from the start.
   const ensureCart = useCallback(async (): Promise<string> => {
     if (state.cartId) return state.cartId
 
@@ -232,11 +239,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return stored
     }
 
-    const id = await shopifyCreateCart()
+    const id = await shopifyCreateCart(country)
     safeLocalSet(CART_ID_KEY, id)
     dispatch({ type: 'SET_CART_ID', cartId: id })
     return id
-  }, [state.cartId])
+  }, [state.cartId, country])
 
   // ── addItem ──────────────────────────────────────────────────────────────
 
@@ -252,7 +259,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LOADING', loading: true })
       dispatch({ type: 'SET_ERROR', error: null })
 
-      // Optimistic update (currency unchanged until real response arrives)
+      // Optimistic update
       const existing = state.lines.find(l => l.variantId === variantId)
       const optimisticLines: CartLine[] = existing
         ? state.lines.map(l =>

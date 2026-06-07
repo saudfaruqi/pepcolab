@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { CartProvider } from '@/lib/cartContext'
 import CartDrawer from '@/components/CartDrawer'
+import { CountryProvider } from '@/lib/countryContext'
 
 export const metadata: Metadata = {
   title: { template: '%s · PepcoLab', default: 'PepcoLab — Research-Grade Peptides, UK' },
@@ -28,10 +29,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="google-site-verification" content="coc1Mhr_wcWR5l4AULYnq5mngxdMdXebz01HBvxmZmM" />
       </head>
       <body>
+        <CountryProvider>
         <CartProvider>
           {children}
           <CartDrawer />
         </CartProvider>
+        </CountryProvider>
       </body>
     </html>
   )
