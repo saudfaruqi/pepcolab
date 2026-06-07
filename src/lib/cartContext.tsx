@@ -161,7 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, init)
 
   // Must be called at the top level of the component, not inside effects
-  const { country } = useCountry()
+  const { country, ready } = useCountry()
 
   // Initialise from localStorage and rehydrate from Shopify on mount.
   // Also updates cart buyer identity so Shopify returns the correct currency.
@@ -212,7 +212,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   // Re-run when country resolves (async detection means it may start as 'AE')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [country])
+  }, [country, ready])
 
   // Persist lines to localStorage whenever they change
   useEffect(() => {

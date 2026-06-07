@@ -1,10 +1,15 @@
 // app/api/products/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
+
+
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const TOKEN  = process.env.SHOPIFY_STOREFRONT_PRIVATE_TOKEN
          ?? process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 const API_URL = `https://${DOMAIN}/api/2024-04/graphql.json`
+
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const { query, variables, buyerCountry } = await req.json()

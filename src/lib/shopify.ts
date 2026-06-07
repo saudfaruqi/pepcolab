@@ -478,10 +478,11 @@ const PRODUCTS_QUERY = /* GraphQL */ `
 `
 
 // shopify.ts — update getProductByHandle
+// shopify.ts — getProductByHandle, remove @inContext from the query string
 export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
   const data = await shopifyFetch<{ product: ShopifyProduct | null }>(
     /* GraphQL */ `
-      query getProduct($handle: String!) @inContext(country: $country) {
+      query getProduct($handle: String!) {
         product(handle: $handle) {
           id handle title description descriptionHtml tags
           variants(first: 10) {
@@ -508,7 +509,7 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
       }
     `,
     { handle },
-    { revalidate: 60, buyerCountry }
+    { revalidate: 60, buyerCountry }  // country goes in the header, not the query
   )
   return data.product ? normaliseProduct(data.product) : null
 }

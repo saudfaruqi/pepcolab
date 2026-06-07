@@ -4,42 +4,39 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 
 const COUNTRY_KEY = 'pepcolab_country'
 
+const COUNTRY_CURRENCY: Record<string, string> = {
+  AE: 'AED', GB: 'GBP', US: 'USD',
+  DE: 'EUR', FR: 'EUR', AU: 'AUD', CA: 'CAD',
+}
+
 interface CountryCtx {
-  country: string      // ISO 3166-1 alpha-2, e.g. "GB"
-  currency: string     // ISO 4217, e.g. "GBP"  
+  country: string
+  currency: string
   setCountry: (c: string) => void
+  ready: boolean  // ← add this so consumers know detection is complete
 }
 
 const CountryContext = createContext<CountryCtx>({
   country: 'AE',
   currency: 'AED',
   setCountry: () => {},
+  ready: false,
 })
 
-// Map country → currency for the markets you support in Shopify
-const COUNTRY_CURRENCY: Record<string, string> = {
-  AE: 'AED',
-  GB: 'GBP',
-  US: 'USD',
-  DE: 'EUR',
-  FR: 'EUR',
-  AU: 'AUD',
-  CA: 'CAD',
-  // add more as you enable markets in Shopify admin
-}
-
 export function CountryProvider({ children }: { children: ReactNode }) {
-  const [country, setCountryState] = useState('AE')
+  // Start with null so server and client initial render both agree
+  const [country, setCountryState] = useState<string>('AE')
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    // 1. Check localStorage first (returning visitor or manual override)
+    // Only runs client-side, so no server/client mismatch
     const stored = localStorage.getItem(COUNTRY_KEY)
     if (stored && COUNTRY_CURRENCY[stored]) {
       setCountryState(stored)
+      setReady(true)
       return
     }
 
-    // 2. Detect via Shopify's own localization query — most accurate
     fetch('/api/country')
       .then(r => r.json())
       .then(({ country: detected }) => {
@@ -48,7 +45,8 @@ export function CountryProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(COUNTRY_KEY, detected)
         }
       })
-      .catch(() => {/* stay on default AE */})
+      .catch(() => {})
+      .finally(() => setReady(true))
   }, [])
 
   const setCountry = (c: string) => {
@@ -61,6 +59,7 @@ export function CountryProvider({ children }: { children: ReactNode }) {
       country,
       currency: COUNTRY_CURRENCY[country] ?? 'AED',
       setCountry,
+      ready,
     }}>
       {children}
     </CountryContext.Provider>
