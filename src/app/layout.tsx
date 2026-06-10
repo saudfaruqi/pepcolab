@@ -118,15 +118,15 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/favicon.ico',
+        url: '/pepcologo.png',
       },
       {
-        url: '/icon-32.png',
+        url: '/pepcologo.png',
         type: 'image/png',
         sizes: '32x32',
       },
       {
-        url: '/icon-192.png',
+        url: '/pepcologo.png',
         type: 'image/png',
         sizes: '192x192',
       },
@@ -134,12 +134,12 @@ export const metadata: Metadata = {
 
     apple: [
       {
-        url: '/apple-touch-icon.png',
+        url: '/pepcologo.png',
         sizes: '180x180',
       },
     ],
 
-    shortcut: ['/favicon.ico'],
+    shortcut: ['/pepcologo.png'],
   },
 
   manifest: '/site.webmanifest',
@@ -163,7 +163,7 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: '/og-cover.jpg',
+        url: '/pepcoall.png',
         width: 1200,
         height: 630,
         alt: 'PepcoLab Research-Grade Peptides',
@@ -182,7 +182,7 @@ export const metadata: Metadata = {
 
     creator: '@pepcolab',
 
-    images: ['/og-cover.jpg'],
+    images: ['/pepcologo.png'],
   },
 
   appleWebApp: {
@@ -252,7 +252,7 @@ export default function RootLayout({
         <link rel="canonical" href={siteUrl} />
 
         {/* PRELOAD IMPORTANT ASSETS */}
-        <link rel="preload" href="/og-cover.jpg" as="image" />
+        <link rel="preload" href="/pepcologo.png" as="image" />
 
         {/* GOOGLE VERIFICATION */}
         <meta
@@ -272,12 +272,12 @@ export default function RootLayout({
 
               url: siteUrl,
 
-              logo: `${siteUrl}/logo.png`,
+              logo: `${siteUrl}/pepcologo.png`,
 
               description:
                 'Research-grade peptides and laboratory compounds for scientific and in-vitro research applications.',
 
-              email: 'support@pepcolab.com',
+              email: 'hello@pepcolab.com',
 
               address: {
                 '@type': 'PostalAddress',
@@ -338,7 +338,7 @@ export default function RootLayout({
 
               name: 'PepcoLab',
 
-              image: `${siteUrl}/og-cover.jpg`,
+              image: `${siteUrl}/pepcoall.png`,
 
               url: siteUrl,
 
