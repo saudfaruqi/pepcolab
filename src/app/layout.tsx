@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
 
-        <meta name="google-site-verification" content="coc1Mhr_wcWR5l4AULYnq5mngxdMdXebz01HBvxmZmM" />
+        <meta name="google-site-verification" content="iSuNTQTsMQf9PHYe4l-b3sXHGl8F3qQ59OGo9qnTn18" />
       </head>
       <body>
         <CountryProvider>
