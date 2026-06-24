@@ -87,7 +87,7 @@ function ReconstitutionCalculator() {
           value={mg}
           onChange={(e) => setMg(e.target.value)}
           placeholder="Peptide amount (mg)"
-          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
+          className="w-full bg-white rounded-xl border px-4 py-3 outline-none focus:border-black"
         />
 
         <input
@@ -95,7 +95,7 @@ function ReconstitutionCalculator() {
           value={target}
           onChange={(e) => setTarget(e.target.value)}
           placeholder="Target concentration (mcg/mL)"
-          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-black"
+          className="w-full bg-white rounded-xl border px-4 py-3 outline-none focus:border-black"
         />
 
         {result !== null && (
@@ -150,7 +150,7 @@ function DoseCalculator() {
           value={concentration}
           onChange={(e) => setConcentration(e.target.value)}
           placeholder="Concentration (mcg/mL)"
-          className="w-full rounded-xl border px-4 py-3"
+          className="w-full bg-white rounded-xl border px-4 py-3"
         />
 
         <input
@@ -158,7 +158,7 @@ function DoseCalculator() {
           value={dose}
           onChange={(e) => setDose(e.target.value)}
           placeholder="Desired dose (mcg)"
-          className="w-full rounded-xl border px-4 py-3"
+          className="w-full bg-white rounded-xl border px-4 py-3"
         />
 
         {volume !== null && (
@@ -213,7 +213,7 @@ function BatchVerifier() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter lot number (e.g. PEP-2412-07)"
-            className="w-full rounded-xl border pl-11 pr-4 py-3 outline-none focus:border-black"
+            className="w-full bg-white rounded-xl border pl-11 pr-4 py-3 outline-none focus:border-black"
           />
         </div>
 
@@ -277,7 +277,7 @@ function PurityCalculator() {
           value={actual}
           onChange={(e) => setActual(e.target.value)}
           placeholder="Measured amount"
-          className="w-full rounded-xl border px-4 py-3"
+          className="w-full bg-white rounded-xl border px-4 py-3"
         />
 
         <input
@@ -285,7 +285,7 @@ function PurityCalculator() {
           value={expected}
           onChange={(e) => setExpected(e.target.value)}
           placeholder="Theoretical amount"
-          className="w-full rounded-xl border px-4 py-3"
+          className="w-full bg-white rounded-xl border px-4 py-3"
         />
 
         {purity !== null && (

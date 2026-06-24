@@ -172,7 +172,7 @@ export default function ContactPage() {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="Full Name"
-                  className="w-full border border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
                 />
 
                 <input
@@ -182,7 +182,7 @@ export default function ContactPage() {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="Email Address"
-                  className="w-full border border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
                 />
 
                 <input
@@ -190,7 +190,7 @@ export default function ContactPage() {
                   value={form.company}
                   onChange={handleChange}
                   placeholder="Company (optional)"
-                  className="w-full border border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
                 />
 
                 <input
@@ -199,7 +199,7 @@ export default function ContactPage() {
                   value={form.subject}
                   onChange={handleChange}
                   placeholder="Subject"
-                  className="w-full border border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
                 />
 
                 <textarea
