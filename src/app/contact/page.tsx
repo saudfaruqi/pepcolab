@@ -209,7 +209,7 @@ export default function ContactPage() {
                   value={form.message}
                   onChange={handleChange}
                   placeholder="Your message..."
-                  className="w-full border border-neutral-200 rounded-xl px-4 py-3 resize-none"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 resize-none"
                 />
 
                 <button
