@@ -1,4 +1,4 @@
-// shopify.ts
+  // shopify.ts
 
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN

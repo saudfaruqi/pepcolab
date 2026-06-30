@@ -1,3 +1,6 @@
+
+//cartcontext
+
 'use client'
 import {
   createContext,
@@ -370,19 +373,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // ── checkout ─────────────────────────────────────────────────────────────
 
-  const checkout = useCallback(async () => {
-    if (!state.cartId || state.lines.length === 0) return
-    dispatch({ type: 'SET_LOADING', loading: true })
-    try {
-      const url = await getCartCheckoutUrl(state.cartId)
-      window.location.href = url
-    } catch (err) {
-      dispatch({ type: 'SET_ERROR', error: 'Could not start checkout. Please try again.' })
-      console.error('[Cart] checkout error:', err)
-    } finally {
-      dispatch({ type: 'SET_LOADING', loading: false })
-    }
-  }, [state.cartId, state.lines])
+const checkout = useCallback(async () => {
+  if (!state.cartId || state.lines.length === 0) return
+  dispatch({ type: 'SET_LOADING', loading: true })
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: state.lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
+        country,
+      }),
+    })
+    const data = await res.json()
+    if (data.error) throw new Error(data.error)
+    window.location.href = `/checkout?order=${data.orderId}`
+  } catch (err) {
+    dispatch({ type: 'SET_ERROR', error: 'Could not start checkout. Please try again.' })
+    console.error('[Cart] checkout error:', err)
+  } finally {
+    dispatch({ type: 'SET_LOADING', loading: false })
+  }
+}, [state.cartId, state.lines, country])
 
   return (
     <CartContext.Provider
