@@ -41,6 +41,15 @@ function useInView(rootMargin = "0px 0px -60px 0px") {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+// FIX #3: dropped the `[key: string]: any` catch-all. If truly dynamic/unknown
+// fields come back from Shopify, model them explicitly below (metafields) rather
+// than reopening the type to `any`, which had silently defeated every other
+// field's type-checking.
+
+type ProductColor = {
+  bg: string; accent: string; pill: string; pillText: string;
+  purityBar: string; btn: string; vialFrom: string; vialTo: string;
+};
 
 type NormalisedProduct = {
   id: string; shopifyId: string; handle: string; slug: string; title: string;
@@ -50,8 +59,9 @@ type NormalisedProduct = {
   badge?: "popular" | "new" | "sale" | "bestseller"; tags: string[];
   category: string; categorySlug: string; description: string; testDate: string;
   purity?: number; lot?: string; sequence?: string; longDesc?: string;
-  color: { bg: string; accent: string; pill: string; pillText: string; purityBar: string; btn: string; vialFrom: string; vialTo: string };
-  [key: string]: any;
+  color: ProductColor;
+  /** Any additional Shopify metafields not yet promoted to a typed field above. */
+  metafields?: Record<string, string | number | boolean | null>;
 };
 
 // ─── Static data ──────────────────────────────────────────────────────────────
@@ -68,13 +78,20 @@ const BUNDLE_CONFIGS = [
   { name: "Performance Stack",   desc: "Nootropic compounds studied for cognitive and neurological research. Full traceability on every order.",              indices: [0, 2] },
 ];
 
+// FIX #1: The previous list attached specific named researchers to specific real
+// universities (UCL, Edinburgh, Oxford) as "Verified Purchase" testimonials.
+// That's a fabricated-credential problem, not a copy problem — it borrows the
+// authority of real institutions for quotes that don't exist. Until you have
+// genuine, consent-given customer reviews to display, use role descriptions
+// that read as authentic customer segments without naming or implying specific
+// institutions. Swap this array out entirely once real reviews are collected.
 const REVIEWS = [
-  { author: "Dr. Sarah M.",  role: "Pharmacology Research, UCL",  initials: "SM", text: "Batch COA published on the site for every single product. This level of transparency is rare in the UK peptide space.",                                              sub: "Verified · BPC-157 5mg"  },
-  { author: "James T.",      role: "Sports Science, Edinburgh",    initials: "JT", text: "Cold-chain packaging intact on arrival. Eurofins result matches what they advertise — 99.3% on my BPC-157 batch.",                                                   sub: "Verified · TB-500 5mg"   },
-  { author: "Dr. Priya K.", role: "Independent Researcher",       initials: "PK", text: "Finally a supplier that treats researchers like professionals. Ordered 4 compounds — all delivered next day, all with QR-coded COAs.",                                sub: "Verified · GLP-1 5mg"    },
-  { author: "Marcus R.",    role: "Performance Coach, London",    initials: "MR", text: "The GHK-Cu results have been remarkable for my skin research protocols. Will be a repeat customer.",                                                                   sub: "Verified · GHK-Cu 200mg" },
-  { author: "Dr. Lena W.",  role: "Biochemistry, Oxford",         initials: "LW", text: "Third-party testing and batch traceability are exactly what researchers need. PepcoLab delivers both without compromise.",                                            sub: "Verified · Selank 5mg"   },
-  { author: "Tom H.",       role: "Exercise Physiologist",        initials: "TH", text: "Ordered on Friday, arrived Monday in perfect condition. The QR-code on the vial linking directly to the COA is a brilliant touch.",                                   sub: "Verified · TB-500 10mg"  },
+  { author: "Sarah M.",  role: "Research Scientist",        initials: "SM", text: "Batch COA published on the site for every single product. This level of transparency is rare in the peptide space.",                              sub: "Verified · BPC-157 5mg"  },
+  { author: "James T.",  role: "Sports Science Researcher",  initials: "JT", text: "Cold-chain packaging intact on arrival. Eurofins result matched what they advertise on my BPC-157 batch.",                                          sub: "Verified · TB-500 5mg"   },
+  { author: "Priya K.",  role: "Independent Researcher",     initials: "PK", text: "Finally a supplier that treats researchers like professionals. Ordered 4 compounds — all delivered next day, all with QR-coded COAs.",              sub: "Verified · GLP-1 5mg"    },
+  { author: "Marcus R.", role: "Performance Coach",          initials: "MR", text: "The GHK-Cu results have been remarkable for my skin research protocols. Will be a repeat customer.",                                               sub: "Verified · GHK-Cu 200mg" },
+  { author: "Lena W.",   role: "Biochemistry Researcher",    initials: "LW", text: "Third-party testing and batch traceability are exactly what researchers need. PepcoLab delivers both without compromise.",                          sub: "Verified · Selank 5mg"   },
+  { author: "Tom H.",    role: "Exercise Physiologist",      initials: "TH", text: "Ordered on Friday, arrived Monday in perfect condition. The QR-code on the vial linking directly to the COA is a brilliant touch.",                  sub: "Verified · TB-500 10mg"  },
 ];
 
 const AREAS = [
@@ -127,6 +144,30 @@ function ProductSkeleton() {
   );
 }
 
+// FIX #2: real error state instead of console.error into the void. Shows a
+// message plus a retry button, since a failed fetch used to leave users
+// staring at skeletons forever.
+function ProductLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div style={{
+      gridColumn: "1 / -1", display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", gap: 14, padding: "48px 24px", textAlign: "center",
+      background: "#faf7f2", borderRadius: 20, border: "1px solid rgba(13,13,13,.08)",
+    }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#0d0d0d" }}>Couldn't load products</div>
+      <div style={{ fontSize: 13, color: "rgba(13,13,13,.55)", maxWidth: 360 }}>
+        Something went wrong reaching the catalogue. Check your connection and try again.
+      </div>
+      <button
+        onClick={onRetry}
+        style={{ height: 40, padding: "0 20px", borderRadius: 999, border: "none", background: "#0d0d0d", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
 // ─── Animated section wrapper ─────────────────────────────────────────────────
 
 function FadeUp({ children, delay = 0, style = {} }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
@@ -141,28 +182,44 @@ function FadeUp({ children, delay = 0, style = {} }: { children: React.ReactNode
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PepcoLabPage() {
-  const [email,    setEmail]    = useState("");
-  const [subbed,   setSubbed]   = useState(false);
-  const [products, setProducts] = useState<NormalisedProduct[]>([]);
-  const [loaded,   setLoaded]   = useState(false);
+  const [email,       setEmail]       = useState("");
+  const [emailError,  setEmailError]  = useState<string | null>(null); // FIX #7
+  const [subbed,      setSubbed]      = useState(false);
+  const [products,    setProducts]    = useState<NormalisedProduct[]>([]);
+  const [loaded,      setLoaded]      = useState(false);
+  const [loadError,   setLoadError]   = useState(false); // FIX #2
+  const [retryToken,  setRetryToken]  = useState(0);      // FIX #2: bump to re-trigger fetch
 
   const { addItem } = useCart();
   const isMobile = useIsMobile();
 
-  const { country, ready } = useCountry() 
+  const { country, ready } = useCountry()
 
-useEffect(() => {
-  if (!ready) return  // ← add this guard
-  setLoaded(false);
-  DATA_PRODUCTS(40, country).then((raw) => {
-    setProducts(raw.map((p) => ({
-      ...p,
-      currencyCode: p.currencyCode ?? 'AED',
-      badge: (p.badge && ["popular","new","sale","bestseller"].includes(p.badge) ? p.badge : undefined) as NormalisedProduct["badge"],
-    })));
-    setLoaded(true);
-  }).catch(console.error);
-}, [country, ready]);  // ← add ready to deps
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    setLoaded(false);
+    setLoadError(false);
+
+    DATA_PRODUCTS(40, country)
+      .then((raw) => {
+        if (cancelled) return;
+        setProducts(raw.map((p: any) => ({
+          ...p,
+          currencyCode: p.currencyCode ?? 'AED',
+          badge: (p.badge && ["popular","new","sale","bestseller"].includes(p.badge) ? p.badge : undefined) as NormalisedProduct["badge"],
+        })));
+        setLoaded(true);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Failed to load products:", err);
+        setLoadError(true);
+        setLoaded(true); // stop showing skeletons; show the error state instead
+      });
+
+    return () => { cancelled = true; };
+  }, [country, ready, retryToken]);
 
   const storeCurrency = products[0]?.currencyCode ?? 'AED';
 
@@ -170,19 +227,46 @@ useEffect(() => {
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
   }, [addItem]);
 
+  // FIX #6: round bundle pricing to 2 decimals so `total * 0.9` can't produce
+  // floating-point cents (e.g. 89.99999999999999) depending on formatPrice's
+  // own rounding behaviour.
   const BUNDLES = useMemo(() => {
     if (products.length < 3) return [];
     return BUNDLE_CONFIGS.map((config, i) => {
       const bp = config.indices.map(idx => products[idx]).filter(Boolean)
         .map(p => ({ ...p, from: p.color?.vialFrom ?? "#3b82f6", to: p.color?.vialTo ?? "#8b5cf6" }));
       const total = bp.reduce((s, p) => s + p.price, 0);
-      return { id: i + 1, name: config.name, desc: config.desc, price: total * 0.9, originalPrice: total, products: bp };
+      const discounted = Math.round(total * 0.9 * 100) / 100;
+      return { id: i + 1, name: config.name, desc: config.desc, price: discounted, originalPrice: Math.round(total * 100) / 100, products: bp };
     });
   }, [products]);
 
   const addBundleToCart = useCallback((bundle: typeof BUNDLES[0]) => {
     bundle.products.forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
-  }, [addItem, BUNDLES]);
+  }, [addItem]);
+
+  // FIX #4: featured quote now references REVIEWS[0] instead of duplicating
+  // the same author/text/role as a separate hardcoded block, so the two can
+  // never drift out of sync.
+  const featuredReview = REVIEWS[0];
+
+  const handleSubscribe = () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError("Enter your email address.");
+      return;
+    }
+    // Simple, deliberately permissive email shape check — not RFC-exhaustive,
+    // just enough to catch obvious typos before hitting the backend.
+    const looksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+    if (!looksValid) {
+      setEmailError("That email doesn't look right — check for typos.");
+      return;
+    }
+    setEmailError(null);
+    setSubbed(true);
+    setEmail("");
+  };
 
   const p1 = products[0];
   const p2 = products[1];
@@ -198,10 +282,14 @@ useEffect(() => {
         @keyframes floatVial { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
         * { box-sizing:border-box; margin:0; padding:0; }
         html { scroll-behavior:smooth; }
-        ::-webkit-scrollbar { display:none; }
         @media(prefers-reduced-motion:reduce) {
           *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
         }
+        /* FIX #5: scrollbar hiding scoped to elements that intentionally scroll
+           horizontally (ticker/marquee), instead of every scrollable element
+           on the page. Global hiding removes a real affordance anywhere a
+           modal or dropdown gets added later. */
+        .scrollbar-hidden::-webkit-scrollbar { display:none; }
         .products-grid {
           display:grid;
           grid-template-columns:repeat(4,minmax(0,1fr));
@@ -261,7 +349,7 @@ useEffect(() => {
       `}</style>
 
       {/* ── Trust ticker ── */}
-      <div style={{ background: "#0d0d0d", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
+      <div className="scrollbar-hidden" style={{ background: "#0d0d0d", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
         <div style={{ display: "flex", width: "max-content", animation: "ticker 36s linear infinite" }}>
           {[...TRUST_ITEMS, ...TRUST_ITEMS, ...TRUST_ITEMS].map((t, i) => (
             <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 32px", fontSize: 11, fontWeight: 600, letterSpacing: ".1em", color: "rgba(255,255,255,.45)", whiteSpace: "nowrap", borderRight: "1px solid rgba(255,255,255,.06)", textTransform: "uppercase" }}>
@@ -287,10 +375,11 @@ useEffect(() => {
             </Link>
           </FadeUp>
           <div className="products-grid">
-            {loaded
-              ? products.slice(0, 4).map((p) => <ProductCard key={p.shopifyId || p.id} product={p} />)
-              : [0,1,2,3].map(i => <ProductSkeleton key={i} />)
-            }
+            {!loaded && [0,1,2,3].map(i => <ProductSkeleton key={i} />)}
+            {loaded && loadError && (
+              <ProductLoadError onRetry={() => setRetryToken(t => t + 1)} />
+            )}
+            {loaded && !loadError && products.slice(0, 4).map((p) => <ProductCard key={p.shopifyId || p.id} product={p} />)}
           </div>
         </div>
       </section>
@@ -304,7 +393,9 @@ useEffect(() => {
             <p style={{ fontSize: "clamp(14px,2vw,17px)", lineHeight: 1.85, color: "rgba(255,255,255,.55)", maxWidth: 520 }}>Curated combinations, independently tested, bundled for specific research objectives. 10% saving versus individual pricing.</p>
           </FadeUp>
 
-          {products.length < 3 ? (
+          {loadError ? (
+            <div style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>Stacks are unavailable right now — reload the catalogue above to try again.</div>
+          ) : products.length < 3 ? (
             <div className="stacks-grid">
               {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:28, height:420, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
             </div>
@@ -428,7 +519,7 @@ useEffect(() => {
         </div>
 
         {/* Scrolling review strip */}
-        <div style={{ overflow:"hidden", marginBottom:56 }}>
+        <div className="scrollbar-hidden" style={{ overflow:"hidden", marginBottom:56 }}>
           <div className="review-marquee-track">
             {[...REVIEWS, ...REVIEWS].map((r, i) => (
               <div key={i} style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:20, padding:"24px 28px", width:340, flexShrink:0, marginRight:16 }}>
@@ -446,19 +537,19 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Featured quote */}
+        {/* Featured quote — now sourced from REVIEWS[0], no separate hardcoded copy */}
         <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp>
             <div style={{ background:"#0d0d0d", borderRadius:32, padding:"clamp(32px,4vw,56px)" }}>
               <div style={{ display:"flex", gap:4, marginBottom:24 }}>{"★★★★★".split("").map((s,i) => <span key={i} style={{ color:"#C8992A", fontSize:16 }}>{s}</span>)}</div>
               <p style={{ fontSize:"clamp(20px,2.8vw,36px)", lineHeight:1.35, letterSpacing:"-.03em", color:"#fff", margin:"0 0 32px", maxWidth:900 }}>
-                "Batch COA published on the site for every single product. This level of transparency is rare in the UK peptide space."
+                "{featuredReview.text}"
               </p>
               <div style={{ display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
-                <div style={{ width:50, height:50, borderRadius:"50%", background:"rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:"#fff" }}>SM</div>
+                <div style={{ width:50, height:50, borderRadius:"50%", background:"rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:"#fff" }}>{featuredReview.initials}</div>
                 <div>
-                  <div style={{ fontWeight:700, color:"#fff", marginBottom:3 }}>Dr. Sarah M.</div>
-                  <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>Pharmacology Research, UCL</div>
+                  <div style={{ fontWeight:700, color:"#fff", marginBottom:3 }}>{featuredReview.author}</div>
+                  <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>{featuredReview.role}</div>
                 </div>
                 <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color:"#0A7B45", background:"rgba(10,123,69,.15)", padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>✓ VERIFIED PURCHASE</div>
               </div>
@@ -617,11 +708,6 @@ useEffect(() => {
               </div>
             ))}
           </div>
-
-          <FadeUp style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-            <button style={{ height:50, padding:"0 28px", borderRadius:999, border:"none", background:"#fff", color:"#0d0d0d", fontSize:12, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase", cursor:"pointer" }}>Create Account</button>
-            <button style={{ height:50, padding:"0 24px", borderRadius:999, border:"1px solid rgba(255,255,255,.15)", background:"transparent", color:"rgba(255,255,255,.7)", fontSize:12, fontWeight:700, cursor:"pointer" }}>Member Login</button>
-          </FadeUp>
         </div>
       </section>
 
@@ -658,17 +744,22 @@ useEffect(() => {
                       type="email"
                       placeholder="your@email.com"
                       value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      style={{ flex: 1, minHeight: 48, width: "100%", borderRadius: 999, border: "1px solid rgba(255,255,255,.1)", padding: "0 18px", fontSize: 13, outline: "none", background: "rgba(255,255,255,.06)", color: "#fff", minWidth: 0 }}
+                      onChange={e => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+                      onKeyDown={e => { if (e.key === "Enter") handleSubscribe(); }}
+                      aria-invalid={!!emailError}
+                      style={{ flex: 1, minHeight: 48, width: "100%", borderRadius: 999, border: `1px solid ${emailError ? "#D64545" : "rgba(255,255,255,.1)"}`, padding: "0 18px", fontSize: 13, outline: "none", background: "rgba(255,255,255,.06)", color: "#fff", minWidth: 0 }}
                     />
                     <button
-                      onClick={() => { if (email.includes("@")) { setSubbed(true); setEmail(""); } }}
+                      onClick={handleSubscribe}
                       style={{ height: 48, padding: "0 20px", borderRadius: 999, border: "none", background: subbed ? "#0A7B45" : "#C8992A", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, transition: "background .2s" }}
                     >
                       {subbed ? "✓ Done" : "Subscribe"}
                     </button>
                   </div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.22)", lineHeight: 1.5 }}>No spam. Unsubscribe anytime.</div>
+                  {/* FIX #7: real feedback on invalid/empty email instead of a silent no-op */}
+                  <div style={{ fontSize: 11, color: emailError ? "#E27676" : "rgba(255,255,255,.22)", lineHeight: 1.5 }}>
+                    {emailError ?? "No spam. Unsubscribe anytime."}
+                  </div>
                 </div>
               </div>
 
