@@ -1,7 +1,4 @@
-
-
 // src/components/CartDrawer.tsx
-
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -10,6 +7,7 @@ import {
   X, Minus, Plus, ArrowRight, ShoppingBag, Trash2,
 } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
+import { useCountry } from '@/lib/countryContext'
 import { formatPrice } from '@/lib/utils'
 
 const FREE_SHIPPING_THRESHOLD = 75
@@ -17,11 +15,14 @@ const FREE_SHIPPING_THRESHOLD = 75
 export default function CartDrawer() {
   const {
     open, lines, subtotal, totalQuantity, currencyCode,
-    loading, error, closeCart, removeItem, updateQty, checkout, clearError,
+    loading, error, closeCart, removeItem, updateQty, clearError,
   } = useCart()
+  const { country: detectedCountry, currency: detectedCurrency } = useCountry()
 
-  const drawerRef   = useRef<HTMLDivElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
   const [checkingOut, setCheckingOut] = useState(false)
+  const [sdkReady, setSdkReady] = useState(false)
+  const [sdkError, setSdkError] = useState<string | null>(null)
 
   /* lock scroll */
   useEffect(() => {
@@ -36,13 +37,117 @@ export default function CartDrawer() {
     return () => window.removeEventListener('keydown', h)
   }, [closeCart])
 
-  /* shipping progress (based on AED threshold — adjust per currency) */
-  const progress  = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
+  /* shipping progress */
+  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
   const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0)
+  const displayCurrency = detectedCurrency || currencyCode || 'AED'
+
+  // Initialize STRABL SDK
+  useEffect(() => {
+    const initSdk = () => {
+      // @ts-ignore
+      if (window.StrablCheckout) {
+        const platformUuid = process.env.NEXT_PUBLIC_STRABL_PLATFORM_UUID
+        const environment = process.env.NEXT_PUBLIC_STRABL_ENVIRONMENT || 'production'
+        
+        if (platformUuid) {
+          try {
+            // @ts-ignore
+            window.StrablCheckout.initialize({
+              platformUuid: platformUuid,
+              environment: environment,
+              storeName: 'PepcoLab',
+              storeUrl: process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin,
+              storeLogo: '/pepcologo.png',
+              buttonSelector: '#checkout-button',
+            })
+            setSdkReady(true)
+          } catch (err) {
+            console.error('[CartDrawer] STRABL init error:', err)
+            setSdkError('Failed to initialize payment system')
+          }
+        } else {
+          console.warn('[CartDrawer] STRABL platform UUID not found')
+        }
+      }
+    }
+
+    // Try immediately
+    initSdk()
+
+    // Also try after a delay (in case SDK loads asynchronously)
+    const timeout = setTimeout(initSdk, 1000)
+    return () => clearTimeout(timeout)
+  }, [])
 
   const handleCheckout = async () => {
+    if (lines.length === 0) return
+    
     setCheckingOut(true)
-    try { await checkout() } finally { setCheckingOut(false) }
+    setSdkError(null)
+    
+    try {
+      // Check if SDK is initialized
+      // @ts-ignore
+      if (!window.StrablCheckout) {
+        setSdkError('Payment system is not available. Please refresh and try again.')
+        setCheckingOut(false)
+        return
+      }
+
+      const platformUuid = process.env.NEXT_PUBLIC_STRABL_PLATFORM_UUID
+      if (!platformUuid) {
+        setSdkError('STRABL configuration is missing. Please contact support.')
+        setCheckingOut(false)
+        return
+      }
+
+      // Build cart data for STRABL
+      const baseUrl = process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin
+      const currency = displayCurrency || 'AED'
+      
+      // Filter and validate line items
+      const validLineItems = lines
+        .filter(l => l.variantId && l.quantity > 0 && l.price > 0)
+        .map(l => ({
+          title: l.title || 'Product',
+          description: l.variantTitle || l.title || 'Product',
+          price: Number(l.price) || 0,
+          quantity: Number(l.quantity) || 1,
+          productId: l.variantId,
+          variantId: l.variantId,
+          image: l.image || '',
+          url: l.slug ? `${baseUrl}/products/${l.slug}` : `${baseUrl}/products`,
+          variantOptions: l.variantTitle ? [l.variantTitle] : [],
+        }))
+
+      if (validLineItems.length === 0) {
+        setSdkError('Your cart is empty or contains invalid items.')
+        setCheckingOut(false)
+        return
+      }
+
+      const cartData = {
+        currency: currency,
+        country: detectedCountry || 'AE',
+        lineItems: validLineItems,
+        extra: {},
+        merchantUrls: {
+          successUrl: `${baseUrl}/checkout/success`,
+          failureUrl: `${baseUrl}/checkout/failure`,
+          cancelUrl: `${baseUrl}/checkout/cancel`,
+        },
+      }
+      
+      // Redirect to STRABL hosted checkout
+      // @ts-ignore
+      await window.StrablCheckout.checkoutWithRedirect({ cart: cartData })
+      
+    } catch (err: any) {
+      console.error('[CartDrawer] Checkout error:', err)
+      setSdkError(err.message || 'Something went wrong. Please try again.')
+      setCheckingOut(false)
+    }
   }
 
   return (
@@ -145,7 +250,7 @@ export default function CartDrawer() {
                 <span>
                   {progress >= 100
                     ? '✓ Free shipping unlocked'
-                    : `${formatPrice(remaining, currencyCode)} away from free shipping`}
+                    : `${formatPrice(remaining, displayCurrency)} away from free shipping`}
                 </span>
                 <span style={{ color: 'rgba(255,255,255,.25)' }}>
                   {Math.round(progress)}%
@@ -169,7 +274,7 @@ export default function CartDrawer() {
         </div>
 
         {/* ── Error banner ── */}
-        {error && (
+        {(error || sdkError) && (
           <div style={{
             background: '#FEF2F2',
             borderBottom: '1px solid rgba(220,38,38,.12)',
@@ -181,10 +286,13 @@ export default function CartDrawer() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
-              <span style={{ fontSize: 12.5, color: '#b91c1c' }}>{error}</span>
+              <span style={{ fontSize: 12.5, color: '#b91c1c' }}>{sdkError || error}</span>
             </div>
             <button
-              onClick={clearError}
+              onClick={() => {
+                clearError()
+                setSdkError(null)
+              }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', padding: 2 }}
             >
               <X size={12} />
@@ -345,7 +453,7 @@ export default function CartDrawer() {
                             fontFamily: 'Georgia, serif', fontSize: 16,
                             fontWeight: 700, color: '#0d0d0d', letterSpacing: '-.02em',
                           }}>
-                            {formatPrice(line.price * line.quantity, currencyCode)}
+                            {formatPrice(line.price * line.quantity, displayCurrency)}
                           </span>
                           <button
                             onClick={() => removeItem(line.id)}
@@ -396,24 +504,24 @@ export default function CartDrawer() {
                 fontFamily: 'Georgia, serif',
                 fontSize: 26, color: '#0d0d0d', letterSpacing: '-.04em',
               }}>
-                {formatPrice(subtotal, currencyCode)}
+                {formatPrice(subtotal, displayCurrency)}
               </strong>
             </div>
 
-            {/* Checkout button */}
+            {/* Checkout button - redirects directly to STRABL */}
             <button
               onClick={handleCheckout}
-              disabled={checkingOut || loading}
+              disabled={checkingOut || loading || !sdkReady}
               style={{
                 width: '100%', height: 54, borderRadius: 14, border: 0,
-                background: checkingOut || loading
+                background: checkingOut || loading || !sdkReady
                   ? 'rgba(13,13,13,.25)'
                   : 'linear-gradient(135deg,#0d0d0d 0%,#1e1e1e 100%)',
-                color: checkingOut || loading ? 'rgba(255,255,255,.5)' : '#fff',
+                color: checkingOut || loading || !sdkReady ? 'rgba(255,255,255,.5)' : '#fff',
                 fontWeight: 700, fontSize: 14, letterSpacing: '.02em',
                 display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 9,
-                cursor: checkingOut || loading ? 'not-allowed' : 'pointer',
-                boxShadow: checkingOut || loading ? 'none' : '0 4px 20px rgba(13,13,13,.22)',
+                cursor: checkingOut || loading || !sdkReady ? 'not-allowed' : 'pointer',
+                boxShadow: checkingOut || loading || !sdkReady ? 'none' : '0 4px 20px rgba(13,13,13,.22)',
                 transition: 'all .2s',
                 marginBottom: 12,
               }}
@@ -427,14 +535,25 @@ export default function CartDrawer() {
                     animation: 'cart-spin .65s linear infinite',
                     flexShrink: 0,
                   }} />
-                  Processing…
+                  Redirecting to secure checkout…
+                </>
+              ) : !sdkReady ? (
+                <>
+                  <span style={{
+                    width: 15, height: 15, borderRadius: '50%',
+                    border: '2px solid rgba(255,255,255,.3)',
+                    borderTopColor: '#fff',
+                    animation: 'cart-spin .65s linear infinite',
+                    flexShrink: 0,
+                  }} />
+                  Loading payment system…
                 </>
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                   </svg>
-                  Secure Checkout
+                  Proceed to Checkout
                   <ArrowRight size={14} />
                 </>
               )}

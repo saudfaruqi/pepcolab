@@ -1,19 +1,25 @@
-// lib/countryContext.tsx
+// src/lib/countryContext.tsx
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 
 const COUNTRY_KEY = 'pepcolab_country'
 
 const COUNTRY_CURRENCY: Record<string, string> = {
-  AE: 'AED', GB: 'GBP', US: 'USD',
-  DE: 'EUR', FR: 'EUR', AU: 'AUD', CA: 'CAD',
+  AE: 'AED',
+  GB: 'GBP',  // UK Pound
+  US: 'USD',
+  DE: 'EUR',
+  FR: 'EUR',
+  AU: 'AUD',
+  CA: 'CAD',
+  // Add more as needed
 }
 
 interface CountryCtx {
   country: string
   currency: string
   setCountry: (c: string) => void
-  ready: boolean  // ← add this so consumers know detection is complete
+  ready: boolean
 }
 
 const CountryContext = createContext<CountryCtx>({
@@ -24,7 +30,6 @@ const CountryContext = createContext<CountryCtx>({
 })
 
 export function CountryProvider({ children }: { children: ReactNode }) {
-  // Start with null so server and client initial render both agree
   const [country, setCountryState] = useState<string>('AE')
   const [ready, setReady] = useState(false)
 
@@ -43,9 +48,16 @@ export function CountryProvider({ children }: { children: ReactNode }) {
         if (detected && COUNTRY_CURRENCY[detected]) {
           setCountryState(detected)
           localStorage.setItem(COUNTRY_KEY, detected)
+        } else {
+          // Default to AE if detected country is not supported
+          setCountryState('AE')
+          localStorage.setItem(COUNTRY_KEY, 'AE')
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        // Fallback to AE on error
+        setCountryState('AE')
+      })
       .finally(() => setReady(true))
   }, [])
 

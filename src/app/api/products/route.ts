@@ -24,7 +24,6 @@ function injectInContext(query: string, country: string): string {
 
 export async function POST(req: NextRequest) {
   const { query, variables, buyerCountry } = await req.json()
-  console.log('[api/products] buyerCountry:', buyerCountry)
 
   const contextualQuery = buyerCountry
     ? injectInContext(query, buyerCountry)

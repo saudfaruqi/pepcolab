@@ -1,3 +1,4 @@
+
 // lib/shopifyClient.ts
 export async function shopifyClientFetch<T>(
   query: string,

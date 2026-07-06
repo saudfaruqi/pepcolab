@@ -1,0 +1,20 @@
+{
+  "data": {
+    "lines": [
+      {
+        "variantId": "gid://shopify/ProductVariant/52141290356967",
+        "quantity": 1,
+        "price": 128.54,
+        "title": "GHK-Cu 50mg × 10 Vials",
+        "variantTitle": "50mg",
+        "image": "https://cdn.shopify.com/s/files/1/0794/2786/2759/files/GHK-Cu.png?v=1780477744",
+        "slug": "ghk-cu-5mg"
+      }
+    ],
+    "country": "AE",
+    "currencyCode": "AED",
+    "createdAt": 1783353092647
+  },
+  "expiresAt": 1783356692647,
+  "createdAt": 1783353092647
+}

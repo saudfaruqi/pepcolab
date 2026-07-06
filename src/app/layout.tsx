@@ -1,4 +1,6 @@
+// src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 import { CartProvider } from '@/lib/cartContext'
@@ -253,6 +255,12 @@ export default function RootLayout({
 
         {/* PRELOAD IMPORTANT ASSETS */}
         <link rel="preload" href="/pepcologo.png" as="image" />
+
+        {/* STRABL SDK - Loaded globally for immediate availability */}
+        <Script
+          src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
+          strategy="beforeInteractive"
+        />
 
         {/* GOOGLE VERIFICATION */}
         <meta

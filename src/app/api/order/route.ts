@@ -1,6 +1,6 @@
 
 
-// src/app/api/checkout/order/route.ts
+// src/app/api/order/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchShopifyOrder } from '@/lib/shopifyAdmin'

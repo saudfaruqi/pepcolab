@@ -1,5 +1,4 @@
-  // shopify.ts
-
+// src/lib/shopify.ts
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 
@@ -14,7 +13,6 @@ const API_URL = `https://${DOMAIN}/api/${API_VERSION}/graphql.json`
 
 // ─── Core fetch ────────────────────────────────────────────────────────────
 
-// shopify.ts — update shopifyFetch signature and body
 export async function shopifyFetch<T = Record<string, unknown>>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -206,11 +204,6 @@ const CART_FIELDS = /* GraphQL */ `
   }
 `
 
-
-
-
-// shopify.ts — add this mutation + update createCart
-
 export async function updateCartBuyerIdentity(
   cartId: string,
   countryCode: string
@@ -255,7 +248,6 @@ export async function createCart(countryCode = 'AE'): Promise<string> {
   }
   return data.cartCreate.cart.id
 }
-
 
 export async function addToCart(
   cartId: string,
@@ -404,7 +396,6 @@ export function normaliseProduct(node: ShopifyProduct) {
 
     variantId: variant?.id ?? '',
     price: parseFloat(variant?.price.amount ?? '0'),
-    // Expose the currency code returned by the Storefront API for this variant
     currencyCode: variant?.price.currencyCode ?? 'AED',
     oldPrice: variant?.compareAtPrice
       ? parseFloat(variant.compareAtPrice.amount)
@@ -524,7 +515,7 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
       }
     `,
     { handle },
-    { revalidate: 60, buyerCountry }  // country goes in the header, not the query
+    { revalidate: 60, buyerCountry }
   )
   return data.product ? normaliseProduct(data.product) : null
 }
