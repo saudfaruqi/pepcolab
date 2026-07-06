@@ -1,5 +1,6 @@
 
 
+
 // app/checkout/page.tsx
 
 'use client'
@@ -20,11 +21,12 @@ interface CartLineItem {
 interface CartData {
   currency: string
   lineItems: CartLineItem[]
+  extra: { checkoutRef: string }
 }
 
 function CheckoutInner() {
   const params = useSearchParams()
-  const orderId = params.get('order')
+  const ref = params.get('ref')            // ← was 'order'
   const [cartData, setCartData] = useState<CartData | null>(null)
   const [error, setError]       = useState<string | null>(null)
   const [redirecting, setRedirecting] = useState(false)
@@ -32,16 +34,16 @@ function CheckoutInner() {
   const [loading, setLoading]   = useState(true)
 
   useEffect(() => {
-    if (!orderId) { setError('Missing order reference.'); setLoading(false); return }
-    fetch(`/api/checkout/order?order_id=${orderId}`)
+    if (!ref) { setError('Missing checkout reference.'); setLoading(false); return }
+    fetch(`/api/checkout/order?ref=${ref}`)   // ← was order_id=${orderId}
       .then(r => r.json())
       .then(data => {
         if (data.error) setError(data.error)
         else setCartData(data.cartData)
       })
-      .catch(() => setError('Could not load order. Please go back and try again.'))
+      .catch(() => setError('Could not load your cart. Please go back and try again.'))
       .finally(() => setLoading(false))
-  }, [orderId])
+  }, [ref])
 
   useEffect(() => {
     if (!sdkReady) return
@@ -64,7 +66,9 @@ function CheckoutInner() {
     setRedirecting(true)
     try {
       // @ts-ignore
-      await window.StrablCheckout.checkoutWithRedirect({ cart: cartData })
+      await window.StrablCheckout.checkoutWithRedirect({
+        cart: cartData,        // now includes extra.shopifyOrderId
+      })
     } catch (err) {
       console.error(err)
       setError('Something went wrong. Please try again.')

@@ -1,3 +1,7 @@
+
+
+// src/app/checkout/cancel/page.tsx
+
 'use client'
 
 import { useSearchParams } from 'next/navigation'
@@ -6,6 +10,7 @@ import Link from 'next/link'
 
 function CancelInner() {
   const params = useSearchParams()
+  const ref = params.get('ref')   // ← was 'order'; unused otherwise so this is a no-op fix
   const orderId = params.get('order')
 
   return (

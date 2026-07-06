@@ -1,3 +1,7 @@
+
+
+// src/app/api/products/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
 
 const DOMAIN  = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN

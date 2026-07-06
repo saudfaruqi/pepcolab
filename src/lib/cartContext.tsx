@@ -342,14 +342,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const checkout = useCallback(async () => {
     if (state.lines.length === 0) return
 
-    // Ensure we have a cartId before proceeding (covers the edge case where
-    // a user adds items and immediately hits checkout before ensureCart resolves)
-    const cartId = state.cartId ?? safeGet(CART_ID_KEY)
-    if (!cartId) {
-      dispatch({ type: 'SET_ERROR', error: 'Cart not ready. Please try again.' })
-      return
-    }
-
     dispatch({ type: 'SET_LOADING', loading: true })
     dispatch({ type: 'SET_ERROR',   error: null })
 
@@ -359,11 +351,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lines: state.lines.map(l => ({
-            variantId: l.variantId,
-            quantity:  l.quantity,
-            price:     l.price,          // explicit price prevents Shopify 422 on some setups
+            variantId:    l.variantId,
+            quantity:     l.quantity,
+            price:        l.price,
+            title:        l.title,
+            variantTitle: l.variantTitle,
+            image:        l.image,
+            slug:         l.slug,
           })),
           country,
+          currencyCode: state.currencyCode,
         }),
       })
 
@@ -375,20 +372,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
 
-      // Clear local cart state immediately — a new cart will be created next visit.
-      // The Shopify order is now the source of truth.
       clearCartStorage()
       dispatch({ type: 'CLEAR_CART' })
 
-      window.location.href = `/checkout?order=${data.orderId}`
+      window.location.href = `/checkout?ref=${data.checkoutRef}`   // ← was order=${data.orderId}
     } catch (err) {
       dispatch({ type: 'SET_ERROR', error: 'Could not start checkout. Please try again.' })
       console.error('[Cart] checkout:', err)
       dispatch({ type: 'SET_LOADING', loading: false })
-      // Note: don't set loading false in finally here — we're navigating away on success
-      // and setting it false would cause a flicker on the checkout button
     }
-  }, [state.cartId, state.lines, country])
+  }, [state.lines, state.currencyCode, country])
 
   return (
     <CartContext.Provider value={{

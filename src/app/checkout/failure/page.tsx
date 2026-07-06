@@ -1,3 +1,6 @@
+
+// src/app/checkout/failure/page.tsx
+
 'use client'
 
 import { useSearchParams } from 'next/navigation'
@@ -14,6 +17,7 @@ const FAILURE_REASONS: Record<string, { title: string; body: string }> = {
 
 function FailureInner() {
   const params = useSearchParams()
+  const ref = params.get('ref')   // ← was 'order'; unused otherwise so this is a no-op fix
   const orderId = params.get('order')
   const rawReason = (params.get('failureReason') || '').toUpperCase()
   const reason = FAILURE_REASONS[rawReason] || {

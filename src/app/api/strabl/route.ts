@@ -1,51 +1,42 @@
-
-
 // app/api/strabl/route.ts
-
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { markShopifyOrderPaid } from '@/lib/shopifyAdmin'
+import { createPaidShopifyOrder, type AdminLineItemInput } from '@/lib/shopifyAdmin'
+import { getPendingCheckout, deletePendingCheckout } from '@/lib/checkoutSession'
+import { markCheckoutComplete, markCheckoutFailed } from '@/lib/checkoutStatus' // new, see #4
 
-const processedIds = new Set<string>() // swap for Redis/DB in production
+const processedIds = new Set<string>()
 
-function verifyWebhook(webhookId: string, timestamp: string, signature: string, rawBody: string) {
+function numericVariantId(gid: string): string {
+  const match = gid.match(/(\d+)$/)
+  if (!match) throw new Error(`Invalid variant gid: ${gid}`)
+  return match[1]
+}
+
+function verifySignature(rawBody: string, signatureHeader: string) {
   const secret = process.env.STRABL_WEBHOOK_SECRET
-  if (!secret) return // skip verification only if explicitly unset
+  if (!secret) return
+  if (!signatureHeader) throw new Error('Missing X-Client-Signature header')
 
-  const ts = parseInt(timestamp, 10)
-  if (isNaN(ts) || Math.abs(Date.now() / 1000 - ts) > 300) {
-    throw new Error('Webhook timestamp too old or invalid')
-  }
+  const expected = crypto.createHmac('sha512', secret).update(rawBody).digest('base64')
+  const expectedBuf = Buffer.from(expected)
+  const receivedBuf = Buffer.from(signatureHeader)
 
-  const signingInput = `${webhookId}.${timestamp}.${rawBody}`
-  const expectedHex = crypto.createHmac('sha256', secret).update(signingInput).digest('hex')
-  const expected = `v1=${expectedHex}`
-
-  if (
-    expected.length !== signature.length ||
-    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
-  ) {
+  if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
     throw new Error('Webhook signature mismatch')
   }
 }
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
-  const webhookId = req.headers.get('x-webhook-id') || ''
-  const timestamp = req.headers.get('x-webhook-timestamp') || ''
-  const signature = req.headers.get('x-webhook-signature') || ''
+  const signature = req.headers.get('x-client-signature') || ''
 
   try {
-    verifyWebhook(webhookId, timestamp, signature, rawBody)
+    verifySignature(rawBody, signature)
   } catch (err: any) {
     console.warn('[webhook] rejected:', err.message)
     return NextResponse.json({ error: err.message }, { status: 400 })
   }
-
-  if (processedIds.has(webhookId)) {
-    return new NextResponse(null, { status: 204 })
-  }
-  processedIds.add(webhookId)
 
   let event: any
   try {
@@ -54,36 +45,69 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { webhookEventType, orderUuid, payload = {} } = event
-  const shopifyOrderId = payload.extra?.shopifyOrderId
+  const { type, orderUpdate = {}, customerUpdate = {} } = event
+  const orderUuid = orderUpdate.orderUuid
+  const checkoutRef: string | undefined = orderUpdate.extra?.checkoutRef
 
-  console.log(`[webhook] type=${webhookEventType} strabl=${orderUuid} shopify=${shopifyOrderId || 'n/a'}`)
+  const dedupeKey = `${orderUuid}:${type}`
+  if (processedIds.has(dedupeKey)) return new NextResponse(null, { status: 204 })
+  processedIds.add(dedupeKey)
 
-  switch (webhookEventType) {
+  console.log('[webhook raw]', rawBody)
+  console.log(`[webhook] type=${type} strabl=${orderUuid} ref=${checkoutRef || 'n/a'} paymentStatus=${orderUpdate.paymentStatus}`)
+
+  switch (type) {
     case 'order_created':
-      // Fires on redirect, before payment — never mark paid here.
-      console.log(`[webhook] checkout started — strabl:${orderUuid} shopify:${shopifyOrderId || 'n/a'}`)
+      console.log(`[webhook] checkout started — strabl:${orderUuid} ref:${checkoutRef || 'n/a'}`)
       break
 
     case 'order_updated': {
-      const status = payload.status ?? payload.paymentStatus ?? payload.transaction?.status
-      if (shopifyOrderId && status === 'succeeded') {
-        // handle success — see step 3 below
-      } else {
-        console.log(`[webhook] order_updated status=${status} — not marking paid`)
+      const isPaid = orderUpdate.paymentStatus?.toLowerCase() === 'paid'
+      if (!isPaid) {
+        console.log(`[webhook] order_updated — paymentStatus=${orderUpdate.paymentStatus} — not creating order`)
+        break
+      }
+      if (!checkoutRef) {
+        console.error('[webhook] paid event with no checkoutRef')
+        return NextResponse.json({ error: 'Missing checkoutRef' }, { status: 400 })
+      }
+
+      const pending = getPendingCheckout(checkoutRef)
+      if (!pending) {
+        console.error('[webhook] no pending checkout for ref', checkoutRef)
+        return NextResponse.json({ error: 'Unknown or expired checkout session' }, { status: 404 })
+      }
+
+      try {
+        const lineItems: AdminLineItemInput[] = pending.lines.map(l => ({
+          variant_id: numericVariantId(l.variantId),
+          quantity: l.quantity,
+        }))
+        const order = await createPaidShopifyOrder(lineItems, pending.country, customerUpdate, orderUuid)
+        deletePendingCheckout(checkoutRef)
+        markCheckoutComplete(checkoutRef, order.id)
+        console.log(`[webhook] order created — shopify:${order.id} strabl:${orderUuid}`)
+      } catch (err) {
+        console.error('[webhook] order create failed:', err)
+        return NextResponse.json({ error: 'Shopify order create failed' }, { status: 500 })
       }
       break
     }
+
     case 'order_failed':
-      console.warn(`[webhook] payment failed — strabl:${orderUuid} shopify:${shopifyOrderId}`)
+      if (checkoutRef) markCheckoutFailed(checkoutRef)
+      console.warn(`[webhook] payment failed — strabl:${orderUuid} ref:${checkoutRef || 'n/a'}`)
       break
+
+    case 'order_cancelled':
     case 'order_refunded':
     case 'order_chargeback':
     case 'order_abandoned':
-      console.info(`[webhook] ${webhookEventType} — strabl:${orderUuid}`)
+      console.info(`[webhook] ${type} — strabl:${orderUuid} ref:${checkoutRef || 'n/a'}`)
       break
+
     default:
-      console.log(`[webhook] unhandled event: ${webhookEventType}`)
+      console.log(`[webhook] unhandled event: ${type}`)
   }
 
   return new NextResponse(null, { status: 204 })
