@@ -1,3 +1,7 @@
+
+
+// app/api/strabl/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { markShopifyOrderPaid } from '@/lib/shopifyAdmin'
@@ -57,16 +61,19 @@ export async function POST(req: NextRequest) {
 
   switch (webhookEventType) {
     case 'order_created':
-    case 'order_updated':
-      if (shopifyOrderId) {
-        try {
-          await markShopifyOrderPaid(shopifyOrderId, orderUuid)
-        } catch (err) {
-          console.error('[webhook] mark paid failed:', err)
-          return NextResponse.json({ error: 'Shopify update failed' }, { status: 500 })
-        }
+      // Fires on redirect, before payment — never mark paid here.
+      console.log(`[webhook] checkout started — strabl:${orderUuid} shopify:${shopifyOrderId || 'n/a'}`)
+      break
+
+    case 'order_updated': {
+      const status = payload.status ?? payload.paymentStatus ?? payload.transaction?.status
+      if (shopifyOrderId && status === 'succeeded') {
+        // handle success — see step 3 below
+      } else {
+        console.log(`[webhook] order_updated status=${status} — not marking paid`)
       }
       break
+    }
     case 'order_failed':
       console.warn(`[webhook] payment failed — strabl:${orderUuid} shopify:${shopifyOrderId}`)
       break

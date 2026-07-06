@@ -1,3 +1,7 @@
+
+
+// src/lib/shopifyAdmin.ts
+
 const DOMAIN = process.env.SHOPIFY_STORE_DOMAIN
 const TOKEN = process.env.SHOPIFY_ADMIN_TOKEN
 const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-10'
