@@ -48,15 +48,21 @@ export default function RelatedProducts({ initialProducts, currentHandle, curren
   // ProductActions uses for the main product price.
   const [products, setProducts] = useState(initialProducts)
 
+  // FIX: this used to bail out with `country === 'AE'`, on the assumption
+  // the server-rendered data was already correct for AE. That's only true
+  // right after a build/ISR regeneration — after a price change in Shopify
+  // it goes stale like everything else on this statically-built page (see
+  // the matching comment in ProductActions.tsx). Always refetch once ready,
+  // for every market, so this grid doesn't need a hard refresh either.
   useEffect(() => {
-    if (!ready || country === 'AE') return // AE data is already correct
+    if (!ready) return
     let cancelled = false
     getProducts(100, country)
       .then((fresh) => {
         if (!cancelled) setProducts(fresh)
       })
       .catch(() => {
-        // Keep showing the AE-built data — never leave the section blank.
+        // Keep showing whatever we currently have — never leave the section blank.
       })
     return () => {
       cancelled = true

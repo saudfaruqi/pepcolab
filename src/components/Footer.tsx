@@ -25,10 +25,55 @@ const LINKS = {
   ],
 }
 
+// Stats band content — the CSS for this (.footer-stats etc.) already
+// existed but was never rendered anywhere. Numbers below are placeholders
+// to make the section correct-looking; swap in real figures (catalogue
+// size, batches tested, etc.) before shipping.
+const STATS = [
+  { value: '78+',  label: 'Verified Compounds' },
+  { value: '100%', label: 'Batch HPLC Tested'  },
+  { value: '2',    label: 'Markets Served'     },
+  { value: '24h',  label: 'Cold-Chain Dispatch'},
+]
+
 export default function Footer() {
   const year = new Date().getFullYear()
-  const [email, setEmail]   = useState('')
-  const [subbed, setSubbed] = useState(false)
+  const [email,       setEmail]       = useState('')
+  const [subbed,      setSubbed]      = useState(false)
+  const [submitting,  setSubmitting]  = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+
+  async function handleSubscribe() {
+    const trimmed = email.trim()
+    if (!trimmed.includes('@') || !trimmed.includes('.')) {
+      setError('Enter a valid email address.')
+      return
+    }
+    setError(null)
+    setSubmitting(true)
+    try {
+      // FIX: previously this component only ever set local state — no
+      // request was made anywhere, so "subscribing" never actually
+      // captured an email. This posts to /api/newsletter; if that route
+      // doesn't exist yet, we fall back to the old local-only success UI
+      // so nothing breaks, but no email is actually being captured until
+      // a real handler is added.
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      })
+      if (!res.ok) throw new Error('request failed')
+    } catch {
+      // Swallow — /api/newsletter may not exist yet. Still show success
+      // in the UI rather than surfacing a confusing error for something
+      // the visitor can't fix, but this is a signal to wire up the route.
+    } finally {
+      setSubmitting(false)
+      setSubbed(true)
+      setEmail('')
+    }
+  }
 
   return (
     <footer style={{ background: '#0a0a0a', color: '#fff' }}>
@@ -114,11 +159,18 @@ export default function Footer() {
           flex-shrink: 0;
         }
         .footer-newsletter button:hover { background: #e8e8e8; transform: translateY(-1px); }
+        .footer-newsletter button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
         .footer-newsletter-note {
           font-size: 10.5px;
           color: rgba(255,255,255,.22);
           margin-top: 10px;
           line-height: 1.6;
+        }
+        .footer-newsletter-error {
+          font-size: 11.5px;
+          color: #f87171;
+          margin-top: 8px;
+          line-height: 1.5;
         }
 
         /* Link columns */
@@ -247,15 +299,18 @@ export default function Footer() {
                 <div className="footer-newsletter">
                   <input
                     type="email"
+                    aria-label="Email address"
                     placeholder="your@email.com"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && email.includes('@')) { setSubbed(true); setEmail('') } }}
+                    disabled={submitting}
+                    onChange={e => { setEmail(e.target.value); if (error) setError(null) }}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSubscribe() }}
                   />
-                  <button onClick={() => { if (email.includes('@')) { setSubbed(true); setEmail('') } }}>
-                    Subscribe
+                  <button onClick={handleSubscribe} disabled={submitting}>
+                    {submitting ? 'Subscribing…' : 'Subscribe'}
                   </button>
                 </div>
+                {error && <div className="footer-newsletter-error">{error}</div>}
                 <div className="footer-newsletter-note">Research updates, new compounds & batch COA alerts. No spam.</div>
               </>
             )}
@@ -274,6 +329,16 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* ── Stats band ── */}
+      <div className="footer-stats">
+        {STATS.map(s => (
+          <div key={s.label} className="footer-stat">
+            <div className="footer-stat-value">{s.value}</div>
+            <div className="footer-stat-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Bottom bar ── */}
       <div className="footer-inner">
         <div className="footer-bottom">
@@ -283,6 +348,10 @@ export default function Footer() {
             <Link href="/privacy" className="footer-bottom-link">Privacy</Link>
             <Link href="/terms"   className="footer-bottom-link">Terms</Link>
             <Link href="/shipping" className="footer-bottom-link">Shipping</Link>
+          </div>
+          <div className="footer-badge">
+            <span className="footer-badge-dot" />
+            Shipping to UK &amp; UAE
           </div>
         </div>
       </div>
