@@ -362,8 +362,32 @@ export async function getCartCheckoutUrl(cartId: string): Promise<string> {
 
 // ─── Product queries ───────────────────────────────────────────────────────
 
+/**
+ * Picks which variant a product card/detail view should represent.
+ * Fixes the old behaviour of always using edges[0], which meant a product
+ * could show "Out of stock" or the wrong price just because its FIRST
+ * variant (e.g. lowest mg) happened to be unavailable while others weren't.
+ *
+ * Strategy: prefer the cheapest AVAILABLE variant. If none are available,
+ * fall back to the cheapest variant overall (still shown, but inStock:false).
+ */
+function pickRepresentativeVariant(
+  edges: { node: ShopifyProductVariant }[]
+): ShopifyProductVariant | undefined {
+  const variants = edges.map((e) => e.node)
+  if (variants.length === 0) return undefined
+
+  const available = variants.filter((v) => v.availableForSale)
+  const pool = available.length > 0 ? available : variants
+
+  return pool.reduce((cheapest, v) =>
+    parseFloat(v.price.amount) < parseFloat(cheapest.price.amount) ? v : cheapest
+  )
+}
+
 export function normaliseProduct(node: ShopifyProduct) {
-  const variant = node.variants.edges[0]?.node
+  const variant = pickRepresentativeVariant(node.variants.edges)
+  const anyVariantAvailable = node.variants.edges.some((e) => e.node.availableForSale)
   const image = node.images.edges[0]?.node
 
   const meta = Object.fromEntries(
@@ -401,8 +425,12 @@ export function normaliseProduct(node: ShopifyProduct) {
       ? parseFloat(variant.compareAtPrice.amount)
       : undefined,
 
-    inStock: variant?.availableForSale ?? false,
+    // A product is in stock if ANY variant is available, not just the
+    // one we're displaying — the displayed variant/price is just the
+    // cheapest available option.
+    inStock: anyVariantAvailable,
     stockCount: variant?.quantityAvailable ?? 0,
+    variantCount: node.variants.edges.length,
 
     images: node.images.edges.map(({ node }) => ({
       url: node.url,
@@ -454,19 +482,23 @@ export async function getProducts(first = 40, buyerCountry?: string) {
 }
 
 // Extract the query string to reuse in both paths
+// NOTE: variants(first: 1) → variants(first: 10). Most PepcoLab products
+// have 2-7 variants (different mg strengths); fetching only the first
+// meant stock/price were checked against a single, arbitrary variant.
 const PRODUCTS_QUERY = /* GraphQL */ `
   query getProducts($first: Int!) {
     products(first: $first) {
       edges {
         node {
           id handle title description tags
-          variants(first: 1) {
+          variants(first: 10) {
             edges {
               node {
                 id title
                 price { amount currencyCode }
                 compareAtPrice { amount currencyCode }
                 availableForSale
+                quantityAvailable
               }
             }
           }
@@ -498,6 +530,7 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
                 price { amount currencyCode }
                 compareAtPrice { amount currencyCode }
                 availableForSale
+                quantityAvailable
               }
             }
           }
