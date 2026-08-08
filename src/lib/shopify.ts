@@ -548,7 +548,7 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
       }
     `,
     { handle },
-    { revalidate: 60, buyerCountry }
+    { revalidate: 60, buyerCountry } 
   )
   return data.product ? normaliseProduct(data.product) : null
 }
