@@ -7,10 +7,9 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
-import ProductCard from '@/components/ProductCard'
+import RelatedProducts from '@/components/RelatedProducts'
 
-import { ChevronRight, ShieldCheck, Truck, RotateCcw, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { ChevronRight, ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -117,7 +116,12 @@ function buildJsonLd(product: any) {
     productLd.offers = {
       '@type': 'Offer',
       url,
-      priceCurrency: 'GBP',
+      // FIX: was hardcoded 'GBP' regardless of which market the page was
+      // built/served for. Every AE-priced product was declaring GBP prices
+      // in its structured data — a real mismatch for Google Merchant/rich
+      // results, independent of the on-page display currency bug. Falls
+      // back to GBP only if normaliseProduct() genuinely didn't set one.
+      priceCurrency: product.currencyCode ?? 'GBP',
       price: String(product.price),
       availability:
         product.inStock === false
@@ -138,31 +142,6 @@ function buildJsonLd(product: any) {
   }
 
   return [productLd, breadcrumbLd]
-}
-
-// ── Related products: same primary category tag, current product excluded.
-// Falls back to filling remaining slots with other in-stock products so the
-// section never renders half-empty on a lightly-tagged catalogue. ──────────
-function getRelatedProducts(all: any[], current: any, limit = 4) {
-  const currentTag = current.tags?.[0]?.toLowerCase()
-  const pool = all.filter((p) => p.handle !== current.handle)
-
-  const sameCategory = currentTag
-    ? pool.filter((p) => p.tags?.some((t: string) => t.toLowerCase() === currentTag))
-    : []
-
-  const related = [...sameCategory]
-  if (related.length < limit) {
-    const fillers = pool
-      .filter((p) => p.inStock !== false && !related.some((r) => r.handle === p.handle))
-      .sort(() => Math.random() - 0.5)
-    for (const p of fillers) {
-      if (related.length >= limit) break
-      related.push(p)
-    }
-  }
-
-  return related.slice(0, limit)
 }
 
 /* -------------------------------------------------------------------------- */
@@ -200,7 +179,6 @@ export default async function ProductPage({ params }: Props) {
   const images = shopifyProduct.images ?? []
   const oneLiner = getOneLiner(shopifyProduct.description)
   const jsonLd = buildJsonLd(shopifyProduct)
-  const relatedProducts = getRelatedProducts(allProducts, shopifyProduct)
 
   return (
     <>
@@ -362,26 +340,20 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
 
-        {/* ── Recommended Products ── */}
-        {relatedProducts.length > 0 && (
-          <section className="pp-related">
-            <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
-                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(24px,4vw,36px)', letterSpacing: '-.03em', margin: 0 }}>
-                  You may also like
-                </h2>
-                <Link href="/products" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: '#111', fontWeight: 600, fontSize: 13 }}>
-                  Browse all <ArrowRight size={14} />
-                </Link>
-              </div>
-              <div className="pp-related-grid">
-                {relatedProducts.map((rp) => (
-                  <ProductCard key={rp.shopifyId || rp.handle} product={rp} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
+        {/*
+          Recommended Products — RelatedProducts is a client component that
+          re-fetches `allProducts` once the visitor's country resolves to
+          something other than AE, the same pattern ProductActions already
+          uses for the main price. It also owns its own "no related items"
+          empty state, so the heading/"Browse all" link never renders over
+          an empty grid if the GB-refetched product set doesn't have a match
+          (see comment in RelatedProducts.tsx).
+        */}
+        <RelatedProducts
+          initialProducts={allProducts}
+          currentHandle={shopifyProduct.handle}
+          currentTag={shopifyProduct.tags?.[0]}
+        />
 
         <style>{`
           *, *::before, *::after { box-sizing: border-box; }
