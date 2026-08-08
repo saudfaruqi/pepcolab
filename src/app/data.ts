@@ -1,5 +1,4 @@
 // data.ts
-
 export interface Product {
   id: string
   slug: string
@@ -18,8 +17,8 @@ export interface Product {
   testDate: string
   sequence?: string
   badge?: 'popular' | 'new' | 'sale' | 'bestseller'
-  image?: string        // ← add
-  imageAlt?: string     // ← add
+  image?: string
+  imageAlt?: string
   color: {
     bg: string
     accent: string
@@ -31,16 +30,16 @@ export interface Product {
     vialTo: string
   }
   inStock: boolean
-  stockCount: number
+  stockCount?: number   // ← was required, now optional
   variantId?: string
-variants?: {
-  id: string
-  title: string
-  price: number
-  compareAtPrice?: number
-  currencyCode?: string
-  availableForSale: boolean
-}[]
+  variants?: {
+    id: string
+    title: string
+    price: number
+    compareAtPrice?: number
+    currencyCode?: string
+    availableForSale: boolean
+  }[]
 }
 
 export interface Category {
