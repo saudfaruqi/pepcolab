@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react'
 import { getProducts } from '@/lib/shopify'
 import ProductCard from '@/components/ProductCard'
@@ -26,6 +27,10 @@ const KNOWN_SLUGS = new Set(KNOWN_CATEGORIES.map(c => c.slug))
 interface Props { showAll?: boolean }
 
 export default function ProductsSection({ showAll = false }: Props) {
+  const router       = useRouter()
+  const pathname      = usePathname()
+  const searchParams = useSearchParams()
+
   const [search,      setSearch]      = useState('')
   const [sort,        setSort]        = useState('default')
   const [category,    setCategory]    = useState('all')
@@ -43,6 +48,33 @@ export default function ProductsSection({ showAll = false }: Props) {
       .then(p => { setAllProducts(p); setLoading(false) })
       .catch(() => setLoading(false))
   }, [country, ready])  // ← add deps
+
+  // ── Read ?cat= from the URL (nav dropdown links land here) and keep the
+  // in-page category state in sync with it, both on first load and on any
+  // subsequent navigation (e.g. clicking a different nav category link
+  // while already on /products). ─────────────────────────────────────────
+  useEffect(() => {
+    if (!showAll) return
+    const catParam = searchParams.get('cat')
+    if (catParam && KNOWN_SLUGS.has(catParam)) {
+      setCategory(catParam)
+      setFiltersOpen(true) // surface the pill row so the active filter is visible
+    } else {
+      setCategory('all')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, showAll])
+
+  // ── Selecting a category pill in-page also pushes ?cat= into the URL,
+  // so the filtered view is shareable/bookmarkable and back/forward works. ─
+  function selectCategory(slug: string) {
+    setCategory(slug)
+    const params = new URLSearchParams(searchParams.toString())
+    if (slug === 'all') params.delete('cat')
+    else params.set('cat', slug)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
 
   // Fade-in animation
   useEffect(() => {
@@ -211,7 +243,7 @@ export default function ProductsSection({ showAll = false }: Props) {
                 {activeCategories.map(cat => (
                   <button
                     key={cat.slug}
-                    onClick={() => setCategory(cat.slug)}
+                    onClick={() => selectCategory(cat.slug)}
                     style={{
                       borderRadius: 8, padding: '6px 14px',
                       border: category === cat.slug ? '1px solid #111' : '1px solid rgba(0,0,0,.1)',
@@ -236,7 +268,7 @@ export default function ProductsSection({ showAll = false }: Props) {
               </span>
               {category !== 'all' && (
                 <button
-                  onClick={() => setCategory('all')}
+                  onClick={() => selectCategory('all')}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: '#0d0d0d', background: '#f0f0ee', border: 'none', borderRadius: 6, padding: '3px 9px', cursor: 'pointer' }}
                 >
                   {activeCategories.find(c => c.slug === category)?.label}
@@ -269,7 +301,7 @@ export default function ProductsSection({ showAll = false }: Props) {
               <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, letterSpacing: '-.02em' }}>No compounds found</h3>
               <p style={{ color: 'rgba(13,13,13,.5)', fontSize: 14, marginBottom: 24 }}>Try adjusting your search or clearing filters.</p>
               <button
-                onClick={() => { setSearch(''); setCategory('all'); setSort('default') }}
+                onClick={() => { setSearch(''); setSort('default'); selectCategory('all') }}
                 style={{ border: 'none', borderRadius: 8, background: '#0d0d0d', color: '#fff', padding: '10px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
               >
                 Clear all filters

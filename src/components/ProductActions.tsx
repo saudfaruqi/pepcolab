@@ -64,6 +64,13 @@ export default function ProductActions({ product: initialProduct }: Props) {
     }
   }, [p, selectedVariantId, currencyCode])
 
+  // Reset scroll position on the tab body whenever the active tab changes,
+  // so switching tabs never leaves you mid-scroll on the new content.
+  useEffect(() => {
+    const el = document.getElementById('pp-tab-panel')
+    if (el) el.scrollTop = 0
+  }, [activeTab])
+
   const handleAdd = async () => {
     if (!selectedVariant.availableForSale || added) return
     setAdded(true)
@@ -261,7 +268,7 @@ export default function ProductActions({ product: initialProduct }: Props) {
           }
         </button>
         <a
-        
+
           href={`/certificates?lot=${p.lot ?? ''}`}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -277,9 +284,20 @@ export default function ProductActions({ product: initialProduct }: Props) {
 
       {/* Tabs */}
       <div style={{ borderTop: '1px solid #F0F0F0', paddingTop: 20 }}>
+        {/*
+          Tab bar: this row itself scrolls HORIZONTALLY on narrow screens
+          (overflowX: auto) if there isn't room for all 4 labels — that's
+          intentional and is likely what was reading as "overflow-y
+          scrolling" if the labels wrapped onto a second line instead.
+          `whiteSpace: nowrap` + `flexShrink: 0` on each tab button below
+          stops that wrap so the row scrolls sideways instead of growing
+          taller.
+        */}
         <div style={{
           display: 'flex', gap: 0, marginBottom: 18,
-          borderBottom: '1px solid #F0F0F0', overflowX: 'auto',
+          borderBottom: '1px solid #F0F0F0',
+          overflowX: 'auto', overflowY: 'hidden',
+          WebkitOverflowScrolling: 'touch',
         }}>
           {TABS.map((tab, i) => (
             <button
@@ -301,7 +319,31 @@ export default function ProductActions({ product: initialProduct }: Props) {
             </button>
           ))}
         </div>
-        <div style={{ minHeight: 60 }}>{tabContent()}</div>
+
+        {/*
+          Tab panel: previously `minHeight: 60` with no explicit height or
+          overflow rule. That's normally fine, but if this component ever
+          renders inside a flex/grid ancestor with a fixed or percentage
+          height (it does — .pp-info-col sits in a CSS grid row next to a
+          `position: sticky` image column), a bare block with no `height:
+          auto` can inherit a stretched, size-constrained box from the
+          grid and clip its own content, producing an internal vertical
+          scrollbar around the Overview/Specs/Storage/Disclaimer copy
+          instead of letting the page itself grow and scroll normally.
+          Making height/overflow explicit here forces this panel to size
+          to its content and pushes any scrolling back up to the page.
+        */}
+        <div
+          id="pp-tab-panel"
+          style={{
+            minHeight: 60,
+            height: 'auto',
+            maxHeight: 'none',
+            overflowY: 'visible',
+          }}
+        >
+          {tabContent()}
+        </div>
       </div>
     </>
   )

@@ -1,13 +1,4 @@
 // src/app/products/[slug]/page.tsx
-//
-// CHANGES FROM YOUR VERSION:
-//   1. Added generateMetadata()   — per-product title/description/canonical/OG
-//   2. Replaced the soft-404      — notFound() instead of a 200 with "not found"
-//   3. getProducts(100) → 250     — must match the cap in sitemap.ts
-//   4. Added Product JSON-LD      — price/availability rich results
-//   5. Added BreadcrumbList JSON-LD — you already render breadcrumbs visually
-//   6. Added alt text fallback on thumbnails (was alt="")
-// Everything else (layout, styles, components) is unchanged.
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -16,8 +7,10 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
+import ProductCard from '@/components/ProductCard'
 
-import { ChevronRight, ShieldCheck, Truck, RotateCcw } from 'lucide-react'
+import { ChevronRight, ShieldCheck, Truck, RotateCcw, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -147,12 +140,40 @@ function buildJsonLd(product: any) {
   return [productLd, breadcrumbLd]
 }
 
+// ── Related products: same primary category tag, current product excluded.
+// Falls back to filling remaining slots with other in-stock products so the
+// section never renders half-empty on a lightly-tagged catalogue. ──────────
+function getRelatedProducts(all: any[], current: any, limit = 4) {
+  const currentTag = current.tags?.[0]?.toLowerCase()
+  const pool = all.filter((p) => p.handle !== current.handle)
+
+  const sameCategory = currentTag
+    ? pool.filter((p) => p.tags?.some((t: string) => t.toLowerCase() === currentTag))
+    : []
+
+  const related = [...sameCategory]
+  if (related.length < limit) {
+    const fillers = pool
+      .filter((p) => p.inStock !== false && !related.some((r) => r.handle === p.handle))
+      .sort(() => Math.random() - 0.5)
+    for (const p of fillers) {
+      if (related.length >= limit) break
+      related.push(p)
+    }
+  }
+
+  return related.slice(0, limit)
+}
+
 /* -------------------------------------------------------------------------- */
 /* PAGE                                                                        */
 /* -------------------------------------------------------------------------- */
 
 export default async function ProductPage({ params }: Props) {
-  const shopifyProduct = await getProductByHandle(params.slug)
+  const [shopifyProduct, allProducts] = await Promise.all([
+    getProductByHandle(params.slug),
+    getProducts(100),
+  ])
 
   // Was: return <div>Product not found</div> — which sent HTTP 200 and let
   // Google index every bad URL as a thin duplicate page. notFound() renders
@@ -179,6 +200,7 @@ export default async function ProductPage({ params }: Props) {
   const images = shopifyProduct.images ?? []
   const oneLiner = getOneLiner(shopifyProduct.description)
   const jsonLd = buildJsonLd(shopifyProduct)
+  const relatedProducts = getRelatedProducts(allProducts, shopifyProduct)
 
   return (
     <>
@@ -340,6 +362,27 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
 
+        {/* ── Recommended Products ── */}
+        {relatedProducts.length > 0 && (
+          <section className="pp-related">
+            <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(24px,4vw,36px)', letterSpacing: '-.03em', margin: 0 }}>
+                  You may also like
+                </h2>
+                <Link href="/products" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: '#111', fontWeight: 600, fontSize: 13 }}>
+                  Browse all <ArrowRight size={14} />
+                </Link>
+              </div>
+              <div className="pp-related-grid">
+                {relatedProducts.map((rp) => (
+                  <ProductCard key={rp.shopifyId || rp.handle} product={rp} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         <style>{`
           *, *::before, *::after { box-sizing: border-box; }
 
@@ -380,6 +423,11 @@ export default async function ProductPage({ params }: Props) {
           .pp-info-col {
             width: 100%;
             min-width: 0;
+            /* Explicit auto height so this grid item never stretches to
+               match the sticky image column's box and clip its own
+               content (the root cause of the tab panel's internal
+               scrollbar — see ProductActions.tsx). */
+            height: auto;
           }
 
           .pp-trust-desktop { display: none; }
@@ -389,6 +437,25 @@ export default async function ProductPage({ params }: Props) {
             flex-wrap: wrap;
             gap: 7px;
             margin-bottom: 4px;
+          }
+
+          .pp-related {
+            background: #f7f7f5;
+            padding: clamp(40px,6vw,72px) 0;
+            margin-top: clamp(24px,4vw,40px);
+          }
+
+          .pp-related-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+          }
+
+          @media (min-width: 768px) {
+            .pp-related-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+          }
+          @media (min-width: 1200px) {
+            .pp-related-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
           }
 
           @media (min-width: 900px) {
@@ -402,6 +469,7 @@ export default async function ProductPage({ params }: Props) {
             .pp-image-col {
               position: sticky;
               top: 80px;
+              align-self: start;
             }
 
             .pp-trust-desktop {

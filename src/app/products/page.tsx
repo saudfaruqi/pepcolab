@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductsSection from '@/components/ProductsSection'
@@ -311,8 +312,14 @@ export default function ProductsPage() {
         </section>
 
         {/* ── Products ── */}
+        {/* ProductsSection reads the ?cat= query param via useSearchParams, which
+            requires a Suspense boundary in the App Router — without this you'll
+            get a build/runtime error: "useSearchParams() should be wrapped in a
+            suspense boundary at page '/products'". */}
         <section id="catalogue" className="pp-products">
-          <ProductsSection showAll />
+          <Suspense fallback={null}>
+            <ProductsSection showAll />
+          </Suspense>
         </section>
 
         {/* ── Research Standards ── */}
