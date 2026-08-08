@@ -12,7 +12,8 @@ const siteUrl = 'https://www.pepcolab.com'
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // REMOVED maximumScale: 1 — it blocks pinch-zoom, which is a WCAG 2.1
+  // failure (1.4.4 Resize Text) and hurts mobile usability on a spec-heavy site.
   themeColor: '#050505',
   colorScheme: 'dark',
 }
@@ -21,88 +22,40 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
 
   title: {
-    default:
-      'PepcoLab® | Research-Grade Peptides & Laboratory Compounds UK & UAE',
+    default: 'PepcoLab® | Research-Grade Peptides & Laboratory Compounds UK',
     template: '%s | PepcoLab',
   },
 
   description:
-    'PepcoLab supplies premium research-grade peptides and laboratory compounds for scientific and in-vitro research applications. Independently verified batches, COA transparency, cold-chain dispatch, and international laboratory sourcing for UK and UAE researchers.',
+    'Research-grade peptides and laboratory compounds with independent HPLC batch verification, published certificates of analysis, and cold-chain dispatch. Supplied for in-vitro research use only.',
 
   applicationName: 'PepcoLab',
-
   referrer: 'origin-when-cross-origin',
 
-  keywords: [
-    'research peptides UK',
-    'research peptides UAE',
-    'research compounds UK',
-    'research compounds Dubai',
-    'research peptides London',
-    'research peptides Abu Dhabi',
-    'research compounds UAE',
-    'research laboratory compounds',
-    'laboratory peptides',
-    'research use only peptides',
-    'research chemicals UK',
-    'research chemicals UAE',
-    'HPLC tested peptides',
-    'COA verified peptides',
-    'cold-chain peptide delivery',
-    'premium laboratory compounds',
-    'peptide supplier UK',
-    'peptide supplier UAE',
-    'BPC-157 research peptide',
-    'TB-500 peptide',
-    'GHK-Cu copper peptide',
-    'Semaglutide research compound',
-    'Tirzepatide research peptide',
-    'Retatrutide research peptide',
-    'CJC-1295 peptide',
-    'Ipamorelin peptide',
-    'Sermorelin peptide',
-    'Tesamorelin peptide',
-    'Semax peptide',
-    'Selank peptide',
-    'Dihexa peptide',
-    'Melanotan II research peptide',
-    'PT-141 peptide',
-    'MOTS-c peptide',
-    'Humanin peptide',
-    'Thymosin Alpha-1 peptide',
-    'scientific research compounds',
-    'laboratory-grade peptides',
-    'peptide COA verification',
-    'independent batch testing',
-    'research-use-only compounds',
-  ],
+  // REMOVED the `keywords` array entirely.
+  // Google has ignored meta keywords since 2009 — it is pure downside. The old
+  // array also indexed your intent for a regulator: it named Retatrutide,
+  // Tirzepatide and Semaglutide alongside "Dubai" and "Abu Dhabi".
 
-  authors: [
-    {
-      name: 'PepcoLab',
-      url: siteUrl,
-    },
-  ],
-
+  authors: [{ name: 'PepcoLab', url: siteUrl }],
   creator: 'PepcoLab',
-
   publisher: 'PepcoLab',
-
   category: 'Scientific Research',
 
+  // CRITICAL FIX: canonical is now a RELATIVE path. Combined with
+  // metadataBase, Next resolves it per-route. The previous absolute
+  // `canonical: siteUrl` told Google that EVERY page was a duplicate of the
+  // homepage. `alternates.languages` was also removed — both hreflang entries
+  // pointed at the same URL, which is a no-op at best and a conflict signal at
+  // worst. Add it back only when you have genuinely separate /uae/ pages.
   alternates: {
-    canonical: siteUrl,
-    languages: {
-      'en-GB': siteUrl,
-      'en-AE': siteUrl,
-    },
+    canonical: '/',
   },
 
   robots: {
     index: true,
     follow: true,
     nocache: false,
-
     googleBot: {
       index: true,
       follow: true,
@@ -119,50 +72,25 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [
-      {
-        url: '/pepcologo.png',
-      },
-      {
-        url: '/pepcologo.png',
-        type: 'image/png',
-        sizes: '32x32',
-      },
-      {
-        url: '/pepcologo.png',
-        type: 'image/png',
-        sizes: '192x192',
-      },
+      { url: '/pepcologo.png' },
+      { url: '/pepcologo.png', type: 'image/png', sizes: '32x32' },
+      { url: '/pepcologo.png', type: 'image/png', sizes: '192x192' },
     ],
-
-    apple: [
-      {
-        url: '/pepcologo.png',
-        sizes: '180x180',
-      },
-    ],
-
+    apple: [{ url: '/pepcologo.png', sizes: '180x180' }],
     shortcut: ['/pepcologo.png'],
   },
 
   manifest: '/site.webmanifest',
 
   openGraph: {
-    title:
-      'PepcoLab® | Research-Grade Peptides & Laboratory Compounds',
-
+    title: 'PepcoLab® | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Premium laboratory compounds and research peptides with independent batch verification, COA transparency, and cold-chain UK & UAE distribution.',
-
+      'Independent batch verification, published COAs, and cold-chain dispatch. Research use only.',
     url: siteUrl,
-
     siteName: 'PepcoLab',
-
     locale: 'en_GB',
-
     type: 'website',
-
     countryName: 'United Kingdom',
-
     images: [
       {
         url: '/pepcoall.png',
@@ -175,15 +103,10 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-
-    title:
-      'PepcoLab® | Research-Grade Peptides & Laboratory Compounds',
-
+    title: 'PepcoLab® | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Research-grade peptides with transparent COA documentation, independent testing, and cold-chain dispatch.',
-
+      'Research-grade compounds with transparent COA documentation and independent testing.',
     creator: '@pepcolab',
-
     images: ['/pepcologo.png'],
   },
 
@@ -193,34 +116,15 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
   },
 
-  formatDetection: {
-    telephone: false,
-    email: false,
-    address: false,
-  },
+  formatDetection: { telephone: false, email: false, address: false },
 
+  // TRIMMED: theme-color and mobile-web-app-capable are already emitted by the
+  // `viewport` export and `appleWebApp` above — duplicating them here produced
+  // two of each tag. geo_region / coverage / distribution / target / audience /
+  // classification / designer / owner are all non-standard tags that no search
+  // engine reads. Removed as dead weight.
   other: {
-    'theme-color': '#050505',
-    'mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-capable': 'yes',
     'msapplication-TileColor': '#050505',
-
-    // SEO + GEO
-    geo_region: 'GB',
-    geo_placename: 'London',
-    distribution: 'global',
-    coverage: 'Worldwide',
-    target: 'all',
-
-    // Branding
-    classification: 'Scientific Research',
-    copyright: 'PepcoLab',
-    designer: 'PepcoLab',
-    owner: 'PepcoLab',
-
-    // Compliance Positioning
-    product_type: 'Research Compounds',
-    audience: 'Scientific Research Community',
   },
 }
 
@@ -232,41 +136,30 @@ export default function RootLayout({
   return (
     <html lang="en-GB" suppressHydrationWarning>
       <head>
-        {/* FONT OPTIMIZATION */}
+        {/* FONTS — the previous href was "https://://fonts.googleapis.com/..."
+            which is a malformed URL. It has been failing silently in
+            production, so the entire site has been rendering in fallback
+            system fonts. Fixed below. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-
         <link
-          href="https://://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
 
-        {/* DNS PREFETCH */}
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        {/* REMOVED: <link rel="canonical" href={siteUrl} />
+            This was hardcoded to the homepage on every single route, and it
+            also duplicated the canonical emitted by metadata.alternates.
+            The metadata export above now handles it correctly per-page. */}
 
-        {/* CANONICAL */}
-        <link rel="canonical" href={siteUrl} />
+        {/* REMOVED: duplicate <meta name="google-site-verification"> —
+            metadata.verification already emits it. */}
 
-        {/* PRELOAD IMPORTANT ASSETS */}
         <link rel="preload" href="/pepcologo.png" as="image" />
-
-        {/* STRABL SDK - Loaded globally for immediate availability */}
-        <Script
-          src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
-          strategy="beforeInteractive"
-        />
-
-        {/* GOOGLE VERIFICATION */}
-        <meta
-          name="google-site-verification"
-          content="iSuNTQTsMQf9PHYe4l-b3sXHGl8F3qQ59OGo9qnTn18"
-        />
 
         {/* ORGANIZATION SCHEMA */}
         <script
@@ -275,34 +168,28 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
-
               name: 'PepcoLab',
-
+              legalName: 'SEE BEE DEE LIMITED',
               url: siteUrl,
-
               logo: `${siteUrl}/pepcologo.png`,
-
               description:
-                'Research-grade peptides and laboratory compounds for scientific and in-vitro research applications.',
-
+                'Research-grade peptides and laboratory compounds for in-vitro research use.',
               email: 'hello@pepcolab.com',
-
+              // TODO: add the real registered address. An addressCountry with
+              // no street/locality is an incomplete PostalAddress and Google
+              // may ignore the whole block.
               address: {
                 '@type': 'PostalAddress',
                 addressCountry: 'GB',
               },
-
-              areaServed: [
-                {
-                  '@type': 'Country',
-                  name: 'United Kingdom',
-                },
-                {
-                  '@type': 'Country',
-                  name: 'United Arab Emirates',
-                },
-              ],
-
+              identifier: {
+                '@type': 'PropertyValue',
+                name: 'Companies House',
+                value: '17072052',
+              },
+              areaServed: [{ '@type': 'Country', name: 'United Kingdom' }],
+              // TODO: remove any sameAs entry whose profile does not actually
+              // exist — a 404 here is a negative trust signal.
               sameAs: [
                 'https://instagram.com/pepcolab',
                 'https://x.com/pepcolab',
@@ -311,81 +198,62 @@ export default function RootLayout({
           }}
         />
 
-        {/* WEBSITE SCHEMA */}
+        {/* WEBSITE SCHEMA
+            REMOVED the SearchAction potentialAction — it pointed at
+            /search?q={...}, and there is no /search route in the app. Declaring
+            a search endpoint that 404s is invalid structured data. Add it back
+            when the route exists (your Nav already links to /products?q=…, so
+            that is the URL to use). */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
-
               '@type': 'WebSite',
-
               name: 'PepcoLab',
-
               url: siteUrl,
-
-              potentialAction: {
-                '@type': 'SearchAction',
-
-                target: `${siteUrl}/search?q={search_term_string}`,
-
-                'query-input': 'required name=search_term_string',
-              },
             }),
           }}
         />
 
-        {/* ECOMMERCE / STORE SCHEMA */}
+        {/* STORE SCHEMA
+            REMOVED telephone: '+44' — that is a country dialling code, not a
+            phone number, and it invalidates the block. Either put the real
+            E.164 number in or leave the field out entirely (done here). */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
-
               '@type': 'Store',
-
               name: 'PepcoLab',
-
               image: `${siteUrl}/pepcoall.png`,
-
               url: siteUrl,
-
-              telephone: '+44',
-
-              priceRange: '£££',
-
-              paymentAccepted: [
-                'Bank Transfer',
-                'Credit Card',
-                'Apple Pay',
-                'Google Pay',
-              ],
-
-              currenciesAccepted: 'GBP, AED, USD',
-
-              address: {
-                '@type': 'PostalAddress',
-                addressCountry: 'GB',
-              },
-
-              areaServed: [
-                'United Kingdom',
-                'United Arab Emirates',
-              ],
+              priceRange: '££',
+              paymentAccepted: ['Credit Card', 'Apple Pay', 'Google Pay'],
+              currenciesAccepted: 'GBP',
+              address: { '@type': 'PostalAddress', addressCountry: 'GB' },
+              areaServed: 'United Kingdom',
             }),
           }}
-        />
-
-        {/* SECURITY */}
-        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-
-        <meta
-          httpEquiv="Content-Security-Policy"
-          content="upgrade-insecure-requests"
         />
       </head>
 
       <body suppressHydrationWarning>
+        {/* STRABL SDK — moved off `beforeInteractive`.
+            beforeInteractive blocks first render on EVERY page for a script
+            only the checkout needs, and it loads @latest from a third-party
+            CDN, so an upstream publish can change your checkout without a
+            deploy. Two changes:
+              1. lazyOnload here, or better: move this <Script> into
+                 src/app/checkout/page.tsx so it only loads where it is used.
+              2. Pin the version — replace @latest with the exact version you
+                 have tested. */}
+        <Script
+          src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
+          strategy="lazyOnload"
+        />
+
         <CountryProvider>
           <CartProvider>
             {children}

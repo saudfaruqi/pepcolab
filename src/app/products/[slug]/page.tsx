@@ -1,5 +1,16 @@
+// src/app/products/[slug]/page.tsx
+//
+// CHANGES FROM YOUR VERSION:
+//   1. Added generateMetadata()   — per-product title/description/canonical/OG
+//   2. Replaced the soft-404      — notFound() instead of a 200 with "not found"
+//   3. getProducts(100) → 250     — must match the cap in sitemap.ts
+//   4. Added Product JSON-LD      — price/availability rich results
+//   5. Added BreadcrumbList JSON-LD — you already render breadcrumbs visually
+//   6. Added alt text fallback on thumbnails (was alt="")
+// Everything else (layout, styles, components) is unchanged.
 
-// products/slug/page
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -9,14 +20,73 @@ import ProductActions from '@/components/ProductActions'
 import { ChevronRight, ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 
+const SITE_URL = 'https://www.pepcolab.com'
+
 interface Props {
   params: { slug: string }
 }
 
+// NOTE: if you upgrade to Next 15, `params` becomes a Promise and this
+// signature changes to `{ params }: { params: Promise<{ slug: string }> }`
+// with `const { slug } = await params`. On Next 14 the below is correct.
+
 export async function generateStaticParams() {
-  const products = await getProducts(100)
+  // Keep this cap in sync with sitemap.ts. If they drift, you get sitemap
+  // entries with no pre-rendered page (or pages absent from the sitemap).
+  const products = await getProducts(250)
   return products.map((product) => ({ slug: product.handle }))
 }
+
+/* -------------------------------------------------------------------------- */
+/* METADATA                                                                    */
+/* -------------------------------------------------------------------------- */
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = await getProductByHandle(params.slug)
+
+  if (!product) {
+    return {
+      title: 'Product not found',
+      robots: { index: false, follow: false },
+    }
+  }
+
+  const canonical = `/products/${product.handle}`
+
+  // Factual and compound-focused. No effects, benefits, outcomes or
+  // indications — the meta description is the most screenshotted surface
+  // on the site and the easiest thing for a regulator to quote back.
+  const description =
+    `${product.title} — research-grade compound with published certificate of analysis` +
+    (product.purity ? `, ${product.purity}% HPLC-verified purity` : '') +
+    (product.lot ? `, batch ${product.lot}` : '') +
+    '. Cold-chain dispatch. For in-vitro research use only.'
+
+  const ogImage = product.images?.[0]?.url
+
+  return {
+    title: `${product.title} | Research Grade, COA Published`,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: `${product.title} | PepcoLab`,
+      description,
+      url: `${SITE_URL}${canonical}`,
+      type: 'website',
+      images: ogImage ? [{ url: ogImage, alt: product.title }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${product.title} | PepcoLab`,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* HELPERS                                                                     */
+/* -------------------------------------------------------------------------- */
 
 function getOneLiner(description?: string): string {
   if (!description) return ''
@@ -30,15 +100,65 @@ function getOneLiner(description?: string): string {
   return description.slice(0, 120).trim() + '…'
 }
 
+function buildJsonLd(product: any) {
+  const url = `${SITE_URL}/products/${product.handle}`
+
+  const productLd: Record<string, any> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: product.description,
+    sku: product.lot ?? product.handle,
+    url,
+    image: product.images?.map((i: any) => i.url).filter(Boolean) ?? [],
+    brand: { '@type': 'Brand', name: 'PepcoLab' },
+    // Deliberately NO aggregateRating / review. Marking up invented reviews is
+    // a Google structured-data policy violation (manual action risk) and, in
+    // the UK, a banned practice under the DMCC Act 2024. Add these only once
+    // real verified-purchase reviews exist.
+  }
+
+  // Only emit offers if we actually have a price — an Offer with a null price
+  // fails validation and can suppress the whole block.
+  if (product.price != null) {
+    productLd.offers = {
+      '@type': 'Offer',
+      url,
+      priceCurrency: 'GBP',
+      price: String(product.price),
+      availability:
+        product.inStock === false
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'PepcoLab' },
+    }
+  }
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Products', item: `${SITE_URL}/products` },
+      { '@type': 'ListItem', position: 3, name: product.title, item: url },
+    ],
+  }
+
+  return [productLd, breadcrumbLd]
+}
+
+/* -------------------------------------------------------------------------- */
+/* PAGE                                                                        */
+/* -------------------------------------------------------------------------- */
+
 export default async function ProductPage({ params }: Props) {
   const shopifyProduct = await getProductByHandle(params.slug)
 
+  // Was: return <div>Product not found</div> — which sent HTTP 200 and let
+  // Google index every bad URL as a thin duplicate page. notFound() renders
+  // src/app/not-found.tsx and returns a real 404.
   if (!shopifyProduct) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontSize: 18 }}>
-        Product not found
-      </div>
-    )
+    notFound()
   }
 
   const product = {
@@ -58,9 +178,18 @@ export default async function ProductPage({ params }: Props) {
 
   const images = shopifyProduct.images ?? []
   const oneLiner = getOneLiner(shopifyProduct.description)
+  const jsonLd = buildJsonLd(shopifyProduct)
 
   return (
     <>
+      {jsonLd.map((block, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }}
+        />
+      ))}
+
       <Nav />
 
       <main style={{ background: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -85,7 +214,7 @@ export default async function ProductPage({ params }: Props) {
               {images.length > 0 ? (
                 <img
                   src={images[0].url}
-                  alt={images[0].alt || shopifyProduct.title}
+                  alt={images[0].alt || `${shopifyProduct.title} research vial`}
                   className="pp-main-img"
                 />
               ) : (
@@ -124,7 +253,11 @@ export default async function ProductPage({ params }: Props) {
                     border: i === 0 ? '2px solid #2563eb' : '1px solid #e5e7eb',
                     background: '#fafafa',
                   }}>
-                    <img src={img.url} alt={img.alt || ''} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3 }} />
+                    <img
+                      src={img.url}
+                      alt={img.alt || `${shopifyProduct.title} view ${i + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3 }}
+                    />
                   </div>
                 ))}
               </div>
