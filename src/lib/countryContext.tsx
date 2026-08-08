@@ -1,19 +1,12 @@
 // src/lib/countryContext.tsx
 'use client'
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 
-const COUNTRY_KEY = 'pepcolab_country'
-
-const COUNTRY_CURRENCY: Record<string, string> = {
-  AE: 'AED',
-  GB: 'GBP',  // UK Pound
-  US: 'USD',
-  DE: 'EUR',
-  FR: 'EUR',
-  AU: 'AUD',
-  CA: 'CAD',
-  // Add more as needed
-}
+// PepcoLab only sells into the UAE — no geo-detection, no per-visitor
+// currency swapping. Every visitor sees the same AE catalogue and AED
+// pricing, so cart/checkout currency always matches what's displayed.
+const FIXED_COUNTRY = 'AE'
+const FIXED_CURRENCY = 'AED'
 
 interface CountryCtx {
   country: string
@@ -23,56 +16,22 @@ interface CountryCtx {
 }
 
 const CountryContext = createContext<CountryCtx>({
-  country: 'AE',
-  currency: 'AED',
+  country: FIXED_COUNTRY,
+  currency: FIXED_CURRENCY,
   setCountry: () => {},
-  ready: false,
+  ready: true,
 })
 
 export function CountryProvider({ children }: { children: ReactNode }) {
-  const [country, setCountryState] = useState<string>('AE')
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    // Only runs client-side, so no server/client mismatch
-    const stored = localStorage.getItem(COUNTRY_KEY)
-    if (stored && COUNTRY_CURRENCY[stored]) {
-      setCountryState(stored)
-      setReady(true)
-      return
-    }
-
-    fetch('/api/country')
-      .then(r => r.json())
-      .then(({ country: detected }) => {
-        if (detected && COUNTRY_CURRENCY[detected]) {
-          setCountryState(detected)
-          localStorage.setItem(COUNTRY_KEY, detected)
-        } else {
-          // Default to AE if detected country is not supported
-          setCountryState('AE')
-          localStorage.setItem(COUNTRY_KEY, 'AE')
-        }
-      })
-      .catch(() => {
-        // Fallback to AE on error
-        setCountryState('AE')
-      })
-      .finally(() => setReady(true))
-  }, [])
-
-  const setCountry = (c: string) => {
-    setCountryState(c)
-    localStorage.setItem(COUNTRY_KEY, c)
-  }
-
   return (
-    <CountryContext.Provider value={{
-      country,
-      currency: COUNTRY_CURRENCY[country] ?? 'AED',
-      setCountry,
-      ready,
-    }}>
+    <CountryContext.Provider
+      value={{
+        country: FIXED_COUNTRY,
+        currency: FIXED_CURRENCY,
+        setCountry: () => {}, // no-op — country is fixed to AE
+        ready: true,
+      }}
+    >
       {children}
     </CountryContext.Provider>
   )
