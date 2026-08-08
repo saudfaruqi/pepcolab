@@ -65,8 +65,15 @@ export default function Nav() {
     { code: 'US', label: 'United States',  currency: 'USD' },
   ]
 
-  const searchRef  = useRef<HTMLInputElement>(null)
-  const dropTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchRef      = useRef<HTMLInputElement>(null)
+  const dropTimer      = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Separate timer for the currency dropdown — it previously opened/closed
+  // on raw onMouseEnter/onMouseLeave with no debounce and no hover
+  // handlers on the dropdown panel itself, so crossing the small visual
+  // gap between the trigger and the panel (top: calc(100% + 6px) on
+  // .nav-drop) closed it before you could reach the options. Mirrors
+  // dropTimer's 130ms debounce below.
+  const currencyTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!ready) return  // ← wait for detection
@@ -107,6 +114,21 @@ export default function Nav() {
 
   const openDrop  = (l: string) => { if (dropTimer.current) clearTimeout(dropTimer.current); setActiveDrop(l) }
   const closeDrop = ()          => { dropTimer.current = setTimeout(() => setActiveDrop(null), 130) }
+
+  // Same debounce pattern as openDrop/closeDrop above, applied to the
+  // currency switcher so hovering across the trigger→panel gap doesn't
+  // slam it shut. openCurrency also cancels any pending close, so
+  // re-entering (either the trigger or the panel) before the 130ms
+  // timeout fires keeps it open.
+  const openCurrency  = () => { if (currencyTimer.current) clearTimeout(currencyTimer.current); setCurrencyOpen(true) }
+  const closeCurrency = () => { currencyTimer.current = setTimeout(() => setCurrencyOpen(false), 130) }
+  // Click toggle for touch/keyboard users — also clears any pending close
+  // so a click right after a hover-triggered close-timer doesn't get
+  // silently undone by that stale timeout finishing a moment later.
+  const toggleCurrency = () => {
+    if (currencyTimer.current) clearTimeout(currencyTimer.current)
+    setCurrencyOpen(o => !o)
+  }
 
   const categoryCounts = products.reduce<Record<string, number>>((acc, p) => {
     const c = p.category.toLowerCase(); acc[c] = (acc[c] ?? 0) + 1; return acc
@@ -756,15 +778,19 @@ export default function Nav() {
           <div className="nav-actions">
             {/* Currency / region switcher */}
             <div className="nav-link-wrap"
-              onMouseEnter={() => setCurrencyOpen(true)}
-              onMouseLeave={() => setCurrencyOpen(false)}
+              onMouseEnter={openCurrency}
+              onMouseLeave={closeCurrency}
             >
-              <button className="nav-search-btn" onClick={() => setCurrencyOpen(o => !o)} style={{ minWidth: 0 }}>
+              <button className="nav-search-btn" onClick={toggleCurrency} style={{ minWidth: 0 }}>
                 <span>{ready ? currency : '···'}</span>
                 <ChevronDown open={currencyOpen} />
               </button>
               {currencyOpen && (
-                <div className="nav-drop" style={{ right: 0, left: 'auto', minWidth: 180 }}>
+                <div className="nav-drop"
+                  style={{ right: 0, left: 'auto', minWidth: 180 }}
+                  onMouseEnter={openCurrency}
+                  onMouseLeave={closeCurrency}
+                >
                   {COUNTRY_OPTIONS.map(opt => (
                     <button
                       key={opt.code}
