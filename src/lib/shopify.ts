@@ -425,9 +425,17 @@ export function normaliseProduct(node: ShopifyProduct) {
       ? parseFloat(variant.compareAtPrice.amount)
       : undefined,
 
-    // A product is in stock if ANY variant is available, not just the
-    // one we're displaying — the displayed variant/price is just the
-    // cheapest available option.
+    // NEW — the full variant list, so ProductActions can render a picker
+    // when a product has more than one option (e.g. Pen vs Vial).
+    variants: node.variants.edges.map(({ node: v }) => ({
+      id: v.id,
+      title: v.title,
+      price: parseFloat(v.price.amount),
+      compareAtPrice: v.compareAtPrice ? parseFloat(v.compareAtPrice.amount) : undefined,
+      currencyCode: v.price.currencyCode,
+      availableForSale: v.availableForSale,
+    })),
+
     inStock: anyVariantAvailable,
     stockCount: variant?.quantityAvailable ?? 0,
     variantCount: node.variants.edges.length,
