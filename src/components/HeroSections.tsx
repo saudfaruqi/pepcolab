@@ -318,7 +318,7 @@ export default function HeroCinematic() {
                 // real still frame from the video once you have one
                 // exported; pepcoall.png is a placeholder so the attribute
                 // isn't empty in the meantime.
-                poster="/pepcoall.png"
+                poster="/pepcovideo.jpg"
                 style={{
                   width: '100%',
                   height: '400px',
