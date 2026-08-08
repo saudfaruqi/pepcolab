@@ -498,7 +498,6 @@ const PRODUCTS_QUERY = /* GraphQL */ `
                 price { amount currencyCode }
                 compareAtPrice { amount currencyCode }
                 availableForSale
-                quantityAvailable
               }
             }
           }
@@ -530,7 +529,6 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
                 price { amount currencyCode }
                 compareAtPrice { amount currencyCode }
                 availableForSale
-                quantityAvailable
               }
             }
           }

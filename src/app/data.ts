@@ -33,6 +33,14 @@ export interface Product {
   inStock: boolean
   stockCount: number
   variantId?: string
+  variants?: {
+    id: string
+    title: string
+    price: number
+    compareAtPrice?: number
+    currencyCode?: string
+    availableForSale: boolean
+  }[]
 }
 
 export interface Category {

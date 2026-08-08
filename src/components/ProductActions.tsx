@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ShoppingCart, Download, CheckCircle } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 import { formatPrice } from '@/lib/utils'
@@ -17,10 +17,38 @@ export default function ProductActions({ product: p }: Props) {
   // Currency code embedded by normaliseProduct; fall back to "AED"
   const currencyCode: string = (p as any).currencyCode ?? 'AED'
 
+  // ── Variant / strength picker ──────────────────────────────────────────
+  // p.variantId/p.price/p.mg are just whichever variant normaliseProduct
+  // auto-picked (cheapest available). If the product actually has multiple
+  // variants, let the customer choose between them; otherwise fall back to
+  // the single values as before so nothing breaks for single-variant items.
+  const hasMultipleVariants = (p.variants?.length ?? 0) > 1
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(
+    p.variantId ?? p.variants?.[0]?.id ?? ''
+  )
+
+  const selectedVariant = useMemo(() => {
+    return p.variants?.find(v => v.id === selectedVariantId) ?? {
+      id: p.variantId ?? '',
+      title: p.mg,
+      price: p.price,
+      compareAtPrice: p.oldPrice,
+      currencyCode,
+      availableForSale: p.inStock,
+    }
+  }, [p, selectedVariantId, currencyCode])
+
   const handleAdd = async () => {
-    if (!p.inStock || added) return
+    if (!selectedVariant.availableForSale || added) return
     setAdded(true)
-    await addItem(p.variantId ?? `gid://shopify/ProductVariant/${p.id}`, p.name, p.mg, p.price, p.slug)
+    await addItem(
+      selectedVariant.id || `gid://shopify/ProductVariant/${p.id}`,
+      p.name,
+      selectedVariant.title,
+      selectedVariant.price,
+      p.slug
+    )
     setTimeout(() => setAdded(false), 2200)
   }
 
@@ -46,7 +74,7 @@ export default function ProductActions({ product: p }: Props) {
               { label: 'Purity',    value: p.purity ? `${p.purity}%` : 'N/A' },
               { label: 'Lot',       value: p.lot || 'N/A' },
               { label: 'Test Date', value: p.testDate || 'N/A' },
-              { label: 'Amount',    value: p.mg },
+              { label: 'Amount',    value: selectedVariant.title },
               { label: 'Category',  value: p.category || 'Research Compound' },
               { label: 'Grade',     value: 'Research Use Only' },
             ].map(({ label, value }) => (
@@ -127,19 +155,54 @@ export default function ProductActions({ product: p }: Props) {
 
   return (
     <>
+      {/* Strength / dose picker — only shown when there's more than one variant */}
+      {hasMultipleVariants && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#626A85', marginBottom: 8 }}>
+            Strength
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {p.variants!.map((v) => {
+              const isSelected = v.id === selectedVariantId
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => setSelectedVariantId(v.id)}
+                  disabled={!v.availableForSale}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: v.availableForSale ? 'pointer' : 'not-allowed',
+                    border: isSelected ? '1.5px solid #1A56DB' : '1px solid #DDE3F0',
+                    background: isSelected ? '#EFF6FF' : '#fff',
+                    color: !v.availableForSale ? '#C5CBDA' : isSelected ? '#1A56DB' : '#0D0F14',
+                    textDecoration: !v.availableForSale ? 'line-through' : 'none',
+                    transition: 'all .15s',
+                  }}
+                >
+                  {v.title}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Price & stock */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          {p.oldPrice && (
+          {selectedVariant.compareAtPrice && (
             <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#AAB3C8' }}>
-              {formatPrice(p.oldPrice, currencyCode)}
+              {formatPrice(selectedVariant.compareAtPrice, selectedVariant.currencyCode ?? currencyCode)}
             </span>
           )}
           <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.04em', color: '#0D0F14', lineHeight: 1 }}>
-            {formatPrice(p.price, currencyCode)}
+            {formatPrice(selectedVariant.price, selectedVariant.currencyCode ?? currencyCode)}
           </span>
         </div>
-        {p.inStock ? (
+        {selectedVariant.availableForSale ? (
           <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999, background: '#EAF3DE', color: '#3B6D11' }}>
             ✓ In stock
           </span>
@@ -154,22 +217,22 @@ export default function ProductActions({ product: p }: Props) {
       <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
         <button
           onClick={handleAdd}
-          disabled={!p.inStock}
+          disabled={!selectedVariant.availableForSale}
           style={{
             flex: 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontSize: 14, fontWeight: 600, color: '#fff',
             padding: '14px 20px', borderRadius: 12, border: 'none',
             background: added ? '#3B6D11' : 'linear-gradient(135deg,#1A56DB,#2563EB)',
-            boxShadow: p.inStock && !added ? '0 4px 18px rgba(26,86,219,0.35)' : 'none',
-            cursor: p.inStock ? 'pointer' : 'not-allowed',
-            opacity: p.inStock ? 1 : 0.4,
+            boxShadow: selectedVariant.availableForSale && !added ? '0 4px 18px rgba(26,86,219,0.35)' : 'none',
+            cursor: selectedVariant.availableForSale ? 'pointer' : 'not-allowed',
+            opacity: selectedVariant.availableForSale ? 1 : 0.4,
             transition: 'all .2s',
           }}
         >
           {added
             ? <><CheckCircle size={16} /> Added to cart</>
-            : <><ShoppingCart size={16} />{p.inStock ? 'Add to Cart' : 'Out of Stock'}</>
+            : <><ShoppingCart size={16} />{selectedVariant.availableForSale ? 'Add to Cart' : 'Out of Stock'}</>
           }
         </button>
         <a
