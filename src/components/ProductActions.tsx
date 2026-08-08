@@ -1,7 +1,10 @@
+// src/components/ProductActions.tsx
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ShoppingCart, Download, CheckCircle } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
+import { useCountry } from '@/lib/countryContext'
+import { getProductByHandle } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/app/data'
 
@@ -9,24 +12,46 @@ interface Props { product: Product }
 
 const TABS = ['Overview', 'Technical Specs', 'Storage', 'Disclaimer']
 
-export default function ProductActions({ product: p }: Props) {
+export default function ProductActions({ product: initialProduct }: Props) {
   const [added,     setAdded]     = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const { addItem } = useCart()
+  const { country, ready } = useCountry()
+
+  // The page is statically built for AE. Once we know the visitor is
+  // actually GB, re-fetch this product's live GB pricing/variants and
+  // swap it in. Falls back silently to the AE-built data on any error.
+  const [liveProduct, setLiveProduct] = useState<Product>(initialProduct)
+
+  useEffect(() => {
+    if (!ready || country === 'AE') return // AE data is already correct
+    let cancelled = false
+    getProductByHandle(initialProduct.slug, country)
+      .then((fresh) => {
+        if (!cancelled && fresh) setLiveProduct(fresh as unknown as Product)
+      })
+      .catch(() => {
+        // Keep showing the AE-built data — never leave the UI blank.
+      })
+    return () => { cancelled = true }
+  }, [ready, country, initialProduct.slug])
+
+  const p = liveProduct
 
   // Currency code embedded by normaliseProduct; fall back to "AED"
   const currencyCode: string = (p as any).currencyCode ?? 'AED'
 
   // ── Variant / strength picker ──────────────────────────────────────────
-  // p.variantId/p.price/p.mg are just whichever variant normaliseProduct
-  // auto-picked (cheapest available). If the product actually has multiple
-  // variants, let the customer choose between them; otherwise fall back to
-  // the single values as before so nothing breaks for single-variant items.
   const hasMultipleVariants = (p.variants?.length ?? 0) > 1
 
   const [selectedVariantId, setSelectedVariantId] = useState<string>(
     p.variantId ?? p.variants?.[0]?.id ?? ''
   )
+
+  // Re-sync selected variant whenever live data swaps in (AE → GB)
+  useEffect(() => {
+    setSelectedVariantId(p.variantId ?? p.variants?.[0]?.id ?? '')
+  }, [p])
 
   const selectedVariant = useMemo(() => {
     return p.variants?.find(v => v.id === selectedVariantId) ?? {
@@ -236,6 +261,7 @@ export default function ProductActions({ product: p }: Props) {
           }
         </button>
         <a
+        
           href={`/certificates?lot=${p.lot ?? ''}`}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

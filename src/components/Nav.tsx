@@ -45,15 +45,25 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 
 export default function Nav() {
   const { totalQuantity, openCart } = useCart()
-  const { country, ready } = useCountry()
+  const { country, currency, setCountry, ready } = useCountry()
 
   const [mobileOpen,     setMobileOpen]     = useState(false)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
   const [searchOpen,     setSearchOpen]     = useState(false)
   const [activeDrop,     setActiveDrop]     = useState<string | null>(null)
+  const [currencyOpen,   setCurrencyOpen]   = useState(false)
   const [searchQuery,    setSearchQuery]    = useState('')
   const [scrolled,       setScrolled]       = useState(false)
   const [products,       setProducts]       = useState<Product[]>([])
+
+  // Manual override for visitors whose IP-detected country/currency is
+  // wrong or unreliable (VPNs, corporate proxies, etc). useCountry()
+  // already exposes setCountry — this just gives it a UI.
+  const COUNTRY_OPTIONS: { code: string; label: string; currency: string }[] = [
+    { code: 'AE', label: 'UAE',            currency: 'AED' },
+    { code: 'GB', label: 'United Kingdom', currency: 'GBP' },
+    { code: 'US', label: 'United States',  currency: 'USD' },
+  ]
 
   const searchRef  = useRef<HTMLInputElement>(null)
   const dropTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -109,8 +119,13 @@ export default function Nav() {
       ).slice(0, 6)
     : []
 
+  // Matches the actual tags used across the 34 published products:
+  // metabolic, recovery, cognitive, hormonal, anti-ageing, immune, accessories.
+  // (Previously missing anti-ageing/immune/accessories — dropdown counts
+  // didn't sum to "All Compounds" because 3 whole categories were absent.)
   const CATEGORY_LABELS: Record<string, string> = {
     metabolic: 'Metabolic', recovery: 'Recovery', cognitive: 'Cognitive', hormonal: 'Hormonal',
+    'anti-ageing': 'Anti-Ageing', immune: 'Immune', accessories: 'Accessories',
   }
 
   const NAV_LINKS = [
@@ -644,6 +659,25 @@ export default function Nav() {
           <span>Search peptides…</span>
         </button>
 
+        {/* Currency / region switcher — mobile */}
+        <div style={{ margin: '0 16px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {COUNTRY_OPTIONS.map(opt => (
+            <button
+              key={opt.code}
+              onClick={() => setCountry(opt.code)}
+              style={{
+                padding: '7px 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
+                border: opt.code === country ? '1.5px solid #0d0d0d' : '1px solid rgba(13,13,13,.12)',
+                background: opt.code === country ? '#0d0d0d' : '#fff',
+                color: opt.code === country ? '#fff' : '#0d0d0d',
+                cursor: 'pointer',
+              }}
+            >
+              {opt.currency}
+            </button>
+          ))}
+        </div>
+
         <div className="mob-links">
           {NAV_LINKS.map(link => (
             <div key={link.label} className="mob-link-row">
@@ -720,6 +754,32 @@ export default function Nav() {
 
           {/* Actions */}
           <div className="nav-actions">
+            {/* Currency / region switcher */}
+            <div className="nav-link-wrap"
+              onMouseEnter={() => setCurrencyOpen(true)}
+              onMouseLeave={() => setCurrencyOpen(false)}
+            >
+              <button className="nav-search-btn" onClick={() => setCurrencyOpen(o => !o)} style={{ minWidth: 0 }}>
+                <span>{ready ? currency : '···'}</span>
+                <ChevronDown open={currencyOpen} />
+              </button>
+              {currencyOpen && (
+                <div className="nav-drop" style={{ right: 0, left: 'auto', minWidth: 180 }}>
+                  {COUNTRY_OPTIONS.map(opt => (
+                    <button
+                      key={opt.code}
+                      onClick={() => { setCountry(opt.code); setCurrencyOpen(false) }}
+                      className="nav-drop-item"
+                      style={{ width: '100%', border: 'none', background: opt.code === country ? '#f4f3f0' : 'none', textAlign: 'left' }}
+                    >
+                      <span className="nav-drop-item-label">{opt.label}</span>
+                      <span className="nav-drop-item-sub">{opt.currency}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Search */}
             <button className="nav-search-btn" onClick={() => setSearchOpen(true)}>
               <SearchIcon />

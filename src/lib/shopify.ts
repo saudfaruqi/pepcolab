@@ -122,6 +122,11 @@ export interface ShopifyProductVariant {
   price: ShopifyMoneyV2
   compareAtPrice: ShopifyMoneyV2 | null
   availableForSale: boolean
+  // Not fetched: quantityAvailable requires the
+  // unauthenticated_read_product_inventory Storefront API scope, which this
+  // token doesn't have. In/out of stock is derived from availableForSale
+  // instead — that's all the storefront actually needs.
+  quantityAvailable?: number
 }
 
 export interface ShopifyImage {
@@ -387,6 +392,7 @@ function pickRepresentativeVariant(
 export function normaliseProduct(node: ShopifyProduct) {
   const variant = pickRepresentativeVariant(node.variants.edges)
   const anyVariantAvailable = node.variants.edges.some((e) => e.node.availableForSale)
+  const image = node.images.edges[0]?.node
 
   const meta = Object.fromEntries(
     (node.metafields ?? [])
@@ -423,8 +429,17 @@ export function normaliseProduct(node: ShopifyProduct) {
       ? parseFloat(variant.compareAtPrice.amount)
       : undefined,
 
-    // Full variant list — lets ProductActions render a strength/format
-    // picker (e.g. Pen vs Vial) when a product has more than one option.
+    // A product is in stock if ANY variant is available, not just the
+    // one we're displaying — the displayed variant/price is just the
+    // cheapest available option.
+    inStock: anyVariantAvailable,
+    // Not available on the public storefront token (see ShopifyProductVariant
+    // above) — kept as a field for compatibility, always 0 for now.
+    stockCount: 0,
+    variantCount: node.variants.edges.length,
+
+    // Full variant list so the UI can offer a strength/dose picker instead
+    // of being stuck with whichever single variant got auto-selected above.
     variants: node.variants.edges.map(({ node: v }) => ({
       id: v.id,
       title: v.title,
@@ -433,12 +448,6 @@ export function normaliseProduct(node: ShopifyProduct) {
       currencyCode: v.price.currencyCode,
       availableForSale: v.availableForSale,
     })),
-
-    // A product is in stock if ANY variant is available, not just the
-    // one we're displaying — the displayed variant/price is just the
-    // cheapest available option.
-    inStock: anyVariantAvailable,
-    variantCount: node.variants.edges.length,
 
     images: node.images.edges.map(({ node }) => ({
       url: node.url,
@@ -467,7 +476,32 @@ export function normaliseProduct(node: ShopifyProduct) {
   }
 }
 
-// Extract the query string to reuse in both server/client paths.
+// shopify.ts — update getProducts to use the proxy when called client-side
+export async function getProducts(first = 40, buyerCountry?: string) {
+  if (typeof window === 'undefined') {
+    // Server: fetch without country (used only for generateStaticParams)
+    const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
+      PRODUCTS_QUERY,
+      { first },
+      { revalidate: 60, serverSide: true }
+    )
+    return data.products.edges.map(({ node }) => normaliseProduct(node))
+  }
+
+  // Client: always go through proxy with country
+  const { shopifyClientFetch } = await import('./shopifyClient')
+  const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
+    PRODUCTS_QUERY,
+    { first },
+    buyerCountry
+  )
+  return data.products.edges.map(({ node }) => normaliseProduct(node))
+}
+
+// Extract the query string to reuse in both paths
+// NOTE: variants(first: 1) → variants(first: 10). Most PepcoLab products
+// have 2-7 variants (different mg strengths); fetching only the first
+// meant stock/price were checked against a single, arbitrary variant.
 const PRODUCTS_QUERY = /* GraphQL */ `
   query getProducts($first: Int!) {
     products(first: $first) {
@@ -498,30 +532,8 @@ const PRODUCTS_QUERY = /* GraphQL */ `
   }
 `
 
-export async function getProducts(first = 40, buyerCountry?: string) {
-  if (typeof window === 'undefined') {
-    // Server: fetch without country (used only for generateStaticParams)
-    const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
-      PRODUCTS_QUERY,
-      { first },
-      { revalidate: 60, serverSide: true }
-    )
-    return data.products.edges.map(({ node }) => normaliseProduct(node))
-  }
-
-  // Client: always go through proxy with country
-  const { shopifyClientFetch } = await import('./shopifyClient')
-  const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
-    PRODUCTS_QUERY,
-    { first },
-    buyerCountry
-  )
-  return data.products.edges.map(({ node }) => normaliseProduct(node))
-}
-
-// Extract the single-product query too, so it can go through the same
-// server/client split as getProducts above.
-const PRODUCT_QUERY = /* GraphQL */ `
+// shopify.ts — getProductByHandle, remove @inContext from the query string
+const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
   query getProduct($handle: String!) {
     product(handle: $handle) {
       id handle title description descriptionHtml tags
@@ -551,21 +563,26 @@ const PRODUCT_QUERY = /* GraphQL */ `
 
 export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
   if (typeof window === 'undefined') {
-    // Server (build-time SSG via generateStaticParams / generateMetadata) —
-    // always fetched as AE, since that's the market baked into the static build.
+    // Server: used at build time via generateStaticParams/generateMetadata,
+    // always AE — matches getProducts' server branch.
     const data = await shopifyFetch<{ product: ShopifyProduct | null }>(
-      PRODUCT_QUERY,
+      PRODUCT_BY_HANDLE_QUERY,
       { handle },
-      { revalidate: 60, buyerCountry, serverSide: true }
+      { revalidate: 60, serverSide: true, buyerCountry }
     )
     return data.product ? normaliseProduct(data.product) : null
   }
 
-  // Client: go through the proxy with the visitor's real detected country
-  // (used by ProductActions to refresh pricing/variants for GB visitors).
+  // Client: was calling shopifyFetch directly, which hits Shopify's GraphQL
+  // API straight from the browser instead of going through /api/products —
+  // unlike getProducts, which already proxies. That's why the product
+  // detail page kept showing AE/AED pricing for GB visitors while every
+  // other page (which uses getProducts) correctly switched to GBP: this
+  // direct client call was failing silently and falling back to the
+  // build-time AE data. Route through the same proxy getProducts uses.
   const { shopifyClientFetch } = await import('./shopifyClient')
   const data = await shopifyClientFetch<{ product: ShopifyProduct | null }>(
-    PRODUCT_QUERY,
+    PRODUCT_BY_HANDLE_QUERY,
     { handle },
     buyerCountry
   )
