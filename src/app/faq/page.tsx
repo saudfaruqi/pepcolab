@@ -47,6 +47,23 @@ const FAQS = [
   },
 ]
 
+// FAQPage structured data — built once from the same FAQS array the page
+// already renders, so copy and schema can never drift out of sync. This is
+// the only page on the site with zero schema despite having the cleanest
+// Q&A content for it; a straightforward rich-result opportunity.
+const FAQ_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
+  })),
+}
+
 export default function FAQPage() {
   const [open, setOpen] = useState<number | null>(0)
   const [search, setSearch] = useState('')
@@ -59,6 +76,10 @@ export default function FAQPage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
+      />
       <Nav />
 
       <main

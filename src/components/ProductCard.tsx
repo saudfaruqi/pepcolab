@@ -78,6 +78,8 @@ export default function ProductCard({ product: p, featured = false }: Props) {
             <img
               src={p.image}
               alt={p.imageAlt ?? p.name}
+              loading={featured ? 'eager' : 'lazy'}
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',

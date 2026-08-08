@@ -87,16 +87,39 @@ export default function ProductActions({ product: initialProduct }: Props) {
   const tabContent = () => {
     switch (activeTab) {
 
-      case 0: // Overview — render Shopify descriptionHtml
-        return p.descriptionHtml ? (
-          <div
-            className="shopify-desc"
-            dangerouslySetInnerHTML={{ __html: p.descriptionHtml }}
-          />
-        ) : (
-          <p style={{ fontSize: 13, lineHeight: 1.85, color: '#626A85' }}>
-            {p.description || 'Research-grade compound manufactured to strict quality standards.'}
-          </p>
+      case 0: // Overview — render Shopify descriptionHtml, then the
+              // `long_desc` metafield underneath. normaliseProduct() in
+              // shopify.ts was already pulling this metafield into
+              // `longDesc` on every product — it just wasn't being
+              // rendered anywhere. This is the field to write real,
+              // unique, keyword-relevant per-product copy into (research
+              // context, what the COA verifies, etc.) for long-tail
+              // ranking on individual compound names — far more
+              // SEO-valuable than the short Shopify `description` field
+              // most storefronts default to.
+        return (
+          <>
+            {p.descriptionHtml ? (
+              <div
+                className="shopify-desc"
+                dangerouslySetInnerHTML={{ __html: p.descriptionHtml }}
+              />
+            ) : (
+              <p style={{ fontSize: 13, lineHeight: 1.85, color: '#626A85' }}>
+                {p.description || 'Research-grade compound manufactured to strict quality standards.'}
+              </p>
+            )}
+            {p.longDesc && (
+              <div style={{ marginTop: p.descriptionHtml || p.description ? 18 : 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#AAB3C8', marginBottom: 8 }}>
+                  Research Overview
+                </div>
+                <p style={{ fontSize: 13, lineHeight: 1.85, color: '#626A85', whiteSpace: 'pre-line' }}>
+                  {p.longDesc}
+                </p>
+              </div>
+            )}
+          </>
         )
 
       case 1: // Technical Specs

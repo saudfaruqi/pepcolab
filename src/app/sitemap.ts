@@ -55,7 +55,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((p) => p.handle)
       .map((p) => ({
         url: `${BASE_URL}/products/${p.handle}`,
-        lastModified: now,
+        // Use Shopify's real updatedAt when we have it, so lastmod actually
+        // means something to Google. `now` for every product on every hourly
+        // regen was a false freshness signal that crawlers learn to ignore —
+        // fall back to `now` only for the rare case updatedAt is missing.
+        lastModified: (p as any).updatedAt ? new Date((p as any).updatedAt) : now,
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }))

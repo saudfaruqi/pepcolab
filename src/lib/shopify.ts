@@ -410,6 +410,11 @@ export function normaliseProduct(node: ShopifyProduct) {
     title: node.title,
     name: node.title,
     shortName: node.title,
+    // Real per-product freshness signal for sitemap.ts — previously the
+    // sitemap stamped every product with `new Date()` on every hourly
+    // regeneration, which tells Google "everything changed" every hour and
+    // gets discounted as a freshness signal rather than trusted.
+    updatedAt: (node as any).updatedAt as string | undefined,
 
     mg: variant?.title ?? '5mg',
     description: node.description,
@@ -507,7 +512,7 @@ const PRODUCTS_QUERY = /* GraphQL */ `
     products(first: $first) {
       edges {
         node {
-          id handle title description tags
+          id handle title description tags updatedAt
           variants(first: 10) {
             edges {
               node {
@@ -536,7 +541,7 @@ const PRODUCTS_QUERY = /* GraphQL */ `
 const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
   query getProduct($handle: String!) {
     product(handle: $handle) {
-      id handle title description descriptionHtml tags
+      id handle title description descriptionHtml tags updatedAt
       variants(first: 10) {
         edges {
           node {

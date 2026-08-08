@@ -93,7 +93,29 @@ export default function HeroCinematic() {
           {/* LEFT CONTENT */}
           <div>
 
-            {/* Heading */}
+            {/*
+              Heading: was "Research Without Compromise." — a strong brand
+              line, but it's also the single most important line on the
+              site for on-page SEO, and it previously carried no keyword
+              signal at all (no "peptides," no "research-grade," no market).
+              Kept the tagline as a smaller kicker above the H1 so the brand
+              voice isn't lost, and moved the actual keyword-bearing copy
+              into the H1 itself.
+            */}
+            <div
+              className="hero-fade"
+              style={{
+                color: 'rgba(255,255,255,.5)',
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '.14em',
+                textTransform: 'uppercase',
+                marginBottom: 14,
+              }}
+            >
+              Research Without Compromise
+            </div>
+
             <h1
               className="hero-fade"
               style={{
@@ -105,11 +127,11 @@ export default function HeroCinematic() {
                 marginBottom: 24,
               }}
             >
-              Research
+              Research-Grade
               <br />
-              Without
+              Peptides,
               <br />
-              Compromise.
+              Verified.
             </h1>
 
             {/* Description */}
@@ -290,6 +312,13 @@ export default function HeroCinematic() {
                 muted
                 loop
                 playsInline
+                // No poster meant this box painted solid black until the
+                // video buffered — worst case for LCP, and gave crawlers no
+                // image to associate with the hero at all. Swap this for a
+                // real still frame from the video once you have one
+                // exported; pepcoall.png is a placeholder so the attribute
+                // isn't empty in the meantime.
+                poster="/pepcoall.png"
                 style={{
                   width: '100%',
                   height: '400px',
