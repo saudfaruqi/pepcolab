@@ -13,8 +13,7 @@ const siteUrl = 'https://www.pepcolab.com'
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  // REMOVED maximumScale: 1 — it blocks pinch-zoom, which is a WCAG 2.1
-  // failure (1.4.4 Resize Text) and hurts mobile usability on a spec-heavy site.
+  // No maximumScale — blocking pinch-zoom is a WCAG 2.1 failure (1.4.4).
   themeColor: '#050505',
   colorScheme: 'dark',
 }
@@ -22,33 +21,30 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
 
+  // UAE leads the title: the live catalogue is 34 UAE SKUs priced in AED.
+  // Declaring UK-only while trading in AED suppresses you for the queries
+  // that actually match your storefront.
   title: {
-    default: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds UK',
+    default:
+      'PepcoLab | Research-Grade Peptides & Laboratory Compounds — UAE & UK',
     template: '%s | PepcoLab',
   },
 
   description:
-    'Research-grade peptides and laboratory compounds with independent HPLC batch verification, published certificates of analysis, and cold-chain dispatch. Supplied for in-vitro research use only.',
+    'Research-grade peptides and laboratory compounds with published batch certificates of analysis and cold-chain dispatch across the UAE and UK. Supplied for in-vitro research use only.',
 
   applicationName: 'PepcoLab',
   referrer: 'origin-when-cross-origin',
 
-  // REMOVED the `keywords` array entirely.
-  // Google has ignored meta keywords since 2009 — it is pure downside. The old
-  // array also indexed your intent for a regulator: it named Retatrutide,
-  // Tirzepatide and Semaglutide alongside "Dubai" and "Abu Dhabi".
+  // No `keywords` — ignored by Google since 2009, and the old array named
+  // Retatrutide, Tirzepatide and Semaglutide alongside "Dubai".
 
   authors: [{ name: 'PepcoLab', url: siteUrl }],
   creator: 'PepcoLab',
   publisher: 'PepcoLab',
   category: 'Scientific Research',
 
-  // CRITICAL FIX: canonical is now a RELATIVE path. Combined with
-  // metadataBase, Next resolves it per-route. The previous absolute
-  // `canonical: siteUrl` told Google that EVERY page was a duplicate of the
-  // homepage. `alternates.languages` was also removed — both hreflang entries
-  // pointed at the same URL, which is a no-op at best and a conflict signal at
-  // worst. Add it back only when you have genuinely separate /uae/ pages.
+  // Relative canonical — resolved per-route against metadataBase.
   alternates: {
     canonical: '/',
   },
@@ -73,7 +69,7 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [
-      { url: '/favicon.ico' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
       { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
     ],
@@ -84,31 +80,34 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 
   openGraph: {
-    title: 'PepcoLab® | Research-Grade Peptides & Laboratory Compounds',
+    // ® removed throughout — see the note in the Store schema below.
+    title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Independent batch verification, published COAs, and cold-chain dispatch. Research use only.',
+      'Published batch certificates of analysis and cold-chain dispatch across the UAE and UK. Research use only.',
     url: siteUrl,
     siteName: 'PepcoLab',
     locale: 'en_GB',
+    alternateLocale: ['en_AE'],
     type: 'website',
-    countryName: 'United Kingdom',
     images: [
       {
         url: '/pepcoall.png',
         width: 1200,
         height: 630,
-        alt: 'PepcoLab Research-Grade Peptides',
+        alt: 'PepcoLab research-grade peptide vials',
       },
     ],
   },
 
   twitter: {
     card: 'summary_large_image',
-    title: 'PepcoLab® | Research-Grade Peptides & Laboratory Compounds',
+    title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Research-grade compounds with transparent COA documentation and independent testing.',
+      'Research compounds with published batch documentation and cold-chain dispatch.',
     creator: '@pepcolab',
-    images: ['/pepcologo.png'],
+    // Was /pepcologo.png — a square logo on a summary_large_image card
+    // letterboxes or gets rejected. Needs the 1200x630 asset.
+    images: ['/pepcoall.png'],
   },
 
   appleWebApp: {
@@ -119,11 +118,8 @@ export const metadata: Metadata = {
 
   formatDetection: { telephone: false, email: false, address: false },
 
-  // TRIMMED: theme-color and mobile-web-app-capable are already emitted by the
-  // `viewport` export and `appleWebApp` above — duplicating them here produced
-  // two of each tag. geo_region / coverage / distribution / target / audience /
-  // classification / designer / owner are all non-standard tags that no search
-  // engine reads. Removed as dead weight.
+  // theme-color and mobile-web-app-capable are emitted by the `viewport`
+  // export and `appleWebApp` above — don't duplicate them here.
   other: {
     'msapplication-TileColor': '#050505',
   },
@@ -137,10 +133,6 @@ export default function RootLayout({
   return (
     <html lang="en-GB" suppressHydrationWarning>
       <head>
-        {/* FONTS — the previous href was "https://://fonts.googleapis.com/..."
-            which is a malformed URL. It has been failing silently in
-            production, so the entire site has been rendering in fallback
-            system fonts. Fixed below. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -152,13 +144,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
 
-        {/* REMOVED: <link rel="canonical" href={siteUrl} />
-            This was hardcoded to the homepage on every single route, and it
-            also duplicated the canonical emitted by metadata.alternates.
-            The metadata export above now handles it correctly per-page. */}
-
-        {/* REMOVED: duplicate <meta name="google-site-verification"> —
-            metadata.verification already emits it. */}
+        {/* No hardcoded <link rel="canonical"> here — metadata.alternates
+            handles it per-route. A static one would point every page at the
+            homepage. */}
 
         <link rel="preload" href="/pepcologo.png" as="image" />
 
@@ -176,11 +164,14 @@ export default function RootLayout({
               description:
                 'Research-grade peptides and laboratory compounds for in-vitro research use.',
               email: 'hello@pepcolab.com',
-              // TODO: add the real registered address. An addressCountry with
-              // no street/locality is an incomplete PostalAddress and Google
-              // may ignore the whole block.
+              // TODO: replace with the real registered address. A
+              // PostalAddress carrying only addressCountry is incomplete and
+              // Google may discard the whole block.
               address: {
                 '@type': 'PostalAddress',
+                streetAddress: '',
+                addressLocality: '',
+                postalCode: '',
                 addressCountry: 'GB',
               },
               identifier: {
@@ -188,9 +179,12 @@ export default function RootLayout({
                 name: 'Companies House',
                 value: '17072052',
               },
-              areaServed: [{ '@type': 'Country', name: 'United Kingdom' }],
-              // TODO: remove any sameAs entry whose profile does not actually
-              // exist — a 404 here is a negative trust signal.
+              areaServed: [
+                { '@type': 'Country', name: 'United Arab Emirates' },
+                { '@type': 'Country', name: 'United Kingdom' },
+              ],
+              // TODO: delete any entry whose profile does not exist. A 404
+              // from your own structured data is a negative trust signal.
               sameAs: [
                 'https://instagram.com/pepcolab',
                 'https://x.com/pepcolab',
@@ -200,11 +194,9 @@ export default function RootLayout({
         />
 
         {/* WEBSITE SCHEMA
-            REMOVED the SearchAction potentialAction — it pointed at
-            /search?q={...}, and there is no /search route in the app. Declaring
-            a search endpoint that 404s is invalid structured data. Add it back
-            when the route exists (your Nav already links to /products?q=…, so
-            that is the URL to use). */}
+            No potentialAction/SearchAction — it pointed at /search?q={...}
+            and that route doesn't exist. Add it back against
+            /products?q={...} once search is wired up. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -213,14 +205,21 @@ export default function RootLayout({
               '@type': 'WebSite',
               name: 'PepcoLab',
               url: siteUrl,
+              inLanguage: ['en-GB', 'en-AE'],
             }),
           }}
         />
 
         {/* STORE SCHEMA
-            REMOVED telephone: '+44' — that is a country dialling code, not a
-            phone number, and it invalidates the block. Either put the real
-            E.164 number in or leave the field out entirely (done here). */}
+            Now reflects what the storefront actually sells: AED pricing,
+            UAE + UK service area, real price band from the live catalogue.
+            No `telephone` — '+44' is a dialling code, not a number, and it
+            invalidated the block. Add the real E.164 number or leave it out.
+
+            NOTE ON (R): dropped everywhere in this file. Under s.95 Trade
+            Marks Act 1994 it is a criminal offence in the UK to represent a
+            mark as registered when it is not. Use (TM) while an application
+            is pending, and reinstate (R) only once registration is granted. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -230,37 +229,35 @@ export default function RootLayout({
               name: 'PepcoLab',
               image: `${siteUrl}/pepcoall.png`,
               url: siteUrl,
-              priceRange: '££',
+              priceRange: 'AED 40 – AED 930',
               paymentAccepted: ['Credit Card', 'Apple Pay', 'Google Pay'],
-              currenciesAccepted: 'GBP',
-              address: { '@type': 'PostalAddress', addressCountry: 'GB' },
-              areaServed: 'United Kingdom',
+              currenciesAccepted: 'AED, GBP',
+              address: {
+                '@type': 'PostalAddress',
+                addressCountry: 'GB',
+              },
+              areaServed: ['United Arab Emirates', 'United Kingdom'],
             }),
           }}
         />
       </head>
 
       <body suppressHydrationWarning>
-        {/* STRABL SDK — moved off `beforeInteractive`.
-            beforeInteractive blocks first render on EVERY page for a script
-            only the checkout needs, and it loads @latest from a third-party
-            CDN, so an upstream publish can change your checkout without a
-            deploy. Two changes:
-              1. lazyOnload here, or better: move this <Script> into
-                 src/app/checkout/page.tsx so it only loads where it is used.
-              2. Pin the version — replace @latest with the exact version you
-                 have tested. */}
+        {/* STRABL SDK — version PINNED. @latest let a third-party publish
+            change the live checkout with no deploy on your side. Replace
+            0.0.0 with the exact version you have tested, and consider moving
+            this <Script> into checkout/page.tsx so it only loads where it's
+            actually used. */}
         <Script
-          src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
+          src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@0.0.0/dist/index.global.js"
           strategy="lazyOnload"
         />
 
         <CountryProvider>
-          {/* Gate lives inside CountryProvider so a UAE/UK selection here
-              can call useCountry().setCountry() directly — one source of
-              truth for market instead of a second, separate gate-only
-              state. It renders as a fixed full-screen overlay, so children
-              still mount normally underneath (no SSR/content flash issues). */}
+          {/* Gate sits inside CountryProvider so a UAE/UK selection can call
+              useCountry().setCountry() directly — one source of truth for
+              market. Renders as a fixed overlay, so children still mount
+              underneath and there's no SSR content flash. */}
           <AgeLocationGate />
           <CartProvider>
             {children}
