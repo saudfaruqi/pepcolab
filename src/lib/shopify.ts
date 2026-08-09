@@ -146,6 +146,7 @@ export interface ShopifyProduct {
   description: string
   descriptionHtml?: string
   tags: string[]
+  productType: string
   variants: { edges: { node: ShopifyProductVariant }[] }
   images: { edges: { node: ShopifyImage }[] }
   metafields: (ShopifyMetafield | null)[]
@@ -427,6 +428,15 @@ export function normaliseProduct(node: ShopifyProduct) {
       : '',
     badge: tags.includes('popular') ? 'popular' : undefined,
 
+    // Format (Pen / Vial / Powder / Supply) — comes from Shopify's
+    // productType field, separate from the body-system category tags
+    // above. Not previously fetched at all, so "vials/pens" had no data
+    // source anywhere in the app.
+    format: node.productType ?? '',
+    formatSlug: node.productType
+      ? node.productType.toLowerCase().replace(/\s+/g, '-')
+      : '',
+
     variantId: variant?.id ?? '',
     price: parseFloat(variant?.price.amount ?? '0'),
     currencyCode: variant?.price.currencyCode ?? 'AED',
@@ -512,7 +522,7 @@ const PRODUCTS_QUERY = /* GraphQL */ `
     products(first: $first) {
       edges {
         node {
-          id handle title description tags updatedAt
+          id handle title description tags updatedAt productType
           variants(first: 10) {
             edges {
               node {
@@ -541,7 +551,7 @@ const PRODUCTS_QUERY = /* GraphQL */ `
 const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
   query getProduct($handle: String!) {
     product(handle: $handle) {
-      id handle title description descriptionHtml tags updatedAt
+      id handle title description descriptionHtml tags updatedAt productType
       variants(first: 10) {
         edges {
           node {
