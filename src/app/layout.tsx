@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
 
   title: {
-    default: 'PepcoLab® | Research-Grade Peptides & Laboratory Compounds UK',
+    default: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds UK',
     template: '%s | PepcoLab',
   },
 
@@ -73,12 +73,12 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [
-      { url: '/pepcologo.png' },
-      { url: '/pepcologo.png', type: 'image/png', sizes: '32x32' },
-      { url: '/pepcologo.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
     ],
-    apple: [{ url: '/pepcologo.png', sizes: '180x180' }],
-    shortcut: ['/pepcologo.png'],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    shortcut: ['/favicon.ico'],
   },
 
   manifest: '/site.webmanifest',
