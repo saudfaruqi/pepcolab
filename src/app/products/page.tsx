@@ -1,3 +1,7 @@
+
+
+// app/products/page.tsx
+
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Nav from '@/components/Nav'
