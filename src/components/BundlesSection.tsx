@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'react'
 import React from 'react'
 import { BUNDLES } from '@/app/data'
 import { getProducts } from '@/lib/shopify'
+import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/app/data'
 
 import { useCountry } from '@/lib/countryContext'
@@ -13,32 +14,6 @@ const BUNDLE_IMGS: Record<string, string> = {
   'b2': 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80&auto=format&fit=crop',
   'b3': 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=600&q=80&auto=format&fit=crop',
   'b4': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&q=80&auto=format&fit=crop',
-}
-
-function AnimatedCard({ children, delay }: { children: React.ReactNode; delay: number }) {
-  const ref = useRef<HTMLAnchorElement>(null)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    el.style.opacity = '0'
-    el.style.transform = 'translateY(24px)'
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => {
-            el.style.transition = 'opacity 0.55s ease, transform 0.55s ease'
-            el.style.opacity = '1'
-            el.style.transform = 'translateY(0)'
-          }, delay)
-          obs.disconnect()
-        }
-      },
-      { threshold: 0.1 }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [delay])
-  return <>{children}</>
 }
 
 export default function BundlesSection() {
@@ -97,6 +72,29 @@ export default function BundlesSection() {
             const prods = bundle.products
               .map((slug: string) => products.find((p: Product) => p.slug === slug))
               .filter((p): p is Product => p !== undefined)
+
+            // Bundle price/save in data.ts are static, AED-denominated
+            // numbers frozen at config time — every other price on the site
+            // (ProductActions, RelatedProducts, ProductCard) is refetched
+            // live per buyer country/currency, so a GB visitor was seeing
+            // an AED figure mislabelled "AED" regardless of their actual
+            // market. Once all of a bundle's products have loaded from the
+            // live, country-aware fetch above, derive the bundle's price
+            // from their real (already-correct-currency) prices instead,
+            // preserving the discount depth configured in data.ts rather
+            // than the frozen absolute numbers.
+            const staticTotal = bundle.price + bundle.save
+            const discountRatio = staticTotal > 0 ? bundle.save / staticTotal : 0
+            const liveTotal = prods.length === bundle.products.length
+              ? prods.reduce((s, p: any) => s + p.price, 0)
+              : null
+            const currencyCode = (prods[0] as any)?.currencyCode ?? 'AED'
+            const displayDiscounted = liveTotal != null
+              ? Math.round(liveTotal * (1 - discountRatio) * 100) / 100
+              : bundle.price
+            const displayTotal = liveTotal ?? staticTotal
+            const displaySave = Math.round((displayTotal - displayDiscounted) * 100) / 100
+
             return (
               <a
                 key={bundle.id}
@@ -127,7 +125,7 @@ export default function BundlesSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute top-3 right-3 text-[10px] font-semibold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    Save AED {bundle.save.toFixed(2)}
+                    Save {formatPrice(displaySave, currencyCode)}
                   </div>
                   <div className="absolute bottom-3 left-3 flex gap-1.5">
                     {prods.map((_, i) => (
@@ -143,7 +141,7 @@ export default function BundlesSection() {
                   <h3 className="text-[14.5px] font-medium text-[var(--ink)] group-hover:text-[var(--cobalt)] transition-colors mb-1">{bundle.name}</h3>
                   <p className="text-[12px] text-[var(--ink-30)] mb-4 flex-1">{bundle.desc}</p>
                   <div className="flex items-center justify-between">
-                    <span className="font-serif text-[19px] tracking-tight text-[var(--ink)]">AED {bundle.price.toFixed(2)}</span>
+                    <span className="font-serif text-[19px] tracking-tight text-[var(--ink)]">{formatPrice(displayDiscounted, currencyCode)}</span>
                     <ArrowRight size={14} className="text-[var(--ink-30)] group-hover:text-[var(--cobalt)] group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </div>

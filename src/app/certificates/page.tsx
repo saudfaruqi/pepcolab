@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import {getProducts} from '@/lib/shopify'
@@ -17,6 +17,7 @@ import {
 export default function CertificatesPage() {
   const [query, setQuery] = useState('')
   const [products, setProducts] = useState<any[]>([])
+  const resultsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -44,6 +45,15 @@ export default function CertificatesPage() {
       ? products.reduce((acc: number, p: any) => acc + (p.purity ?? 99), 0) /
         products.length
       : 0
+
+  // Filtering already happens live as the person types (see filteredProducts
+  // above) — "Verify Batch" had no onClick at all, so clicking it did
+  // nothing. Filtering itself doesn't need this button, but a button that
+  // visibly does nothing reads as broken, so it now jumps down to the
+  // results it's meant to be verifying.
+  const handleVerify = () => {
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <>
@@ -151,6 +161,7 @@ export default function CertificatesPage() {
                   <input
                     value={query}
                     onChange={e => setQuery(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleVerify() }}
                     placeholder="Search lot number, peptide or category..."
                     style={{
                       width: '100%',
@@ -166,6 +177,7 @@ export default function CertificatesPage() {
                 </div>
 
                 <button
+                  onClick={handleVerify}
                   style={{
                     height: 56,
                     padding: '0 28px',
@@ -263,7 +275,7 @@ export default function CertificatesPage() {
 
         {/* CERTIFICATES */}
 
-        <section>
+        <section ref={resultsRef}>
           <div
             style={{
               maxWidth: 1400,
@@ -382,7 +394,7 @@ export default function CertificatesPage() {
                           marginTop: 4,
                         }}
                       >
-                        {product.lot}
+                        {product.lot || 'N/A'}
                       </div>
                     </div>
 
@@ -400,11 +412,11 @@ export default function CertificatesPage() {
                         style={{
                           fontSize: 14,
                           fontWeight: 700,
-                          color: '#16A34A',
+                          color: product.purity ? '#16A34A' : 'rgba(13,13,13,.4)',
                           marginTop: 4,
                         }}
                       >
-                        {product.purity}%
+                        {product.purity ? `${product.purity}%` : 'N/A'}
                       </div>
                     </div>
 
@@ -424,7 +436,7 @@ export default function CertificatesPage() {
                           marginTop: 4,
                         }}
                       >
-                        {product.testDate}
+                        {product.testDate || 'N/A'}
                       </div>
                     </div>
 
