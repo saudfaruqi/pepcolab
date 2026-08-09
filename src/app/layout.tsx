@@ -248,9 +248,10 @@ export default function RootLayout({
             0.0.0 with the exact version you have tested, and consider moving
             this <Script> into checkout/page.tsx so it only loads where it's
             actually used. */}
-        <Script
-          src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@0.0.0/dist/index.global.js"
-        />
+<Script
+  src="https://unpkg.com/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
+  strategy="lazyOnload"
+/>
 
         <CountryProvider>
           {/* Gate sits inside CountryProvider so a UAE/UK selection can call
