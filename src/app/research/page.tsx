@@ -494,9 +494,8 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
   const tc = tagColors[article.tag as keyof typeof tagColors] || tagColors.Guide
 
   return (
-    
     <div style={{ background: '#fafaf8', minHeight: '100vh' }}>
-      {/* Top bar */}
+      {/* Top bar - Mobile First */}
       <div
         style={{
           position: 'sticky',
@@ -505,10 +504,11 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
           background: 'rgba(250,250,248,0.95)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(13,13,13,.07)',
-          padding: '14px 20px',
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
+          gap: 8,
+          flexWrap: 'wrap',
         }}
       >
         <button
@@ -516,40 +516,41 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 6,
-            padding: '8px 16px',
+            gap: 4,
+            padding: '6px 12px',
             borderRadius: 999,
             border: '1px solid rgba(13,13,13,.12)',
             background: '#fff',
             cursor: 'pointer',
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 600,
             color: '#0d0d0d',
+            whiteSpace: 'nowrap',
           }}
         >
-          <ArrowLeft size={14} />
-          Back to Research Hub
+          <ArrowLeft size={12} />
+          <span className="hidden sm:inline">Back</span>
         </button>
-        <span style={{ fontSize: 13, color: 'rgba(13,13,13,.4)' }}>
-          <ChevronRight size={12} style={{ display: 'inline', verticalAlign: 'middle' }} />
-          {' '}{article.tag}
+        <span style={{ fontSize: 12, color: 'rgba(13,13,13,.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <ChevronRight size={12} />
+          <span className="hidden xs:inline">{article.tag}</span>
         </span>
       </div>
 
-      {/* Article header */}
+      {/* Article header - Mobile First */}
       <div
         style={{
           maxWidth: 820,
           margin: '0 auto',
-          padding: '56px 24px 0',
+          padding: '32px 16px 0',
         }}
       >
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
-            marginBottom: 20,
+            gap: 8,
+            marginBottom: 16,
             flexWrap: 'wrap',
           }}
         >
@@ -557,9 +558,9 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
             style={{
               background: tc.bg,
               color: tc.text,
-              padding: '4px 12px',
+              padding: '2px 10px',
               borderRadius: 999,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700,
               letterSpacing: '.1em',
               textTransform: 'uppercase',
@@ -571,35 +572,35 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
-              fontSize: 12,
+              gap: 4,
+              fontSize: 11,
               color: 'rgba(13,13,13,.45)',
             }}
           >
-            <Calendar size={12} />
+            <Calendar size={11} />
             {article.date}
           </span>
           <span
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
-              fontSize: 12,
+              gap: 4,
+              fontSize: 11,
               color: 'rgba(13,13,13,.45)',
             }}
           >
-            <Clock size={12} />
-            {article.readTime} read
+            <Clock size={11} />
+            {article.readTime}
           </span>
         </div>
 
         <h1
           style={{
             fontFamily: '"Playfair Display", Georgia, serif',
-            fontSize: 'clamp(30px, 5vw, 52px)',
+            fontSize: 'clamp(24px, 5vw, 52px)',
             lineHeight: 1.1,
-            letterSpacing: '-.04em',
-            marginBottom: 24,
+            letterSpacing: '-.03em',
+            marginBottom: 20,
             color: '#0d0d0d',
           }}
         >
@@ -608,27 +609,27 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
 
         <p
           style={{
-            fontSize: 19,
-            lineHeight: 1.75,
+            fontSize: 'clamp(15px, 2.5vw, 19px)',
+            lineHeight: 1.7,
             color: 'rgba(13,13,13,.6)',
-            marginBottom: 40,
+            marginBottom: 32,
             borderLeft: '3px solid #2563EB',
-            paddingLeft: 20,
+            paddingLeft: 16,
             fontStyle: 'italic',
           }}
         >
           {article.excerpt}
         </p>
 
-        <hr style={{ border: 'none', borderTop: '1px solid rgba(13,13,13,.08)', marginBottom: 40 }} />
+        <hr style={{ border: 'none', borderTop: '1px solid rgba(13,13,13,.08)', marginBottom: 32 }} />
       </div>
 
-      {/* Article body */}
+      {/* Article body - Mobile First */}
       <div
         style={{
           maxWidth: 820,
           margin: '0 auto',
-          padding: '0 24px 80px',
+          padding: '0 16px 60px',
         }}
       >
         {article.content.map((block: ArticleContentBlock, i: number) => {
@@ -637,10 +638,10 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
               <p
                 key={i}
                 style={{
-                  fontSize: 18,
-                  lineHeight: 1.85,
+                  fontSize: 'clamp(15px, 2vw, 18px)',
+                  lineHeight: 1.8,
                   color: '#1a1a1a',
-                  marginBottom: 36,
+                  marginBottom: 28,
                   fontWeight: 400,
                 }}
               >
@@ -654,11 +655,11 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
                 key={i}
                 style={{
                   fontFamily: '"Playfair Display", Georgia, serif',
-                  fontSize: 26,
-                  letterSpacing: '-.03em',
+                  fontSize: 'clamp(20px, 3vw, 26px)',
+                  letterSpacing: '-.02em',
                   color: '#0d0d0d',
-                  marginTop: 48,
-                  marginBottom: 16,
+                  marginTop: 40,
+                  marginBottom: 12,
                   lineHeight: 1.2,
                 }}
               >
@@ -671,10 +672,10 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
               <p
                 key={i}
                 style={{
-                  fontSize: 16,
-                  lineHeight: 1.85,
+                  fontSize: 'clamp(14px, 1.5vw, 16px)',
+                  lineHeight: 1.8,
                   color: 'rgba(13,13,13,.75)',
-                  marginBottom: 24,
+                  marginBottom: 20,
                 }}
               >
                 {block.text}
@@ -686,12 +687,12 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
               <ul
                 key={i}
                 style={{
-                  marginBottom: 28,
+                  marginBottom: 24,
                   paddingLeft: 0,
                   listStyle: 'none',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 12,
+                  gap: 10,
                 }}
               >
                 {block.items!.map((item: string, j: number) => (
@@ -699,21 +700,21 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
                     key={j}
                     style={{
                       display: 'flex',
-                      gap: 14,
-                      fontSize: 15.5,
-                      lineHeight: 1.75,
+                      gap: 12,
+                      fontSize: 'clamp(13px, 1.3vw, 15.5px)',
+                      lineHeight: 1.7,
                       color: 'rgba(13,13,13,.75)',
                     }}
                   >
                     <span
                       style={{
                         flexShrink: 0,
-                        width: 20,
-                        height: 20,
+                        width: 18,
+                        height: 18,
                         borderRadius: '50%',
                         background: '#2563EB',
                         color: '#fff',
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: 700,
                         display: 'flex',
                         alignItems: 'center',
@@ -738,14 +739,14 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
                   border: '1px solid #bfdbfe',
                   borderLeft: '4px solid #2563EB',
                   borderRadius: 12,
-                  padding: '20px 22px',
-                  margin: '32px 0',
-                  fontSize: 14.5,
-                  lineHeight: 1.75,
+                  padding: '16px 18px',
+                  margin: '28px 0',
+                  fontSize: 'clamp(13px, 1.3vw, 14.5px)',
+                  lineHeight: 1.7,
                   color: '#1e3a8a',
                 }}
               >
-                <strong style={{ display: 'block', marginBottom: 6, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2563EB' }}>
+                <strong style={{ display: 'block', marginBottom: 4, fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2563EB' }}>
                   Research Note
                 </strong>
                 {block.text}
@@ -755,11 +756,11 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
           return null
         })}
 
-        {/* Footer nav */}
+        {/* Footer nav - Mobile First */}
         <div
           style={{
-            marginTop: 60,
-            paddingTop: 32,
+            marginTop: 48,
+            paddingTop: 24,
             borderTop: '1px solid rgba(13,13,13,.08)',
           }}
         >
@@ -768,18 +769,20 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
-              padding: '12px 24px',
+              gap: 6,
+              padding: '10px 20px',
               borderRadius: 999,
               border: 'none',
               background: '#0d0d0d',
               color: '#fff',
               cursor: 'pointer',
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
+              width: '100%',
+              justifyContent: 'center',
             }}
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={14} />
             Back to Research Hub
           </button>
         </div>
@@ -789,7 +792,7 @@ function ArticleDetail({ article, onBack }: { article: Article; onBack: () => vo
 }
 
 /* ─────────────────────────────────────────
-   MAIN RESEARCH HUB PAGE
+   MAIN RESEARCH HUB PAGE - MOBILE FIRST
 ───────────────────────────────────────── */
 export default function ResearchPage() {
   const [activeArticle, setActiveArticle] = useState<Article | null>(null)
@@ -808,45 +811,42 @@ export default function ResearchPage() {
   const featured = ARTICLES.find(a => a.id === 'glp1') ?? ARTICLES[0]
 
   return (
-
-
     <main style={{ background: '#f7f7f5', minHeight: '100vh' }}>
-
       <Navbar />
 
-      {/* ── HERO ── */}
+      {/* ── HERO - MOBILE FIRST ── */}
       <section
         style={{
           borderBottom: '1px solid rgba(13,13,13,.08)',
           background: 'linear-gradient(160deg,#fff 0%,#f0f4ff 60%,#f7f7f5 100%)',
         }}
       >
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '80px 20px 64px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '48px 16px 40px' }}>
           <div style={{ maxWidth: 740 }}>
             <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
-                marginBottom: 22,
+                gap: 6,
+                marginBottom: 16,
                 color: '#2563EB',
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: '.14em',
                 textTransform: 'uppercase',
               }}
             >
-              <Microscope size={14} />
+              <Microscope size={13} />
               Knowledge Base
             </div>
 
             <h1
               style={{
                 fontFamily: '"Playfair Display", Georgia, serif',
-                fontSize: 'clamp(48px,7vw,84px)',
-                lineHeight: 0.92,
-                letterSpacing: '-.05em',
-                margin: '0 0 22px',
+                fontSize: 'clamp(32px, 8vw, 84px)',
+                lineHeight: 0.95,
+                letterSpacing: '-.04em',
+                margin: '0 0 16px',
                 color: '#0d0d0d',
               }}
             >
@@ -857,11 +857,11 @@ export default function ResearchPage() {
 
             <p
               style={{
-                fontSize: 17,
-                lineHeight: 1.8,
+                fontSize: 'clamp(14px, 2vw, 17px)',
+                lineHeight: 1.7,
                 color: 'rgba(13,13,13,.55)',
                 maxWidth: 600,
-                marginBottom: 40,
+                marginBottom: 32,
               }}
             >
               In-depth research articles, peptide protocols, laboratory methodologies,
@@ -869,12 +869,12 @@ export default function ResearchPage() {
             </p>
           </div>
 
-          {/* Stats */}
+          {/* Stats - Mobile First Grid */}
           <div
             style={{
               display: 'grid',
-              gap: 14,
-              gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))',
+              gap: 10,
+              gridTemplateColumns: 'repeat(2, 1fr)',
               maxWidth: 900,
             }}
           >
@@ -888,50 +888,51 @@ export default function ResearchPage() {
                 key={label}
                 style={{
                   background: '#fff',
-                  borderRadius: 18,
-                  padding: '22px 24px',
+                  borderRadius: 14,
+                  padding: '16px 18px',
                   border: '1px solid rgba(13,13,13,.07)',
                 }}
               >
-                <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-.05em', marginBottom: 5 }}>
+                <div style={{ fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 800, letterSpacing: '-.05em', marginBottom: 2 }}>
                   {value}
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(13,13,13,.5)', fontWeight: 500 }}>{label}</div>
+                <div style={{ fontSize: 'clamp(10px, 1.2vw, 12px)', color: 'rgba(13,13,13,.5)', fontWeight: 500 }}>
+                  {label}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FEATURED ARTICLE ── */}
+      {/* ── FEATURED ARTICLE - MOBILE FIRST ── */}
       <section>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '48px 20px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 16px' }}>
           <button
             onClick={() => setActiveArticle(featured)}
             style={{
               width: '100%',
               textAlign: 'left',
               background: '#0d0d0d',
-              borderRadius: 28,
-              padding: '52px 40px',
+              borderRadius: 20,
+              padding: '32px 20px',
               color: '#fff',
               border: 'none',
               cursor: 'pointer',
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
-              gap: 24,
-              alignItems: 'end',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
             }}
           >
             <div>
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: 700,
                   letterSpacing: '.16em',
                   textTransform: 'uppercase',
                   opacity: 0.45,
-                  marginBottom: 16,
+                  marginBottom: 12,
                 }}
               >
                 Featured Publication
@@ -939,10 +940,10 @@ export default function ResearchPage() {
               <h2
                 style={{
                   fontFamily: '"Playfair Display", Georgia, serif',
-                  fontSize: 'clamp(28px,5vw,52px)',
+                  fontSize: 'clamp(22px, 4.5vw, 52px)',
                   lineHeight: 1.05,
-                  letterSpacing: '-.04em',
-                  marginBottom: 18,
+                  letterSpacing: '-.03em',
+                  marginBottom: 14,
                   maxWidth: 680,
                 }}
               >
@@ -951,10 +952,10 @@ export default function ResearchPage() {
               <p
                 style={{
                   maxWidth: 600,
-                  fontSize: 15,
-                  lineHeight: 1.8,
+                  fontSize: 'clamp(13px, 1.5vw, 15px)',
+                  lineHeight: 1.7,
                   color: 'rgba(255,255,255,.6)',
-                  marginBottom: 32,
+                  marginBottom: 24,
                 }}
               >
                 {featured.excerpt}
@@ -963,31 +964,32 @@ export default function ResearchPage() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 8,
-                  padding: '13px 24px',
+                  gap: 6,
+                  padding: '10px 18px',
                   borderRadius: 999,
                   background: '#fff',
                   color: '#0d0d0d',
                   fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: 12,
                 }}
               >
                 Read Full Article
-                <ArrowRight size={15} />
+                <ArrowRight size={13} />
               </div>
             </div>
             <div
               style={{
                 background: 'rgba(255,255,255,.06)',
                 border: '1px solid rgba(255,255,255,.1)',
-                borderRadius: 16,
-                padding: '16px 20px',
-                whiteSpace: 'nowrap',
+                borderRadius: 12,
+                padding: '14px 16px',
               }}
             >
-              <div style={{ fontSize: 11, opacity: 0.45, marginBottom: 10, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase' }}>Stats</div>
+              <div style={{ fontSize: 10, opacity: 0.45, marginBottom: 8, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                Stats
+              </div>
               {[['Tag', featured.tag], ['Read', featured.readTime], ['Date', featured.date]].map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 24, fontSize: 13, marginBottom: 6, color: 'rgba(255,255,255,.7)' }}>
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, fontSize: 12, marginBottom: 4, color: 'rgba(255,255,255,.7)' }}>
                   <span style={{ opacity: 0.5 }}>{k}</span>
                   <span style={{ fontWeight: 600 }}>{v}</span>
                 </div>
@@ -997,15 +999,15 @@ export default function ResearchPage() {
         </div>
       </section>
 
-      {/* ── CATEGORIES ── */}
+      {/* ── CATEGORIES - MOBILE FIRST ── */}
       <section>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px 52px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px 36px' }}>
           <h2
             style={{
               fontFamily: '"Playfair Display", Georgia, serif',
-              fontSize: 32,
-              marginBottom: 22,
-              letterSpacing: '-.04em',
+              fontSize: 'clamp(24px, 4vw, 32px)',
+              marginBottom: 16,
+              letterSpacing: '-.03em',
               color: '#0d0d0d',
             }}
           >
@@ -1014,8 +1016,8 @@ export default function ResearchPage() {
           <div
             style={{
               display: 'grid',
-              gap: 14,
-              gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
+              gap: 10,
+              gridTemplateColumns: 'repeat(2, 1fr)',
             }}
           >
             {categories.map(cat => (
@@ -1024,8 +1026,8 @@ export default function ResearchPage() {
                 onClick={() => setActiveCategory(activeCategory === cat.title ? 'All' : cat.title)}
                 style={{
                   background: activeCategory === cat.title ? cat.color : '#fff',
-                  borderRadius: 20,
-                  padding: '22px 22px',
+                  borderRadius: 16,
+                  padding: '16px 16px',
                   border: `1px solid ${activeCategory === cat.title ? cat.color : 'rgba(13,13,13,.08)'}`,
                   textAlign: 'left',
                   cursor: 'pointer',
@@ -1033,17 +1035,17 @@ export default function ResearchPage() {
                 }}
               >
                 <cat.icon
-                  size={22}
+                  size={18}
                   style={{
-                    marginBottom: 16,
+                    marginBottom: 12,
                     color: activeCategory === cat.title ? '#fff' : cat.color,
                   }}
                 />
                 <div
                   style={{
-                    fontSize: 18,
+                    fontSize: 'clamp(14px, 1.8vw, 18px)',
                     fontWeight: 700,
-                    marginBottom: 4,
+                    marginBottom: 2,
                     color: activeCategory === cat.title ? '#fff' : '#0d0d0d',
                   }}
                 >
@@ -1051,7 +1053,7 @@ export default function ResearchPage() {
                 </div>
                 <div
                   style={{
-                    fontSize: 12,
+                    fontSize: 'clamp(10px, 1vw, 12px)',
                     color: activeCategory === cat.title ? 'rgba(255,255,255,.7)' : 'rgba(13,13,13,.5)',
                   }}
                 >
@@ -1063,12 +1065,12 @@ export default function ResearchPage() {
         </div>
       </section>
 
-      {/* ── FILTER BAR ── */}
+      {/* ── FILTER BAR - MOBILE FIRST ── */}
       <section>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px 28px' }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(13,13,13,.45)', marginRight: 4 }}>
-              <Tag size={12} style={{ display: 'inline', marginRight: 4 }} />
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px 20px' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(13,13,13,.45)', marginRight: 2 }}>
+              <Tag size={11} style={{ display: 'inline', marginRight: 3 }} />
               Filter:
             </span>
             {allTags.map(tag => {
@@ -1079,14 +1081,15 @@ export default function ResearchPage() {
                   key={tag}
                   onClick={() => setActiveCategory(tag)}
                   style={{
-                    padding: '6px 14px',
+                    padding: '4px 12px',
                     borderRadius: 999,
                     border: `1px solid ${active ? 'transparent' : 'rgba(13,13,13,.12)'}`,
                     background: active ? (tc ? tc.bg : '#e0e7ff') : '#fff',
                     color: active ? (tc ? tc.text : '#2563EB') : 'rgba(13,13,13,.6)',
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: active ? 700 : 500,
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {tag}
@@ -1099,18 +1102,18 @@ export default function ResearchPage() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
-                  padding: '5px 10px',
+                  gap: 3,
+                  padding: '3px 8px',
                   borderRadius: 999,
                   border: '1px solid rgba(220,38,38,.25)',
                   background: '#fff5f5',
                   color: '#dc2626',
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
               >
-                <X size={10} />
+                <X size={9} />
                 Clear
               </button>
             )}
@@ -1118,22 +1121,22 @@ export default function ResearchPage() {
         </div>
       </section>
 
-      {/* ── ARTICLE GRID ── */}
+      {/* ── ARTICLE GRID - MOBILE FIRST ── */}
       <section>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px 80px' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px 60px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 4 }}>
             <h2
               style={{
                 fontFamily: '"Playfair Display", Georgia, serif',
-                fontSize: 32,
-                letterSpacing: '-.04em',
+                fontSize: 'clamp(22px, 3.5vw, 32px)',
+                letterSpacing: '-.03em',
                 color: '#0d0d0d',
                 margin: 0,
               }}
             >
               {activeCategory === 'All' ? 'All Research' : activeCategory}
             </h2>
-            <span style={{ fontSize: 13, color: 'rgba(13,13,13,.4)', fontWeight: 500 }}>
+            <span style={{ fontSize: 12, color: 'rgba(13,13,13,.4)', fontWeight: 500 }}>
               {filtered.length} article{filtered.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -1142,11 +1145,12 @@ export default function ResearchPage() {
             <div
               style={{
                 textAlign: 'center',
-                padding: '60px 20px',
+                padding: '40px 16px',
                 background: '#fff',
-                borderRadius: 24,
+                borderRadius: 20,
                 border: '1px solid rgba(13,13,13,.07)',
                 color: 'rgba(13,13,13,.45)',
+                fontSize: 14,
               }}
             >
               No articles in this category yet.
@@ -1156,8 +1160,8 @@ export default function ResearchPage() {
           <div
             style={{
               display: 'grid',
-              gap: 18,
-              gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))',
+              gap: 14,
+              gridTemplateColumns: '1fr',
             }}
           >
             {filtered.map(article => {
@@ -1168,12 +1172,12 @@ export default function ResearchPage() {
                   onClick={() => setActiveArticle(article)}
                   style={{
                     background: '#fff',
-                    borderRadius: 22,
-                    padding: 24,
+                    borderRadius: 18,
+                    padding: 20,
                     border: '1px solid rgba(13,13,13,.08)',
                     display: 'flex',
                     flexDirection: 'column',
-                    minHeight: 240,
+                    minHeight: 200,
                     cursor: 'pointer',
                     transition: 'box-shadow 0.2s, transform 0.2s',
                   }}
@@ -1186,14 +1190,14 @@ export default function ResearchPage() {
                     e.currentTarget.style.transform = 'none'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, flexWrap: 'wrap', gap: 6 }}>
                     <span
                       style={{
                         background: tc.bg,
                         color: tc.text,
-                        padding: '4px 11px',
+                        padding: '2px 10px',
                         borderRadius: 999,
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: 700,
                         letterSpacing: '.1em',
                         textTransform: 'uppercase',
@@ -1205,24 +1209,24 @@ export default function ResearchPage() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 4,
-                        fontSize: 11,
+                        gap: 3,
+                        fontSize: 10,
                         color: 'rgba(13,13,13,.38)',
                       }}
                     >
-                      <Clock size={11} />
+                      <Clock size={10} />
                       {article.readTime}
                     </span>
                   </div>
 
                   <h3
                     style={{
-                      fontSize: 18,
-                      lineHeight: 1.38,
-                      marginBottom: 14,
+                      fontSize: 'clamp(16px, 2vw, 18px)',
+                      lineHeight: 1.35,
+                      marginBottom: 10,
                       color: '#0d0d0d',
                       fontWeight: 700,
-                      letterSpacing: '-.02em',
+                      letterSpacing: '-.01em',
                     }}
                   >
                     {article.title}
@@ -1230,11 +1234,11 @@ export default function ResearchPage() {
 
                   <p
                     style={{
-                      fontSize: 13.5,
-                      lineHeight: 1.65,
+                      fontSize: 'clamp(12px, 1.2vw, 13.5px)',
+                      lineHeight: 1.6,
                       color: 'rgba(13,13,13,.55)',
                       flex: 1,
-                      marginBottom: 20,
+                      marginBottom: 16,
                     }}
                   >
                     {article.excerpt}
@@ -1246,19 +1250,21 @@ export default function ResearchPage() {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       borderTop: '1px solid rgba(13,13,13,.06)',
-                      paddingTop: 16,
+                      paddingTop: 12,
+                      flexWrap: 'wrap',
+                      gap: 4,
                     }}
                   >
                     <span
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 5,
-                        fontSize: 12,
+                        gap: 4,
+                        fontSize: 11,
                         color: 'rgba(13,13,13,.4)',
                       }}
                     >
-                      <Calendar size={11} />
+                      <Calendar size={10} />
                       {article.date}
                     </span>
 
@@ -1266,14 +1272,14 @@ export default function ResearchPage() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 5,
-                        fontSize: 12,
+                        gap: 4,
+                        fontSize: 11,
                         fontWeight: 600,
                         color: '#2563EB',
                       }}
                     >
                       Read article
-                      <ArrowRight size={12} />
+                      <ArrowRight size={11} />
                     </span>
                   </div>
                 </article>
@@ -1283,67 +1289,69 @@ export default function ResearchPage() {
         </div>
       </section>
 
-      {/* ── RESOURCES BANNER ── */}
+      {/* ── RESOURCES BANNER - MOBILE FIRST ── */}
       <section>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 20px 80px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px 60px' }}>
           <div
             style={{
               background: '#fff',
-              borderRadius: 28,
-              padding: '36px 36px',
+              borderRadius: 20,
+              padding: '24px 20px',
               border: '1px solid rgba(13,13,13,.08)',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 24,
-              flexWrap: 'wrap',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: 16,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%' }}>
               <div
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
                   background: '#eff6ff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <BookOpen size={22} color="#2563EB" />
+                <BookOpen size={18} color="#2563EB" />
               </div>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4, color: '#0d0d0d' }}>
+                <div style={{ fontSize: 'clamp(15px, 2vw, 18px)', fontWeight: 700, marginBottom: 2, color: '#0d0d0d' }}>
                   Scientific Resources
                 </div>
-                <div style={{ fontSize: 14, color: 'rgba(13,13,13,.55)', maxWidth: 480 }}>
+                <div style={{ fontSize: 'clamp(12px, 1.2vw, 14px)', color: 'rgba(13,13,13,.55)', maxWidth: 480 }}>
                   Storage protocols, reconstitution guides, handling standards, and peer-reviewed literature references.
                 </div>
               </div>
             </div>
             <button
               onClick={() => {
-  const guide = ARTICLES.find(a => a.id === 'peptide-storage')
-  if (guide) setActiveArticle(guide)
-}}
+                const guide = ARTICLES.find(a => a.id === 'peptide-storage')
+                if (guide) setActiveArticle(guide)
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 8,
-                padding: '13px 22px',
+                gap: 6,
+                padding: '10px 18px',
                 borderRadius: 999,
                 border: '1px solid rgba(13,13,13,.12)',
                 background: '#0d0d0d',
                 color: '#fff',
                 cursor: 'pointer',
                 fontWeight: 600,
-                fontSize: 14,
+                fontSize: 13,
                 whiteSpace: 'nowrap',
+                width: '100%',
+                justifyContent: 'center',
               }}
             >
               Browse Guides
-              <ArrowRight size={14} />
+              <ArrowRight size={13} />
             </button>
           </div>
         </div>
