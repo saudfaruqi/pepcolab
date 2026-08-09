@@ -2,16 +2,23 @@
 import { X } from 'lucide-react'
 import { useState } from 'react'
 
+// NOTE: "Next day UK delivery" below is what was requested, but the current
+// inventory export shows 0 units on hand at every UK location row (all
+// marked "not stocked") — every UK order is presumably fulfilled from the
+// UAE. Confirm actual UK dispatch/transit time with Mohammed before this
+// goes live, or the claim may not be accurate. Also removed "GLP-2 (Tera)
+// now in stock" — no such product exists in the catalogue (Retatrutide,
+// the closest match, isn't stocked as "GLP-2" and wasn't in-stock either).
 const ITEMS = [
-  '✦ Free UK dispatch on orders over AED75',
+  '✦ Free shipping on all orders',
+  '✦ Next day delivery available in the UK',
   '✦ Cold-chain verified packaging on every order',
-  '✦ New: GLP-2 (Tera) now in stock',
   '✦ Same-day dispatch on orders before 2 pm',
   '✦ Eurofins-verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',
-  '✦ Free UK dispatch on orders over AED75',
+  '✦ Free shipping on all orders',
+  '✦ Next day delivery available in the UK',
   '✦ Cold-chain verified packaging on every order',
-  '✦ New: GLP-2 (Tera) now in stock',
   '✦ Same-day dispatch on orders before 2 pm',
   '✦ Eurofins-verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',

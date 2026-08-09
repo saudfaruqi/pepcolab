@@ -6,7 +6,7 @@ import Footer from '@/components/Footer'
 import {getProducts} from '@/lib/shopify'
 import {
   Search,
-  Download,
+  Eye,
   CheckCircle2,
   ShieldCheck,
   FlaskConical,
@@ -309,9 +309,9 @@ export default function CertificatesPage() {
                   'repeat(auto-fill,minmax(320px,1fr))',
               }}
             >
-              {filteredProducts.map(getProducts => (
+              {filteredProducts.map(product => (
                 <div
-                  key={getProducts.id}
+                  key={product.id}
                   style={{
                     background: '#fff',
                     borderRadius: 20,
@@ -337,7 +337,7 @@ export default function CertificatesPage() {
                           marginBottom: 6,
                         }}
                       >
-                        {getProducts.category}
+                        {product.category}
                       </div>
 
                       <h3
@@ -347,7 +347,7 @@ export default function CertificatesPage() {
                           fontWeight: 700,
                         }}
                       >
-                        {getProducts.name}
+                        {product.name}
                       </h3>
                     </div>
 
@@ -382,7 +382,7 @@ export default function CertificatesPage() {
                           marginTop: 4,
                         }}
                       >
-                        {getProducts.lot}
+                        {product.lot}
                       </div>
                     </div>
 
@@ -404,7 +404,7 @@ export default function CertificatesPage() {
                           marginTop: 4,
                         }}
                       >
-                        {getProducts.purity}%
+                        {product.purity}%
                       </div>
                     </div>
 
@@ -424,7 +424,7 @@ export default function CertificatesPage() {
                           marginTop: 4,
                         }}
                       >
-                        {getProducts.testDate}
+                        {product.testDate}
                       </div>
                     </div>
 
@@ -449,6 +449,8 @@ export default function CertificatesPage() {
                     </div>
                   </div>
 
+                  {/* View-only — was a "Download COA PDF" button. COAs are
+                      viewable in-browser only, no download, per policy. */}
                   <button
                     style={{
                       width: '100%',
@@ -464,8 +466,8 @@ export default function CertificatesPage() {
                       fontWeight: 600,
                     }}
                   >
-                    <Download size={15} />
-                    Download COA PDF
+                    <Eye size={15} />
+                    View COA
                     <ArrowRight size={14} />
                   </button>
                 </div>

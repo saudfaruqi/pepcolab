@@ -9,20 +9,37 @@ import ProductCard from '@/components/ProductCard'
 import { useCountry } from '@/lib/countryContext'
 
 // ── These are the only valid category tags we recognise ──────────────────
-// Add to this list as you create new categories in Shopify
+// Matches the 7 tags actually used in the Shopify catalogue (verified
+// against the product export: metabolic, hormonal, cognitive, recovery,
+// anti-ageing, accessories, immune). Previously included "skin" and "neuro",
+// neither of which is a real product tag — anyone landing on those via a
+// stale link (e.g. the old homepage category grid) always hit "No compounds
+// found" because zero products could ever match. Add to this list only when
+// a new tag is actually created in Shopify.
 const KNOWN_CATEGORIES: { slug: string; label: string }[] = [
-  { slug: 'recovery',    label: 'Recovery'    },
-  { slug: 'metabolic',   label: 'Metabolic'   },
-  { slug: 'cognitive',   label: 'Cognitive'   },
-  { slug: 'hormonal',    label: 'Hormonal'    },
-  { slug: 'anti-ageing', label: 'Anti-Ageing' },
-  { slug: 'skin',        label: 'Skin & Repair'},
-  { slug: 'neuro',       label: 'Neuro'       },
-  { slug: 'accessories',  label: 'Accessories'  },
-  { slug: 'immune',      label: 'Immune'      },
+  { slug: 'metabolic',    label: 'Metabolic'   },
+  { slug: 'hormonal',     label: 'Hormonal'    },
+  { slug: 'cognitive',    label: 'Cognitive'   },
+  { slug: 'recovery',     label: 'Recovery'    },
+  { slug: 'anti-ageing',  label: 'Anti-Ageing' },
+  { slug: 'accessories',  label: 'Accessories' },
+  { slug: 'immune',       label: 'Immune'      },
 ]
 
 const KNOWN_SLUGS = new Set(KNOWN_CATEGORIES.map(c => c.slug))
+
+// ── Format (Pen / Vial / Powder / Supply) — a second, independent filter
+// axis from the body-system categories above. This comes from Shopify's
+// productType field (see shopify.ts normaliseProduct → formatSlug), which
+// wasn't being fetched at all before, so there was no way to filter or even
+// see "vials" vs "pens" anywhere on the product page.
+const KNOWN_FORMATS: { slug: string; label: string }[] = [
+  { slug: 'vial',   label: 'Vials'    },
+  { slug: 'pen',    label: 'Pens'     },
+  { slug: 'powder', label: 'Powder'   },
+  { slug: 'supply', label: 'Supplies' },
+]
+const KNOWN_FORMAT_SLUGS = new Set(KNOWN_FORMATS.map(f => f.slug))
 
 interface Props { showAll?: boolean }
 
@@ -34,6 +51,7 @@ export default function ProductsSection({ showAll = false }: Props) {
   const [search,      setSearch]      = useState('')
   const [sort,        setSort]        = useState('default')
   const [category,    setCategory]    = useState('all')
+  const [format,      setFormat]      = useState('all')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [allProducts, setAllProducts] = useState<any[]>([])
   const [loading,     setLoading]     = useState(true)
@@ -56,11 +74,26 @@ export default function ProductsSection({ showAll = false }: Props) {
   useEffect(() => {
     if (!showAll) return
     const catParam = searchParams.get('cat')
+    const formatParam = searchParams.get('format')
     if (catParam && KNOWN_SLUGS.has(catParam)) {
       setCategory(catParam)
       setFiltersOpen(true) // surface the pill row so the active filter is visible
     } else {
       setCategory('all')
+    }
+    if (formatParam && KNOWN_FORMAT_SLUGS.has(formatParam)) {
+      setFormat(formatParam)
+      setFiltersOpen(true)
+    } else {
+      setFormat('all')
+    }
+    if ((catParam && KNOWN_SLUGS.has(catParam)) || (formatParam && KNOWN_FORMAT_SLUGS.has(formatParam))) {
+      // Belt-and-braces alongside the #catalogue anchor on the nav links:
+      // covers client-side navigations (e.g. Next's router) where the
+      // browser doesn't re-run its native hash scroll, so a category/format
+      // pick from the nav always lands the visitor on the grid instead of
+      // the top of the page.
+      headRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, showAll])
@@ -72,6 +105,16 @@ export default function ProductsSection({ showAll = false }: Props) {
     const params = new URLSearchParams(searchParams.toString())
     if (slug === 'all') params.delete('cat')
     else params.set('cat', slug)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
+
+  // Same pattern as selectCategory, for the format pill row.
+  function selectFormat(slug: string) {
+    setFormat(slug)
+    const params = new URLSearchParams(searchParams.toString())
+    if (slug === 'all') params.delete('format')
+    else params.set('format', slug)
     const qs = params.toString()
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }

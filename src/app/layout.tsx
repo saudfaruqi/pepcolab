@@ -6,6 +6,7 @@ import './globals.css'
 import { CartProvider } from '@/lib/cartContext'
 import CartDrawer from '@/components/CartDrawer'
 import { CountryProvider } from '@/lib/countryContext'
+import AgeLocationGate from '@/components/AgeLocationGate'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -255,6 +256,12 @@ export default function RootLayout({
         />
 
         <CountryProvider>
+          {/* Gate lives inside CountryProvider so a UAE/UK selection here
+              can call useCountry().setCountry() directly — one source of
+              truth for market instead of a second, separate gate-only
+              state. It renders as a fixed full-screen overlay, so children
+              still mount normally underneath (no SSR/content flash issues). */}
+          <AgeLocationGate />
           <CartProvider>
             {children}
             <CartDrawer />

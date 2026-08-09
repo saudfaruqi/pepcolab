@@ -1,6 +1,5 @@
 'use client'
-'use client'
-import { Download, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Eye, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react'
 
 const COA_ROWS = [
   { label: 'Lot number', value: 'PEP-2412-07', type: 'badge' },
@@ -57,11 +56,11 @@ export default function COASection() {
                 Search COA Library
               </a>
               <a
-                href="/certificates/download"
+                href="/certificates"
                 className="flex items-center gap-2 text-[13px] text-gray-400 px-5 py-3 rounded-[8px] border border-gray-800 hover:border-gray-600 hover:text-white transition-colors btn-press"
               >
-                <Download size={14} />
-                Download Lab Files
+                <Eye size={14} />
+                View Lab Files
               </a>
             </div>
 
@@ -122,19 +121,20 @@ export default function COASection() {
                 ))}
               </div>
 
-              {/* Downloads */}
+              {/* View-only documents — no download, per policy: COAs are
+                  viewable in-browser only. */}
               <div className="px-5 pt-3 pb-5">
                 <div className="bg-[#111] rounded-[10px] p-4 border border-gray-800">
                   <div className="text-[10px] tracking-[0.8px] uppercase text-gray-600 mb-3 font-medium">
-                    Download documents
+                    View documents
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {['Full COA PDF', 'HPLC Trace', 'MS Report', 'Endotoxin'].map(doc => (
+                    {['Full COA', 'HPLC Trace', 'MS Report', 'Endotoxin'].map(doc => (
                       <button
                         key={doc}
                         className="flex items-center gap-1 text-[11px] text-blue-400 bg-blue-950/50 border border-blue-900/50 px-2.5 py-1.5 rounded-[6px] hover:bg-blue-900/50 transition-colors"
                       >
-                        <Download size={10} />
+                        <Eye size={10} />
                         {doc}
                       </button>
                     ))}

@@ -2,25 +2,33 @@
 import { useRef, useEffect } from 'react'
 import { ArrowRight } from 'lucide-react'
 
+// Matches the 7 tags that actually exist in the Shopify catalogue. The
+// previous list had "Skin & Repair" (slug "skin"), which is not a real
+// product tag — that card always led to an empty "No compounds found"
+// page. It also had no card at all for "accessories" or "immune", which
+// together account for 5 real products with no path in from the homepage.
+// Counts below are current as of the last product export (Aug 2026) —
+// these are static display counts, not live-fetched, so update them if the
+// catalogue changes materially.
 const CATEGORIES = [
   {
     label: 'Metabolic & Weight',
     slug: 'metabolic',
-    count: 8,
+    count: 9,
     emoji: '⚡',
     color: { bg: '#EBF2FF', accent: '#1A56DB', border: '#BFCFF8' },
     img: 'https://images.unsplash.com/photo-1576671414121-aa2d60f06f93?w=300&q=80&auto=format&fit=crop',
   },
   {
-    label: 'Recovery & Healing',
-    slug: 'recovery',
+    label: 'Hormonal & Peptide',
+    slug: 'hormonal',
     count: 7,
-    emoji: '💊',
-    color: { bg: '#E6F5EE', accent: '#0A7B45', border: '#A7D9BC' },
-    img: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=300&q=80&auto=format&fit=crop',
+    emoji: '🔬',
+    color: { bg: '#FFF3E8', accent: '#C05621', border: '#F6C69B' },
+    img: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=300&q=80&auto=format&fit=crop',
   },
   {
-    label: 'Cognitive & Neuro',
+    label: 'Cognitive',
     slug: 'cognitive',
     count: 6,
     emoji: '🧠',
@@ -28,12 +36,12 @@ const CATEGORIES = [
     img: 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=300&q=80&auto=format&fit=crop',
   },
   {
-    label: 'Hormonal & Peptide',
-    slug: 'hormonal',
-    count: 9,
-    emoji: '🔬',
-    color: { bg: '#FFF3E8', accent: '#C05621', border: '#F6C69B' },
-    img: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=300&q=80&auto=format&fit=crop',
+    label: 'Recovery & Healing',
+    slug: 'recovery',
+    count: 6,
+    emoji: '💊',
+    color: { bg: '#E6F5EE', accent: '#0A7B45', border: '#A7D9BC' },
+    img: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=300&q=80&auto=format&fit=crop',
   },
   {
     label: 'Anti-Ageing',
@@ -44,12 +52,20 @@ const CATEGORIES = [
     img: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=300&q=80&auto=format&fit=crop',
   },
   {
-    label: 'Skin & Repair',
-    slug: 'skin',
-    count: 5,
-    emoji: '🌿',
+    label: 'Accessories',
+    slug: 'accessories',
+    count: 3,
+    emoji: '🧪',
     color: { bg: '#F0FDF4', accent: '#15803D', border: '#86EFAC' },
     img: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=300&q=80&auto=format&fit=crop',
+  },
+  {
+    label: 'Immune',
+    slug: 'immune',
+    count: 2,
+    emoji: '🛡️',
+    color: { bg: '#FFFBEB', accent: '#B45309', border: '#FDE68A' },
+    img: 'https://images.unsplash.com/photo-1584362917165-526a968579e8?w=300&q=80&auto=format&fit=crop',
   },
 ]
 
@@ -88,11 +104,11 @@ export default function CategoriesSection() {
           </a>
         </div>
 
-        <div ref={sectionRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div ref={sectionRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           {CATEGORIES.map((cat) => (
             <a
               key={cat.slug}
-              href={`/products?cat=${cat.slug}`}
+              href={`/products?cat=${cat.slug}#catalogue`}
               className="group relative flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-[0_8px_28px_rgba(26,86,219,0.12)]"
               style={{
                 background: cat.color.bg,

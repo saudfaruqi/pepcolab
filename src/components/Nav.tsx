@@ -150,13 +150,19 @@ export default function Nav() {
     'anti-ageing': 'Anti-Ageing', immune: 'Immune', accessories: 'Accessories',
   }
 
+  // Every href into the catalogue carries #catalogue so the browser scrolls
+  // straight to the product grid on landing — previously these linked to
+  // bare "/products?cat=slug", which dropped the visitor at the top of the
+  // page (above the hero) and left them to scroll down manually to see any
+  // filtered results. The grid section in app/products/page.tsx already has
+  // id="catalogue"; this just points at it.
   const NAV_LINKS = [
     {
-      label: 'Products', href: '/products', hasDrop: true,
+      label: 'Products', href: '/products#catalogue', hasDrop: true,
       items: [
-        { label: 'All Compounds',   href: '/products',  sub: products.length > 0 ? `${products.length} compounds` : 'Browse catalogue' },
+        { label: 'All Compounds',   href: '/products#catalogue',  sub: products.length > 0 ? `${products.length} compounds` : 'Browse catalogue' },
         ...Object.entries(CATEGORY_LABELS).map(([slug, label]) => ({
-          label, href: `/products?cat=${slug}`,
+          label, href: `/products?cat=${slug}#catalogue`,
           sub: categoryCounts[slug] != null ? `${categoryCounts[slug]} product${categoryCounts[slug] !== 1 ? 's' : ''}` : undefined,
         })),
         { label: 'Bundles & Stacks', href: '/bundles', sub: 'Save 10% on combinations' },
