@@ -250,7 +250,6 @@ export default function RootLayout({
             actually used. */}
         <Script
           src="https://cdn.jsdelivr.net/npm/@strabl-engineering/checkout-sdk@0.0.0/dist/index.global.js"
-          strategy="lazyOnload"
         />
 
         <CountryProvider>
