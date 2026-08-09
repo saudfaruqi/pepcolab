@@ -1,7 +1,7 @@
 // src/components/ProductActions.tsx
 'use client'
 import { useState, useMemo, useEffect } from 'react'
-import { ShoppingCart, Download, CheckCircle } from 'lucide-react'
+import { ShoppingCart, Eye, CheckCircle } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { getProductByHandle } from '@/lib/shopify'
@@ -304,8 +304,8 @@ export default function ProductActions({ product: initialProduct }: Props) {
             background: '#fff', transition: 'all .2s',
           }}
         >
-          <Download size={15} />
-          COA
+          <Eye size={15} />
+          View COA
         </a>
       </div>
 

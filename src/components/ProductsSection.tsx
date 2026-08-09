@@ -147,6 +147,14 @@ export default function ProductsSection({ showAll = false }: Props) {
     return tags.find(t => KNOWN_SLUGS.has(t)) ?? ''
   }
 
+  // ── Find a product's format (Pen / Vial / Powder / Supply) ───────────────
+  // Comes from Shopify's productType field via normaliseProduct's
+  // formatSlug (see shopify.ts) — a separate axis from the category tags.
+  function getProductFormat(p: any): string {
+    const slug: string = (p.formatSlug ?? '').toLowerCase()
+    return KNOWN_FORMAT_SLUGS.has(slug) ? slug : ''
+  }
+
   // ── Only show categories that have at least 1 product ───────────────────
   const activeCategories = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -159,6 +167,21 @@ export default function ProductsSection({ showAll = false }: Props) {
       ...KNOWN_CATEGORIES
         .filter(c => counts[c.slug])
         .map(c => ({ ...c, count: counts[c.slug] })),
+    ]
+  }, [allProducts])
+
+  // ── Only show formats that have at least 1 product ───────────────────────
+  const activeFormats = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const p of allProducts) {
+      const fmt = getProductFormat(p)
+      if (fmt) counts[fmt] = (counts[fmt] ?? 0) + 1
+    }
+    return [
+      { slug: 'all', label: 'All', count: allProducts.length },
+      ...KNOWN_FORMATS
+        .filter(f => counts[f.slug])
+        .map(f => ({ ...f, count: counts[f.slug] })),
     ]
   }, [allProducts])
 
@@ -175,6 +198,10 @@ export default function ProductsSection({ showAll = false }: Props) {
 
     if (category !== 'all') {
       results = results.filter(p => getProductCategory(p) === category)
+    }
+
+    if (format !== 'all') {
+      results = results.filter(p => getProductFormat(p) === format)
     }
 
     if (search.trim()) {
@@ -196,7 +223,7 @@ export default function ProductsSection({ showAll = false }: Props) {
     }
 
     return results
-  }, [search, sort, category, showAll, allProducts])
+  }, [search, sort, category, format, showAll, allProducts])
 
   return (
     <section style={{ padding: showAll ? '0 0 100px' : '72px 0' }}>
@@ -276,31 +303,66 @@ export default function ProductsSection({ showAll = false }: Props) {
                 }}
               >
                 {filtersOpen ? <X size={13} /> : <SlidersHorizontal size={13} />}
-                Category
+                Filters
               </button>
             </div>
 
-            {/* Category pills — only shown when filter open */}
+            {/* Category + format pills — only shown when filter open */}
             {filtersOpen && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 18, padding: '14px 16px', background: '#f9f9f7', borderRadius: 12, border: '1px solid rgba(0,0,0,.07)' }}>
-                {activeCategories.map(cat => (
-                  <button
-                    key={cat.slug}
-                    onClick={() => selectCategory(cat.slug)}
-                    style={{
-                      borderRadius: 8, padding: '6px 14px',
-                      border: category === cat.slug ? '1px solid #111' : '1px solid rgba(0,0,0,.1)',
-                      background: category === cat.slug ? '#111' : '#fff',
-                      color: category === cat.slug ? '#fff' : '#374151',
-                      fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-                      transition: 'all .15s',
-                      display: 'flex', alignItems: 'center', gap: 6,
-                    }}
-                  >
-                    {cat.label}
-                    <span style={{ opacity: .5, fontSize: 11 }}>{cat.count}</span>
-                  </button>
-                ))}
+              <div style={{ marginBottom: 18, padding: '14px 16px', background: '#f9f9f7', borderRadius: 12, border: '1px solid rgba(0,0,0,.07)', display: 'grid', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(13,13,13,.4)', marginBottom: 8 }}>
+                    Category
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                    {activeCategories.map(cat => (
+                      <button
+                        key={cat.slug}
+                        onClick={() => selectCategory(cat.slug)}
+                        style={{
+                          borderRadius: 8, padding: '6px 14px',
+                          border: category === cat.slug ? '1px solid #111' : '1px solid rgba(0,0,0,.1)',
+                          background: category === cat.slug ? '#111' : '#fff',
+                          color: category === cat.slug ? '#fff' : '#374151',
+                          fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
+                          transition: 'all .15s',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                        }}
+                      >
+                        {cat.label}
+                        <span style={{ opacity: .5, fontSize: 11 }}>{cat.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {activeFormats.length > 1 && (
+                  <div>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(13,13,13,.4)', marginBottom: 8 }}>
+                      Format
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                      {activeFormats.map(fmt => (
+                        <button
+                          key={fmt.slug}
+                          onClick={() => selectFormat(fmt.slug)}
+                          style={{
+                            borderRadius: 8, padding: '6px 14px',
+                            border: format === fmt.slug ? '1px solid #111' : '1px solid rgba(0,0,0,.1)',
+                            background: format === fmt.slug ? '#111' : '#fff',
+                            color: format === fmt.slug ? '#fff' : '#374151',
+                            fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
+                            transition: 'all .15s',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                          }}
+                        >
+                          {fmt.label}
+                          <span style={{ opacity: .5, fontSize: 11 }}>{fmt.count}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -315,6 +377,15 @@ export default function ProductsSection({ showAll = false }: Props) {
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: '#0d0d0d', background: '#f0f0ee', border: 'none', borderRadius: 6, padding: '3px 9px', cursor: 'pointer' }}
                 >
                   {activeCategories.find(c => c.slug === category)?.label}
+                  <X size={10} />
+                </button>
+              )}
+              {format !== 'all' && (
+                <button
+                  onClick={() => selectFormat('all')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: '#0d0d0d', background: '#f0f0ee', border: 'none', borderRadius: 6, padding: '3px 9px', cursor: 'pointer' }}
+                >
+                  {activeFormats.find(f => f.slug === format)?.label}
                   <X size={10} />
                 </button>
               )}
@@ -344,7 +415,7 @@ export default function ProductsSection({ showAll = false }: Props) {
               <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, letterSpacing: '-.02em' }}>No compounds found</h3>
               <p style={{ color: 'rgba(13,13,13,.5)', fontSize: 14, marginBottom: 24 }}>Try adjusting your search or clearing filters.</p>
               <button
-                onClick={() => { setSearch(''); setSort('default'); selectCategory('all') }}
+                onClick={() => { setSearch(''); setSort('default'); selectCategory('all'); selectFormat('all') }}
                 style={{ border: 'none', borderRadius: 8, background: '#0d0d0d', color: '#fff', padding: '10px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
               >
                 Clear all filters
