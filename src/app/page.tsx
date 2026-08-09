@@ -8,6 +8,7 @@ import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { CATEGORIES as REAL_CATEGORIES, BUNDLES as CURATED_BUNDLES } from "@/app/data";
 
 import { useCountry } from '@/lib/countryContext'
 
@@ -72,12 +73,6 @@ const TRUST_ITEMS = [
   "99%+ Purity Guaranteed", "Free Tracked Shipping Over AED80",
 ];
 
-const BUNDLE_CONFIGS = [
-  { name: "Recovery Stack",      desc: "A widely studied regeneration-focused combination. Each compound independently tested with published COA.",          indices: [0, 1] },
-  { name: "Skin Research Stack", desc: "Compounds frequently selected for skin repair and metabolic research. Batch-verified, cold-chain dispatched.",        indices: [1, 2] },
-  { name: "Performance Stack",   desc: "Nootropic compounds studied for cognitive and neurological research. Full traceability on every order.",              indices: [0, 2] },
-];
-
 // FIX #1: The previous list attached specific named researchers to specific real
 // universities (UCL, Edinburgh, Oxford) as "Verified Purchase" testimonials.
 // That's a fabricated-credential problem, not a copy problem — it borrows the
@@ -94,14 +89,24 @@ const REVIEWS = [
   { author: "Tom H.",    role: "Exercise Physiologist",      initials: "TH", text: "Ordered on Friday, arrived Monday in perfect condition. The QR-code on the vial linking directly to the COA is a brilliant touch.",                  sub: "Verified · TB-500 10mg"  },
 ];
 
-const AREAS = [
-  { label: "Tissue Repair",      sub: "BPC-157, TB-500",         from: "#000", to: "#111" },
-  { label: "Metabolic Health",   sub: "GLP-1, Semaglutide",      from: "#000", to: "#111" },
-  { label: "Skin & Collagen",    sub: "GHK-Cu, Epithalon",       from: "#000", to: "#111" },
-  { label: "Cognitive Support",  sub: "Selank, Semax",           from: "#000", to: "#111" },
-  { label: "Longevity",          sub: "Epithalon, Thymosin",     from: "#000", to: "#111" },
-  { label: "Pain & Inflammation",sub: "BPC-157, Thymosin β4",   from: "#000", to: "#111" },
-];
+// Accent colours keyed to the real Shopify category slugs (metabolic,
+// hormonal, cognitive, recovery, anti-ageing, accessories, immune) — same
+// palette CategoriesSection.tsx uses, so a category reads the same way
+// whether you land on it from here or from /products. The previous AREAS
+// array here was a fourth, independently-hardcoded category list (data.ts,
+// CategoriesSection.tsx, and ProductsSection.tsx's KNOWN_CATEGORIES were
+// the other three) with invented labels ("Tissue Repair", "Skin &
+// Collagen"...) that didn't match any real product tag, and the cards
+// weren't even links — clicking one did nothing.
+const AREA_ACCENTS: Record<string, string> = {
+  metabolic:     "#3B82F6",
+  hormonal:      "#F59E0B",
+  cognitive:     "#A78BFA",
+  recovery:      "#34D399",
+  "anti-ageing": "#F472B6",
+  accessories:   "#4ADE80",
+  immune:        "#FBBF24",
+}
 
 // ─── Vial SVG ─────────────────────────────────────────────────────────────────
 
@@ -227,18 +232,49 @@ export default function PepcoLabPage() {
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
   }, [addItem]);
 
-  // FIX #6: round bundle pricing to 2 decimals so `total * 0.9` can't produce
-  // floating-point cents (e.g. 89.99999999999999) depending on formatPrice's
-  // own rounding behaviour.
+  // FIX #6 (kept): round bundle pricing to 2 decimals so a discount
+  // multiplication can't produce floating-point cents.
+  //
+  // Previously this built "bundles" from raw array position — products[0]+
+  // products[1] for "Recovery Stack", products[1]+products[2] for "Skin
+  // Research Stack", etc. — against whatever order Shopify happened to
+  // return that request. The bundle names/descriptions were specific
+  // ("Recovery Stack: BPC-157 + GHK-Cu") but the products actually bundled
+  // were arbitrary and could silently change on every refetch. Now matches
+  // the same curated, handle-based BUNDLES config data.ts and
+  // BundlesSection.tsx use, so /bundles and the homepage always describe
+  // the same stacks. Pricing is derived from each matched product's live,
+  // country-correct price (see BundlesSection.tsx for the same pattern),
+  // preserving the discount depth configured in data.ts rather than a
+  // frozen AED-only number.
   const BUNDLES = useMemo(() => {
-    if (products.length < 3) return [];
-    return BUNDLE_CONFIGS.map((config, i) => {
-      const bp = config.indices.map(idx => products[idx]).filter(Boolean)
-        .map(p => ({ ...p, from: p.color?.vialFrom ?? "#3b82f6", to: p.color?.vialTo ?? "#8b5cf6" }));
-      const total = bp.reduce((s, p) => s + p.price, 0);
-      const discounted = Math.round(total * 0.9 * 100) / 100;
-      return { id: i + 1, name: config.name, desc: config.desc, price: discounted, originalPrice: Math.round(total * 100) / 100, products: bp };
-    });
+    return CURATED_BUNDLES.map((bundle) => {
+      const bp = bundle.products
+        .map((slug) => products.find(p => p.slug === slug))
+        .filter((p): p is NormalisedProduct => Boolean(p))
+        .map(p => ({ ...p, from: p.color?.vialFrom ?? "#3b82f6", to: p.color?.vialTo ?? "#8b5cf6" }))
+
+      if (bp.length === 0) return null
+
+      const staticTotal = bundle.price + bundle.save
+      const discountRatio = staticTotal > 0 ? bundle.save / staticTotal : 0
+      const liveTotal = bp.length === bundle.products.length
+        ? bp.reduce((s, p) => s + p.price, 0)
+        : null
+      const discounted = liveTotal != null
+        ? Math.round(liveTotal * (1 - discountRatio) * 100) / 100
+        : bundle.price
+      const total = liveTotal ?? staticTotal
+
+      return {
+        id: bundle.id,
+        name: bundle.name,
+        desc: bundle.desc,
+        price: discounted,
+        originalPrice: Math.round(total * 100) / 100,
+        products: bp,
+      }
+    }).filter((b): b is NonNullable<typeof b> => b !== null)
   }, [products]);
 
   const addBundleToCart = useCallback((bundle: typeof BUNDLES[0]) => {
@@ -363,7 +399,7 @@ export default function PepcoLabPage() {
       <HeroCinematic />
 
       {/* ── Products ── */}
-      <section style={{ background: "#fff", padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
+      <section id="catalogue" style={{ background: "#fff", padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 clamp(16px,1vw,32px)" }}>
           <FadeUp style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 16 }}>
             <div>
@@ -395,11 +431,11 @@ export default function PepcoLabPage() {
 
           {loadError ? (
             <div style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>Stacks are unavailable right now — reload the catalogue above to try again.</div>
-          ) : products.length < 3 ? (
+          ) : products.length === 0 ? (
             <div className="stacks-grid">
               {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:28, height:420, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
             </div>
-          ) : (
+          ) : BUNDLES.length === 0 ? null : (
             <div className="stacks-grid">
               {BUNDLES.map((b, bi) => (
                 <FadeUp key={b.id} delay={bi * 0.1}>
@@ -662,23 +698,33 @@ export default function PepcoLabPage() {
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.35)", marginBottom:16 }}>Research Categories</div>
               <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#fff" }}>Explore research<br />focus areas.</h2>
             </div>
-            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{AREAS.length} Categories</span>
+            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{REAL_CATEGORIES.filter(c => c.slug !== "all").length} Categories</span>
           </FadeUp>
 
           <div className="areas-grid">
-            {AREAS.map((a, i) => (
-              <FadeUp key={a.label} delay={i * 0.06}>
-                <div className="area-card" style={{ background:`linear-gradient(145deg,${a.from},${a.to})`, borderRadius:24, padding:"36px 28px 32px", overflow:"hidden", position:"relative", border:"1px solid rgba(255,255,255,.06)" }}>
-                  <div style={{ position:"absolute", top:-30, right:-30, width:120, height:120, borderRadius:"50%", background:"rgba(255,255,255,.05)" }} />
-                  <div style={{ position:"absolute", bottom:-20, left:-20, width:80, height:80, borderRadius:"50%", background:"rgba(255,255,255,.04)" }} />
-                  <div style={{ position:"relative", zIndex:1 }}>
-                    <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(255,255,255,.4)", marginBottom:40 }}>Research Area</div>
-                    <h3 style={{ fontSize:isMobile?26:32, fontWeight:700, letterSpacing:"-.04em", color:"#fff", marginBottom:10, lineHeight:1 }}>{a.label}</h3>
-                    <p style={{ fontSize:13, color:"rgba(255,255,255,.55)", marginBottom:28 }}>{a.sub}</p>
-                  </div>
-                </div>
-              </FadeUp>
-            ))}
+            {REAL_CATEGORIES.filter(c => c.slug !== "all").map((c, i) => {
+              const accent = AREA_ACCENTS[c.slug] ?? "#fff"
+              return (
+                <FadeUp key={c.slug} delay={i * 0.06}>
+                  <Link
+                    href={`/products?cat=${c.slug}#catalogue`}
+                    className="area-card"
+                    style={{ display: "block", textDecoration: "none", background: "linear-gradient(145deg,#000,#111)", borderRadius: 24, padding: "36px 28px 32px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,.06)" }}
+                  >
+                    <div style={{ position:"absolute", top:-30, right:-30, width:120, height:120, borderRadius:"50%", background:`${accent}22` }} />
+                    <div style={{ position:"absolute", bottom:-20, left:-20, width:80, height:80, borderRadius:"50%", background:"rgba(255,255,255,.04)" }} />
+                    <div style={{ position:"relative", zIndex:1 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:40 }}>
+                        <span style={{ width:6, height:6, borderRadius:"50%", background:accent, flexShrink:0 }} />
+                        <span style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(255,255,255,.4)" }}>Research Area</span>
+                      </div>
+                      <h3 style={{ fontSize:isMobile?26:32, fontWeight:700, letterSpacing:"-.04em", color:"#fff", marginBottom:10, lineHeight:1 }}>{c.label}</h3>
+                      <p style={{ fontSize:13, color:"rgba(255,255,255,.55)", marginBottom:28 }}>{c.count} compound{c.count !== 1 ? "s" : ""}</p>
+                    </div>
+                  </Link>
+                </FadeUp>
+              )
+            })}
           </div>
         </div>
       </section>

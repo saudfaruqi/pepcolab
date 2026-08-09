@@ -140,7 +140,7 @@ export default function HeroCinematic() {
               style={{
                 color: 'rgba(255,255,255,.65)',
                 fontSize: 'clamp(12px,2vw,16px)',
-                lineHeight: 1.2,
+                lineHeight: 1.8,
                 maxWidth: 520,
                 marginBottom: 36,
               }}
@@ -314,10 +314,9 @@ export default function HeroCinematic() {
                 playsInline
                 // No poster meant this box painted solid black until the
                 // video buffered — worst case for LCP, and gave crawlers no
-                // image to associate with the hero at all. Swap this for a
-                // real still frame from the video once you have one
-                // exported; pepcoall.png is a placeholder so the attribute
-                // isn't empty in the meantime.
+                // image to associate with the hero at all. pepcovideo.jpg
+                // below is a placeholder still frame — swap it for a real
+                // exported still once you have one.
                 poster="/pepcovideo.jpg"
                 style={{
                   width: '100%',
