@@ -94,8 +94,8 @@ export const BUNDLES = [
     // real tested Thymosin Beta-4 batch (BT10, 99.26% purity, Red Cap lot).
     // Swap in the real Shopify handle once confirmed — using a placeholder
     // slug below.
-    desc: 'BPC-157 10mg + Thymosin Beta-4 10mg',
-    products: ['bpc-157-uae', 'thymosin-beta-4-uae'], // TODO: confirm real handle
+    desc: 'BPC-157 10mg + Thymosin Alpha 10mg',
+    products: ['bpc-157-uae', 'thymosin-alpha-1-uae'], // TODO: confirm real handle
     price: 89.99, save: 7.99,
     accent: '#0D7A45',
     bg: '#EDFAF3',
