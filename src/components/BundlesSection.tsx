@@ -6,15 +6,57 @@ import { BUNDLES } from '@/app/data'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/lib/cartContext'
+import Vial from '@/components/Vial'
 import type { Product } from '@/app/data'
 
 import { useCountry } from '@/lib/countryContext'
 
-const BUNDLE_IMGS: Record<string, string> = {
-  'b1': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80&auto=format&fit=crop',
-  'b2': 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80&auto=format&fit=crop',
-  'b3': 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=600&q=80&auto=format&fit=crop',
-  'b4': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&q=80&auto=format&fit=crop',
+// Renders the actual products in a bundle side-by-side (real photos, same
+// as everywhere else on the site) instead of a generic stock photo that
+// had nothing to do with what's actually in the stack. Falls back to the
+// same Vial glyph ProductCard/ProductVariantView use when a product has no
+// photo yet, tinted with the bundle's own accent colour from data.ts.
+function BundleImageCollage({
+  bundle,
+  prods,
+  height,
+}: {
+  bundle: typeof BUNDLES[number]
+  prods: Product[]
+  height: number
+}) {
+  const count = Math.max(bundle.products.length, 1)
+  const slots: (Product | undefined)[] =
+    prods.length > 0 ? prods.slice(0, 4) : new Array(Math.min(count, 4)).fill(undefined)
+
+  return (
+    <div style={{ height, display: 'flex', background: bundle.bg }}>
+      {slots.map((p, i) => (
+        <div
+          key={p?.slug ?? i}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 14,
+            borderRight: i < slots.length - 1 ? '1px solid rgba(13,13,13,.06)' : 'none',
+            minWidth: 0,
+          }}
+        >
+          {p?.image ? (
+            <img
+              src={p.image}
+              alt={p.name}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          ) : (
+            <Vial mg={p?.mg ?? ''} size="lg" fromColor={bundle.accent} toColor={bundle.accent} />
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function BundlesSection() {
@@ -185,21 +227,18 @@ export default function BundlesSection() {
                 <button
                   type="button"
                   onClick={() => setOpenBundleId(bundle.id)}
-                  className="h-[160px] relative overflow-hidden text-left cursor-pointer"
-                  style={{ border: 'none', padding: 0, background: 'none' }}
+                  className="relative overflow-hidden text-left cursor-pointer group/img"
+                  style={{ border: 'none', padding: 0, background: 'none', width: '100%' }}
                 >
-                  <img
-                    src={BUNDLE_IMGS[bundle.id]}
-                    alt={bundle.name}
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="transition-transform duration-700 group-hover:scale-105">
+                    <BundleImageCollage bundle={bundle} prods={prods} height={160} />
+                  </div>
                   <div className="absolute top-3 right-3 text-[10px] font-semibold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
                     Save {formatPrice(displaySave, currencyCode)}
                   </div>
                   <div className="absolute bottom-3 left-3 flex gap-1.5">
                     {prods.map((_, i) => (
-                      <div key={i} className="text-[10px] font-mono text-white/70 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/20">
+                      <div key={i} className="text-[10px] font-mono text-white/90 bg-black/45 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/20">
                         {prods[i]?.mg}
                       </div>
                     ))}
@@ -295,11 +334,7 @@ export default function BundlesSection() {
             </button>
 
             <div style={{ height: 180, position: 'relative', overflow: 'hidden', borderRadius: '20px 20px 0 0' }}>
-              <img
-                src={BUNDLE_IMGS[openBundle.id]}
-                alt={openBundle.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+              <BundleImageCollage bundle={openBundle} prods={openProds} height={180} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.55), transparent)' }} />
               <div style={{ position: 'absolute', bottom: 14, left: 18, color: '#fff' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', opacity: .8 }}>
