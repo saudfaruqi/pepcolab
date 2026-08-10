@@ -2,29 +2,46 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react'
+import { COA_BATCHES } from '@/app/coaData'
 
-const COA_ROWS = [
-  { label: 'Lot number', value: 'PEP-2412-07', type: 'badge' },
-  { label: 'Peptide', value: 'GLP-1 (Tera) 5mg', type: 'normal' },
-  { label: 'Purity (HPLC)', value: '99.1%', type: 'good' },
-  { label: 'Mass spec', value: 'Confirmed ✓', type: 'good' },
-  { label: 'Endotoxin', value: '<1 EU/mg', type: 'good' },
-  { label: 'Moisture', value: '4.2%', type: 'normal' },
-  { label: 'Test date', value: 'April 2025', type: 'normal' },
-  { label: 'Testing lab', value: 'Eurofins UK (3rd party)', type: 'normal' },
-]
+// Was: a single hardcoded COA_ROWS array describing a "GLP-1 (Tera) 5mg"
+// product that doesn't exist in the catalogue, with an invented lot number
+// (PEP-2412-07) and invented stats (847 certs / 100% / 0 failed). Now
+// sourced from real Freedom Diagnostics COAs (see coaData.ts). Defaults
+// the terminal preview to Retatrutide 60mg — real, clean data, no
+// spreadsheet artifacts — rather than a fabricated product.
+const DEFAULT_BATCH =
+  COA_BATCHES.find((b) => b.accession === '2607130564') ?? COA_BATCHES[0]
 
 export default function COASection() {
   const router = useRouter()
   const [lotQuery, setLotQuery] = useState('')
+  const [notFound, setNotFound] = useState(false)
 
   // The input + "Verify" button previously had no state and no handler at
   // all — typing did nothing and clicking Verify did nothing. This is a
-  // teaser/marketing widget, not the real lookup, so it hands off to the
-  // full searchable library pre-filled with whatever was typed here.
+  // teaser/marketing widget, not the full lookup tool, so it checks the
+  // real batch list by product code or cap colour (the actual identifiers
+  // printed on your vials — "BC10", "Grey Cap" — not the PEP-XXXX-XX
+  // format the old placeholder implied) and hands off to the full
+  // searchable library, pre-filled, either way.
   function handleVerifySearch() {
     const q = lotQuery.trim()
-    router.push(q ? `/certificates?lot=${encodeURIComponent(q)}` : '/certificates')
+    if (!q) {
+      router.push('/certificates')
+      return
+    }
+    const match = COA_BATCHES.find(
+      (b) =>
+        b.code.toLowerCase().includes(q.toLowerCase()) ||
+        b.lot.toLowerCase().includes(q.toLowerCase())
+    )
+    if (!match) {
+      setNotFound(true)
+      return
+    }
+    setNotFound(false)
+    router.push(`/certificates?lot=${encodeURIComponent(match.code)}`)
   }
 
   return (
@@ -50,10 +67,10 @@ export default function COASection() {
               {[
                 'Full HPLC chromatogram',
                 'Mass spectrometry report',
-                'Endotoxin test results',
-                'Moisture content data',
-                'Storage conditions log',
-                'Chain of custody record',
+                'Identity confirmation (LC-MS)',
+                'Net content per vial',
+                'Independent 3rd-party lab',
+                'Full batch traceability',
               ].map(item => (
                 <div key={item} className="flex items-center gap-2 text-[13px] text-gray-400 font-light">
                   <CheckCircle2 size={13} className="text-blue-400 flex-shrink-0" />
@@ -78,10 +95,13 @@ export default function COASection() {
               </a>
             </div>
 
-            {/* Stat bar */}
+            {/* Stat bar — was invented (847 / 100% / 0). Now derived from
+                the real batch count, so it can never drift from what's
+                actually published. Update the "failed" count by hand if
+                that ever stops being zero — don't leave it defaulted. */}
             <div className="flex gap-8 mt-12 pt-10 border-t border-gray-800">
               {[
-                { num: '847', label: 'Certificates published' },
+                { num: String(COA_BATCHES.length), label: 'Certificates published' },
                 { num: '100%', label: 'Batches with public COA' },
                 { num: '0', label: 'Failed purity tests' },
               ].map(s => (
@@ -102,7 +122,9 @@ export default function COASection() {
                 <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                <span className="ml-3 text-[11px] text-gray-600 font-mono">coa-viewer · PEP-2412-07</span>
+                <span className="ml-3 text-[11px] text-gray-600 font-mono">
+                  coa-viewer · {DEFAULT_BATCH.code}
+                </span>
               </div>
 
               {/* Header */}
@@ -110,7 +132,9 @@ export default function COASection() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] tracking-[1px] uppercase text-gray-600 mb-1 font-mono">Certificate of Analysis</div>
-                    <div className="text-[15px] font-medium text-white">GLP-1 (Tera) 5mg</div>
+                    <div className="text-[15px] font-medium text-white">
+                      {DEFAULT_BATCH.product} · {DEFAULT_BATCH.lot}
+                    </div>
                   </div>
                   <span className="flex items-center gap-1.5 text-[11px] text-green-400 bg-green-950 px-2.5 py-1 rounded-full border border-green-900">
                     <CheckCircle2 size={11} />
@@ -121,7 +145,16 @@ export default function COASection() {
 
               {/* Data rows */}
               <div className="px-5 py-2">
-                {COA_ROWS.map((row) => (
+                {[
+                  { label: 'Product code',     value: DEFAULT_BATCH.code,           type: 'badge'  },
+                  { label: 'Compound',         value: DEFAULT_BATCH.product,        type: 'normal' },
+                  { label: 'Identity (LC-MS)', value: DEFAULT_BATCH.identity,       type: 'good'   },
+                  { label: 'Purity (HPLC-UV)', value: DEFAULT_BATCH.purityAvg,      type: 'good'   },
+                  { label: 'Net content avg',  value: DEFAULT_BATCH.netContentAvg,  type: 'normal' },
+                  { label: 'Received',         value: DEFAULT_BATCH.received,       type: 'normal' },
+                  { label: 'Reported',         value: DEFAULT_BATCH.reported,       type: 'normal' },
+                  { label: 'Testing lab',      value: 'Freedom Diagnostics (3rd party)', type: 'normal' },
+                ].map((row) => (
                   <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-gray-800/50 last:border-none">
                     <span className="text-[12px] text-gray-500 font-light">{row.label}</span>
                     <span className={`text-[12px] font-medium ${
@@ -143,10 +176,10 @@ export default function COASection() {
                     View documents
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {['Full COA', 'HPLC Trace', 'MS Report', 'Endotoxin'].map(doc => (
+                    {['Full COA', 'Chromatogram', 'Mass Confirmation'].map(doc => (
                       <button
                         key={doc}
-                        onClick={() => router.push(`/certificates?lot=${encodeURIComponent(COA_ROWS[0].value)}`)}
+                        onClick={() => router.push(`/certificates?lot=${encodeURIComponent(DEFAULT_BATCH.code)}`)}
                         className="flex items-center gap-1 text-[11px] text-blue-400 bg-blue-950/50 border border-blue-900/50 px-2.5 py-1.5 rounded-[6px] hover:bg-blue-900/50 transition-colors"
                       >
                         <Eye size={10} />
@@ -157,11 +190,12 @@ export default function COASection() {
                 </div>
               </div>
 
-              {/* Footer note */}
+              {/* Footer note — updated to name the real lab rather than
+                  the previous generic "Eurofins UK" placeholder. */}
               <div className="px-5 pb-4 flex items-start gap-2">
                 <AlertCircle size={11} className="text-gray-700 mt-0.5 flex-shrink-0" />
                 <p className="text-[10px] text-gray-700 leading-[1.6]">
-                  All testing conducted by Eurofins Scientific UK, an independent accredited laboratory. PepcoLab has no influence over test results.
+                  All testing conducted by Freedom Diagnostics, an independent third-party laboratory. Peptides tested are intended for research use only and are not approved for human or veterinary use, diagnostic, therapeutic, or clinical applications.
                 </p>
               </div>
             </div>
@@ -169,15 +203,20 @@ export default function COASection() {
             {/* Batch search */}
             <div className="mt-4 bg-[#0d0d0d] border border-gray-800 rounded-[12px] p-4 flex items-center gap-3">
               <div className="flex-1">
-                <div className="text-[10px] text-gray-600 mb-1 font-mono tracking-wide">SEARCH BY LOT NUMBER</div>
+                <div className="text-[10px] text-gray-600 mb-1 font-mono tracking-wide">SEARCH BY PRODUCT CODE OR LOT</div>
                 <input
                   type="text"
                   value={lotQuery}
-                  onChange={(e) => setLotQuery(e.target.value)}
+                  onChange={(e) => { setLotQuery(e.target.value); if (notFound) setNotFound(false) }}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleVerifySearch() }}
-                  placeholder="e.g. PEP-2412-07"
+                  placeholder="e.g. BC10 or Grey Cap"
                   className="w-full bg-transparent text-[13px] text-gray-300 placeholder:text-gray-700 font-mono focus:outline-none"
                 />
+                {notFound && (
+                  <div className="text-[11px] text-amber-400 mt-1.5">
+                    No local match — searching the full library instead.
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleVerifySearch}

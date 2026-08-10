@@ -89,8 +89,13 @@ export const CATEGORIES: Category[] = [
 export const BUNDLES = [
   {
     id: 'b1', name: 'Recovery Stack',
-    desc: 'BPC-157 10mg + GHK-Cu 100mg', // TODO: confirm — was "TB-500 10mg", not in catalogue
-    products: ['bpc-157-uae', 'ghk-cu-uae'], // TODO: replace ghk-cu-uae if TB-500 gets added later
+    // FIX: was "TB-500" — TB-500 is the common market name for Thymosin
+    // Beta-4 fragment, and the Freedom Diagnostics COA confirms you have a
+    // real tested Thymosin Beta-4 batch (BT10, 99.26% purity, Red Cap lot).
+    // Swap in the real Shopify handle once confirmed — using a placeholder
+    // slug below.
+    desc: 'BPC-157 10mg + Thymosin Beta-4 10mg',
+    products: ['bpc-157-uae', 'thymosin-beta-4-uae'], // TODO: confirm real handle
     price: 89.99, save: 7.99,
     accent: '#0D7A45',
     bg: '#EDFAF3',
@@ -113,8 +118,11 @@ export const BUNDLES = [
   },
   {
     id: 'b4', name: 'Metabolic Focus',
-    desc: 'AOD-9604 10mg + Ipamorelin 10mg', // TODO: confirm — was "GLP-1 Tera 5mg", not in catalogue
-    products: ['aod-9604-uae', 'ipamorelin-uae'],
+    // FIX: was "GLP-1 Tera" — near-certainly a mis-transcription of
+    // Tirzepatide ("Tera" ≈ "Tirze-"). The COA set confirms four real
+    // tested Tirzepatide lots (10/30/60mg + TR20), all reported as "GLP TZ".
+    desc: 'Tirzepatide 10mg + Ipamorelin 10mg',
+    products: ['tirzepatide-uae', 'ipamorelin-uae'], // TODO: confirm real handle
     price: 89.99, save: 6.99,
     accent: '#2055F0',
     bg: '#EEF2FD',
