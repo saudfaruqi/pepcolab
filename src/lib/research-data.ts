@@ -33,7 +33,7 @@ export const ARTICLES: Article[] = [
     title: 'BPC-157: Mechanisms of Action and Research Applications',
     date: 'May 2025',
     dateISO: '2025-05-15',
-    metaDescription: 'BPC-157's proposed mechanisms, musculoskeletal and GI research findings, and the key limitations of current preclinical evidence.',
+    metaDescription: 'BPC-157\'s proposed mechanisms, musculoskeletal and GI research findings, and the key limitations of current preclinical evidence.',
     tag: 'Recovery',
     readTime: '8 min',
     excerpt:
@@ -270,7 +270,7 @@ export const ARTICLES: Article[] = [
     title: 'Epithalon and Telomere Biology: A Research Overview',
     date: 'Mar 2025',
     dateISO: '2025-03-18',
-    metaDescription: 'Epithalon's proposed role in telomerase activity and pineal gland research, and what current preclinical evidence does and doesn't show.',
+    metaDescription: 'Epithalon\'s proposed role in telomerase activity and pineal gland research, and what current preclinical evidence does and doesn\'t show.',
     tag: 'Longevity',
     readTime: '10 min',
     excerpt:
@@ -328,7 +328,7 @@ export const ARTICLES: Article[] = [
     title: 'Semax and Cognitive Enhancement Research',
     date: 'Mar 2025',
     dateISO: '2025-03-05',
-    metaDescription: 'Semax's history as a nootropic research compound, proposed BDNF-related mechanisms, and the current state of cognitive research evidence.',
+    metaDescription: 'Semax\'s history as a nootropic research compound, proposed BDNF-related mechanisms, and the current state of cognitive research evidence.',
     tag: 'Cognitive',
     readTime: '9 min',
     excerpt:
