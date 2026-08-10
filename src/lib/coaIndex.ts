@@ -33,11 +33,11 @@ function mgIs(mg: string, n: number): boolean {
 // alongside "bpc" in the two entries right after it, so a plain BPC-157
 // product never matches the blend page and vice versa.
 const COA_INDEX: CoaPageEntry[] = [
-  { label: 'BPC-157 / Thymosin Beta-4 Blend 10mg', page: 1,
+  { label: 'BPC-157 / Thymosin Alpha-1 Blend 10mg', page: 1,
     test: (n) => has(n, 'bpc') && (has(n, 'thymosin') || has(n, 'tb-500') || has(n, 'tb500')) },
   { label: 'BPC-157 10mg', page: 2,
     test: (n, mg) => has(n, 'bpc') && !has(n, 'thymosin') && !has(n, 'tb-500') && !has(n, 'tb500') && mgIs(mg, 10) },
-  { label: 'Thymosin Beta-4 10mg', page: 3,
+  { label: 'Thymosin Alpha-1 10mg', page: 3,
     test: (n, mg) => (has(n, 'thymosin') || has(n, 'tb-500') || has(n, 'tb500')) && !has(n, 'bpc') && mgIs(mg, 10) },
   { label: 'GHK-Cu 100mg', page: 4,
     test: (n, mg) => has(n, 'ghk') && mgIs(mg, 100) },
