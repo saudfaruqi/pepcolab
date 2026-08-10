@@ -487,6 +487,11 @@ export function normaliseProduct(node: ShopifyProduct) {
     testDate: meta['test_date'] ?? undefined,
     sequence: meta['sequence'] ?? undefined,
     longDesc: meta['long_desc'] ?? undefined,
+    // Direct link to this batch's published Certificate of Analysis (PDF),
+    // set as a "pepcolab.coa_url" metafield per product in Shopify. Falls
+    // back to undefined when a product hasn't had one attached yet — the
+    // UI falls back to the searchable /certificates library in that case.
+    coaUrl: meta['coa_url'] ?? undefined,
 
     color: {
       bg: '#f0f4ff',
@@ -551,6 +556,7 @@ const PRODUCTS_QUERY = /* GraphQL */ `
             { namespace: "pepcolab", key: "purity" }
             { namespace: "pepcolab", key: "lot" }
             { namespace: "pepcolab", key: "test_date" }
+            { namespace: "pepcolab", key: "coa_url" }
           ]) { key value }
         }
       }
@@ -583,6 +589,7 @@ const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
         { namespace: "pepcolab", key: "test_date" }
         { namespace: "pepcolab", key: "sequence" }
         { namespace: "pepcolab", key: "long_desc" }
+        { namespace: "pepcolab", key: "coa_url" }
       ]) { key value }
     }
   }

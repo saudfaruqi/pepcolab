@@ -1,4 +1,6 @@
 'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Eye, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react'
 
 const COA_ROWS = [
@@ -13,6 +15,18 @@ const COA_ROWS = [
 ]
 
 export default function COASection() {
+  const router = useRouter()
+  const [lotQuery, setLotQuery] = useState('')
+
+  // The input + "Verify" button previously had no state and no handler at
+  // all — typing did nothing and clicking Verify did nothing. This is a
+  // teaser/marketing widget, not the real lookup, so it hands off to the
+  // full searchable library pre-filled with whatever was typed here.
+  function handleVerifySearch() {
+    const q = lotQuery.trim()
+    router.push(q ? `/certificates?lot=${encodeURIComponent(q)}` : '/certificates')
+  }
+
   return (
     <section className="bg-ink text-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-20">
@@ -132,6 +146,7 @@ export default function COASection() {
                     {['Full COA', 'HPLC Trace', 'MS Report', 'Endotoxin'].map(doc => (
                       <button
                         key={doc}
+                        onClick={() => router.push(`/certificates?lot=${encodeURIComponent(COA_ROWS[0].value)}`)}
                         className="flex items-center gap-1 text-[11px] text-blue-400 bg-blue-950/50 border border-blue-900/50 px-2.5 py-1.5 rounded-[6px] hover:bg-blue-900/50 transition-colors"
                       >
                         <Eye size={10} />
@@ -157,11 +172,17 @@ export default function COASection() {
                 <div className="text-[10px] text-gray-600 mb-1 font-mono tracking-wide">SEARCH BY LOT NUMBER</div>
                 <input
                   type="text"
+                  value={lotQuery}
+                  onChange={(e) => setLotQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleVerifySearch() }}
                   placeholder="e.g. PEP-2412-07"
                   className="w-full bg-transparent text-[13px] text-gray-300 placeholder:text-gray-700 font-mono focus:outline-none"
                 />
               </div>
-              <button className="text-[12px] font-medium bg-blue-600 text-white px-4 py-2 rounded-[7px] hover:bg-blue-700 transition-colors flex-shrink-0">
+              <button
+                onClick={handleVerifySearch}
+                className="text-[12px] font-medium bg-blue-600 text-white px-4 py-2 rounded-[7px] hover:bg-blue-700 transition-colors flex-shrink-0"
+              >
                 Verify
               </button>
             </div>

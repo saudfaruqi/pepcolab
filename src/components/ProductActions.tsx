@@ -1,7 +1,7 @@
 // src/components/ProductActions.tsx
 'use client'
 import { useState, useMemo, useEffect } from 'react'
-import { ShoppingCart, Download, CheckCircle } from 'lucide-react'
+import { ShoppingCart, Download, CheckCircle, ShieldCheck, FileText, ExternalLink } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { getProductByHandle } from '@/lib/shopify'
@@ -20,7 +20,10 @@ interface Props {
   onSelectVariant: (variantId: string) => void
 }
 
-const TABS = ['Overview', 'Technical Specs', 'Storage', 'Disclaimer']
+const TABS = ['Overview', 'Technical Specs', 'Storage', 'Certificate', 'Disclaimer']
+// Index of the Certificate tab within TABS, used by the "COA" quick-action
+// button above to jump straight there instead of navigating off the page.
+const CERT_TAB_INDEX = TABS.indexOf('Certificate')
 
 export default function ProductActions({ product: initialProduct, selectedVariantId, onSelectVariant }: Props) {
   const [added,     setAdded]     = useState(false)
@@ -204,7 +207,74 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           </div>
         )
 
-      case 3: // Disclaimer
+      case 3: { // Certificate — this batch's real purity/lot/test-date data
+                // (already fetched for Technical Specs above) plus a direct
+                // link to the published COA document. `p.coaUrl` comes from
+                // the "pepcolab.coa_url" Shopify metafield (see shopify.ts);
+                // if a batch hasn't had one attached yet, this falls back to
+                // the searchable /certificates library pre-filtered to this
+                // product's lot number instead of a dead end.
+        const coaHref = p.coaUrl || `/certificates?lot=${encodeURIComponent(p.lot ?? '')}`
+        const hasDirectCoa = Boolean(p.coaUrl)
+        return (
+          <div style={{ display: 'grid', gap: 14 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 14px', borderRadius: 10,
+              background: '#EAF3DE', border: '0.5px solid #D3E8BE',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ShieldCheck size={15} color="#3B6D11" />
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#3B6D11' }}>
+                  Independently verified — Pass
+                </span>
+              </div>
+              {p.purity && (
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#3B6D11' }}>{p.purity}% pure</span>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gap: 8 }}>
+              {[
+                { label: 'Lot number',   value: p.lot || 'N/A' },
+                { label: 'Test date',    value: p.testDate || 'N/A' },
+                { label: 'Testing lab',  value: 'Eurofins UK (3rd party)' },
+                { label: 'Document',     value: hasDirectCoa ? 'Full COA available' : 'Search certificate library' },
+              ].map(({ label, value }) => (
+                <div key={label} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '9px 12px', background: '#F8F9FC', borderRadius: 9,
+                  border: '0.5px solid #E5EAF5', gap: 12,
+                }}>
+                  <span style={{ fontSize: 12, color: '#AAB3C8', fontWeight: 600, flexShrink: 0 }}>{label}</span>
+                  <span style={{ fontSize: 12, color: '#0D0F14', fontWeight: 700, textAlign: 'right' }}>{value}</span>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href={coaHref}
+              target={hasDirectCoa ? '_blank' : undefined}
+              rel={hasDirectCoa ? 'noopener noreferrer' : undefined}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                fontSize: 13, fontWeight: 600, padding: '13px 18px', borderRadius: 12,
+                border: '1px solid #DDE3F0', color: '#0D0F14', textDecoration: 'none',
+                background: '#fff',
+              }}
+            >
+              {hasDirectCoa ? <FileText size={15} /> : <ExternalLink size={15} />}
+              {hasDirectCoa ? 'View full Certificate of Analysis' : 'Find this batch in the Certificate Library'}
+            </a>
+
+            <p style={{ fontSize: 11, lineHeight: 1.7, color: '#AAB3C8', margin: 0 }}>
+              All testing conducted by an independent accredited laboratory. PepcoLab has no influence over test results.
+            </p>
+          </div>
+        )
+      }
+
+      case 4: // Disclaimer
         return (
           <div style={{ display: 'grid', gap: 10 }}>
             {[
@@ -304,19 +374,19 @@ export default function ProductActions({ product: initialProduct, selectedVarian
             : <><ShoppingCart size={16} />{selectedVariant.availableForSale ? 'Add to Cart' : 'Out of Stock'}</>
           }
         </button>
-        <a
-
-          href={`/certificates?lot=${p.lot ?? ''}`}
+        <button
+          type="button"
+          onClick={() => setActiveTab(CERT_TAB_INDEX)}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontSize: 13, fontWeight: 600, padding: '14px 18px', borderRadius: 12,
-            border: '1px solid #DDE3F0', color: '#0D0F14', textDecoration: 'none',
-            background: '#fff', transition: 'all .2s',
+            border: '1px solid #DDE3F0', color: '#0D0F14',
+            background: '#fff', cursor: 'pointer', transition: 'all .2s',
           }}
         >
           <Download size={15} />
           COA
-        </a>
+        </button>
       </div>
 
       {/* Tabs */}

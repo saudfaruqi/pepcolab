@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { Suspense, useMemo, useRef, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import {getProducts} from '@/lib/shopify'
@@ -14,8 +15,27 @@ import {
   ArrowRight,
 } from 'lucide-react'
 
+// useSearchParams() requires a Suspense boundary in the App Router, so the
+// actual page logic lives in CertificatesContent below and this default
+// export just wraps it. Same pattern used in app/products/page.tsx.
 export default function CertificatesPage() {
-  const [query, setQuery] = useState('')
+  return (
+    <Suspense fallback={null}>
+      <CertificatesContent />
+    </Suspense>
+  )
+}
+
+function CertificatesContent() {
+  const searchParams = useSearchParams()
+
+  // Was never read at all — ProductActions' "COA" button and COASection's
+  // search box both link here with ?lot=XXXX, but the query state below
+  // started blank every time regardless, so landing here from either of
+  // those never actually pre-filtered to the batch the visitor was after.
+  const lotParam = searchParams.get('lot') ?? ''
+
+  const [query, setQuery] = useState(lotParam)
   const [products, setProducts] = useState<any[]>([])
   const resultsRef = useRef<HTMLDivElement>(null)
 
@@ -25,6 +45,22 @@ export default function CertificatesPage() {
       setProducts(data)
     }
     loadProducts()
+  }, [])
+
+  // Keep the search box in sync if ?lot= changes while already on this page
+  // (e.g. clicking a different product's COA button via client-side nav).
+  useEffect(() => {
+    if (lotParam) setQuery(lotParam)
+  }, [lotParam])
+
+  // Arriving with a specific lot in mind — jump straight to the results
+  // instead of leaving the visitor at the top of a page they need to
+  // scroll down on to see the thing they actually clicked through for.
+  useEffect(() => {
+    if (lotParam) {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const filteredProducts = useMemo(() => {
@@ -461,27 +497,37 @@ export default function CertificatesPage() {
                     </div>
                   </div>
 
-                  {/* View-only — was a "Download COA PDF" button. COAs are
-                      viewable in-browser only, no download, per policy. */}
-                  <button
+                  {/* View-only — no download, COAs are viewable in-browser
+                      only, per policy. Opens the batch's direct COA link
+                      when the product has one attached (pepcolab.coa_url
+                      metafield), otherwise this card just represents the
+                      published record shown above. */}
+                  <a
+                    href={product.coaUrl || '#'}
+                    target={product.coaUrl ? '_blank' : undefined}
+                    rel={product.coaUrl ? 'noopener noreferrer' : undefined}
                     style={{
                       width: '100%',
                       height: 48,
                       borderRadius: 12,
                       border: '1px solid rgba(13,13,13,.08)',
-                      background: '#fafafa',
+                      background: product.coaUrl ? '#fafafa' : '#f2f2f0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
-                      cursor: 'pointer',
+                      cursor: product.coaUrl ? 'pointer' : 'default',
                       fontWeight: 600,
+                      textDecoration: 'none',
+                      color: product.coaUrl ? '#0d0d0d' : 'rgba(13,13,13,.4)',
+                      opacity: product.coaUrl ? 1 : 0.7,
                     }}
+                    onClick={e => { if (!product.coaUrl) e.preventDefault() }}
                   >
                     <Eye size={15} />
-                    View COA
-                    <ArrowRight size={14} />
-                  </button>
+                    {product.coaUrl ? 'View COA' : 'COA pending upload'}
+                    {product.coaUrl && <ArrowRight size={14} />}
+                  </a>
                 </div>
               ))}
             </div>

@@ -13,6 +13,10 @@ export interface Product {
   updatedAt?: string
   purity?: number
   lot?: string
+  // Link to the published Certificate of Analysis PDF for this product's
+  // batch, sourced from Shopify's "pepcolab.coa_url" metafield. Optional —
+  // falls back to the searchable /certificates library when not set.
+  coaUrl?: string
   price: number
   oldPrice?: number
   testDate: string
