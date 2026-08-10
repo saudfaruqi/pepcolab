@@ -89,13 +89,8 @@ export const CATEGORIES: Category[] = [
 export const BUNDLES = [
   {
     id: 'b1', name: 'Recovery Stack',
-    // FIX: was "TB-500" — TB-500 is the common market name for Thymosin
-    // Beta-4 fragment, and the Freedom Diagnostics COA confirms you have a
-    // real tested Thymosin Beta-4 batch (BT10, 99.26% purity, Red Cap lot).
-    // Swap in the real Shopify handle once confirmed — using a placeholder
-    // slug below.
     desc: 'BPC-157 10mg + Thymosin Alpha 10mg',
-    products: ['bpc-157-uae', 'thymosin-alpha-1-uae'], // TODO: confirm real handle
+    products: ['bpc-157-uae', 'thymosin-alpha-uae'], // ← was 'thymosin-alpha-1-uae'
     price: 89.99, save: 7.99,
     accent: '#0D7A45',
     bg: '#EDFAF3',
