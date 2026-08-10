@@ -10,6 +10,7 @@ export interface Product {
   description: string
   descriptionHtml?: string
   longDesc?: string
+  updatedAt?: string
   purity?: number
   lot?: string
   price: number
@@ -19,6 +20,7 @@ export interface Product {
   badge?: 'popular' | 'new' | 'sale' | 'bestseller'
   image?: string
   imageAlt?: string
+  images?: { url: string; alt: string }[]
   color: {
     bg: string
     accent: string
@@ -39,6 +41,10 @@ export interface Product {
     compareAtPrice?: number
     currencyCode?: string
     availableForSale: boolean
+    // Per-variant photo (Pen / Nasal Spray / Vial etc.) — see shopify.ts.
+    // Optional because not every variant has its own image in Shopify;
+    // consumers should fall back to the product's main `image` when absent.
+    image?: { url: string; alt: string }
   }[]
 }
 
@@ -111,33 +117,42 @@ export const BUNDLES = [
   },
 ]
 
+// PLACEHOLDER CONTENT — not real customer reviews. "Verified ·" badges on
+// invented quotes are exactly what the UK's DMCC Act 2024 fake-reviews
+// provisions target, and a fabricated "Dr." credential plus an invented
+// quantitative lab-match claim raise that further into fabricated-expert-
+// endorsement territory. "GLP-1 Tera" also isn't in your catalogue (see
+// BUNDLES note above), so that line cited a product that doesn't exist.
+// Replace this whole array with real, consented reviews as soon as you
+// have them — until then, keep the "Verified" framing and invented
+// credentials off.
 export const REVIEWS = [
   {
     id: 'r1',
-    text: 'The COA transparency is genuinely unlike any other supplier I\'ve used. Independent Eurofins verification, downloadable HPLC traces — exactly what serious research requires.',
-    author: 'Dr. D. Roswell', role: 'Independent Researcher',
-    sub: 'Verified · BPC-157 5mg', initials: 'DR',
+    text: 'The COA transparency is genuinely unlike any other supplier I\'ve used. Independent verification, downloadable HPLC traces — exactly what serious research requires.',
+    author: 'D. Roswell', role: 'Independent Researcher',
+    sub: 'BPC-157 5mg', initials: 'DR',
     rating: 5,
   },
   {
     id: 'r2',
-    text: 'Ordered Friday afternoon, arrived Saturday morning, cold-chain packaging intact. Purity data from my own LC-MS matched their certificate within 0.2%. Exceptional.',
-    author: 'M. Kapur, MSc', role: 'Biochemistry Dept.',
-    sub: 'Verified · TB-500 10mg', initials: 'MK',
+    text: 'Ordered Friday afternoon, arrived Saturday morning, cold-chain packaging intact.',
+    author: 'M. Kapur', role: 'Biochemistry Dept.',
+    sub: 'Epithalon 10mg', initials: 'MK',
     rating: 5,
   },
   {
     id: 'r3',
-    text: 'Finally a UK supplier that publishes their actual lab work. The batch verifier is a game-changer for research documentation. Switching everything to PepcoLab.',
+    text: 'Finally a supplier that publishes their actual lab work. The batch verifier is a game-changer for research documentation.',
     author: 'S. Lowe', role: 'Pharmacology Research',
-    sub: 'Verified · Epithalon 5mg', initials: 'SL',
+    sub: 'Epithalon 5mg', initials: 'SL',
     rating: 5,
   },
   {
     id: 'r4',
-    text: 'The reconstitution calculator alone saves me 20 minutes per session. Product quality is consistently excellent — have ordered 6 times now with zero issues.',
+    text: 'The reconstitution calculator alone saves me time per session. Product quality has been consistently good across several orders.',
     author: 'T. Griffiths', role: 'Laboratory Technician',
-    sub: 'Verified · GLP-1 Tera 5mg', initials: 'TG',
+    sub: 'GHK-Cu 100mg', initials: 'TG',
     rating: 5,
   },
 ]

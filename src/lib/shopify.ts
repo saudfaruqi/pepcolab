@@ -122,6 +122,13 @@ export interface ShopifyProductVariant {
   price: ShopifyMoneyV2
   compareAtPrice: ShopifyMoneyV2 | null
   availableForSale: boolean
+  // Per-variant image (e.g. Pen / Nasal Spray / Vial each ship a different
+  // photo) — wasn't being fetched at all before, so the strength picker on
+  // the product page had no way to swap the displayed image to match
+  // whichever format the visitor selected. Falls back to null when a
+  // variant has no image of its own; normaliseProduct/ProductVariantView
+  // fall back to the product's main image in that case.
+  image: ShopifyImage | null
   // Not fetched: quantityAvailable requires the
   // unauthenticated_read_product_inventory Storefront API scope, which this
   // token doesn't have. In/out of stock is derived from availableForSale
@@ -455,6 +462,8 @@ export function normaliseProduct(node: ShopifyProduct) {
 
     // Full variant list so the UI can offer a strength/dose picker instead
     // of being stuck with whichever single variant got auto-selected above.
+    // `image` is the new field — each variant (Pen/Nasal Spray/Vial etc.)
+    // can carry its own photo now that the query below fetches it.
     variants: node.variants.edges.map(({ node: v }) => ({
       id: v.id,
       title: v.title,
@@ -462,6 +471,7 @@ export function normaliseProduct(node: ShopifyProduct) {
       compareAtPrice: v.compareAtPrice ? parseFloat(v.compareAtPrice.amount) : undefined,
       currencyCode: v.price.currencyCode,
       availableForSale: v.availableForSale,
+      image: v.image ? { url: v.image.url, alt: v.image.altText ?? '' } : undefined,
     })),
 
     images: node.images.edges.map(({ node }) => ({
@@ -530,10 +540,11 @@ const PRODUCTS_QUERY = /* GraphQL */ `
                 price { amount currencyCode }
                 compareAtPrice { amount currencyCode }
                 availableForSale
+                image { url altText }
               }
             }
           }
-          images(first: 1) {
+          images(first: 2) {
             edges { node { url altText } }
           }
           metafields(identifiers: [
@@ -559,6 +570,7 @@ const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
             price { amount currencyCode }
             compareAtPrice { amount currencyCode }
             availableForSale
+            image { url altText }
           }
         }
       }

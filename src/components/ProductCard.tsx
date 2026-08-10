@@ -21,6 +21,12 @@ export default function ProductCard({ product: p, featured = false }: Props) {
   // falling back to "AED" for backwards-compatibility with older cached data.
   const currencyCode: string = (p as any).currencyCode ?? 'AED'
 
+  // Second product photo for the hover swap — shopify.ts now fetches up to
+  // 2 images per product in the list query (was 1), specifically for this.
+  // Falls back to nothing if a product only has one photo, in which case
+  // hovering just keeps showing the primary image as before.
+  const hoverImage: string | undefined = (p as any).images?.[1]?.url
+
   const handleAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -75,21 +81,53 @@ export default function ProductCard({ product: p, featured = false }: Props) {
           }}
         >
           {p.image ? (
-            <img
-              src={p.image}
-              alt={p.imageAlt ?? p.name}
-              loading={featured ? 'eager' : 'lazy'}
-              decoding="async"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                padding: '12px',
-                display: 'block',
-                transform: hovered ? 'scale(1.04)' : 'scale(1)',
-                transition: 'transform .55s cubic-bezier(.22,1,.36,1)',
-              }}
-            />
+            <>
+              <img
+                src={p.image}
+                alt={p.imageAlt ?? p.name}
+                loading={featured ? 'eager' : 'lazy'}
+                decoding="async"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  padding: '12px',
+                  display: 'block',
+                  transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                  // Primary image fades OUT on hover (only when a second
+                  // image actually exists — otherwise it should just stay
+                  // put, not fade to nothing).
+                  opacity: hovered && hoverImage ? 0 : 1,
+                  transition: 'transform .55s cubic-bezier(.22,1,.36,1), opacity .3s ease',
+                }}
+              />
+              {hoverImage && (
+                <img
+                  src={hoverImage}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    padding: '12px',
+                    display: 'block',
+                    transform: hovered ? 'scale(1.04)' : 'scale(1)',
+                    // Second image fades IN on hover — the two together
+                    // are the actual crossfade; the browser only pays the
+                    // request cost once it's lazy-loaded near view, and
+                    // decoding="async" keeps that off the main thread.
+                    opacity: hovered ? 1 : 0,
+                    transition: 'transform .55s cubic-bezier(.22,1,.36,1), opacity .3s ease',
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
+            </>
           ) : (
             <div
               style={{

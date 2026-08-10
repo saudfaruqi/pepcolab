@@ -1,49 +1,47 @@
 // src/components/ProductActions.tsx
 'use client'
 import { useState, useMemo, useEffect } from 'react'
-import { ShoppingCart, Eye, CheckCircle } from 'lucide-react'
+import { ShoppingCart, Download, CheckCircle } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { getProductByHandle } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import type { Product } from '@/app/data'
 
-interface Props { product: Product }
+interface Props {
+  product: Product
+  // Controlled from ProductVariantView.tsx, which also owns the main
+  // product image — lifted up so selecting a strength here can update the
+  // displayed image there. Previously this component managed
+  // selectedVariantId entirely on its own, which is why the image never
+  // changed when you picked Pen / Nasal Spray / Vial: nothing outside this
+  // component could see that the selection had changed.
+  selectedVariantId: string
+  onSelectVariant: (variantId: string) => void
+}
 
 const TABS = ['Overview', 'Technical Specs', 'Storage', 'Disclaimer']
 
-export default function ProductActions({ product: initialProduct }: Props) {
+export default function ProductActions({ product: initialProduct, selectedVariantId, onSelectVariant }: Props) {
   const [added,     setAdded]     = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const { addItem } = useCart()
   const { country, ready } = useCountry()
 
-  // The page is statically built (ISR, revalidate: 60) with AE pricing at
-  // build/regeneration time. That data goes stale between regenerations —
-  // e.g. right after a price change in Shopify admin — and, because of
-  // Next's stale-while-revalidate behaviour, the *first* request after the
-  // 60s window still serves the stale HTML while the page regenerates in
-  // the background. So we always re-fetch live product data client-side
-  // once we're mounted, for every market — not just non-AE visitors.
-  //
-  // FIX: this used to bail out entirely with `if (!ready || country ===
-  // 'AE') return`, on the assumption that AE was "already correct" because
-  // it's what the page was built with. That's only true immediately after
-  // a build/regeneration — it meant AE visitors (the *default* market)
-  // never got a live re-fetch at all and always needed a hard refresh to
-  // see an updated price, while GB visitors got fresh data automatically.
-  // Falls back silently to the initially-rendered data on any error.
+  // The page is statically built for AE. Once we know the visitor is
+  // actually GB, re-fetch this product's live GB pricing/variants and
+  // swap it in. Falls back silently to the AE-built data on any error.
   const [liveProduct, setLiveProduct] = useState<Product>(initialProduct)
 
   useEffect(() => {
-    if (!ready) return
+    if (!ready || country === 'AE') return // AE data is already correct
     let cancelled = false
     getProductByHandle(initialProduct.slug, country)
       .then((fresh) => {
         if (!cancelled && fresh) setLiveProduct(fresh as unknown as Product)
       })
       .catch(() => {
-        // Keep showing whatever we currently have — never leave the UI blank.
+        // Keep showing the AE-built data — never leave the UI blank.
       })
     return () => { cancelled = true }
   }, [ready, country, initialProduct.slug])
@@ -56,15 +54,6 @@ export default function ProductActions({ product: initialProduct }: Props) {
   // ── Variant / strength picker ──────────────────────────────────────────
   const hasMultipleVariants = (p.variants?.length ?? 0) > 1
 
-  const [selectedVariantId, setSelectedVariantId] = useState<string>(
-    p.variantId ?? p.variants?.[0]?.id ?? ''
-  )
-
-  // Re-sync selected variant whenever live data swaps in
-  useEffect(() => {
-    setSelectedVariantId(p.variantId ?? p.variants?.[0]?.id ?? '')
-  }, [p])
-
   const selectedVariant = useMemo(() => {
     return p.variants?.find(v => v.id === selectedVariantId) ?? {
       id: p.variantId ?? '',
@@ -75,6 +64,19 @@ export default function ProductActions({ product: initialProduct }: Props) {
       availableForSale: p.inStock,
     }
   }, [p, selectedVariantId, currencyCode])
+
+  // Re-sync the selected variant whenever live country-swapped data lands
+  // (AE → GB) — only if the current selection no longer exists on the new
+  // variant list. Shopify variant IDs are stable across markets, so this
+  // avoids resetting (and re-triggering ProductVariantView's image sync)
+  // on every currency refresh when the same variant is still valid.
+  useEffect(() => {
+    const stillValid = p.variants?.some((v) => v.id === selectedVariantId)
+    if (!stillValid) {
+      onSelectVariant(p.variantId ?? p.variants?.[0]?.id ?? '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p])
 
   // Reset scroll position on the tab body whenever the active tab changes,
   // so switching tabs never leaves you mid-scroll on the new content.
@@ -100,7 +102,15 @@ export default function ProductActions({ product: initialProduct }: Props) {
     switch (activeTab) {
 
       case 0: // Overview — render Shopify descriptionHtml, then the
-              // `long_desc` metafield underneath.
+              // `long_desc` metafield underneath. normaliseProduct() in
+              // shopify.ts was already pulling this metafield into
+              // `longDesc` on every product — it just wasn't being
+              // rendered anywhere. This is the field to write real,
+              // unique, keyword-relevant per-product copy into (research
+              // context, what the COA verifies, etc.) for long-tail
+              // ranking on individual compound names — far more
+              // SEO-valuable than the short Shopify `description` field
+              // most storefronts default to.
         return (
           <>
             {p.descriptionHtml ? (
@@ -226,7 +236,7 @@ export default function ProductActions({ product: initialProduct }: Props) {
               return (
                 <button
                   key={v.id}
-                  onClick={() => setSelectedVariantId(v.id)}
+                  onClick={() => onSelectVariant(v.id)}
                   disabled={!v.availableForSale}
                   style={{
                     padding: '8px 14px',
@@ -304,13 +314,22 @@ export default function ProductActions({ product: initialProduct }: Props) {
             background: '#fff', transition: 'all .2s',
           }}
         >
-          <Eye size={15} />
-          View COA
+          <Download size={15} />
+          COA
         </a>
       </div>
 
       {/* Tabs */}
       <div style={{ borderTop: '1px solid #F0F0F0', paddingTop: 20 }}>
+        {/*
+          Tab bar: this row itself scrolls HORIZONTALLY on narrow screens
+          (overflowX: auto) if there isn't room for all 4 labels — that's
+          intentional and is likely what was reading as "overflow-y
+          scrolling" if the labels wrapped onto a second line instead.
+          `whiteSpace: nowrap` + `flexShrink: 0` on each tab button below
+          stops that wrap so the row scrolls sideways instead of growing
+          taller.
+        */}
         <div style={{
           display: 'flex', gap: 0, marginBottom: 18,
           borderBottom: '1px solid #F0F0F0',
@@ -338,6 +357,19 @@ export default function ProductActions({ product: initialProduct }: Props) {
           ))}
         </div>
 
+        {/*
+          Tab panel: previously `minHeight: 60` with no explicit height or
+          overflow rule. That's normally fine, but if this component ever
+          renders inside a flex/grid ancestor with a fixed or percentage
+          height (it does — .pp-info-col sits in a CSS grid row next to a
+          `position: sticky` image column), a bare block with no `height:
+          auto` can inherit a stretched, size-constrained box from the
+          grid and clip its own content, producing an internal vertical
+          scrollbar around the Overview/Specs/Storage/Disclaimer copy
+          instead of letting the page itself grow and scroll normally.
+          Making height/overflow explicit here forces this panel to size
+          to its content and pushes any scrolling back up to the page.
+        */}
         <div
           id="pp-tab-panel"
           style={{

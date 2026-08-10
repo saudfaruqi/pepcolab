@@ -1,6 +1,3 @@
-
-
-
 // src/app/products/[slug]/page.tsx
 
 import type { Metadata } from 'next'
@@ -8,11 +5,10 @@ import { notFound } from 'next/navigation'
 
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import Vial from '@/components/Vial'
-import ProductActions from '@/components/ProductActions'
+import ProductVariantView from '@/components/ProductVariantView'
 import RelatedProducts from '@/components/RelatedProducts'
 
-import { ChevronRight, ShieldCheck, Truck, RotateCcw } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -164,6 +160,10 @@ export default async function ProductPage({ params }: Props) {
     notFound()
   }
 
+  // `oneLiner` now lives on the merged product object (rather than being a
+  // separate variable page.tsx rendered inline) because ProductVariantView
+  // — the new client component that owns the image/strength sync — needs it
+  // too, and it's simplest to compute it once here and pass one object down.
   const product = {
     ...shopifyProduct,
     id: shopifyProduct.shopifyId,
@@ -173,14 +173,13 @@ export default async function ProductPage({ params }: Props) {
     category: shopifyProduct.tags?.[0] || '',
     categorySlug: shopifyProduct.tags?.[0]?.toLowerCase().replace(/\s+/g, '-') || '',
     badge: undefined as undefined,
+    oneLiner: getOneLiner(shopifyProduct.description),
     color: {
       bg: '#f5f7fb', accent: '#2563eb', pill: '#dbeafe', pillText: '#1d4ed8',
       purityBar: '#2563eb', btn: '#2563eb', vialFrom: '#2563eb', vialTo: '#7c3aed',
     },
   }
 
-  const images = shopifyProduct.images ?? []
-  const oneLiner = getOneLiner(shopifyProduct.description)
   const jsonLd = buildJsonLd(shopifyProduct)
 
   return (
@@ -207,141 +206,15 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="pp-outer">
-
-          {/* IMAGE COLUMN */}
-          <div className="pp-image-col">
-
-            {/* Square image box */}
-            <div className="pp-image-box">
-              {images.length > 0 ? (
-                <img
-                  src={images[0].url}
-                  alt={images[0].alt || `${shopifyProduct.title} research vial`}
-                  className="pp-main-img"
-                />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', position: 'relative' }}>
-                  <div style={{
-                    position: 'absolute', width: 200, height: 200, borderRadius: '50%',
-                    background: 'radial-gradient(circle,#2563eb18,transparent)', filter: 'blur(40px)',
-                  }} />
-                  <Vial mg={shopifyProduct.mg || '5mg'} size="xl" fromColor="#2563eb" toColor="#7c3aed" />
-                </div>
-              )}
-
-              {shopifyProduct.purity && (
-                <div style={{
-                  position: 'absolute', top: 12, right: 12,
-                  background: 'rgba(255,255,255,.96)', backdropFilter: 'blur(8px)',
-                  padding: '8px 12px', borderRadius: 10,
-                  boxShadow: '0 4px 14px rgba(0,0,0,.08)', border: '1px solid #f0f0f0',
-                }}>
-                  <div style={{ fontSize: 9, color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 1 }}>
-                    Purity
-                  </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#0d0d0d', lineHeight: 1 }}>
-                    {shopifyProduct.purity}%
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto' }}>
-                {images.slice(0, 6).map((img, i) => (
-                  <div key={i} style={{
-                    width: 56, height: 56, flexShrink: 0, borderRadius: 8, overflow: 'hidden',
-                    border: i === 0 ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                    background: '#fafafa',
-                  }}>
-                    <img
-                      src={img.url}
-                      alt={img.alt || `${shopifyProduct.title} view ${i + 1}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3 }}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Trust — desktop only */}
-            <div className="pp-trust-desktop">
-              {[
-                { icon: <ShieldCheck size={14} />, text: 'HPLC-verified purity testing' },
-                { icon: <Truck size={14} />, text: 'Cold-chain temperature-controlled' },
-                { icon: <RotateCcw size={14} />, text: 'Full batch traceability & COA' },
-              ].map(({ icon, text }) => (
-                <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#6b7280' }}>
-                  <span style={{ color: '#2563eb', flexShrink: 0 }}>{icon}</span>
-                  {text}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* INFO COLUMN */}
-          <div className="pp-info-col">
-
-            <div style={{
-              display: 'inline-flex', padding: '4px 11px', borderRadius: 999,
-              background: '#eff6ff', color: '#2563eb',
-              fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
-              marginBottom: 12,
-            }}>
-              {shopifyProduct.tags?.[0] || 'Research Compound'}
-            </div>
-
-            <h1 style={{
-              fontSize: 'clamp(24px, 5vw, 48px)',
-              lineHeight: 1.08,
-              marginBottom: 6,
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              color: '#0d0d0d',
-              wordBreak: 'break-word',
-            }}>
-              {shopifyProduct.title}
-            </h1>
-
-            {(shopifyProduct.lot || shopifyProduct.testDate) && (
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 14, fontWeight: 500 }}>
-                {shopifyProduct.lot && `Batch ${shopifyProduct.lot}`}
-                {shopifyProduct.lot && shopifyProduct.testDate && ' · '}
-                {shopifyProduct.testDate && `Tested ${shopifyProduct.testDate}`}
-              </div>
-            )}
-
-            {oneLiner && (
-              <p style={{ fontSize: 14, lineHeight: 1.75, color: '#6b7280', marginBottom: 18 }}>
-                {oneLiner}
-              </p>
-            )}
-
-            {/* Trust pills — mobile */}
-            <div className="pp-trust-mobile">
-              {[
-                { icon: <ShieldCheck size={11} />, text: 'HPLC Verified' },
-                { icon: <Truck size={11} />, text: 'Cold-Chain' },
-                { icon: <RotateCcw size={11} />, text: 'COA Included' },
-              ].map(({ icon, text }) => (
-                <div key={text} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '5px 11px', borderRadius: 999,
-                  background: '#f9fafb', border: '1px solid #e5e7eb',
-                  fontSize: 11, fontWeight: 600, color: '#374151',
-                }}>
-                  {icon}{text}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ height: 1, background: '#f0f0f0', margin: '18px 0' }} />
-
-            <ProductActions product={product} />
-          </div>
-        </div>
+        {/*
+          Image column + strength picker + price/CTA/tabs used to be laid
+          out here directly, split across a server-rendered image block and
+          the client-rendered <ProductActions>. Moved into one client
+          component (ProductVariantView) because selecting a strength
+          (Pen/Nasal Spray/Vial) needs to update the displayed image, and
+          that requires shared state — which a server component can't hold.
+        */}
+        <ProductVariantView product={product} />
 
         {/*
           Recommended Products — RelatedProducts is a client component that
@@ -393,6 +266,15 @@ export default async function ProductPage({ params }: Props) {
             height: 100%;
             object-fit: contain;
             padding: 20px;
+            /* Small crossfade so swapping images on variant/thumbnail change
+               doesn't pop jarringly — matched to the ~250ms range used
+               elsewhere on the site (nav dropdowns, cards). */
+            animation: pp-img-fade .25s ease;
+          }
+
+          @keyframes pp-img-fade {
+            from { opacity: 0; }
+            to   { opacity: 1; }
           }
 
           .pp-info-col {
