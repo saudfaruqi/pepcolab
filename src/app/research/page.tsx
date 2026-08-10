@@ -183,7 +183,7 @@ const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The recognition that GIP (glucose-dependent insulinotropic polypeptide) receptor and glucagon receptor agonism can be synergistic with GLP-1R activation has driven intense research into dual (GLP-1/GIP or GLP-1/glucagon) and triple (GLP-1/GIP/glucagon) agonists. Tirzepatide, the first approved dual agonist, demonstrates superior weight loss versus GLP-1-only agonists, driven in part by GIP\'s additive effect on adipose tissue lipolysis and its independent contribution to satiety. Research peptides that explore this space include various chimeric sequences designed to probe the relative receptor contributions.',
+        text: 'The recognition that GIP (glucose-dependent insulinotropic polypeptide) receptor and glucagon receptor agonism can be synergistic with GLP-1R activation has driven intense research into dual (GLP-1/GIP or GLP-1/glucagon) and triple (GLP-1/GIP/glucagon) agonists. These compounds demonstrate superior metabolic effects compared to GLP-1-only agonists, driven in part by additive effects on adipose tissue lipolysis and independent contributions to satiety. Research peptides that explore this space include various chimeric sequences designed to probe the relative receptor contributions.',
       },
       {
         type: 'heading',

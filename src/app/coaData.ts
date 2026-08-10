@@ -29,10 +29,6 @@ export const COA_BATCHES: CoaBatch[] = [
   { lot: 'Grey Cap',        code: 'Retatrutide 60mg', product: 'Retatrutide', purityVial1: '99.86%', purityVial2: '99.84%', purityAvg: '99.85%', netContentAvg: '61.07 mg', identity: 'Confirmed (LC-MS)', accession: '2607130564', received: '2026-07-13', reported: '2026-07-15' },
   { lot: 'Black Cap',       code: 'TSM10',         product: 'Tesamorelin',   purityVial1: '99.24%', purityVial2: '99.33%', purityAvg: '99.29%', netContentAvg: '11.49 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220740', received: '2026-06-22', reported: '2026-06-25' },
   { lot: 'Red Cap',         code: 'Tesamorelin 20mg', product: 'Tesamorelin', purityVial1: '99.89%', purityVial2: '99.87%', purityAvg: '99.88%', netContentAvg: '24.02 mg', identity: 'Confirmed (LC-MS)', accession: '2607130568', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Red Cap',         code: 'Tirzepatide 10mg', product: 'Tirzepatide', purityVial1: '99.76%', purityVial2: '99.77%', purityAvg: '99.77%', netContentAvg: '12.26 mg', identity: 'Confirmed (LC-MS)', accession: '2607130576', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Yellow Cap',      code: 'TR20',          product: 'Tirzepatide',   purityVial1: '99.92%', purityVial2: '99.94%', purityAvg: '99.93%', netContentAvg: '22.57 mg', identity: 'Confirmed (LC-MS)', accession: '2606220738', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Grey Cap',        code: 'Tirzepatide 30mg', product: 'Tirzepatide', purityVial1: '99.67%', purityVial2: '99.67%', purityAvg: '99.67%', netContentAvg: '33.35 mg', identity: 'Confirmed (LC-MS)', accession: '2607130578', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Dark Green Cap',  code: 'Tirzepatide 60mg', product: 'Tirzepatide', purityVial1: '99.85%', purityVial2: '99.89%', purityAvg: '99.87%', netContentAvg: '64.68 mg', identity: 'Confirmed (LC-MS)', accession: '2607130580', received: '2026-07-13', reported: '2026-07-15' },
 ]
 
 // EXCLUDED: RT20 (accession 2606220750) — Identity (LC-MS) field reads

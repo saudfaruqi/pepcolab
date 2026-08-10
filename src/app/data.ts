@@ -116,17 +116,6 @@ export const BUNDLES = [
     accent: '#BE185D',
     bg: '#FDF0F8',
   },
-  {
-    id: 'b4', name: 'Metabolic Focus',
-    // FIX: was "GLP-1 Tera" — near-certainly a mis-transcription of
-    // Tirzepatide ("Tera" ≈ "Tirze-"). The COA set confirms four real
-    // tested Tirzepatide lots (10/30/60mg + TR20), all reported as "GLP TZ".
-    desc: 'Tirzepatide 10mg + Ipamorelin 10mg',
-    products: ['tirzepatide-uae', 'ipamorelin-uae'], // TODO: confirm real handle
-    price: 89.99, save: 6.99,
-    accent: '#2055F0',
-    bg: '#EEF2FD',
-  },
 ]
 
 // PLACEHOLDER CONTENT — not real customer reviews. "Verified ·" badges on

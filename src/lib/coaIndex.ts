@@ -65,14 +65,6 @@ const COA_INDEX: CoaPageEntry[] = [
     test: (n, mg) => has(n, 'tesamorelin') && mgIs(mg, 10) },
   { label: 'Tesamorelin 20mg', page: 16,
     test: (n, mg) => has(n, 'tesamorelin') && mgIs(mg, 20) },
-  { label: 'Tirzepatide 10mg', page: 17,
-    test: (n, mg) => has(n, 'tirzepatide') && mgIs(mg, 10) },
-  { label: 'Tirzepatide 20mg', page: 18,
-    test: (n, mg) => has(n, 'tirzepatide') && mgIs(mg, 20) },
-  { label: 'Tirzepatide 30mg', page: 19,
-    test: (n, mg) => has(n, 'tirzepatide') && mgIs(mg, 30) },
-  { label: 'Tirzepatide 60mg', page: 20,
-    test: (n, mg) => has(n, 'tirzepatide') && mgIs(mg, 60) },
 ]
 
 export interface ResolvedCoa {

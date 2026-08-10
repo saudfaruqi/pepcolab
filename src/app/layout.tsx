@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   referrer: 'origin-when-cross-origin',
 
   // No `keywords` — ignored by Google since 2009, and the old array named
-  // Retatrutide, Tirzepatide and Semaglutide alongside "Dubai".
+  // Retatrutide and Semaglutide alongside "Dubai".
 
   authors: [{ name: 'PepcoLab', url: siteUrl }],
   creator: 'PepcoLab',
