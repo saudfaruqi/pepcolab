@@ -1,6 +1,8 @@
 // src/app/sitemap.ts
 import type { MetadataRoute } from 'next'
 import { getProducts } from '@/lib/shopify'
+import { GUIDES } from '@/lib/guides-data'
+import { ARTICLES } from '@/lib/research-data'
 
 const BASE_URL = 'https://www.pepcolab.com'
 
@@ -69,5 +71,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] Shopify product fetch failed:', err)
   }
 
-  return [...staticEntries, ...productEntries]
+  // Individual guide and research-article pages — didn't exist before these
+  // moved off the single client-rendered /guides and /research pages onto
+  // their own [slug] routes. Uses each entry's own publish date rather than
+  // `now`, same freshness-signal reasoning as the product entries above.
+  const guideEntries: MetadataRoute.Sitemap = GUIDES.map((g) => ({
+    url: `${BASE_URL}/guides/${g.id}`,
+    lastModified: new Date(g.publishedISO),
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }))
+
+  const researchEntries: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
+    url: `${BASE_URL}/research/${a.id}`,
+    lastModified: new Date(a.dateISO),
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }))
+
+  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries]
 }
