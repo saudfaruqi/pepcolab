@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import {getProducts} from '@/lib/shopify'
+import { resolveLocalCoa } from '@/lib/coaIndex'
 import {
   Search,
   Eye,
@@ -357,7 +358,12 @@ function CertificatesContent() {
                   'repeat(auto-fill,minmax(320px,1fr))',
               }}
             >
-              {filteredProducts.map(product => (
+              {filteredProducts.map(product => {
+                // Real Shopify metafield wins if set; otherwise fall back
+                // to the combined local PDF using the product's base mg.
+                const localCoa = product.coaUrl ? undefined : resolveLocalCoa(product.name, product.mg)
+                const coaUrl = product.coaUrl || localCoa?.url
+                return (
                 <div
                   key={product.id}
                   style={{
@@ -498,38 +504,39 @@ function CertificatesContent() {
                   </div>
 
                   {/* View-only — no download, COAs are viewable in-browser
-                      only, per policy. Opens the batch's direct COA link
-                      when the product has one attached (pepcolab.coa_url
-                      metafield), otherwise this card just represents the
-                      published record shown above. */}
+                      only, per policy. Opens the batch's direct COA page
+                      when one resolves (Shopify metafield or the local
+                      combined PDF index), otherwise this card just
+                      represents the published record shown above. */}
                   <a
-                    href={product.coaUrl || '#'}
-                    target={product.coaUrl ? '_blank' : undefined}
-                    rel={product.coaUrl ? 'noopener noreferrer' : undefined}
+                    href={coaUrl || '#'}
+                    target={coaUrl ? '_blank' : undefined}
+                    rel={coaUrl ? 'noopener noreferrer' : undefined}
                     style={{
                       width: '100%',
                       height: 48,
                       borderRadius: 12,
                       border: '1px solid rgba(13,13,13,.08)',
-                      background: product.coaUrl ? '#fafafa' : '#f2f2f0',
+                      background: coaUrl ? '#fafafa' : '#f2f2f0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
-                      cursor: product.coaUrl ? 'pointer' : 'default',
+                      cursor: coaUrl ? 'pointer' : 'default',
                       fontWeight: 600,
                       textDecoration: 'none',
-                      color: product.coaUrl ? '#0d0d0d' : 'rgba(13,13,13,.4)',
-                      opacity: product.coaUrl ? 1 : 0.7,
+                      color: coaUrl ? '#0d0d0d' : 'rgba(13,13,13,.4)',
+                      opacity: coaUrl ? 1 : 0.7,
                     }}
-                    onClick={e => { if (!product.coaUrl) e.preventDefault() }}
+                    onClick={e => { if (!coaUrl) e.preventDefault() }}
                   >
                     <Eye size={15} />
-                    {product.coaUrl ? 'View COA' : 'COA pending upload'}
-                    {product.coaUrl && <ArrowRight size={14} />}
+                    {coaUrl ? 'View COA' : 'COA pending upload'}
+                    {coaUrl && <ArrowRight size={14} />}
                   </a>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>

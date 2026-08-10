@@ -2,6 +2,7 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
 import { ShoppingCart, Download, CheckCircle, ShieldCheck, FileText, ExternalLink } from 'lucide-react'
+import { resolveLocalCoa } from '@/lib/coaIndex'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { getProductByHandle } from '@/lib/shopify'
@@ -214,8 +215,13 @@ export default function ProductActions({ product: initialProduct, selectedVarian
                 // if a batch hasn't had one attached yet, this falls back to
                 // the searchable /certificates library pre-filtered to this
                 // product's lot number instead of a dead end.
-        const coaHref = p.coaUrl || `/certificates?lot=${encodeURIComponent(p.lot ?? '')}`
-        const hasDirectCoa = Boolean(p.coaUrl)
+        // Real Shopify metafield wins if set; otherwise fall back to the
+        // combined local PDF, resolved against whichever strength is
+        // currently selected (selectedVariant.title) so switching Pen /
+        // Vial / mg strength re-points at the right page.
+        const localCoa = p.coaUrl ? undefined : resolveLocalCoa(p.name, selectedVariant.title)
+        const coaHref = p.coaUrl || localCoa?.url || `/certificates?lot=${encodeURIComponent(p.lot ?? '')}`
+        const hasDirectCoa = Boolean(p.coaUrl || localCoa)
         return (
           <div style={{ display: 'grid', gap: 14 }}>
             <div style={{
