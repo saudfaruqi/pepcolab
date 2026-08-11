@@ -1,7 +1,7 @@
 // src/components/BestSellersSection.tsx
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
 
@@ -44,6 +44,8 @@ export default function BestSellersSection({
   products: any[]
   loading?: boolean
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  
   const featured = useMemo(() => {
     return FEATURED_HANDLES
       .map((handle) => products.find((p) => p.handle === handle || p.slug === handle))
@@ -69,9 +71,10 @@ export default function BestSellersSection({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
-            marginBottom: 'clamp(24px,4vw,44px)',
+            marginBottom: 'clamp(20px,4vw,44px)',
             flexWrap: 'wrap',
             gap: 12,
+            paddingRight: 'clamp(0px,3vw,0px)',
           }}
         >
           <div>
@@ -101,205 +104,312 @@ export default function BestSellersSection({
               textDecoration: 'none',
               borderBottom: '1px solid rgba(255,255,255,.2)',
               paddingBottom: 3,
+              whiteSpace: 'nowrap',
             }}
           >
             View full catalogue →
           </Link>
         </div>
 
-        {/* Rail */}
-        <div className="bs-grid">
-          {loading &&
-            [0, 1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                style={{
-                  borderRadius: 16,
-                  background: '#141414',
-                  height: 320,
-                  animation: 'pulse 1.6s ease infinite',
-                  animationDelay: `${i * 0.1}s`,
-                }}
-              />
-            ))}
-
-          {!loading &&
-            featured.map((p: any, i: number) => (
-              <Link
-                key={p.shopifyId || p.id}
-                href={`/products/${p.handle}`}
-                className="bs-card"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  textDecoration: 'none',
-                  background: 'linear-gradient(160deg,#161616,#0F0F0F)',
-                  border: '1px solid rgba(255,255,255,.08)',
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}
-              >
-                {/* Rank chip */}
+        {/* Rail — horizontal scroll on mobile, grid on desktop */}
+        <div className="bs-wrapper">
+          <div 
+            ref={scrollRef}
+            className="bs-rail"
+          >
+            {loading &&
+              [0, 1, 2, 3, 4].map((i) => (
                 <div
+                  key={i}
+                  className="bs-card-skeleton"
                   style={{
-                    position: 'absolute',
-                    top: 10,
-                    left: 10,
-                    zIndex: 2,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '3px 8px',
-                    borderRadius: 999,
-                    background: i === 0 ? '#C8992A' : 'rgba(255,255,255,.08)',
-                    border: i === 0 ? 'none' : '1px solid rgba(255,255,255,.12)',
-                    backdropFilter: 'blur(6px)',
+                    borderRadius: 16,
+                    background: '#141414',
+                    height: 340,
+                    minWidth: 260,
+                    maxWidth: 280,
+                    flex: '0 0 auto',
+                    animation: 'pulse 1.6s ease infinite',
+                    animationDelay: `${i * 0.1}s`,
                   }}
-                >
-                  <span
-                    style={{
-                      fontSize: 8.5,
-                      fontWeight: 800,
-                      letterSpacing: '.08em',
-                      textTransform: 'uppercase',
-                      color: i === 0 ? '#0A0A0A' : 'rgba(255,255,255,.65)',
-                    }}
-                  >
-                    {RANK_LABELS[i] ?? 'Popular'}
-                  </span>
-                </div>
+                />
+              ))}
 
-                {/* Image */}
-                <div
+            {!loading &&
+              featured.map((p: any, i: number) => (
+                <Link
+                  key={p.shopifyId || p.id}
+                  href={`/products/${p.handle}`}
+                  className="bs-card"
                   style={{
-                    position: 'relative',
-                    aspectRatio: '1/1',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 16,
+                    flexDirection: 'column',
+                    textDecoration: 'none',
+                    background: 'linear-gradient(160deg,#161616,#0F0F0F)',
+                    border: '1px solid rgba(255,255,255,.08)',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    minWidth: 260,
+                    maxWidth: 280,
+                    flex: '0 0 auto',
                   }}
                 >
-                  {p.image ? (
-                    <img
-                      src={p.image}
-                      alt={p.imageAlt || p.title}
-                      loading={i < 2 ? 'eager' : 'lazy'}
-                      className="bs-img"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
-                  ) : (
-                    <div style={{ color: 'rgba(255,255,255,.2)', fontSize: 12 }}>{p.title}</div>
-                  )}
-
-                  {p.purity && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 8,
-                        padding: '3px 7px',
-                        borderRadius: 6,
-                        background: 'rgba(255,255,255,.07)',
-                        border: '1px solid rgba(255,255,255,.1)',
-                        backdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      <div style={{ fontSize: 6.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
-                        Purity
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
-                        {p.purity}%
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Body */}
-                <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <h3
+                  {/* Rank chip */}
+                  <div
                     style={{
-                      fontSize: 'clamp(14px,1.8vw,18px)',
-                      fontWeight: 700,
-                      letterSpacing: '-.02em',
-                      color: '#fff',
-                      lineHeight: 1.15,
-                      margin: '0 0 4px',
+                      position: 'absolute',
+                      top: 10,
+                      left: 10,
+                      zIndex: 2,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '3px 8px',
+                      borderRadius: 999,
+                      background: i === 0 ? '#C8992A' : 'rgba(255,255,255,.08)',
+                      border: i === 0 ? 'none' : '1px solid rgba(255,255,255,.12)',
+                      backdropFilter: 'blur(6px)',
                     }}
                   >
-                    {p.title}
-                  </h3>
-
-                  <p
-                    style={{
-                      fontSize: 11,
-                      lineHeight: 1.5,
-                      color: 'rgba(255,255,255,.45)',
-                      margin: '0 0 12px',
-                      flex: 1,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {FEATURED_COPY[p.handle] ?? 'Published certificate of analysis for every batch.'}
-                  </p>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
-                        {formatPrice(p.price, p.currencyCode ?? 'AED')}
-                      </span>
-                      {p.oldPrice && (
-                        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,.28)', textDecoration: 'line-through' }}>
-                          {formatPrice(p.oldPrice, p.currencyCode ?? 'AED')}
-                        </span>
-                      )}
-                    </div>
                     <span
                       style={{
-                        fontSize: 9.5,
-                        fontWeight: 700,
-                        color: p.inStock === false ? 'rgba(255,255,255,.3)' : '#4ADE80',
-                        whiteSpace: 'nowrap',
+                        fontSize: 8.5,
+                        fontWeight: 800,
+                        letterSpacing: '.08em',
+                        textTransform: 'uppercase',
+                        color: i === 0 ? '#0A0A0A' : 'rgba(255,255,255,.65)',
                       }}
                     >
-                      {p.inStock === false ? 'Out of stock' : 'In stock'}
+                      {RANK_LABELS[i] ?? 'Popular'}
                     </span>
                   </div>
-                </div>
-              </Link>
-            ))}
+
+                  {/* Image */}
+                  <div
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1/1',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 16,
+                    }}
+                  >
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.imageAlt || p.title}
+                        loading={i < 2 ? 'eager' : 'lazy'}
+                        className="bs-img"
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                    ) : (
+                      <div style={{ color: 'rgba(255,255,255,.2)', fontSize: 12 }}>{p.title}</div>
+                    )}
+
+                    {p.purity && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: 8,
+                          right: 8,
+                          padding: '3px 7px',
+                          borderRadius: 6,
+                          background: 'rgba(255,255,255,.07)',
+                          border: '1px solid rgba(255,255,255,.1)',
+                          backdropFilter: 'blur(8px)',
+                        }}
+                      >
+                        <div style={{ fontSize: 6.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
+                          Purity
+                        </div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                          {p.purity}%
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        letterSpacing: '-.02em',
+                        color: '#fff',
+                        lineHeight: 1.15,
+                        margin: '0 0 4px',
+                      }}
+                    >
+                      {p.title}
+                    </h3>
+
+                    <p
+                      style={{
+                        fontSize: 11,
+                        lineHeight: 1.5,
+                        color: 'rgba(255,255,255,.45)',
+                        margin: '0 0 12px',
+                        flex: 1,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {FEATURED_COPY[p.handle] ?? 'Published certificate of analysis for every batch.'}
+                    </p>
+
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
+                          {formatPrice(p.price, p.currencyCode ?? 'AED')}
+                        </span>
+                        {p.oldPrice && (
+                          <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,.28)', textDecoration: 'line-through' }}>
+                            {formatPrice(p.oldPrice, p.currencyCode ?? 'AED')}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          color: p.inStock === false ? 'rgba(255,255,255,.3)' : '#4ADE80',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {p.inStock === false ? 'Out of stock' : 'In stock'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+          </div>
+
+          {/* Scroll hint (optional — shows on mobile) */}
+          <div className="bs-scroll-hint">
+            <span>← Swipe to explore →</span>
+          </div>
         </div>
       </div>
 
       <style>{`
-        .bs-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
+        .bs-wrapper {
+          position: relative;
         }
-        @media (min-width: 480px) {
-          .bs-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        
+        .bs-rail {
+          display: flex;
+          gap: 14px;
+          overflow-x: auto;
+          overflow-y: visible;
+          padding: 4px 2px 12px 2px;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
         }
-        @media (min-width: 900px) {
-          .bs-grid { grid-template-columns: repeat(5, 1fr); gap: 20px; }
+        
+        .bs-rail::-webkit-scrollbar {
+          display: none;
         }
+        
         .bs-card {
+          scroll-snap-align: start;
           transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
+          min-width: 260px;
+          max-width: 280px;
+          flex: 0 0 auto;
         }
+        
         .bs-card:hover {
           transform: translateY(-4px);
           border-color: rgba(200,153,42,.35) !important;
           box-shadow: 0 20px 40px rgba(0,0,0,.5);
         }
-        .bs-img { transition: transform .45s ease; }
-        .bs-card:hover .bs-img { transform: scale(1.04); }
+        
+        .bs-img { 
+          transition: transform .45s ease; 
+        }
+        
+        .bs-card:hover .bs-img { 
+          transform: scale(1.04); 
+        }
+        
+        .bs-scroll-hint {
+          display: block;
+          text-align: center;
+          font-size: 11px;
+          color: rgba(255,255,255,.25);
+          letter-spacing: .05em;
+          margin-top: 4px;
+          animation: fadeInOut 2.5s ease infinite;
+        }
+        
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        
+        /* Desktop: switch to grid */
+        @media (min-width: 900px) {
+          .bs-rail {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            overflow-x: visible;
+            padding: 0;
+            scroll-snap-type: none;
+          }
+          
+          .bs-card {
+            min-width: unset;
+            max-width: unset;
+            flex: unset;
+            scroll-snap-align: unset;
+          }
+          
+          .bs-scroll-hint {
+            display: none;
+          }
+        }
+        
+        /* Tablet: 2-3 columns */
+        @media (min-width: 600px) and (max-width: 899px) {
+          .bs-rail {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            overflow-x: visible;
+            padding: 0;
+            scroll-snap-type: none;
+          }
+          
+          .bs-card {
+            min-width: unset;
+            max-width: unset;
+            flex: unset;
+            scroll-snap-align: unset;
+          }
+          
+          .bs-scroll-hint {
+            display: none;
+          }
+        }
+        
         @media (prefers-reduced-motion: reduce) {
-          .bs-card, .bs-img { transition: none !important; }
-          .bs-card:hover { transform: none; }
+          .bs-card, .bs-img { 
+            transition: none !important; 
+          }
+          .bs-card:hover { 
+            transform: none; 
+          }
+          .bs-scroll-hint {
+            animation: none;
+            opacity: 0.3;
+          }
         }
       `}</style>
     </section>
