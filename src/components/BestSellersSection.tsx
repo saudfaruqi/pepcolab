@@ -71,10 +71,9 @@ export default function BestSellersSection({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
-            marginBottom: 'clamp(20px,4vw,44px)',
+            marginBottom: 'clamp(16px,4vw,44px)',
             flexWrap: 'wrap',
             gap: 12,
-            paddingRight: 'clamp(0px,3vw,0px)',
           }}
         >
           <div>
@@ -111,23 +110,20 @@ export default function BestSellersSection({
           </Link>
         </div>
 
-        {/* Rail — horizontal scroll on mobile, grid on desktop */}
+        {/* Rail */}
         <div className="bs-wrapper">
-          <div 
-            ref={scrollRef}
-            className="bs-rail"
-          >
+          <div ref={scrollRef} className="bs-rail">
             {loading &&
               [0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
                   className="bs-card-skeleton"
                   style={{
-                    borderRadius: 16,
+                    borderRadius: 14,
                     background: '#141414',
-                    height: 340,
-                    minWidth: 260,
-                    maxWidth: 280,
+                    height: 240,
+                    minWidth: 180,
+                    maxWidth: 200,
                     flex: '0 0 auto',
                     animation: 'pulse 1.6s ease infinite',
                     animationDelay: `${i * 0.1}s`,
@@ -147,25 +143,25 @@ export default function BestSellersSection({
                     textDecoration: 'none',
                     background: 'linear-gradient(160deg,#161616,#0F0F0F)',
                     border: '1px solid rgba(255,255,255,.08)',
-                    borderRadius: 16,
+                    borderRadius: 14,
                     overflow: 'hidden',
                     position: 'relative',
-                    minWidth: 260,
-                    maxWidth: 280,
+                    minWidth: 180,
+                    maxWidth: 200,
                     flex: '0 0 auto',
                   }}
                 >
-                  {/* Rank chip */}
+                  {/* Rank chip - smaller */}
                   <div
                     style={{
                       position: 'absolute',
-                      top: 10,
-                      left: 10,
+                      top: 8,
+                      left: 8,
                       zIndex: 2,
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 4,
-                      padding: '3px 8px',
+                      gap: 3,
+                      padding: '2px 7px',
                       borderRadius: 999,
                       background: i === 0 ? '#C8992A' : 'rgba(255,255,255,.08)',
                       border: i === 0 ? 'none' : '1px solid rgba(255,255,255,.12)',
@@ -174,9 +170,9 @@ export default function BestSellersSection({
                   >
                     <span
                       style={{
-                        fontSize: 8.5,
+                        fontSize: 7.5,
                         fontWeight: 800,
-                        letterSpacing: '.08em',
+                        letterSpacing: '.06em',
                         textTransform: 'uppercase',
                         color: i === 0 ? '#0A0A0A' : 'rgba(255,255,255,.65)',
                       }}
@@ -185,7 +181,7 @@ export default function BestSellersSection({
                     </span>
                   </div>
 
-                  {/* Image */}
+                  {/* Image - smaller */}
                   <div
                     style={{
                       position: 'relative',
@@ -193,7 +189,7 @@ export default function BestSellersSection({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: 16,
+                      padding: 12,
                     }}
                   >
                     {p.image ? (
@@ -205,42 +201,45 @@ export default function BestSellersSection({
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                       />
                     ) : (
-                      <div style={{ color: 'rgba(255,255,255,.2)', fontSize: 12 }}>{p.title}</div>
+                      <div style={{ color: 'rgba(255,255,255,.2)', fontSize: 10 }}>{p.title}</div>
                     )}
 
                     {p.purity && (
                       <div
                         style={{
                           position: 'absolute',
-                          bottom: 8,
-                          right: 8,
-                          padding: '3px 7px',
-                          borderRadius: 6,
+                          bottom: 6,
+                          right: 6,
+                          padding: '2px 6px',
+                          borderRadius: 5,
                           background: 'rgba(255,255,255,.07)',
                           border: '1px solid rgba(255,255,255,.1)',
                           backdropFilter: 'blur(8px)',
                         }}
                       >
-                        <div style={{ fontSize: 6.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
+                        <div style={{ fontSize: 5.5, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
                           Purity
                         </div>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                        <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
                           {p.purity}%
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Body */}
-                  <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  {/* Body - compact */}
+                  <div style={{ padding: '8px 10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <h3
                       style={{
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: 700,
                         letterSpacing: '-.02em',
                         color: '#fff',
-                        lineHeight: 1.15,
-                        margin: '0 0 4px',
+                        lineHeight: 1.1,
+                        margin: '0 0 2px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {p.title}
@@ -248,40 +247,33 @@ export default function BestSellersSection({
 
                     <p
                       style={{
-                        fontSize: 11,
-                        lineHeight: 1.5,
-                        color: 'rgba(255,255,255,.45)',
-                        margin: '0 0 12px',
+                        fontSize: 10,
+                        lineHeight: 1.4,
+                        color: 'rgba(255,255,255,.4)',
+                        margin: '0 0 8px',
                         flex: 1,
                         display: '-webkit-box',
-                        WebkitLineClamp: 2,
+                        WebkitLineClamp: 1,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                       }}
                     >
-                      {FEATURED_COPY[p.handle] ?? 'Published certificate of analysis for every batch.'}
+                      {FEATURED_COPY[p.handle] ?? 'Published COA for every batch.'}
                     </p>
 
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
-                          {formatPrice(p.price, p.currencyCode ?? 'AED')}
-                        </span>
-                        {p.oldPrice && (
-                          <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,.28)', textDecoration: 'line-through' }}>
-                            {formatPrice(p.oldPrice, p.currencyCode ?? 'AED')}
-                          </span>
-                        )}
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
+                        {formatPrice(p.price, p.currencyCode ?? 'AED')}
+                      </span>
                       <span
                         style={{
-                          fontSize: 9.5,
+                          fontSize: 8.5,
                           fontWeight: 700,
                           color: p.inStock === false ? 'rgba(255,255,255,.3)' : '#4ADE80',
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {p.inStock === false ? 'Out of stock' : 'In stock'}
+                        {p.inStock === false ? 'Out' : 'In stock'}
                       </span>
                     </div>
                   </div>
@@ -289,9 +281,9 @@ export default function BestSellersSection({
               ))}
           </div>
 
-          {/* Scroll hint (optional — shows on mobile) */}
+          {/* Scroll hint */}
           <div className="bs-scroll-hint">
-            <span>← Swipe to explore →</span>
+            <span>← Swipe →</span>
           </div>
         </div>
       </div>
@@ -303,10 +295,10 @@ export default function BestSellersSection({
         
         .bs-rail {
           display: flex;
-          gap: 14px;
+          gap: 10px;
           overflow-x: auto;
           overflow-y: visible;
-          padding: 4px 2px 12px 2px;
+          padding: 4px 2px 10px 2px;
           scroll-snap-type: x mandatory;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
@@ -319,15 +311,16 @@ export default function BestSellersSection({
         .bs-card {
           scroll-snap-align: start;
           transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
-          min-width: 260px;
-          max-width: 280px;
+          min-width: 180px;
+          max-width: 200px;
           flex: 0 0 auto;
+          height: auto;
         }
         
         .bs-card:hover {
-          transform: translateY(-4px);
+          transform: translateY(-3px);
           border-color: rgba(200,153,42,.35) !important;
-          box-shadow: 0 20px 40px rgba(0,0,0,.5);
+          box-shadow: 0 16px 32px rgba(0,0,0,.5);
         }
         
         .bs-img { 
@@ -341,24 +334,24 @@ export default function BestSellersSection({
         .bs-scroll-hint {
           display: block;
           text-align: center;
-          font-size: 11px;
-          color: rgba(255,255,255,.25);
-          letter-spacing: .05em;
-          margin-top: 4px;
+          font-size: 10px;
+          color: rgba(255,255,255,.2);
+          letter-spacing: .08em;
+          margin-top: 2px;
           animation: fadeInOut 2.5s ease infinite;
         }
         
         @keyframes fadeInOut {
-          0%, 100% { opacity: 0.3; }
+          0%, 100% { opacity: 0.25; }
           50% { opacity: 1; }
         }
         
-        /* Desktop: switch to grid */
-        @media (min-width: 900px) {
+        /* Tablet: 2-3 columns */
+        @media (min-width: 600px) and (max-width: 899px) {
           .bs-rail {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
             overflow-x: visible;
             padding: 0;
             scroll-snap-type: none;
@@ -376,12 +369,12 @@ export default function BestSellersSection({
           }
         }
         
-        /* Tablet: 2-3 columns */
-        @media (min-width: 600px) and (max-width: 899px) {
+        /* Desktop: 5 columns */
+        @media (min-width: 900px) {
           .bs-rail {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
             overflow-x: visible;
             padding: 0;
             scroll-snap-type: none;
@@ -408,7 +401,7 @@ export default function BestSellersSection({
           }
           .bs-scroll-hint {
             animation: none;
-            opacity: 0.3;
+            opacity: 0.25;
           }
         }
       `}</style>
