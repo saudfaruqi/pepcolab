@@ -180,7 +180,8 @@ export default function BestSellersSection({
                     </span>
                   </div>
 
-                  {/* Image container - fixed height so pens & vials sit at the same scale */}
+                  {/* Image container - fixed height so pens & vials sit at the same scale.
+                      Height/padding scale up on desktop via .bs-image-container media queries below. */}
                   <div
                     className="bs-image-container"
                     style={{
@@ -361,10 +362,17 @@ export default function BestSellersSection({
           50% { opacity: 1; }
         }
 
-        /* Mobile: horizontal scroll */
+        /* Mobile: horizontal scroll, no hover/tap shadow */
         @media (max-width: 599px) {
           .bs-card {
             width: clamp(140px, 40vw, 180px);
+          }
+
+          .bs-card:hover,
+          .bs-card:active,
+          .bs-card:focus {
+            box-shadow: none !important;
+            transform: none !important;
           }
 
           .bs-image-container {
@@ -389,18 +397,12 @@ export default function BestSellersSection({
             scroll-snap-align: unset;
           }
 
-        .bs-card:hover {
-          transform: translateY(-3px);
-          border-color: rgba(200,153,42,.35) !important;
-          box-shadow: 0;
-        }          
-
           .bs-scroll-hint {
             display: none;
           }
         }
 
-        /* Desktop: 5 columns */
+        /* Desktop: 5 columns, bigger/wider product imagery */
         @media (min-width: 900px) {
           .bs-rail {
             display: grid;
@@ -416,8 +418,21 @@ export default function BestSellersSection({
             scroll-snap-align: unset;
           }
 
+          .bs-image-container {
+            height: 220px !important;
+            padding: 18px !important;
+          }
+
           .bs-scroll-hint {
             display: none;
+          }
+        }
+
+        /* Extra-wide desktops: images get even more room */
+        @media (min-width: 1300px) {
+          .bs-image-container {
+            height: 260px !important;
+            padding: 22px !important;
           }
         }
 
