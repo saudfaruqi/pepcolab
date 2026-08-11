@@ -17,6 +17,7 @@ import { BUNDLES as CURATED_BUNDLES } from "@/app/data";
 
 
 import { useCountry } from '@/lib/countryContext'
+import BestSellersSection from "./BestSellersSection";
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
@@ -475,26 +476,7 @@ export default function PepcoLabPage({
       <HeroCinematic />
 
       {/* ── Products ── */}
-      <section id="catalogue" style={{ background: "#fff", padding: "clamp(48px,6vw,80px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 clamp(16px,1vw,32px)" }}>
-          <FadeUp style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(13,13,13,.4)", marginBottom: 10 }}>Catalogue</div>
-              <h2 style={{ fontSize: "clamp(32px,4vw,52px)", fontWeight: 700, letterSpacing: "-.05em", lineHeight: 1, color: "#0d0d0d" }}>Verified compounds.<br />Published data.</h2>
-            </div>
-            <Link href="/products" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: "#0d0d0d", textDecoration: "none", borderBottom: "1px solid rgba(13,13,13,.2)", paddingBottom: 2 }}>
-              View full catalogue →
-            </Link>
-          </FadeUp>
-          <div className="products-grid">
-            {!loaded && [0,1,2,3].map(i => <ProductSkeleton key={i} />)}
-            {loaded && loadError && (
-              <ProductLoadError onRetry={() => setRetryToken(t => t + 1)} />
-            )}
-            {loaded && !loadError && products.slice(0, 4).map((p) => <ProductCard key={p.shopifyId || p.id} product={p} />)}
-          </div>
-        </div>
-      </section>
+      <BestSellersSection products={products} loading={!loaded} />
 
       {/* ── Research Stacks ── */}
       <section style={{ background: "#0A0A0A", padding: "clamp(60px,8vw,140px) 0" }}>

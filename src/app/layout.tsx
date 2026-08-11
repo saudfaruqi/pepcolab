@@ -8,6 +8,7 @@ import { CartProvider } from '@/lib/cartContext'
 import CartDrawer from '@/components/CartDrawer'
 import { CountryProvider } from '@/lib/countryContext'
 import AgeLocationGate from '@/components/AgeLocationGate'
+import FloatingCalculator from '@/components/FloatingCalculator'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -274,6 +275,7 @@ export default async function RootLayout({
           <CartProvider>
             {children}
             <CartDrawer />
+            <FloatingCalculator />
           </CartProvider>
         </CountryProvider>
       </body>
