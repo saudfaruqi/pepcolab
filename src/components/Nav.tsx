@@ -62,7 +62,6 @@ export default function Nav() {
   const COUNTRY_OPTIONS: { code: string; label: string; currency: string }[] = [
     { code: 'AE', label: 'UAE',            currency: 'AED' },
     { code: 'GB', label: 'United Kingdom', currency: 'GBP' },
-    { code: 'US', label: 'United States',  currency: 'USD' },
   ]
 
   const searchRef      = useRef<HTMLInputElement>(null)
