@@ -39,7 +39,15 @@ export default function CartDrawer() {
 
   const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
   const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0)
-  const displayCurrency = detectedCurrency || currencyCode || 'AED'
+  // currencyCode comes from the cart itself — Shopify's cartBuyerIdentityUpdate
+  // recalculates every line item's price AND currency together when the
+  // country changes, so it's the only value that's guaranteed to match what
+  // `line.price`/`subtotal` are actually denominated in. detectedCurrency is
+  // just the country-picker's local label and can be a step ahead of the
+  // cart's real (async) re-pricing — using it first was showing the new
+  // currency symbol on the old currency's amount. Only fall back to it
+  // before the cart has ever loaded a currencyCode at all.
+  const displayCurrency = currencyCode || detectedCurrency || 'AED'
 
   useEffect(() => {
     const initSdk = () => {
