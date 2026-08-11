@@ -97,7 +97,7 @@ export default function BestSellersSection({
               gap: 8,
               fontSize: 13,
               fontWeight: 600,
-              color: 'rgba(255,255,255,.7)',
+              color: 'rgba(0,0,0,.7)',
               textDecoration: 'none',
               borderBottom: '1px solid rgba(255,255,255,.2)',
               paddingBottom: 3,
