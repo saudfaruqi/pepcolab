@@ -63,7 +63,7 @@ export default function BestSellersSection({
         borderBottom: '1px solid rgba(255,255,255,.06)',
       }}
     >
-      <div style={{ maxWidth: 1500, margin: '0 auto', padding: '0 clamp(12px,3vw,32px)' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 clamp(12px,3vw,42px)' }}>
 
         {/* Header */}
         <div
@@ -122,8 +122,8 @@ export default function BestSellersSection({
                     borderRadius: 14,
                     background: '#141414',
                     height: 300,
-                    minWidth: 150,
-                    maxWidth: 180,
+                    minWidth: 200,
+                    maxWidth: 260,
                     flex: '0 0 auto',
                     animation: 'pulse 1.6s ease infinite',
                     animationDelay: `${i * 0.1}s`,
@@ -329,7 +329,7 @@ export default function BestSellersSection({
         .bs-card {
           scroll-snap-align: start;
           transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
-          width: clamp(160px, 18vw, 220px);
+          width: clamp(200px, 30vw, 300px);
           height: auto;
         }
 
