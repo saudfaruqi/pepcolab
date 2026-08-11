@@ -28,7 +28,7 @@ const FEATURED_HANDLES = [
 /** Short editorial line per product. Kept factual — format and composition,
  *  not effects. These sit on the most-viewed section of the site. */
 const FEATURED_COPY: Record<string, string> = {
-  'retatrutide-uae': 'The flagship blend. Five peptides, one vial, published COA.',
+  'retatrutide-uae': 'GLP-1/GIP/glucagon triple agonist, single-vial format.',
   'klow-uae': 'The flagship blend. Five peptides, one vial, published COA.',
   'wolverine-stack-uae': 'Repair blend in pen or vial. Two formats, one batch record.',
   'glow-uae': 'Three-peptide preparation, cold-chain dispatched.',
@@ -45,7 +45,7 @@ export default function BestSellersSection({
   loading?: boolean
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  
+
   const featured = useMemo(() => {
     return FEATURED_HANDLES
       .map((handle) => products.find((p) => p.handle === handle || p.slug === handle))
@@ -121,9 +121,9 @@ export default function BestSellersSection({
                   style={{
                     borderRadius: 14,
                     background: '#141414',
-                    height: 240,
-                    minWidth: 180,
-                    maxWidth: 200,
+                    height: 300,
+                    minWidth: 150,
+                    maxWidth: 180,
                     flex: '0 0 auto',
                     animation: 'pulse 1.6s ease infinite',
                     animationDelay: `${i * 0.1}s`,
@@ -146,12 +146,11 @@ export default function BestSellersSection({
                     borderRadius: 14,
                     overflow: 'hidden',
                     position: 'relative',
-                    minWidth: 180,
-                    maxWidth: 200,
                     flex: '0 0 auto',
+                    alignSelf: 'stretch',
                   }}
                 >
-                  {/* Rank chip - smaller */}
+                  {/* Rank chip */}
                   <div
                     style={{
                       position: 'absolute',
@@ -181,15 +180,18 @@ export default function BestSellersSection({
                     </span>
                   </div>
 
-                  {/* Image - smaller */}
+                  {/* Image container - fixed height so pens & vials sit at the same scale */}
                   <div
+                    className="bs-image-container"
                     style={{
                       position: 'relative',
-                      aspectRatio: '1/1',
+                      height: 150,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: 12,
+                      padding: '12px',
+                      background: 'rgba(255,255,255,.02)',
+                      flex: '0 0 auto',
                     }}
                   >
                     {p.image ? (
@@ -198,7 +200,13 @@ export default function BestSellersSection({
                         alt={p.imageAlt || p.title}
                         loading={i < 2 ? 'eager' : 'lazy'}
                         className="bs-img"
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
+                        }}
                       />
                     ) : (
                       <div style={{ color: 'rgba(255,255,255,.2)', fontSize: 10 }}>{p.title}</div>
@@ -227,16 +235,23 @@ export default function BestSellersSection({
                     )}
                   </div>
 
-                  {/* Body - compact */}
-                  <div style={{ padding: '8px 10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  {/* Body */}
+                  <div
+                    style={{
+                      padding: '10px 12px 14px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      flex: 1,
+                    }}
+                  >
                     <h3
                       style={{
-                        fontSize: 13,
+                        fontSize: 'clamp(13px, 1.1vw, 16px)',
                         fontWeight: 700,
                         letterSpacing: '-.02em',
                         color: '#fff',
                         lineHeight: 1.1,
-                        margin: '0 0 2px',
+                        margin: '0 0 4px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -247,13 +262,14 @@ export default function BestSellersSection({
 
                     <p
                       style={{
-                        fontSize: 10,
+                        fontSize: 'clamp(10px, 0.8vw, 12px)',
                         lineHeight: 1.4,
                         color: 'rgba(255,255,255,.4)',
-                        margin: '0 0 8px',
+                        margin: '0 0 10px',
+                        minHeight: '2.8em',
                         flex: 1,
                         display: '-webkit-box',
-                        WebkitLineClamp: 1,
+                        WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                       }}
@@ -262,12 +278,12 @@ export default function BestSellersSection({
                     </p>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
+                      <span style={{ fontSize: 'clamp(15px, 1.2vw, 18px)', fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
                         {formatPrice(p.price, p.currencyCode ?? 'AED')}
                       </span>
                       <span
                         style={{
-                          fontSize: 8.5,
+                          fontSize: 'clamp(8.5px, 0.7vw, 10px)',
                           fontWeight: 700,
                           color: p.inStock === false ? 'rgba(255,255,255,.3)' : '#4ADE80',
                           whiteSpace: 'nowrap',
@@ -292,10 +308,11 @@ export default function BestSellersSection({
         .bs-wrapper {
           position: relative;
         }
-        
+
         .bs-rail {
           display: flex;
-          gap: 10px;
+          align-items: stretch;
+          gap: clamp(10px, 1.5vw, 20px);
           overflow-x: auto;
           overflow-y: visible;
           padding: 4px 2px 10px 2px;
@@ -303,34 +320,32 @@ export default function BestSellersSection({
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
-        
+
         .bs-rail::-webkit-scrollbar {
           display: none;
         }
-        
+
         .bs-card {
           scroll-snap-align: start;
           transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
-          min-width: 180px;
-          max-width: 200px;
-          flex: 0 0 auto;
+          width: clamp(160px, 18vw, 220px);
           height: auto;
         }
-        
+
         .bs-card:hover {
           transform: translateY(-3px);
           border-color: rgba(200,153,42,.35) !important;
           box-shadow: 0 16px 32px rgba(0,0,0,.5);
         }
-        
-        .bs-img { 
-          transition: transform .45s ease; 
+
+        .bs-img {
+          transition: transform .45s ease;
         }
-        
-        .bs-card:hover .bs-img { 
-          transform: scale(1.04); 
+
+        .bs-card:hover .bs-img {
+          transform: scale(1.04);
         }
-        
+
         .bs-scroll-hint {
           display: block;
           text-align: center;
@@ -340,64 +355,72 @@ export default function BestSellersSection({
           margin-top: 2px;
           animation: fadeInOut 2.5s ease infinite;
         }
-        
+
         @keyframes fadeInOut {
           0%, 100% { opacity: 0.25; }
           50% { opacity: 1; }
         }
-        
-        /* Tablet: 2-3 columns */
+
+        /* Mobile: horizontal scroll */
+        @media (max-width: 599px) {
+          .bs-card {
+            width: clamp(140px, 40vw, 180px);
+          }
+
+          .bs-image-container {
+            height: 120px !important;
+            padding: 8px !important;
+          }
+        }
+
+        /* Tablet: 2-3 columns grid */
         @media (min-width: 600px) and (max-width: 899px) {
           .bs-rail {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
             overflow-x: visible;
             padding: 0;
             scroll-snap-type: none;
           }
-          
+
           .bs-card {
-            min-width: unset;
-            max-width: unset;
-            flex: unset;
+            width: 100%;
             scroll-snap-align: unset;
           }
-          
+
           .bs-scroll-hint {
             display: none;
           }
         }
-        
+
         /* Desktop: 5 columns */
         @media (min-width: 900px) {
           .bs-rail {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 18px;
+            gap: clamp(16px, 2vw, 24px);
             overflow-x: visible;
             padding: 0;
             scroll-snap-type: none;
           }
-          
+
           .bs-card {
-            min-width: unset;
-            max-width: unset;
-            flex: unset;
+            width: 100%;
             scroll-snap-align: unset;
           }
-          
+
           .bs-scroll-hint {
             display: none;
           }
         }
-        
+
         @media (prefers-reduced-motion: reduce) {
-          .bs-card, .bs-img { 
-            transition: none !important; 
+          .bs-card, .bs-img {
+            transition: none !important;
           }
-          .bs-card:hover { 
-            transform: none; 
+          .bs-card:hover {
+            transform: none;
           }
           .bs-scroll-hint {
             animation: none;
