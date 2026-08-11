@@ -49,36 +49,85 @@ export default function CartDrawer() {
   // before the cart has ever loaded a currencyCode at all.
   const displayCurrency = currencyCode || detectedCurrency || 'AED'
 
+  // STRABL SDK READINESS
+  // --------------------
+  // BUG THIS FIXES: the old version called initSdk() on mount and retried
+  // exactly ONCE after 1000ms, then gave up forever. The SDK is loaded from a
+  // third-party CDN in layout.tsx, so on any slow connection — or any page
+  // heavy enough to delay the script — `window.StrablCheckout` was still
+  // undefined at both attempts. `sdkReady` then stayed false permanently and
+  // the checkout button, which is `disabled={... || !sdkReady}`, could never
+  // be pressed. The cart looked fine; checkout was simply dead.
+  //
+  // Now: poll on a short interval with a hard deadline, and surface a real
+  // error if the SDK genuinely never arrives instead of failing silently.
   useEffect(() => {
-    const initSdk = () => {
-      // @ts-ignore
-      if (window.StrablCheckout) {
-        const platformUuid = process.env.NEXT_PUBLIC_STRABL_PLATFORM_UUID
-        const environment = process.env.NEXT_PUBLIC_STRABL_ENVIRONMENT || 'production'
-        
-        if (platformUuid) {
-          try {
-            // @ts-ignore
-            window.StrablCheckout.initialize({
-              platformUuid,
-              environment,
-              storeName: 'PepcoLab',
-              storeUrl: process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin,
-              storeLogo: '/pepcologo.png',
-              buttonSelector: '#checkout-button',
-            })
-            setSdkReady(true)
-          } catch (err) {
-            console.error('[CartDrawer] STRABL init error:', err)
-            setSdkError('Failed to initialize payment system')
-          }
-        }
-      }
+    let cancelled = false
+    let interval: ReturnType<typeof setInterval> | undefined
+    let deadline: ReturnType<typeof setTimeout> | undefined
+
+    const platformUuid = process.env.NEXT_PUBLIC_STRABL_PLATFORM_UUID
+    const environment = process.env.NEXT_PUBLIC_STRABL_ENVIRONMENT || 'production'
+
+    if (!platformUuid) {
+      setSdkError('STRABL configuration is missing. Please contact support.')
+      return
     }
 
-    initSdk()
-    const timeout = setTimeout(initSdk, 1000)
-    return () => clearTimeout(timeout)
+    const stop = () => {
+      if (interval) clearInterval(interval)
+      if (deadline) clearTimeout(deadline)
+    }
+
+    const tryInit = (): boolean => {
+      if (cancelled) return true
+      // @ts-ignore
+      if (!window.StrablCheckout) return false
+
+      try {
+        // @ts-ignore
+        window.StrablCheckout.initialize({
+          platformUuid,
+          environment,
+          storeName: 'PepcoLab',
+          storeUrl: process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin,
+          storeLogo: '/pepcologo.png',
+          buttonSelector: '#checkout-button',
+        })
+        setSdkReady(true)
+      } catch (err) {
+        console.error('[CartDrawer] STRABL init error:', err)
+        setSdkError('Failed to initialize payment system')
+      }
+      return true
+    }
+
+    if (!tryInit()) {
+      interval = setInterval(() => {
+        if (tryInit()) stop()
+      }, 250)
+
+      // 20s is generous even on a bad mobile connection. If the SDK hasn't
+      // appeared by then it isn't coming — a CDN outage, an ad blocker, or a
+      // CSP rule — and the customer needs to be told rather than left
+      // clicking a dead button.
+      deadline = setTimeout(() => {
+        stop()
+        if (!cancelled) {
+          // @ts-ignore
+          if (!window.StrablCheckout) {
+            setSdkError(
+              'Payment system could not be loaded. Disable any ad blocker and refresh, or contact us to complete your order.'
+            )
+          }
+        }
+      }, 20000)
+    }
+
+    return () => {
+      cancelled = true
+      stop()
+    }
   }, [])
 
   const handleCheckout = async () => {
