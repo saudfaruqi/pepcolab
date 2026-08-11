@@ -13,7 +13,8 @@ import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { CATEGORIES as REAL_CATEGORIES, BUNDLES as CURATED_BUNDLES } from "@/app/data";
+import { BUNDLES as CURATED_BUNDLES } from "@/app/data";
+
 
 import { useCountry } from '@/lib/countryContext'
 
@@ -112,6 +113,23 @@ const AREA_ACCENTS: Record<string, string> = {
   accessories:   "#4ADE80",
   immune:        "#FBBF24",
 }
+
+
+// Display labels for the category tags that exist in Shopify. A tag with no
+// entry here falls back to a title-cased version of its slug, so adding a new
+// category in Shopify never renders a blank card.
+const AREA_LABELS: Record<string, string> = {
+  metabolic:     "Metabolic",
+  hormonal:      "Hormonal",
+  cognitive:     "Cognitive",
+  recovery:      "Recovery",
+  "anti-ageing": "Anti-Ageing",
+  accessories:   "Accessories",
+  immune:        "Immune",
+}
+
+// Market tags are catalogue plumbing, not research categories — never render.
+const MARKET_TAGS = new Set(["uae", "uk"])
 
 // ─── Vial SVG ─────────────────────────────────────────────────────────────────
 
@@ -260,6 +278,31 @@ export default function PepcoLabPage({
   }, [country, ready, retryToken]);
 
   const storeCurrency = products[0]?.currencyCode ?? 'AED';
+
+
+// Derived from the products actually loaded for this market, so the cards
+  // and their counts follow the visitor's catalogue automatically. Replaces
+  // the hardcoded CATEGORIES array in data.ts — a static list can't switch
+  // catalogues, which is why UK visitors were seeing UAE categories.
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of products) {
+      for (const tag of p.tags ?? []) {
+        const slug = tag.toLowerCase()
+        if (MARKET_TAGS.has(slug)) continue
+        counts.set(slug, (counts.get(slug) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()]
+      .map(([slug, count]) => ({
+        slug,
+        count,
+        label:
+          AREA_LABELS[slug] ??
+          slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+  }, [products])  
 
   const addToCart = useCallback((product: NormalisedProduct) => {
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
@@ -731,11 +774,11 @@ export default function PepcoLabPage({
               <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.35)", marginBottom:16 }}>Research Categories</div>
               <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#fff" }}>Explore research<br />focus areas.</h2>
             </div>
-            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{REAL_CATEGORIES.filter(c => c.slug !== "all").length} Categories</span>
+            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{categories.length} Categories</span>
           </FadeUp>
 
           <div className="areas-grid">
-            {REAL_CATEGORIES.filter(c => c.slug !== "all").map((c, i) => {
+            {categories.map((c, i) => {
               const accent = AREA_ACCENTS[c.slug] ?? "#fff"
               return (
                 <FadeUp key={c.slug} delay={i * 0.06}>

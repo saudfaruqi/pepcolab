@@ -2,15 +2,20 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductVariantView from '@/components/ProductVariantView'
+import ProductCard from '@/components/ProductCard'
 
 import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 
 const SITE_URL = 'https://www.pepcolab.com'
+
+/** Catalogue plumbing, not research categories — never used for matching. */
+const MARKET_TAGS = new Set(['uae', 'uk'])
 
 interface Props {
   params: { slug: string }
@@ -104,6 +109,30 @@ function getOneLiner(description?: string): string {
   return description.slice(0, 120).trim() + '…'
 }
 
+/** The research category tag, ignoring market tags. */
+function categoryTag(tags: string[] = []): string | undefined {
+  return tags.map((t) => t.toLowerCase()).find((t) => !MARKET_TAGS.has(t))
+}
+
+/**
+ * Related products: same research category first, then anything else to fill
+ * the row. The top-up matters — several categories (immune, accessories) have
+ * only 2-3 products, so a category-only match would render a lonely single
+ * card or an empty section on those pages.
+ */
+function pickRelated(all: any[], current: any, limit = 4) {
+  const cat = categoryTag(current.tags)
+  const pool = all.filter((p) => p.handle !== current.handle)
+
+  const sameCategory = cat
+    ? pool.filter((p) => (p.tags ?? []).map((t: string) => t.toLowerCase()).includes(cat))
+    : []
+
+  const rest = pool.filter((p) => !sameCategory.includes(p))
+
+  return [...sameCategory, ...rest].slice(0, limit)
+}
+
 function buildJsonLd(product: any) {
   const url = `${SITE_URL}/products/${product.handle}`
 
@@ -156,7 +185,12 @@ function buildJsonLd(product: any) {
 
 export default async function ProductPage({ params }: Props) {
   // Built in AED. ProductActions swaps in the visitor's currency client-side.
-  const shopifyProduct = await getProductByHandle(params.slug, 'AE')
+  // Both calls run in parallel — the related list shouldn't add a serial
+  // round-trip to the page's render time.
+  const [shopifyProduct, allProducts] = await Promise.all([
+    getProductByHandle(params.slug, 'AE'),
+    getProducts(40, 'AE').catch(() => [] as any[]),
+  ])
 
   // Real 404 (renders src/app/not-found.tsx) rather than a 200 with a
   // "not found" message, which Google indexes as a thin duplicate page.
@@ -175,8 +209,8 @@ export default async function ProductPage({ params }: Props) {
     name: shopifyProduct.title,
     shortName: shopifyProduct.title,
     oneLiner: getOneLiner(shopifyProduct.description),
-    category: shopifyProduct.tags?.[0] || '',
-    categorySlug: shopifyProduct.tags?.[0]?.toLowerCase().replace(/\s+/g, '-') || '',
+    category: categoryTag(shopifyProduct.tags) || '',
+    categorySlug: categoryTag(shopifyProduct.tags) || '',
     badge: undefined as undefined,
     color: {
       bg: '#f5f7fb', accent: '#2563eb', pill: '#dbeafe', pillText: '#1d4ed8',
@@ -185,7 +219,8 @@ export default async function ProductPage({ params }: Props) {
   }
 
   const jsonLd = buildJsonLd(shopifyProduct)
-
+  const related = pickRelated(allProducts, shopifyProduct, 4)
+  const relatedCategory = categoryTag(shopifyProduct.tags)
 
   return (
     <>
@@ -214,9 +249,82 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
 
-
-
         <ProductVariantView product={product} />
+
+        {/* ── Related products ──────────────────────────────────────────────
+            Server-rendered from the same catalogue fetch, so these are real
+            internal links in the HTML rather than client-injected ones. That
+            matters for SEO: product pages otherwise link only up to
+            /products, leaving the deep catalogue thinly connected. */}
+        {related.length > 0 && (
+          <section
+            style={{
+              borderTop: '1px solid #f0f0f0',
+              background: '#fafafa',
+              padding: '48px 0 72px',
+            }}
+          >
+            <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                  gap: 16,
+                  flexWrap: 'wrap',
+                  marginBottom: 24,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: '.16em',
+                      textTransform: 'uppercase',
+                      color: '#9ca3af',
+                      marginBottom: 8,
+                    }}
+                  >
+                    You may also need
+                  </div>
+                  <h2
+                    style={{
+                      fontSize: 'clamp(22px, 3vw, 32px)',
+                      fontWeight: 800,
+                      letterSpacing: '-0.03em',
+                      color: '#0d0d0d',
+                      lineHeight: 1.1,
+                      margin: 0,
+                    }}
+                  >
+                    Related compounds
+                  </h2>
+                </div>
+
+                <Link
+                  href={relatedCategory ? `/products?cat=${relatedCategory}#catalogue` : '/products'}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#0d0d0d',
+                    textDecoration: 'none',
+                    borderBottom: '1px solid rgba(13,13,13,.2)',
+                    paddingBottom: 2,
+                  }}
+                >
+                  View all →
+                </Link>
+              </div>
+
+              <div className="pp-related-grid">
+                {related.map((p: any) => (
+                  <ProductCard key={p.shopifyId || p.id} product={p} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Layout classes used by ProductVariantView live here so the grid
             stays with the route rather than being duplicated per component. */}
@@ -266,6 +374,14 @@ export default async function ProductPage({ params }: Props) {
             margin-bottom: 4px;
           }
 
+          /* Matches .products-grid on the homepage so cards line up the same
+             way across the site. */
+          .pp-related-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+
           @media (min-width: 900px) {
             .pp-outer {
               grid-template-columns: 1fr 1fr;
@@ -284,6 +400,11 @@ export default async function ProductPage({ params }: Props) {
             }
 
             .pp-trust-mobile { display: none; }
+
+            .pp-related-grid {
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 20px;
+            }
           }
 
           /* Shopify HTML description */
