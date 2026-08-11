@@ -2,32 +2,42 @@
 import { useRef, useEffect } from 'react'
 import { Truck, ShieldCheck, BadgeCheck, CreditCard } from 'lucide-react'
 
+// FIX: this block previously claimed "FDA-Approved Medications Only" and
+// "Licensed for US Pharmacists" / "prescription upload" review — none of
+// which is true for a research-use-only peptide catalogue, and both
+// directly contradict the "research use only, not for human consumption"
+// positioning stated on /about, /terms and the product pages. Leaving
+// this live is a real regulatory exposure (implying FDA approval and a
+// pharmacist-reviewed prescription pathway for products that are neither)
+// on top of being a brand-trust problem the moment a buyer compares the
+// homepage to the small print. Replaced with claims that are actually true
+// of this storefront.
 const FEATURES = [
   {
     icon: Truck,
-    title: 'Next-Day Nationwide Delivery',
-    desc: 'Cold-chain tracked dispatch across the UK. Order before 2pm for same-day shipping.',
+    title: 'Cold-Chain Dispatch — UK & UAE',
+    desc: 'Temperature-controlled packaging on every order, tracked door-to-door across both markets.',
     color: '#EBF2FF',
     accent: '#1A56DB',
   },
   {
     icon: ShieldCheck,
-    title: 'FDA-Approved Medications Only',
-    desc: 'Every compound passes independent HPLC analysis and mass-spec verification before dispatch.',
+    title: 'Independently Tested, Every Batch',
+    desc: 'Third-party HPLC purity analysis by Eurofins UK, with the certificate published per lot — not asserted.',
     color: '#E6F5EE',
     accent: '#0A7B45',
   },
   {
     icon: BadgeCheck,
-    title: 'Licensed for US Pharmacists',
-    desc: 'Our team of licensed pharmacists reviews every order and prescription upload personally.',
+    title: 'Sourced from Denver, Colorado, USA',
+    desc: 'Manufactured and lab-tested for research use only — not for human or veterinary consumption.',
     color: '#F5F0FE',
     accent: '#7C3AED',
   },
   {
     icon: CreditCard,
-    title: 'Flexible Payments & Support',
-    desc: 'All major payment methods accepted. 24/7 customer support via live chat, phone, and email.',
+    title: 'Secure Card Payments',
+    desc: 'Visa, Mastercard and American Express accepted via STRABL, our PCI-compliant payment processor.',
     color: '#FFF3E8',
     accent: '#C05621',
   },

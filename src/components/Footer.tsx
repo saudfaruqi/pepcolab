@@ -276,6 +276,38 @@ export default function Footer() {
           background: #22c55e;
           flex-shrink: 0;
         }
+        .footer-payments {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+          padding: 20px 0;
+          border-top: 1px solid rgba(255,255,255,.08);
+        }
+        .footer-payments-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,.35);
+          flex-shrink: 0;
+        }
+        .footer-payments-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .footer-payment-chip {
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(255,255,255,.6);
+          border: 1px solid rgba(255,255,255,.14);
+          background: rgba(255,255,255,.04);
+          padding: 5px 11px;
+          border-radius: 6px;
+          letter-spacing: .01em;
+        }
       `}</style>
 
       {/* ── Top section ── */}
@@ -337,6 +369,28 @@ export default function Footer() {
             <div className="footer-stat-label">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* ── Payment methods ──
+          Requested by the business: show accepted card schemes near
+          checkout trust signals. Deliberately NOT using the official
+          Visa/Mastercard/Amex logo artwork here — those are trademarked
+          marks with usage guidelines (colour, clear-space, minimum size)
+          that a hand-rolled SVG will violate. This renders each brand as
+          a plain text chip instead, which is what's actually needed to
+          reassure a buyer at checkout ("do you take my card?") without
+          any brand-guideline risk. Swap in the official downloadable SVGs
+          from each network's brand-asset page if a "real logo" look is
+          wanted — don't recreate them by hand. */}
+      <div className="footer-inner">
+        <div className="footer-payments">
+          <span className="footer-payments-label">We accept</span>
+          <div className="footer-payments-row">
+            {['Visa', 'Mastercard', 'American Express'].map(brand => (
+              <span key={brand} className="footer-payment-chip">{brand}</span>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Bottom bar ── */}

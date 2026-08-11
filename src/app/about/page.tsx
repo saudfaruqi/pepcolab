@@ -183,6 +183,12 @@ export default function AboutPage() {
               </p>
 
               <p>
+                Our compounds are manufactured and sourced from Denver, Colorado, USA, then batch-tested
+                by Eurofins UK before being released for dispatch to the UK and UAE — the same supply
+                chain and documentation standard regardless of which market an order ships to.
+              </p>
+
+              <p>
                 We serve both the UK and UAE from that same standard. Pricing and currency adapt to
                 where you're ordering from (GBP for UK researchers, AED for UAE researchers), but the
                 testing and documentation requirement behind every product does not change between
