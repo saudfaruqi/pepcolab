@@ -2,8 +2,18 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { useCountry } from '@/lib/countryContext'
 
 export default function HeroCinematic() {
+  // FIX: the dispatch stat below hardcoded "UK Dispatch" regardless of who
+  // was looking at it — inconsistent with the footer, which already reads
+  // "Cold-Chain Dispatch" market-neutrally, and a bad first impression for
+  // a UAE visitor on a site that otherwise treats UAE as a first-class
+  // market (see AgeLocationGate, countryContext.tsx). Now reads the same
+  // resolved country every other component on the page already uses.
+  const { country } = useCountry()
+  const dispatchLabel = country === 'GB' ? 'UK Dispatch' : 'UAE Dispatch'
+
   useEffect(() => {
     ;(async () => {
       try {
@@ -101,6 +111,13 @@ export default function HeroCinematic() {
               Kept the tagline as a smaller kicker above the H1 so the brand
               voice isn't lost, and moved the actual keyword-bearing copy
               into the H1 itself.
+
+              FIX: added explicit "UK & UAE" — the stated ranking goal is
+              #1 for "peptides in UAE and UK", and neither the kicker nor
+              the H1 previously said either market by name anywhere above
+              the fold. The 24h/UK-only stat further down was the only
+              geographic signal on the whole first screen, and it excluded
+              UAE entirely (see the dispatchLabel fix above).
             */}
             <div
               className="hero-fade"
@@ -113,7 +130,7 @@ export default function HeroCinematic() {
                 marginBottom: 14,
               }}
             >
-              Research Without Compromise
+              Research Without Compromise · UK &amp; UAE
             </div>
 
             <h1
@@ -148,7 +165,8 @@ export default function HeroCinematic() {
               Premium research compounds manufactured to exceptional
               standards and verified through independent laboratory testing.
               Transparent batch data, pharmaceutical-grade quality, and
-              temperature-controlled fulfilment.
+              temperature-controlled fulfilment — shipped across the UK
+              and UAE.
             </p>
 
             {/* CTA Buttons */}
@@ -250,7 +268,7 @@ export default function HeroCinematic() {
                     fontSize: 12,
                   }}
                 >
-                  UK Dispatch
+                  {dispatchLabel}
                 </div>
               </div>
 
