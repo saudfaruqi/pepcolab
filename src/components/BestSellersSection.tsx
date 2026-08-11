@@ -35,7 +35,7 @@ const FEATURED_COPY: Record<string, string> = {
   'selank-uae': 'Heptapeptide, available as vial, pen or nasal spray.',
 }
 
-const RANK_LABELS = ['Best seller', 'Most reordered', 'Staff pick', 'Trending']
+const RANK_LABELS = ['Best seller', 'Most reordered', 'Staff pick', 'Trending', 'Popular']
 
 export default function BestSellersSection({
   products,
