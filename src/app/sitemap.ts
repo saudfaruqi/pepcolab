@@ -27,6 +27,7 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/research',     changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/guides',       changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/tools',        changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/tools/reconstitution-calculator', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/about',        changeFrequency: 'monthly', priority: 0.6 },
   { path: '/faq',          changeFrequency: 'monthly', priority: 0.6 },
   { path: '/contact',      changeFrequency: 'monthly', priority: 0.5 },
