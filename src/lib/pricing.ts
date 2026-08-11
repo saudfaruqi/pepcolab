@@ -51,7 +51,7 @@ export const MARKET_TAG: Record<Market, string> = {
 // the result is empty". That kind of auto-detection means tagging a single
 // product `uk` silently strips the UK storefront down to one item with no
 // deploy and no warning. An explicit switch fails predictably.
-export const UK_CATALOGUE_LIVE = false
+export const UK_CATALOGUE_LIVE = true
 
 /**
  * Fixed display rate — deliberately NOT a live FX feed.
