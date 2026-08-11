@@ -478,100 +478,224 @@ export default function PepcoLabPage({
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
 
-      {/* ── Research Stacks ── */}
-      <section style={{ background: "#0A0A0A", padding: "clamp(60px,8vw,140px) 0" }}>
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px,4vw,60px)" }}>
-          <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(40px,6vw,90px)" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.35)", marginBottom: 16 }}>Research Stacks</div>
-            <h2 style={{ fontSize: "clamp(36px,6vw,84px)", lineHeight: ".92", letterSpacing: "-.07em", color: "#fff", fontWeight: 700, margin: "0 0 16px" }}>Purpose-built<br />compound stacks.</h2>
-            <p style={{ fontSize: "clamp(14px,2vw,17px)", lineHeight: 1.85, color: "rgba(255,255,255,.55)", maxWidth: 520 }}>Curated combinations, independently tested, bundled for specific research objectives. 10% saving versus individual pricing.</p>
-          </FadeUp>
+{/* ── Research Stacks ── */}
+<section style={{ background: "#0A0A0A", padding: "clamp(60px,8vw,140px) 0" }}>
+  <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px,4vw,60px)" }}>
+    <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(32px,6vw,90px)" }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.35)", marginBottom: 16 }}>Research Stacks</div>
+      <h2 style={{ fontSize: "clamp(32px,6vw,84px)", lineHeight: ".92", letterSpacing: "-.07em", color: "#fff", fontWeight: 700, margin: "0 0 16px" }}>
+        Purpose-built<br />compound stacks.
+      </h2>
+      <p style={{ fontSize: "clamp(14px,2vw,17px)", lineHeight: 1.85, color: "rgba(255,255,255,.55)", maxWidth: 520 }}>
+        Curated combinations, independently tested, bundled for specific research objectives. 10% saving versus individual pricing.
+      </p>
+    </FadeUp>
 
-          {loadError ? (
-            <div style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>Stacks are unavailable right now — reload the catalogue above to try again.</div>
-          ) : products.length === 0 ? (
-            <div className="stacks-grid">
-              {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:28, height:420, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
-            </div>
-          ) : BUNDLES.length === 0 ? null : (
-            <div className="stacks-grid">
-              {BUNDLES.map((b, bi) => (
-                <FadeUp key={b.id} delay={bi * 0.1}>
-                  <div className="stack-card" style={{ background: "#111111", border: "1px solid rgba(255,255,255,.07)", borderRadius: 24, overflow: "hidden" }}>
-
-                    {/* Visual */}
-                    <div style={{
-                      background: "#161616",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 20,
-                      padding: "32px 24px",
-                      minHeight: 180,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}>
-                      <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse at 50% 110%, ${b.products[0]?.from ?? "#3b82f6"}28, transparent 65%)` }} />
-                      {b.products.map((p, pi) => (
-                        <div key={p.id} style={{
-                          width: 72, height: 72,
-                          borderRadius: 14,
-                          overflow: "hidden",
-                          background: "rgba(255,255,255,.06)",
-                          flexShrink: 0,
-                          position: "relative", zIndex: 1,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          animation: `floatVial 3s ease ${pi * .4}s infinite`,
-                        }}>
-                          {p.image
-                            ? <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", padding:6 }} />
-                            : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="md" />
-                          }
-                        </div>
-                      ))}
-                    </div>
-
-                    <div style={{ padding: "22px 22px 26px" }}>
-                      {/* Compound pills */}
-                      <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
-                        {b.products.map(p => (
-                          <span key={p.id} style={{ fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", background:"rgba(255,255,255,.07)", color:"rgba(255,255,255,.45)", padding:"3px 9px", borderRadius:999 }}>{p.shortName}</span>
-                        ))}
-                        <span style={{ fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", background:"rgba(200,153,42,.15)", color:"#C8992A", padding:"3px 9px", borderRadius:999 }}>Save 10%</span>
-                      </div>
-
-                      <h3 style={{ fontSize:"clamp(20px,4vw,26px)", lineHeight:1.05, letterSpacing:"-.04em", color:"#fff", margin:"0 0 10px", fontWeight:700 }}>{b.name}</h3>
-                      <p style={{ color:"rgba(255,255,255,.5)", lineHeight:1.75, fontSize:13, margin:"0 0 20px" }}>{b.desc}</p>
-
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, paddingTop:18, borderTop:"1px solid rgba(255,255,255,.07)" }}>
-                        <div style={{ minWidth:0 }}>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:7, flexWrap:"wrap" }}>
-                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>
-                              {formatPrice(b.price, storeCurrency)}
-                            </span>
-                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>
-                              {formatPrice(b.originalPrice, storeCurrency)}
-                            </span>
-                          </div>
-                          <div style={{ fontSize:11, color:"rgba(255,255,255,.28)", marginTop:2 }}>{b.products.length} compounds · COA included</div>
-                        </div>
-                        <button
-                          onClick={() => addBundleToCart(b)}
-                          style={{ height:40, padding:"0 16px", borderRadius:999, border:"1px solid rgba(255,255,255,.14)", background:"rgba(255,255,255,.06)", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", letterSpacing:".04em", transition:".2s ease", whiteSpace:"nowrap", flexShrink:0 }}
-                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.12)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.06)"; }}
-                        >
-                          Add Stack →
-                        </button>
-                      </div>
-                    </div>
+    {loadError ? (
+      <div style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>Stacks are unavailable right now — reload the catalogue above to try again.</div>
+    ) : products.length === 0 ? (
+      <div className="stacks-grid">
+        {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:24, height:380, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
+      </div>
+    ) : BUNDLES.length === 0 ? null : (
+      <div className="stacks-grid">
+        {BUNDLES.map((b, bi) => (
+          <FadeUp key={b.id} delay={bi * 0.1}>
+            <div className="stack-card" style={{ 
+              background: "#111111", 
+              border: "1px solid rgba(255,255,255,.07)", 
+              borderRadius: 20, 
+              overflow: "hidden",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}>
+              {/* Visual - more compact */}
+              <div style={{
+                background: "#161616",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 16,
+                padding: "clamp(20px,3vw,32px) 16px",
+                minHeight: 140,
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse at 50% 110%, ${b.products[0]?.from ?? "#3b82f6"}28, transparent 65%)` }} />
+                {b.products.map((p, pi) => (
+                  <div key={p.id} style={{
+                    width: "clamp(56px,8vw,72px)",
+                    height: "clamp(56px,8vw,72px)",
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    background: "rgba(255,255,255,.06)",
+                    flexShrink: 0,
+                    position: "relative", 
+                    zIndex: 1,
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center",
+                    animation: `floatVial 3s ease ${pi * .4}s infinite`,
+                  }}>
+                    {p.image
+                      ? <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", padding:4 }} />
+                      : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="sm" />
+                    }
                   </div>
-                </FadeUp>
-              ))}
+                ))}
+              </div>
+
+              <div style={{ padding: "clamp(16px,2vw,22px) clamp(16px,2vw,22px) clamp(20px,2vw,26px)", flex: 1, display: "flex", flexDirection: "column" }}>
+                {/* Compound pills */}
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom: 10 }}>
+                  {b.products.map(p => (
+                    <span key={p.id} style={{ 
+                      fontSize: 9.5, 
+                      fontWeight: 700, 
+                      letterSpacing: ".06em", 
+                      textTransform: "uppercase", 
+                      background: "rgba(255,255,255,.07)", 
+                      color: "rgba(255,255,255,.45)", 
+                      padding: "2px 8px", 
+                      borderRadius: 999 
+                    }}>{p.shortName}</span>
+                  ))}
+                  <span style={{ 
+                    fontSize: 9.5, 
+                    fontWeight: 700, 
+                    letterSpacing: ".06em", 
+                    textTransform: "uppercase", 
+                    background: "rgba(200,153,42,.15)", 
+                    color: "#C8992A", 
+                    padding: "2px 8px", 
+                    borderRadius: 999 
+                  }}>Save 10%</span>
+                </div>
+
+                <h3 style={{ 
+                  fontSize: "clamp(18px,3vw,24px)", 
+                  lineHeight: 1.1, 
+                  letterSpacing: "-.04em", 
+                  color: "#fff", 
+                  margin: "0 0 6px", 
+                  fontWeight: 700 
+                }}>{b.name}</h3>
+                
+                <p style={{ 
+                  color: "rgba(255,255,255,.5)", 
+                  lineHeight: 1.6, 
+                  fontSize: "clamp(12px,1.2vw,13px)", 
+                  margin: "0 0 16px",
+                  flex: 1,
+                }}>{b.desc}</p>
+
+                <div style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  alignItems: "center", 
+                  gap: 10, 
+                  paddingTop: 14, 
+                  borderTop: "1px solid rgba(255,255,255,.07)" 
+                }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+                      <span style={{ 
+                        fontSize: "clamp(20px,3vw,26px)", 
+                        fontWeight: 700, 
+                        color: "#fff", 
+                        letterSpacing: "-.04em" 
+                      }}>
+                        {formatPrice(b.price, storeCurrency)}
+                      </span>
+                      <span style={{ 
+                        fontSize: 12, 
+                        color: "rgba(255,255,255,.28)", 
+                        textDecoration: "line-through" 
+                      }}>
+                        {formatPrice(b.originalPrice, storeCurrency)}
+                      </span>
+                    </div>
+                    <div style={{ 
+                      fontSize: "clamp(10px,1vw,11px)", 
+                      color: "rgba(255,255,255,.28)", 
+                      marginTop: 1 
+                    }}>{b.products.length} compounds · COA included</div>
+                  </div>
+                  <button
+                    onClick={() => addBundleToCart(b)}
+                    style={{ 
+                      height: 38, 
+                      padding: "0 clamp(12px,2vw,16px)", 
+                      borderRadius: 999, 
+                      border: "1px solid rgba(255,255,255,.14)", 
+                      background: "rgba(255,255,255,.06)", 
+                      color: "#fff", 
+                      fontSize: "clamp(11px,1vw,12px)", 
+                      fontWeight: 700, 
+                      cursor: "pointer", 
+                      letterSpacing: ".04em", 
+                      transition: ".2s ease", 
+                      whiteSpace: "nowrap", 
+                      flexShrink: 0 
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.12)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.06)"; }}
+                  >
+                    Add Stack →
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </FadeUp>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>{`
+  .stacks-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  @media (min-width: 480px) {
+    .stacks-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  }
+  
+  @media (min-width: 900px) {
+    .stacks-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+  }
+  
+  .stack-card {
+    transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  
+  .stack-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(200,153,42,.25) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,.5);
+  }
+  
+  @keyframes floatVial {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .stack-card { transition: none !important; }
+    .stack-card:hover { transform: none; }
+    [style*="animation: floatVial"] { animation: none !important; }
+  }
+`}</style>
 
       {/* ── Why Pepco — 4-up diff strip ── */}
       <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
