@@ -191,12 +191,22 @@ function FadeUp({ children, delay = 0, style = {} }: { children: React.ReactNode
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function PepcoLabPage() {
+export default function PepcoLabPage({
+  initialProducts,
+  initialCountry,
+}: {
+  /** Product data already fetched server-side in page.tsx for the visitor's
+   *  resolved country — lets the first paint show real products instead of
+   *  loading skeletons, and is what makes this component safe to render
+   *  without `dynamic(..., { ssr: false })`. */
+  initialProducts?: NormalisedProduct[]
+  initialCountry?: string
+}) {
   const [email,       setEmail]       = useState("");
   const [emailError,  setEmailError]  = useState<string | null>(null); // FIX #7
   const [subbed,      setSubbed]      = useState(false);
-  const [products,    setProducts]    = useState<NormalisedProduct[]>([]);
-  const [loaded,      setLoaded]      = useState(false);
+  const [products,    setProducts]    = useState<NormalisedProduct[]>(initialProducts ?? []);
+  const [loaded,      setLoaded]      = useState(Boolean(initialProducts && initialProducts.length > 0));
   const [loadError,   setLoadError]   = useState(false); // FIX #2
   const [retryToken,  setRetryToken]  = useState(0);      // FIX #2: bump to re-trigger fetch
 
@@ -205,8 +215,26 @@ export default function PepcoLabPage() {
 
   const { country, ready } = useCountry()
 
+  // Skip the client fetch on the very first run if page.tsx already fetched
+  // matching data server-side for this exact country — avoids an
+  // instant, pointless refetch of what's already on screen. Any later
+  // country change (via the picker in AgeLocationGate) still refetches
+  // normally, since `hasHydrated.current` is only true once.
+  const hasHydrated = useRef(false);
+
   useEffect(() => {
     if (!ready) return;
+
+    if (
+      !hasHydrated.current &&
+      initialProducts && initialProducts.length > 0 &&
+      initialCountry && country === initialCountry
+    ) {
+      hasHydrated.current = true;
+      return;
+    }
+    hasHydrated.current = true;
+
     let cancelled = false;
     setLoaded(false);
     setLoadError(false);

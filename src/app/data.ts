@@ -1,3 +1,6 @@
+
+
+
 // data.ts
 export interface Product {
   id: string
@@ -152,3 +155,4 @@ export const REVIEWS = [
     rating: 5,
   },
 ]
+

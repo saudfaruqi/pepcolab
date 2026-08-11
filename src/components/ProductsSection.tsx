@@ -41,9 +41,18 @@ const KNOWN_FORMATS: { slug: string; label: string }[] = [
 ]
 const KNOWN_FORMAT_SLUGS = new Set(KNOWN_FORMATS.map(f => f.slug))
 
-interface Props { showAll?: boolean }
+interface Props {
+  showAll?: boolean
+  /** Product data fetched server-side in page.tsx for the visitor's resolved
+   *  country — same pattern as HomePageContent's initialProducts. Lets the
+   *  catalogue's first paint (and therefore what a non-JS crawler sees)
+   *  contain real products instead of nothing while this client component
+   *  hydrates and fetches. */
+  initialProducts?: any[]
+  initialCountry?: string
+}
 
-export default function ProductsSection({ showAll = false }: Props) {
+export default function ProductsSection({ showAll = false, initialProducts, initialCountry }: Props) {
   const router       = useRouter()
   const pathname      = usePathname()
   const searchParams = useSearchParams()
@@ -53,15 +62,31 @@ export default function ProductsSection({ showAll = false }: Props) {
   const [category,    setCategory]    = useState('all')
   const [format,      setFormat]      = useState('all')
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [allProducts, setAllProducts] = useState<any[]>([])
-  const [loading,     setLoading]     = useState(true)
+  const [allProducts, setAllProducts] = useState<any[]>(initialProducts ?? [])
+  const [loading,     setLoading]     = useState(!(initialProducts && initialProducts.length > 0))
   const { country, ready } = useCountry()
 
   const headRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
 
+  // Skip the first fetch when page.tsx already fetched matching data for
+  // this exact country server-side — same hasHydrated pattern as
+  // HomePageContent.tsx. Any later country switch still refetches normally.
+  const hasHydrated = useRef(false)
+
   useEffect(() => {
     if (!ready) return  // ← wait for detection
+
+    if (
+      !hasHydrated.current &&
+      initialProducts && initialProducts.length > 0 &&
+      initialCountry && country === initialCountry
+    ) {
+      hasHydrated.current = true
+      return
+    }
+    hasHydrated.current = true
+
     getProducts(40, country)
       .then(p => { setAllProducts(p); setLoading(false) })
       .catch(() => setLoading(false))

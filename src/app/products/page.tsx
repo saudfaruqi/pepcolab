@@ -4,13 +4,21 @@
 
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { cookies } from 'next/headers'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductsSection from '@/components/ProductsSection'
+import { getProducts } from '@/lib/shopify'
 
 export const metadata: Metadata = {
-  title: 'Research Peptides — PepcoLab',
-  description: 'Research-grade peptides independently verified and publicly certified.',
+  title: 'Research Peptides for Sale — UK & UAE | PepcoLab',
+  description: 'Browse research-grade peptides for laboratory use, shipped across the UK and UAE. Every batch independently tested with a published Certificate of Analysis.',
+  alternates: { canonical: '/products' },
+  openGraph: {
+    title: 'Research Peptides for Sale — UK & UAE | PepcoLab',
+    description: 'Browse research-grade peptides for laboratory use, shipped across the UK and UAE. Every batch independently tested with a published Certificate of Analysis.',
+    type: 'website',
+  },
 }
 
 const IMGS = {
@@ -24,7 +32,22 @@ const TRUST_ITEMS = [
   { n: '03', title: 'Public COA Library',        desc: 'Batch certificates searchable by product and lot number.' },
 ]
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  // Same pattern as the homepage fix: middleware.ts already resolves the
+  // visitor's country into a cookie, so the catalogue can be fetched with
+  // correct per-country pricing server-side instead of ProductsSection
+  // always starting empty and fetching after mount. This is what actually
+  // fixes the "Loading…" catalogue a crawler previously saw — the browse
+  // grid is now full of real products in the very first HTML response.
+  const country = (await cookies()).get('pepcolab_country')?.value ?? 'AE'
+
+  let initialProducts: any[] = []
+  try {
+    initialProducts = await getProducts(40, country)
+  } catch (err) {
+    console.error('[products] Server-side product fetch failed:', err)
+  }
+
   return (
     <>
       <Nav />
@@ -322,7 +345,7 @@ export default function ProductsPage() {
             suspense boundary at page '/products'". */}
         <section id="catalogue" className="pp-products">
           <Suspense fallback={null}>
-            <ProductsSection showAll />
+            <ProductsSection showAll initialProducts={initialProducts} initialCountry={country} />
           </Suspense>
         </section>
 

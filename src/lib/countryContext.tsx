@@ -35,12 +35,50 @@ const CountryContext = createContext<CountryCtx>({
   ready: false,
 })
 
-export function CountryProvider({ children }: { children: ReactNode }) {
-  const [country, setCountryState] = useState<SupportedCountry>('AE')
-  const [ready, setReady] = useState(false)
+export function CountryProvider({
+  children,
+  initialCountry,
+}: {
+  children: ReactNode
+  /**
+   * Country resolved server-side by middleware (from the `pepcolab_country`
+   * cookie, which middleware sets from `x-vercel-ip-country`/geo on every
+   * request — see middleware.ts). When present, this lets the provider
+   * start in its final state on the very first render instead of always
+   * beginning at `country: 'AE', ready: false` and waiting on a client-side
+   * `/api/country` round-trip.
+   *
+   * This is what actually unblocks server-rendering the homepage: previously
+   * nothing consumed the homepage/store's product data could safely render
+   * on the server, because `ready` was guaranteed false until an effect ran
+   * in the browser — so the whole page tree was pushed behind
+   * `dynamic(..., { ssr: false })`. With a known-good initial value, the
+   * product fetch in HomePageContent.tsx can now run server-side too.
+   */
+  initialCountry?: string
+}) {
+  const resolvedInitial = normaliseCountry(initialCountry)
+  const [country, setCountryState] = useState<SupportedCountry>(resolvedInitial)
+  // If the server already resolved a supported country, we're ready
+  // immediately — no flash, no waiting on an effect.
+  const [ready, setReady] = useState<boolean>(
+    Boolean(initialCountry && SUPPORTED_COUNTRIES.includes(initialCountry as SupportedCountry))
+  )
 
   useEffect(() => {
-    // Only runs client-side, so no server/client mismatch
+    // Already resolved server-side — still check localStorage in case the
+    // visitor explicitly picked a different market on a previous visit
+    // (setCountry below), but don't block on a network round-trip.
+    if (ready) {
+      const stored = localStorage.getItem(COUNTRY_KEY)
+      if (stored && stored !== country && SUPPORTED_COUNTRIES.includes(stored as SupportedCountry)) {
+        setCountryState(stored as SupportedCountry)
+      }
+      return
+    }
+
+    // Fallback path — only reached if middleware's cookie wasn't present for
+    // some reason (e.g. an environment where middleware.ts isn't running).
     const stored = localStorage.getItem(COUNTRY_KEY)
     if (stored && SUPPORTED_COUNTRIES.includes(stored as SupportedCountry)) {
       setCountryState(stored as SupportedCountry)
@@ -61,6 +99,7 @@ export function CountryProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(COUNTRY_KEY, 'AE')
       })
       .finally(() => setReady(true))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const setCountry = (c: string) => {

@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import { cookies } from 'next/headers'
 import './globals.css'
 
 import { CartProvider } from '@/lib/cartContext'
@@ -125,11 +126,22 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Read the country middleware.ts already resolved (from
+  // x-vercel-ip-country/geo) and persisted into a cookie, so CountryProvider
+  // can start in its final state instead of always beginning at 'AE' and
+  // waiting on a client-side /api/country fetch. This is what makes it safe
+  // for page.tsx to server-render product data instead of the previous
+  // dynamic(..., { ssr: false }) — see countryContext.tsx for the other half.
+  // Next.js 15's cookies() is async — must be awaited (this is also why
+  // the request.geo fallback in middleware.ts is only defensive: newer
+  // Next versions removed it, the header is the reliable source).
+  const initialCountry = (await cookies()).get('pepcolab_country')?.value
+
   return (
     <html lang="en-GB" suppressHydrationWarning>
       <head>
@@ -253,7 +265,7 @@ export default function RootLayout({
   strategy="lazyOnload"
 />
 
-        <CountryProvider>
+        <CountryProvider initialCountry={initialCountry}>
           {/* Gate sits inside CountryProvider so a UAE/UK selection can call
               useCountry().setCountry() directly — one source of truth for
               market. Renders as a fixed overlay, so children still mount

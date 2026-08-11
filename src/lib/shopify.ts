@@ -1,3 +1,7 @@
+
+
+
+
 // src/lib/shopify.ts
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
@@ -506,14 +510,19 @@ export function normaliseProduct(node: ShopifyProduct) {
   }
 }
 
-// shopify.ts — update getProducts to use the proxy when called client-side
+// shopify.ts — server branch now passes buyerCountry through instead of
+// silently dropping it. Previously only the client branch (via the proxy)
+// applied @inContext(country: ...) pricing — a Server Component calling
+// getProducts(40, 'AE') got GB/default pricing regardless, which is why the
+// homepage couldn't be safely server-rendered with correct prices without
+// this fix landing first. generateStaticParams-style callers that don't
+// care about country still work identically (buyerCountry stays undefined).
 export async function getProducts(first = 40, buyerCountry?: string) {
   if (typeof window === 'undefined') {
-    // Server: fetch without country (used only for generateStaticParams)
     const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
       PRODUCTS_QUERY,
       { first },
-      { revalidate: 60, serverSide: true }
+      { revalidate: 60, serverSide: true, buyerCountry }
     )
     return data.products.edges.map(({ node }) => normaliseProduct(node))
   }
