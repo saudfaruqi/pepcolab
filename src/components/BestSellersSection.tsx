@@ -389,6 +389,12 @@ export default function BestSellersSection({
             scroll-snap-align: unset;
           }
 
+        .bs-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(200,153,42,.35) !important;
+          box-shadow: 0;
+        }          
+
           .bs-scroll-hint {
             display: none;
           }
