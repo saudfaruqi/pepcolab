@@ -17,13 +17,20 @@ interface Props {
 }
 
 /**
- * CURRENCY
- * --------
- * One catalogue serves both markets — every product is available everywhere,
- * only the displayed currency differs. This page is built with AED prices;
- * ProductActions re-fetches with the visitor's country once useCountry()
- * resolves, and normaliseProduct() converts at that point. No cookie read
- * here, so the route stays statically rendered.
+ * CURRENCY & MARKET
+ * -----------------
+ * Built with AED prices. ProductActions re-fetches with the visitor's country
+ * once useCountry() resolves and normaliseProduct() converts at that point, so
+ * the page stays statically rendered — no cookie read on the server.
+ *
+ * Market gating is client-side for the same reason. While UK_CATALOGUE_LIVE is
+ * false (pricing.ts) every product is sold in both markets and MarketGuard is
+ * inert. Once it's true, a visitor who lands on a product from the other
+ * catalogue gets a notice instead of a buy button.
+ *
+ * Deliberately NOT a server-side cookie read + notFound(): that would make
+ * every product page dynamic, and it would 404 the page for Googlebot, which
+ * crawls from US IPs with no market cookie. See isInMarket() in pricing.ts.
  */
 export const revalidate = 60
 

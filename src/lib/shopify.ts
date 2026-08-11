@@ -1,5 +1,5 @@
 // src/lib/shopify.ts
-import { convertFromAed, convertOptional, currencyFor } from './pricing'
+import { convertFromAed, convertOptional, currencyFor, marketQuery } from './pricing'
 
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
@@ -110,6 +110,10 @@ export async function getLocalization(buyerCountry?: string): Promise<ShopifyLoc
     }
   }
 }
+
+// Re-exported so route files import market helpers from one place.
+export { isInMarket, UK_CATALOGUE_LIVE } from './pricing'
+export { marketQuery }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -534,12 +538,19 @@ export function normaliseProduct(node: ShopifyProduct, market?: string) {
 // this fix landing first. generateStaticParams-style callers that don't
 // care about country still work identically (buyerCountry stays undefined).
 export async function getProducts(first = 40, buyerCountry?: string) {
-  // One catalogue serves both markets — buyerCountry only decides the display
-  // currency, never which products are returned.
+  // buyerCountry does two things: picks the display currency (always), and
+  // picks the catalogue (only once UK_CATALOGUE_LIVE is true in pricing.ts —
+  // until then marketQuery returns undefined and every market sees everything).
+  //
+  // Callers with no country — sitemap.ts and generateStaticParams — get the
+  // unfiltered catalogue in AED, which is what they need: one URL per product,
+  // every product pre-rendered and indexable regardless of market.
+  const query = marketQuery(buyerCountry)
+
   if (typeof window === 'undefined') {
     const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
       PRODUCTS_QUERY,
-      { first },
+      { first, query },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
     return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
@@ -549,7 +560,7 @@ export async function getProducts(first = 40, buyerCountry?: string) {
   const { shopifyClientFetch } = await import('./shopifyClient')
   const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
     PRODUCTS_QUERY,
-    { first },
+    { first, query },
     buyerCountry
   )
   return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
@@ -560,8 +571,8 @@ export async function getProducts(first = 40, buyerCountry?: string) {
 // have 2-7 variants (different mg strengths); fetching only the first
 // meant stock/price were checked against a single, arbitrary variant.
 const PRODUCTS_QUERY = /* GraphQL */ `
-  query getProducts($first: Int!) {
-    products(first: $first) {
+  query getProducts($first: Int!, $query: String) {
+    products(first: $first, query: $query) {
       edges {
         node {
           id handle title description tags updatedAt productType

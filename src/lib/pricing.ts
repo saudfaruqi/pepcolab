@@ -26,6 +26,33 @@ export const MARKET_CURRENCY: Record<Market, string> = {
   GB: 'GBP',
 }
 
+/** Product tag that assigns a product to a market. */
+export const MARKET_TAG: Record<Market, string> = {
+  AE: 'uae',
+  GB: 'uk',
+}
+
+// ─── UK CATALOGUE SWITCH ────────────────────────────────────────────────────
+//
+// FALSE  = one catalogue. Every product is shown in both markets; only the
+//          displayed currency differs. This is correct while every product in
+//          Shopify is tagged `uae` and nothing is tagged `uk` — filtering by
+//          `tag:uk` today returns an empty storefront for UK visitors.
+//
+// TRUE   = per-market catalogues. AE visitors see `tag:uae`, GB visitors see
+//          `tag:uk`. A product carrying BOTH tags appears in both.
+//
+// Flip this to true only once every product you intend to sell in the UK is
+// tagged `uk` in Shopify. The moment it's true, any product without the `uk`
+// tag disappears for UK visitors — that's the point, but it's abrupt, so
+// tag first and flip second.
+//
+// Deliberately a constant rather than "filter, and fall back to everything if
+// the result is empty". That kind of auto-detection means tagging a single
+// product `uk` silently strips the UK storefront down to one item with no
+// deploy and no warning. An explicit switch fails predictably.
+export const UK_CATALOGUE_LIVE = false
+
 /**
  * Fixed display rate — deliberately NOT a live FX feed.
  *
@@ -61,6 +88,33 @@ function tidyGbp(value: number): number {
 export function convertFromAed(amountAed: number, country?: string | null): number {
   if (normaliseMarket(country) === 'AE') return amountAed
   return tidyGbp(amountAed * GBP_PER_AED)
+}
+
+/**
+ * Storefront search filter for a market, or undefined for no filtering.
+ *
+ * Returns undefined when UK_CATALOGUE_LIVE is false, or when country is
+ * unknown. Unknown-country callers are sitemap.ts and generateStaticParams,
+ * which must always see BOTH catalogues so every product stays pre-rendered
+ * and indexable — Googlebot crawls from US IPs with no market cookie.
+ */
+export function marketQuery(country?: string | null): string | undefined {
+  if (!UK_CATALOGUE_LIVE) return undefined
+  if (country !== 'AE' && country !== 'GB') return undefined
+  return `tag:${MARKET_TAG[country]}`
+}
+
+/**
+ * Whether a product is sold in a given market. Used to guard direct URL hits
+ * on a product that belongs to the other catalogue.
+ *
+ * Returns TRUE when filtering is off or the country is unknown — same
+ * crawler reasoning as marketQuery().
+ */
+export function isInMarket(tags: string[] = [], country?: string | null): boolean {
+  if (!UK_CATALOGUE_LIVE) return true
+  if (country !== 'AE' && country !== 'GB') return true
+  return tags.map((t) => t.toLowerCase()).includes(MARKET_TAG[country])
 }
 
 /** Convenience for optional values (compareAtPrice, oldPrice). */
