@@ -57,11 +57,11 @@ export default function BestSellersSection({
     <section
       id="catalogue"
       style={{
-        padding: 'clamp(56px,7vw,96px) 0',
+        padding: 'clamp(40px,7vw,96px) 0',
         borderBottom: '1px solid rgba(255,255,255,.06)',
       }}
     >
-      <div style={{ maxWidth: 1500, margin: '0 auto', padding: '0 clamp(16px,3vw,32px)' }}>
+      <div style={{ maxWidth: 1500, margin: '0 auto', padding: '0 clamp(12px,3vw,32px)' }}>
 
         {/* Header */}
         <div
@@ -69,17 +69,17 @@ export default function BestSellersSection({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
-            marginBottom: 'clamp(28px,4vw,44px)',
+            marginBottom: 'clamp(24px,4vw,44px)',
             flexWrap: 'wrap',
-            gap: 16,
+            gap: 12,
           }}
         >
           <div>
             <h2
               style={{
-                fontSize: 'clamp(32px,5vw,64px)',
+                fontSize: 'clamp(26px,5vw,64px)',
                 fontWeight: 800,
-                letterSpacing: '-.055em',
+                letterSpacing: '-.045em',
                 lineHeight: .95,
                 color: '#000',
                 margin: 0,
@@ -94,8 +94,8 @@ export default function BestSellersSection({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
-              fontSize: 13,
+              gap: 6,
+              fontSize: 12,
               fontWeight: 600,
               color: 'rgba(0,0,0,.7)',
               textDecoration: 'none',
@@ -114,9 +114,9 @@ export default function BestSellersSection({
               <div
                 key={i}
                 style={{
-                  borderRadius: 22,
+                  borderRadius: 16,
                   background: '#141414',
-                  height: 380,
+                  height: 320,
                   animation: 'pulse 1.6s ease infinite',
                   animationDelay: `${i * 0.1}s`,
                 }}
@@ -135,7 +135,7 @@ export default function BestSellersSection({
                   textDecoration: 'none',
                   background: 'linear-gradient(160deg,#161616,#0F0F0F)',
                   border: '1px solid rgba(255,255,255,.08)',
-                  borderRadius: 22,
+                  borderRadius: 16,
                   overflow: 'hidden',
                   position: 'relative',
                 }}
@@ -144,13 +144,13 @@ export default function BestSellersSection({
                 <div
                   style={{
                     position: 'absolute',
-                    top: 14,
-                    left: 14,
+                    top: 10,
+                    left: 10,
                     zIndex: 2,
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 6,
-                    padding: '4px 10px',
+                    gap: 4,
+                    padding: '3px 8px',
                     borderRadius: 999,
                     background: i === 0 ? '#C8992A' : 'rgba(255,255,255,.08)',
                     border: i === 0 ? 'none' : '1px solid rgba(255,255,255,.12)',
@@ -159,9 +159,9 @@ export default function BestSellersSection({
                 >
                   <span
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 8.5,
                       fontWeight: 800,
-                      letterSpacing: '.1em',
+                      letterSpacing: '.08em',
                       textTransform: 'uppercase',
                       color: i === 0 ? '#0A0A0A' : 'rgba(255,255,255,.65)',
                     }}
@@ -178,7 +178,7 @@ export default function BestSellersSection({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: 22,
+                    padding: 16,
                   }}
                 >
                   {p.image ? (
@@ -197,19 +197,19 @@ export default function BestSellersSection({
                     <div
                       style={{
                         position: 'absolute',
-                        bottom: 12,
-                        right: 12,
-                        padding: '5px 9px',
-                        borderRadius: 8,
+                        bottom: 8,
+                        right: 8,
+                        padding: '3px 7px',
+                        borderRadius: 6,
                         background: 'rgba(255,255,255,.07)',
                         border: '1px solid rgba(255,255,255,.1)',
                         backdropFilter: 'blur(8px)',
                       }}
                     >
-                      <div style={{ fontSize: 7.5, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
+                      <div style={{ fontSize: 6.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
                         Purity
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
                         {p.purity}%
                       </div>
                     </div>
@@ -217,15 +217,15 @@ export default function BestSellersSection({
                 </div>
 
                 {/* Body */}
-                <div style={{ padding: '18px 18px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <div style={{ padding: '12px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <h3
                     style={{
-                      fontSize: 'clamp(17px,2vw,21px)',
+                      fontSize: 'clamp(14px,1.8vw,18px)',
                       fontWeight: 700,
-                      letterSpacing: '-.03em',
+                      letterSpacing: '-.02em',
                       color: '#fff',
                       lineHeight: 1.15,
-                      margin: '0 0 8px',
+                      margin: '0 0 4px',
                     }}
                   >
                     {p.title}
@@ -233,30 +233,34 @@ export default function BestSellersSection({
 
                   <p
                     style={{
-                      fontSize: 12.5,
-                      lineHeight: 1.65,
+                      fontSize: 11,
+                      lineHeight: 1.5,
                       color: 'rgba(255,255,255,.45)',
-                      margin: '0 0 18px',
+                      margin: '0 0 12px',
                       flex: 1,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
                     }}
                   >
                     {FEATURED_COPY[p.handle] ?? 'Published certificate of analysis for every batch.'}
                   </p>
 
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-.03em' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
                         {formatPrice(p.price, p.currencyCode ?? 'AED')}
                       </span>
                       {p.oldPrice && (
-                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,.28)', textDecoration: 'line-through' }}>
+                        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,.28)', textDecoration: 'line-through' }}>
                           {formatPrice(p.oldPrice, p.currencyCode ?? 'AED')}
                         </span>
                       )}
                     </div>
                     <span
                       style={{
-                        fontSize: 11,
+                        fontSize: 9.5,
                         fontWeight: 700,
                         color: p.inStock === false ? 'rgba(255,255,255,.3)' : '#4ADE80',
                         whiteSpace: 'nowrap',
@@ -274,22 +278,25 @@ export default function BestSellersSection({
       <style>{`
         .bs-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (min-width: 480px) {
+          .bs-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
         }
         @media (min-width: 900px) {
-          .bs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
+          .bs-grid { grid-template-columns: repeat(5, 1fr); gap: 20px; }
         }
         .bs-card {
           transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
         }
         .bs-card:hover {
-          transform: translateY(-6px);
+          transform: translateY(-4px);
           border-color: rgba(200,153,42,.35) !important;
-          box-shadow: 0 24px 50px rgba(0,0,0,.5);
+          box-shadow: 0 20px 40px rgba(0,0,0,.5);
         }
         .bs-img { transition: transform .45s ease; }
-        .bs-card:hover .bs-img { transform: scale(1.05); }
+        .bs-card:hover .bs-img { transform: scale(1.04); }
         @media (prefers-reduced-motion: reduce) {
           .bs-card, .bs-img { transition: none !important; }
           .bs-card:hover { transform: none; }
