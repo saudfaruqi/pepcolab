@@ -55,7 +55,6 @@ export default function BestSellersSection({
     <section
       id="catalogue"
       style={{
-        background: '#0A0A0A',
         padding: 'clamp(56px,7vw,96px) 0',
         borderBottom: '1px solid rgba(255,255,255,.06)',
       }}
@@ -74,47 +73,13 @@ export default function BestSellersSection({
           }}
         >
           <div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                marginBottom: 14,
-                padding: '5px 12px 5px 8px',
-                borderRadius: 999,
-                background: 'rgba(200,153,42,.14)',
-                border: '1px solid rgba(200,153,42,.25)',
-              }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: '#C8992A',
-                  boxShadow: '0 0 0 3px rgba(200,153,42,.2)',
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: '.16em',
-                  textTransform: 'uppercase',
-                  color: '#E5B94E',
-                }}
-              >
-                Most ordered
-              </span>
-            </div>
-
             <h2
               style={{
                 fontSize: 'clamp(32px,5vw,64px)',
                 fontWeight: 800,
                 letterSpacing: '-.055em',
                 lineHeight: .95,
-                color: '#fff',
+                color: '#000',
                 margin: 0,
               }}
             >
