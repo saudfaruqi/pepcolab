@@ -2,15 +2,13 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { cookies } from 'next/headers'
 
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductVariantView from '@/components/ProductVariantView'
 
 import { ChevronRight } from 'lucide-react'
-import { getProducts, getProductByHandle, isInMarket } from '@/lib/shopify'
-import { displayPrice, chargeNotice, type Market } from '@/lib/pricing'
+import { getProducts, getProductByHandle } from '@/lib/shopify'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -19,21 +17,13 @@ interface Props {
 }
 
 /**
- * MARKET GUARD & RENDERING MODE
- * -----------------------------
- * This page reads the `pepcolab_country` cookie (set by middleware.ts) so a
- * GB visitor who lands on a UAE-only product from search or a shared link
- * can't add something we won't ship to them.
- *
- * Reading cookies() opts the route out of static rendering — generateStaticParams
- * below still enumerates the slugs, but pages render per-request. Deliberate
- * trade: with 34 products and `revalidate: 60` on the Shopify fetch the data
- * is still cached, so the cost is small, and shipping an unfulfillable order
- * is a more expensive problem than a warm render.
- *
- * To restore full SSG: drop the cookies() read and the isInMarket() check, and
- * move the guard into ProductActions, which already consumes useCountry().
- * SEO is unaffected either way — see the note on isInMarket() in shopify.ts.
+ * CURRENCY
+ * --------
+ * One catalogue serves both markets — every product is available everywhere,
+ * only the displayed currency differs. This page is built with AED prices;
+ * ProductActions re-fetches with the visitor's country once useCountry()
+ * resolves, and normaliseProduct() converts at that point. No cookie read
+ * here, so the route stays statically rendered.
  */
 export const revalidate = 60
 
@@ -158,19 +148,14 @@ function buildJsonLd(product: any) {
 /* -------------------------------------------------------------------------- */
 
 export default async function ProductPage({ params }: Props) {
-  const market = cookies().get('pepcolab_country')?.value as Market | undefined
-
-  const shopifyProduct = await getProductByHandle(params.slug, market ?? 'AE')
+  // Built in AED. ProductActions swaps in the visitor's currency client-side.
+  const shopifyProduct = await getProductByHandle(params.slug, 'AE')
 
   // Real 404 (renders src/app/not-found.tsx) rather than a 200 with a
   // "not found" message, which Google indexes as a thin duplicate page.
   if (!shopifyProduct) {
     notFound()
   }
-
-  // Sold in another market only. isInMarket() returns true when market is
-  // undefined, so crawlers still get the full page.
-  const availableHere = isInMarket(shopifyProduct.tags, market)
 
   // ProductVariantView owns the whole two-column layout and passes
   // selectedVariantId / onSelectVariant down to ProductActions, so the format
@@ -194,10 +179,6 @@ export default async function ProductPage({ params }: Props) {
 
   const jsonLd = buildJsonLd(shopifyProduct)
 
-  // Shopify charges in AED on this store regardless of market (the gateway is
-  // single-currency), so GBP is a presentation conversion and the AED figure
-  // must stay visible. See src/lib/pricing.ts.
-  const notice = chargeNotice(displayPrice(shopifyProduct.price ?? 0, market ?? 'AE'))
 
   return (
     <>
@@ -226,34 +207,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Out-of-market notice. The page still renders in full — better than
-            a 404 for a shared link, and it keeps the URL indexable. */}
-        {!availableHere && (
-          <div style={{ maxWidth: 1400, margin: '12px auto 0', padding: '0 16px' }}>
-            <div style={{
-              border: '1px solid #FDE68A', background: '#FFFBEB', borderRadius: 12,
-              padding: '12px 16px', fontSize: 13, color: '#92400E', lineHeight: 1.6,
-            }}>
-              <strong>Not stocked for your region.</strong> This compound is held in our{' '}
-              {shopifyProduct.tags?.includes('uk') ? 'United Kingdom' : 'United Arab Emirates'}{' '}
-              catalogue only.{' '}
-              <a href="/products" style={{ color: '#92400E', fontWeight: 600 }}>
-                Browse what we ship to you →
-              </a>
-            </div>
-          </div>
-        )}
 
-        {/* Converted-price disclosure. Required wherever a GBP figure is
-            shown: UK consumer law requires the price actually payable to be
-            clear before purchase, and the card is billed in AED. */}
-        {notice && (
-          <div style={{ maxWidth: 1400, margin: '10px auto 0', padding: '0 16px' }}>
-            <p style={{ fontSize: 11.5, lineHeight: 1.6, color: '#9ca3af', margin: 0 }}>
-              {notice}
-            </p>
-          </div>
-        )}
 
         <ProductVariantView product={product} />
 

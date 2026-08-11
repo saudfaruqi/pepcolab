@@ -1,6 +1,3 @@
-
-
-
 // src/lib/cartContext.tsx
 'use client'
 import {
@@ -22,6 +19,7 @@ import {
   type ShopifyCartLine,
 } from '@/lib/shopify'
 import { useCountry } from '@/lib/countryContext'
+import { convertFromAed, currencyFor } from '@/lib/pricing'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -127,13 +125,27 @@ function mapLine(node: ShopifyCartLine): CartLine {
   }
 }
 
-function applyCart(cart: ShopifyCart) {
-  const lines = cart.lines.edges.map(({ node }) => mapLine(node))
-  const money = cart.cost.subtotalAmount ?? cart.cost.totalAmount
-  const total = parseFloat(money.amount)
+/**
+ * `market` converts Shopify's AED figures into the visitor's display currency.
+ * This is one of only TWO conversion points in the app; the other is
+ * normaliseProduct() in src/lib/shopify.ts. Shopify's cart is always AED
+ * because the payment gateway is single-currency — the checkout and the card
+ * charge stay in dirhams no matter what is shown here, which is why
+ * chargeNotice() has to appear alongside any converted total.
+ *
+ * Line prices are converted individually rather than converting the subtotal,
+ * so `line.price * quantity` displayed per row still sums to the subtotal
+ * shown at the bottom. Converting only the total would leave the rows and the
+ * sum visibly disagreeing after rounding.
+ */
+function applyCart(cart: ShopifyCart, market?: string) {
+  const lines = cart.lines.edges.map(({ node }) => {
+    const line = mapLine(node)
+    return { ...line, price: convertFromAed(line.price, market) }
+  })
   const qty = cart.totalQuantity
-  const currencyCode = money.currencyCode ?? 'AED'
-  return { lines, total, qty, currencyCode }
+  const total = lines.reduce((s, l) => s + l.price * l.quantity, 0)
+  return { lines, total, qty, currencyCode: currencyFor(market) }
 }
 
 function computeTotals(lines: CartLine[]) {
@@ -194,13 +206,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Update buyer identity so Shopify returns the right currency
       try {
         const updated = await updateCartBuyerIdentity(storedId, country)
-        const { lines, total, qty, currencyCode } = applyCart(updated)
+        const { lines, total, qty, currencyCode } = applyCart(updated, country)
         dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
         safeSet(CART_LINES_KEY, JSON.stringify(lines))
         safeSet(CART_CURRENCY_KEY, currencyCode)
       } catch {
         // Identity update failed — at least show what we fetched
-        const { lines, total, qty, currencyCode } = applyCart(cart)
+        const { lines, total, qty, currencyCode } = applyCart(cart, country)
         dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
         safeSet(CART_LINES_KEY, JSON.stringify(lines))
         safeSet(CART_CURRENCY_KEY, currencyCode)
@@ -260,7 +272,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const cartId = await ensureCart()
       const cart = await shopifyAddToCart(cartId, variantId, 1)
-      const { lines, total: realTotal, qty: realQty, currencyCode } = applyCart(cart)
+      const { lines, total: realTotal, qty: realQty, currencyCode } = applyCart(cart, country)
       dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty, currencyCode })
       safeSet(CART_LINES_KEY, JSON.stringify(lines))
       safeSet(CART_CURRENCY_KEY, currencyCode)
@@ -289,7 +301,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       if (!lineId.startsWith('optimistic-') && state.cartId) {
         const cart = await shopifyRemove(state.cartId, [lineId])
-        const { lines, total: rt, qty: rq, currencyCode } = applyCart(cart)
+        const { lines, total: rt, qty: rq, currencyCode } = applyCart(cart, country)
         dispatch({ type: 'SET_LINES', lines, total: rt, qty: rq, currencyCode })
         safeSet(CART_LINES_KEY, JSON.stringify(lines))
         safeSet(CART_CURRENCY_KEY, currencyCode)
@@ -320,7 +332,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       if (!lineId.startsWith('optimistic-') && state.cartId) {
         const cart = await shopifyUpdateLine(state.cartId, lineId, qty)
-        const { lines, total: rt, qty: rq, currencyCode } = applyCart(cart)
+        const { lines, total: rt, qty: rq, currencyCode } = applyCart(cart, country)
         dispatch({ type: 'SET_LINES', lines, total: rt, qty: rq, currencyCode })
         safeSet(CART_LINES_KEY, JSON.stringify(lines))
         safeSet(CART_CURRENCY_KEY, currencyCode)

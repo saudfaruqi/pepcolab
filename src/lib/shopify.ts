@@ -1,4 +1,6 @@
 // src/lib/shopify.ts
+import { convertFromAed, convertOptional, currencyFor } from './pricing'
+
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 
@@ -107,46 +109,6 @@ export async function getLocalization(buyerCountry?: string): Promise<ShopifyLoc
       },
     }
   }
-}
-
-// ─── Markets ───────────────────────────────────────────────────────────────
-//
-// PepcoLab runs two catalogues out of one Shopify store. Availability is
-// driven by product tags, NOT by Shopify Markets catalogs — market-scoped
-// price lists require multi-currency, which this store cannot enable
-// (the payment gateway only supports a single currency, so marketUpdate
-// rejects a GBP base currency on the UK market). Tags give the same
-// availability control without that dependency.
-
-export type Market = 'AE' | 'GB'
-
-export const MARKET_TAG: Record<Market, string> = {
-  AE: 'uae',
-  GB: 'uk',
-}
-
-function normaliseMarket(country?: string): Market | undefined {
-  if (country === 'AE' || country === 'GB') return country
-  return undefined
-}
-
-/** Storefront search-syntax filter for a market, or undefined for no filter. */
-export function marketQuery(country?: string): string | undefined {
-  const market = normaliseMarket(country)
-  return market ? `tag:${MARKET_TAG[market]}` : undefined
-}
-
-/**
- * Whether a product is sold in a given market.
- *
- * Returns TRUE when country is unknown. Googlebot crawls from US IPs with no
- * market cookie — if this defaulted to AE, every UK-only product would 404
- * to Google and drop out of the index.
- */
-export function isInMarket(tags: string[] = [], country?: string): boolean {
-  const market = normaliseMarket(country)
-  if (!market) return true
-  return tags.map((t) => t.toLowerCase()).includes(MARKET_TAG[market])
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -437,7 +399,18 @@ function pickRepresentativeVariant(
   )
 }
 
-export function normaliseProduct(node: ShopifyProduct) {
+/**
+ * `market` converts AED (the only currency Shopify can return on this store —
+ * the gateway is single-currency) into the visitor's display currency. This is
+ * one of only TWO conversion points in the app; the other is applyCart() in
+ * cartContext.tsx. Everything downstream keeps calling
+ * formatPrice(amount, currencyCode) and needs no change. Do not convert again
+ * in a component or the rate gets applied twice.
+ *
+ * Omitting `market` leaves prices in AED untouched, which is what
+ * generateStaticParams and sitemap.ts want.
+ */
+export function normaliseProduct(node: ShopifyProduct, market?: string) {
   const variant = pickRepresentativeVariant(node.variants.edges)
   const anyVariantAvailable = node.variants.edges.some((e) => e.node.availableForSale)
   const image = node.images.edges[0]?.node
@@ -485,11 +458,15 @@ export function normaliseProduct(node: ShopifyProduct) {
       : '',
 
     variantId: variant?.id ?? '',
-    price: parseFloat(variant?.price.amount ?? '0'),
-    currencyCode: variant?.price.currencyCode ?? 'AED',
-    oldPrice: variant?.compareAtPrice
-      ? parseFloat(variant.compareAtPrice.amount)
-      : undefined,
+    price: convertFromAed(parseFloat(variant?.price.amount ?? '0'), market),
+    // The display currency, NOT what Shopify returned — Shopify always says
+    // AED here. formatPrice() renders whatever code it's given, so setting it
+    // correctly at this one point switches every price on the site.
+    currencyCode: currencyFor(market),
+    oldPrice: convertOptional(
+      variant?.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : undefined,
+      market
+    ),
 
     // A product is in stock if ANY variant is available, not just the
     // one we're displaying — the displayed variant/price is just the
@@ -507,9 +484,12 @@ export function normaliseProduct(node: ShopifyProduct) {
     variants: node.variants.edges.map(({ node: v }) => ({
       id: v.id,
       title: v.title,
-      price: parseFloat(v.price.amount),
-      compareAtPrice: v.compareAtPrice ? parseFloat(v.compareAtPrice.amount) : undefined,
-      currencyCode: v.price.currencyCode,
+      price: convertFromAed(parseFloat(v.price.amount), market),
+      compareAtPrice: convertOptional(
+        v.compareAtPrice ? parseFloat(v.compareAtPrice.amount) : undefined,
+        market
+      ),
+      currencyCode: currencyFor(market),
       availableForSale: v.availableForSale,
       image: v.image ? { url: v.image.url, alt: v.image.altText ?? '' } : undefined,
     })),
@@ -554,33 +534,25 @@ export function normaliseProduct(node: ShopifyProduct) {
 // this fix landing first. generateStaticParams-style callers that don't
 // care about country still work identically (buyerCountry stays undefined).
 export async function getProducts(first = 40, buyerCountry?: string) {
-  // Market filter. Products are tagged `uae` and/or `uk`; a product carrying
-  // both appears in both markets. Filtering happens in the Storefront query
-  // rather than client-side, so the other market's catalogue never ships in
-  // the page source.
-  //
-  // No buyerCountry -> no filter. That path is used by sitemap.ts and
-  // generateStaticParams, which must see BOTH catalogues so every product
-  // is pre-rendered and indexable. Do not "tighten" this to default to AE.
-  const query = buyerCountry ? marketQuery(buyerCountry) : undefined
-
+  // One catalogue serves both markets — buyerCountry only decides the display
+  // currency, never which products are returned.
   if (typeof window === 'undefined') {
     const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
       PRODUCTS_QUERY,
-      { first, query },
+      { first },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
-    return data.products.edges.map(({ node }) => normaliseProduct(node))
+    return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
   }
 
   // Client: always go through proxy with country
   const { shopifyClientFetch } = await import('./shopifyClient')
   const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
     PRODUCTS_QUERY,
-    { first, query },
+    { first },
     buyerCountry
   )
-  return data.products.edges.map(({ node }) => normaliseProduct(node))
+  return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
 }
 
 // Extract the query string to reuse in both paths
@@ -588,8 +560,8 @@ export async function getProducts(first = 40, buyerCountry?: string) {
 // have 2-7 variants (different mg strengths); fetching only the first
 // meant stock/price were checked against a single, arbitrary variant.
 const PRODUCTS_QUERY = /* GraphQL */ `
-  query getProducts($first: Int!, $query: String) {
-    products(first: $first, query: $query) {
+  query getProducts($first: Int!) {
+    products(first: $first) {
       edges {
         node {
           id handle title description tags updatedAt productType
@@ -659,7 +631,7 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
       { handle },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
-    return data.product ? normaliseProduct(data.product) : null
+    return data.product ? normaliseProduct(data.product, buyerCountry) : null
   }
 
   // Client: was calling shopifyFetch directly, which hits Shopify's GraphQL
@@ -675,5 +647,5 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
     { handle },
     buyerCountry
   )
-  return data.product ? normaliseProduct(data.product) : null
+  return data.product ? normaliseProduct(data.product, buyerCountry) : null
 }

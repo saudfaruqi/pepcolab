@@ -3,31 +3,49 @@
 // WHY THIS EXISTS
 // ---------------
 // Shopify Markets multi-currency is unavailable on this store: the payment
-// gateway (Strabl) doesn't support presenting more than one currency, and
-// marketUpdate rejects any attempt to set a GBP base currency on the UK
-// market. Storefront `@inContext(country: GB)` therefore returns AED
-// presentment prices regardless.
+// gateway (Strabl) only supports a single currency, so `marketUpdate` rejects
+// a GBP base currency on the UK market and Storefront `@inContext(country: GB)`
+// returns AED presentment prices regardless.
 //
-// Consequence: **AED is the only real price.** The cart, the checkout and
-// the actual card charge are all AED. GBP is a display conversion so UK
-// visitors can read a familiar number — it is not what gets charged, and
-// the customer's own bank applies its FX spread on top (typically 2-3%).
-// That has to be disclosed at checkout. See `chargeNotice()` below.
+// Consequence: **AED is the only real price.** The cart, the checkout and the
+// card charge are all AED. GBP is a display conversion so UK visitors read a
+// familiar number — it is NOT what gets charged, and the customer's own bank
+// applies its FX spread on top (typically 2-3%). That has to be disclosed
+// wherever a converted price appears. See `chargeNotice()`.
+//
+// Conversion happens at exactly two places, both data boundaries:
+//   1. normaliseProduct()  in src/lib/shopify.ts    — product prices
+//   2. applyCart()         in src/lib/cartContext.tsx — cart lines + subtotal
+// Everything downstream keeps calling formatPrice(amount, currencyCode) and
+// works unchanged. Do NOT convert again inside components or you'll double-apply.
 
 export type Market = 'AE' | 'GB'
+
+export const MARKET_CURRENCY: Record<Market, string> = {
+  AE: 'AED',
+  GB: 'GBP',
+}
 
 /**
  * Fixed display rate — deliberately NOT a live FX feed.
  *
- * A live rate means your shelf prices move several times a day, a customer
- * who saw £41 yesterday sees £43 today, and any GBP figure you put in an ad
- * or an email is wrong within a week. Set this manually, review monthly,
- * and keep a margin buffer so a rate move doesn't eat into the AED price
- * you actually collect.
+ * A live rate means shelf prices move several times a day, a customer who saw
+ * £41 yesterday sees £43 today, and any GBP figure in an ad or an email is
+ * wrong within a week. Set this manually, review monthly, and keep a margin
+ * buffer so a rate move doesn't eat the AED you actually collect.
  *
  * Last reviewed: <SET DATE ON EACH UPDATE>
  */
 export const GBP_PER_AED = 0.21
+
+export function normaliseMarket(country?: string | null): Market {
+  return country === 'GB' ? 'GB' : 'AE'
+}
+
+/** Currency code a market should be shown prices in. */
+export function currencyFor(country?: string | null): string {
+  return MARKET_CURRENCY[normaliseMarket(country)]
+}
 
 /** Round to a price that looks chosen rather than converted. */
 function tidyGbp(value: number): number {
@@ -36,78 +54,38 @@ function tidyGbp(value: number): number {
   return Math.round(value / 5) * 5                  // nearest £5
 }
 
-export interface DisplayPrice {
-  /** The figure to show, already formatted. */
-  label: string
-  /** Currency actually charged at checkout — always AED on this store. */
-  chargedCurrency: 'AED'
-  /** The AED amount that will be charged, formatted. */
-  chargedLabel: string
-  /** True when the displayed figure is a conversion, not the charge. */
-  isConverted: boolean
+/**
+ * Convert an AED amount into the market's display currency.
+ * AE is a no-op — AED is the native currency of every Shopify price.
+ */
+export function convertFromAed(amountAed: number, country?: string | null): number {
+  if (normaliseMarket(country) === 'AE') return amountAed
+  return tidyGbp(amountAed * GBP_PER_AED)
+}
+
+/** Convenience for optional values (compareAtPrice, oldPrice). */
+export function convertOptional(
+  amountAed: number | undefined | null,
+  country?: string | null
+): number | undefined {
+  if (amountAed == null) return undefined
+  return convertFromAed(amountAed, country)
 }
 
 /**
- * Turn an AED amount from Shopify into what a given market should see.
- * `aed` is the raw `variant.price.amount` string or number.
+ * Disclosure copy. Render wherever a converted price appears — product page,
+ * cart drawer and checkout at minimum. UK consumer law requires the price
+ * actually payable to be clear before purchase; an approximate conversion is
+ * fine, an undisclosed one is not.
+ *
+ * `amountAed` is the ORIGINAL dirham figure, so the customer can see exactly
+ * what their statement will show.
  */
-export function displayPrice(aed: string | number, market: Market): DisplayPrice {
-  const amount = typeof aed === 'string' ? parseFloat(aed) : aed
-  const chargedLabel = formatAed(amount)
-
-  if (market === 'GB') {
-    const gbp = tidyGbp(amount * GBP_PER_AED)
-    return {
-      label: formatGbp(gbp),
-      chargedCurrency: 'AED',
-      chargedLabel,
-      isConverted: true,
-    }
-  }
-
-  return {
-    label: chargedLabel,
-    chargedCurrency: 'AED',
-    chargedLabel,
-    isConverted: false,
-  }
-}
-
-export function formatAed(amount: number): string {
-  return `AED ${amount.toLocaleString('en-AE', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`
-}
-
-export function formatGbp(amount: number): string {
-  return `£${amount.toLocaleString('en-GB', {
-    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`
-}
-
-/**
- * Disclosure copy. Render this wherever a converted price appears — product
- * page, cart drawer and checkout at minimum. UK consumer law requires the
- * price actually payable to be clear before purchase; an approximate
- * conversion is fine, an undisclosed one is not.
- */
-export function chargeNotice(price: DisplayPrice): string | null {
-  if (!price.isConverted) return null
-  return `Approximate. Charged in dirhams as ${price.chargedLabel}. Your bank sets the final exchange rate and may add a fee.`
-}
-
-/**
- * Which catalogue a market sees. Products are tagged `uae` and/or `uk`;
- * a product carrying both appears in both markets.
- */
-export const MARKET_TAG: Record<Market, string> = {
-  AE: 'uae',
-  GB: 'uk',
-}
-
-/** Storefront API search syntax for the products connection. */
-export function marketQuery(market: Market): string {
-  return `tag:${MARKET_TAG[market]}`
+export function chargeNotice(
+  amountAed: number,
+  country?: string | null
+): string | null {
+  if (normaliseMarket(country) === 'AE') return null
+  const aed = `AED ${Math.round(amountAed).toLocaleString('en-AE')}`
+  return `Approximate. Charged in dirhams as ${aed}. Your bank sets the final exchange rate and may add a fee.`
 }
