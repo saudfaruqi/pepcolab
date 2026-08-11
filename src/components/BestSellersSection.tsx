@@ -108,7 +108,7 @@ export default function BestSellersSection({
         {/* Rail */}
         <div className="bs-grid">
           {loading &&
-            [0, 1, 2, 3].map((i) => (
+            [0, 1, 2, 3, 4].map((i) => (
               <div
                 key={i}
                 style={{
@@ -173,7 +173,6 @@ export default function BestSellersSection({
                   style={{
                     position: 'relative',
                     aspectRatio: '1/1',
-                    background: 'radial-gradient(ellipse at 50% 120%, rgba(200,153,42,.14), transparent 62%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -217,19 +216,6 @@ export default function BestSellersSection({
 
                 {/* Body */}
                 <div style={{ padding: '18px 18px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      letterSpacing: '.12em',
-                      textTransform: 'uppercase',
-                      color: 'rgba(255,255,255,.35)',
-                      marginBottom: 7,
-                    }}
-                  >
-                    {p.format || p.category || 'Research compound'}
-                  </div>
-
                   <h3
                     style={{
                       fontSize: 'clamp(17px,2vw,21px)',
