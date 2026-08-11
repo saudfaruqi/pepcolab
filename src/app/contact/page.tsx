@@ -114,7 +114,7 @@ export default function ContactPage() {
                       Email
                     </div>
                     <div className="text-neutral-600">
-                      support@pepcolab.com
+                      hello@pepcolab.com
                     </div>
                   </div>
                 </div>
@@ -126,7 +126,7 @@ export default function ContactPage() {
                       Phone
                     </div>
                     <div className="text-neutral-600">
-                      +44 20 1234 5678
+                      +44 7838 879669
                     </div>
                   </div>
                 </div>

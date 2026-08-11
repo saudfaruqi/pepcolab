@@ -40,7 +40,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-$to = "support@pepcolab.com";
+$to = "hello@pepcolab.com";
 
 $emailSubject = "Website Contact: " . $subject;
 

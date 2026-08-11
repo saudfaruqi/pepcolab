@@ -8,7 +8,7 @@ export default function CheckoutFailurePage() {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText('support@pepcolab.com')
+    navigator.clipboard.writeText('hello@pepcolab.com')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -104,7 +104,7 @@ export default function CheckoutFailurePage() {
               fontSize: 13
             }}
           >
-            support@pepcolab.com
+            hello@pepcolab.com
           </button>
           {copied && (
             <span style={{
