@@ -478,100 +478,353 @@ export default function PepcoLabPage({
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
 
-      {/* ── Research Stacks ── */}
-      <section style={{ background: "#0A0A0A", padding: "clamp(60px,8vw,140px) 0" }}>
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px,4vw,60px)" }}>
-          <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(40px,6vw,90px)" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.35)", marginBottom: 16 }}>Research Stacks</div>
-            <h2 style={{ fontSize: "clamp(36px,6vw,84px)", lineHeight: ".92", letterSpacing: "-.07em", color: "#fff", fontWeight: 700, margin: "0 0 16px" }}>Purpose-built<br />compound stacks.</h2>
-            <p style={{ fontSize: "clamp(14px,2vw,17px)", lineHeight: 1.85, color: "rgba(255,255,255,.55)", maxWidth: 520 }}>Curated combinations, independently tested, bundled for specific research objectives. 10% saving versus individual pricing.</p>
-          </FadeUp>
+{/* ── Research Stacks ── */}
+<section style={{ 
+  background: "#0A0A0A", 
+  padding: "clamp(40px,8vw,140px) 0",
+  position: "relative",
+  overflow: "hidden"
+}}>
+  {/* Subtle background glow */}
+  <div style={{
+    position: "absolute",
+    top: "-20%",
+    right: "-10%",
+    width: "60%",
+    height: "80%",
+    background: "radial-gradient(ellipse, rgba(59,130,246,0.04) 0%, transparent 70%)",
+    pointerEvents: "none"
+  }} />
+  
+  <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(12px,4vw,60px)" }}>
+    <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(32px,6vw,90px)" }}>
+      <div style={{ 
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 10,
+        fontSize: "clamp(10px,1.2vw,11px)", 
+        fontWeight: 600, 
+        letterSpacing: ".18em", 
+        textTransform: "uppercase", 
+        color: "rgba(255,255,255,.3)", 
+        marginBottom: "clamp(14px,2vw,20px)" 
+      }}>
+        <span style={{ width: "clamp(16px,2vw,24px)", height: 1, background: "rgba(255,255,255,.15)" }} />
+        Research Stacks
+      </div>
+      <h2 style={{ 
+        fontSize: "clamp(28px,6vw,84px)", 
+        lineHeight: ".92", 
+        letterSpacing: "-.07em", 
+        color: "#fff", 
+        fontWeight: 700, 
+        margin: "0 0 clamp(8px,1.5vw,16px)" 
+      }}>
+        Purpose-built<br />
+        <span style={{ background: "linear-gradient(135deg, #fff 60%, rgba(255,255,255,.4))", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          compound stacks.
+        </span>
+      </h2>
+      <p style={{ 
+        fontSize: "clamp(13px,2vw,17px)", 
+        lineHeight: "1.7", 
+        color: "rgba(255,255,255,.5)", 
+        maxWidth: 520 
+      }}>
+        Curated combinations, independently tested, bundled for specific research objectives.
+        <span style={{ display: "block", color: "rgba(255,255,255,.3)", fontSize: ".9em", marginTop: 4 }}>
+          Save 10% versus individual pricing
+        </span>
+      </p>
+    </FadeUp>
 
-          {loadError ? (
-            <div style={{ color: "rgba(255,255,255,.4)", fontSize: 14 }}>Stacks are unavailable right now — reload the catalogue above to try again.</div>
-          ) : products.length === 0 ? (
-            <div className="stacks-grid">
-              {[0,1,2].map(i => <div key={i} style={{ background:"#111", borderRadius:28, height:420, animation:"pulse 1.6s ease infinite", animationDelay:`${i*.15}s` }} />)}
-            </div>
-          ) : BUNDLES.length === 0 ? null : (
-            <div className="stacks-grid">
-              {BUNDLES.map((b, bi) => (
-                <FadeUp key={b.id} delay={bi * 0.1}>
-                  <div className="stack-card" style={{ background: "#111111", border: "1px solid rgba(255,255,255,.07)", borderRadius: 24, overflow: "hidden" }}>
-
-                    {/* Visual */}
+    {loadError ? (
+      <div style={{ 
+        color: "rgba(255,255,255,.4)", 
+        fontSize: "clamp(13px,2vw,14px)", 
+        textAlign: "center", 
+        padding: "clamp(40px,8vw,60px) 0" 
+      }}>
+        <span style={{ fontSize: "clamp(28px,5vw,32px)", display: "block", marginBottom: 12 }}>🔬</span>
+        Stacks are unavailable right now — reload the catalogue above to try again.
+      </div>
+    ) : products.length === 0 ? (
+      <div className="stacks-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+        gap: "clamp(16px,2.5vw,30px)"
+      }}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{ 
+            background: "#111", 
+            borderRadius: "clamp(20px,3vw,28px)", 
+            height: "clamp(380px,50vh,460px)", 
+            animation: "pulse 1.6s ease infinite", 
+            animationDelay: `${i * .15}s` 
+          }} />
+        ))}
+      </div>
+    ) : BUNDLES.length === 0 ? null : (
+      <div className="stacks-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+        gap: "clamp(20px,2.5vw,30px)"
+      }}>
+        {BUNDLES.map((b, bi) => (
+          <FadeUp key={b.id} delay={bi * 0.1}>
+            <div className="stack-card" style={{ 
+              background: "linear-gradient(145deg, #111111 0%, #0d0d0d 100%)", 
+              border: "1px solid rgba(255,255,255,.06)", 
+              borderRadius: "clamp(20px,3vw,28px)", 
+              overflow: "hidden",
+              transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+              position: "relative",
+              cursor: "default",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column"
+            }}
+            onMouseEnter={e => {
+              if (window.innerWidth > 768) {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,.6)";
+              }
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,.06)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            >
+              {/* Visual - Larger image area */}
+              <div style={{
+                background: "linear-gradient(180deg, #161616 0%, #121212 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "clamp(20px,3vw,32px)",
+                padding: "clamp(30px,5vw,50px) clamp(20px,4vw,32px)",
+                minHeight: "clamp(200px,30vh,260px)",
+                position: "relative",
+                overflow: "hidden",
+                flexShrink: 0
+              }}>
+                {/* Enhanced glow orbs */}
+                {b.products.map((p, idx) => (
+                  <div key={p.id} style={{
+                    position: "absolute",
+                    width: "clamp(150px,25vw,220px)",
+                    height: "clamp(150px,25vw,220px)",
+                    borderRadius: "50%",
+                    background: `radial-gradient(circle, ${p.from}30 0%, transparent 70%)`,
+                    top: `${10 + idx * 35}%`,
+                    left: `${5 + idx * 45}%`,
+                    filter: "blur(60px)",
+                    pointerEvents: "none"
+                  }} />
+                ))}
+                
+                {/* Larger Vials with improved styling */}
+                {b.products.map((p, pi) => (
+                  <div key={p.id} style={{
+                    width: "clamp(90px,15vw,120px)",
+                    height: "clamp(90px,15vw,120px)",
+                    borderRadius: "clamp(16px,2.5vw,24px)",
+                    overflow: "hidden",
+                    background: "rgba(255,255,255,.06)",
+                    backdropFilter: "blur(4px)",
+                    border: "1px solid rgba(255,255,255,.08)",
+                    flexShrink: 0,
+                    position: "relative",
+                    zIndex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    animation: `floatVial 3s ease ${pi * .4}s infinite`,
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    boxShadow: "0 8px 32px rgba(0,0,0,.4)"
+                  }}
+                  onMouseEnter={e => {
+                    if (window.innerWidth > 768) {
+                      e.currentTarget.style.transform = "scale(1.1)";
+                      e.currentTarget.style.boxShadow = "0 12px 48px rgba(0,0,0,.6)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,.4)";
+                  }}
+                  >
+                    {p.image
+                      ? <img src={p.image} alt={p.title} style={{ 
+                          width: "100%", 
+                          height: "100%", 
+                          objectFit: "contain", 
+                          padding: "clamp(10px,2vw,16px)",
+                          filter: "drop-shadow(0 4px 12px rgba(0,0,0,.3))"
+                        }} />
+                      : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="lg" />
+                    }
+                    
+                    {/* Subtle shimmer effect on hover */}
                     <div style={{
-                      background: "#161616",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 20,
-                      padding: "32px 24px",
-                      minHeight: 180,
-                      position: "relative",
-                      overflow: "hidden",
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(135deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 50%, rgba(255,255,255,0) 60%)",
+                      backgroundSize: "200% 200%",
+                      animation: "shimmer 3s ease-in-out infinite",
+                      pointerEvents: "none",
+                      opacity: 0.5
+                    }} />
+                  </div>
+                ))}            
+              </div>
+
+              <div style={{ 
+                padding: "clamp(20px,3.5vw,30px) clamp(20px,3.5vw,30px) clamp(24px,4vw,32px)",
+                flex: 1,
+                display: "flex",
+                flexDirection: "column"
+              }}>
+                {/* Compound pills - larger */}
+                <div style={{ 
+                  display:"flex", 
+                  gap: "clamp(6px,1vw,8px)", 
+                  flexWrap:"wrap", 
+                  marginBottom: "clamp(12px,1.8vw,18px)" 
+                }}>
+                  {b.products.map(p => (
+                    <span key={p.id} style={{ 
+                      fontSize: "clamp(10px,1.2vw,11px)", 
+                      fontWeight: 600, 
+                      letterSpacing: ".08em", 
+                      textTransform: "uppercase", 
+                      background: "rgba(255,255,255,.07)", 
+                      color: "rgba(255,255,255,.5)", 
+                      padding: "clamp(4px,0.8vw,6px) clamp(10px,1.5vw,14px)", 
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,.05)"
                     }}>
-                      <div style={{ position:"absolute", inset:0, background:`radial-gradient(ellipse at 50% 110%, ${b.products[0]?.from ?? "#3b82f6"}28, transparent 65%)` }} />
-                      {b.products.map((p, pi) => (
-                        <div key={p.id} style={{
-                          width: 72, height: 72,
-                          borderRadius: 14,
-                          overflow: "hidden",
-                          background: "rgba(255,255,255,.06)",
-                          flexShrink: 0,
-                          position: "relative", zIndex: 1,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          animation: `floatVial 3s ease ${pi * .4}s infinite`,
-                        }}>
-                          {p.image
-                            ? <img src={p.image} alt={p.title} style={{ width:"100%", height:"100%", objectFit:"contain", padding:6 }} />
-                            : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="md" />
-                          }
-                        </div>
-                      ))}
+                      {p.shortName}
+                    </span>
+                  ))}
+                </div>
+
+                <h3 style={{ 
+                  fontSize: "clamp(20px,4vw,30px)", 
+                  lineHeight: "1.05", 
+                  letterSpacing: "-.04em", 
+                  color: "#fff", 
+                  margin: "0 0 clamp(6px,1vw,10px)", 
+                  fontWeight: 700 
+                }}>
+                  {b.name}
+                </h3>
+                <p style={{ 
+                  color: "rgba(255,255,255,.45)", 
+                  lineHeight: "1.65", 
+                  fontSize: "clamp(13px,1.5vw,14px)", 
+                  margin: "0 0 clamp(16px,2.5vw,22px)",
+                  flex: 1
+                }}>
+                  {b.desc}
+                </p>
+
+                <div style={{ 
+                  display:"flex", 
+                  justifyContent:"space-between", 
+                  alignItems:"center", 
+                  gap: "clamp(10px,2vw,16px)", 
+                  paddingTop: "clamp(16px,2.5vw,22px)", 
+                  borderTop:"1px solid rgba(255,255,255,.06)",
+                  flexWrap: window.innerWidth < 420 ? "wrap" : "nowrap"
+                }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ display:"flex", alignItems:"baseline", gap: "clamp(6px,1vw,10px)", flexWrap:"wrap" }}>
+                      <span style={{ 
+                        fontSize: "clamp(22px,4vw,32px)", 
+                        fontWeight: 700, 
+                        color:"#fff", 
+                        letterSpacing:"-.04em" 
+                      }}>
+                        {formatPrice(b.price, storeCurrency)}
+                      </span>
+                      <span style={{ 
+                        fontSize: "clamp(12px,1.4vw,14px)", 
+                        color:"rgba(255,255,255,.2)", 
+                        textDecoration:"line-through" 
+                      }}>
+                        {formatPrice(b.originalPrice, storeCurrency)}
+                      </span>
                     </div>
-
-                    <div style={{ padding: "22px 22px 26px" }}>
-                      {/* Compound pills */}
-                      <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
-                        {b.products.map(p => (
-                          <span key={p.id} style={{ fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", background:"rgba(255,255,255,.07)", color:"rgba(255,255,255,.45)", padding:"3px 9px", borderRadius:999 }}>{p.shortName}</span>
-                        ))}
-                        <span style={{ fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", background:"rgba(200,153,42,.15)", color:"#C8992A", padding:"3px 9px", borderRadius:999 }}>Save 10%</span>
-                      </div>
-
-                      <h3 style={{ fontSize:"clamp(20px,4vw,26px)", lineHeight:1.05, letterSpacing:"-.04em", color:"#fff", margin:"0 0 10px", fontWeight:700 }}>{b.name}</h3>
-                      <p style={{ color:"rgba(255,255,255,.5)", lineHeight:1.75, fontSize:13, margin:"0 0 20px" }}>{b.desc}</p>
-
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, paddingTop:18, borderTop:"1px solid rgba(255,255,255,.07)" }}>
-                        <div style={{ minWidth:0 }}>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:7, flexWrap:"wrap" }}>
-                            <span style={{ fontSize:"clamp(22px,4vw,28px)", fontWeight:700, color:"#fff", letterSpacing:"-.04em" }}>
-                              {formatPrice(b.price, storeCurrency)}
-                            </span>
-                            <span style={{ fontSize:13, color:"rgba(255,255,255,.28)", textDecoration:"line-through" }}>
-                              {formatPrice(b.originalPrice, storeCurrency)}
-                            </span>
-                          </div>
-                          <div style={{ fontSize:11, color:"rgba(255,255,255,.28)", marginTop:2 }}>{b.products.length} compounds · COA included</div>
-                        </div>
-                        <button
-                          onClick={() => addBundleToCart(b)}
-                          style={{ height:40, padding:"0 16px", borderRadius:999, border:"1px solid rgba(255,255,255,.14)", background:"rgba(255,255,255,.06)", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", letterSpacing:".04em", transition:".2s ease", whiteSpace:"nowrap", flexShrink:0 }}
-                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.12)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.06)"; }}
-                        >
-                          Add Stack →
-                        </button>
-                      </div>
+                    <div style={{ 
+                      fontSize: "clamp(11px,1.2vw,12px)", 
+                      color:"rgba(255,255,255,.25)", 
+                      marginTop: 2 
+                    }}>
+                      {b.products.length} compounds · COA included
                     </div>
                   </div>
-                </FadeUp>
-              ))}
+                  
+                  <button
+                    onClick={() => addBundleToCart(b)}
+                    style={{ 
+                      height: "clamp(44px,6vw,52px)", 
+                      padding: "0 clamp(20px,3vw,28px)", 
+                      borderRadius: 999, 
+                      border:"none",
+                      background: "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)",
+                      color:"#fff", 
+                      fontSize: "clamp(12px,1.2vw,13px)", 
+                      fontWeight: 600, 
+                      cursor:"pointer", 
+                      letterSpacing:".06em", 
+                      transition:"all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
+                      whiteSpace:"nowrap", 
+                      flexShrink:0,
+                      position: "relative",
+                      overflow: "hidden",
+                      width: window.innerWidth < 420 ? "100%" : "auto",
+                      justifyContent: "center"
+                    }}
+                    onMouseEnter={e => {
+                      if (window.innerWidth > 768) {
+                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.08) 100%)";
+                        e.currentTarget.style.transform = "scale(1.05)";
+                        e.currentTarget.style.borderColor = "rgba(255,255,255,.25)";
+                        e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,.4)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)";
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: "clamp(6px,1vw,8px)" }}>
+                      <span style={{ display: window.innerWidth < 400 ? "none" : "inline" }}>
+                        Add Stack
+                      </span>
+                      <span style={{ display: window.innerWidth < 400 ? "inline" : "none" }}>
+                        Add
+                      </span>
+                      <svg width="clamp(14px,1.5vw,16px)" height="clamp(14px,1.5vw,16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </FadeUp>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* ── Why Pepco — 4-up diff strip ── */}
       <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
