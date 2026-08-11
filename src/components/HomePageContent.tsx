@@ -1067,7 +1067,7 @@ export default function PepcoLabPage({
             </div>
 
             {/* Info */}
-            <div style={{ padding: "clamp(14px, 2vw, 22px)" }}>
+            <div style={{ padding: "clamp(8px, 1vw, 16px)" }}>
               <div style={{
                 fontSize: 9,
                 fontWeight: 700,
@@ -1135,7 +1135,7 @@ export default function PepcoLabPage({
                   }
                 }}
               >
-                {p.inStock ? `Add ${p.shortName}` : "Out of Stock"}
+                {p.inStock ? `${p.shortName}` : "Out of Stock"}
               </button>
             </div>
           </div>
