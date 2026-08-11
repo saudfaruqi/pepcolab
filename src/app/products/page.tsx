@@ -11,12 +11,15 @@ import ProductsSection from '@/components/ProductsSection'
 import { getProducts } from '@/lib/shopify'
 
 export const metadata: Metadata = {
-  title: 'Research Peptides for Sale — UK & UAE | PepcoLab',
-  description: 'Browse research-grade peptides for laboratory use, shipped across the UK and UAE. Every batch independently tested with a published Certificate of Analysis.',
+  // Page-level title left without the brand suffix — root layout's
+  // `template: '%s | PepcoLab'` appends it once. Setting it here too
+  // double-suffixed the tag and got truncated by Google at ~60 chars.
+  title: 'Research Peptides for Sale — UK & UAE',
+  description: 'Browse research-grade peptides for laboratory use, shipped across the UK and UAE. Supplied with the manufacturer\u2019s certificate of analysis for every batch.',
   alternates: { canonical: '/products' },
   openGraph: {
     title: 'Research Peptides for Sale — UK & UAE | PepcoLab',
-    description: 'Browse research-grade peptides for laboratory use, shipped across the UK and UAE. Every batch independently tested with a published Certificate of Analysis.',
+    description: 'Browse research-grade peptides for laboratory use, shipped across the UK and UAE. Supplied with the manufacturer\u2019s certificate of analysis for every batch.',
     type: 'website',
   },
 }
