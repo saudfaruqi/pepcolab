@@ -18,6 +18,7 @@ import { formatPrice } from '@/lib/utils'
  * out of stock or being renamed degrades gracefully.
  */
 const FEATURED_HANDLES = [
+   'reta',
   'klow-uae',
   'wolverine-stack-uae',
   'glow-uae',
@@ -27,6 +28,7 @@ const FEATURED_HANDLES = [
 /** Short editorial line per product. Kept factual — format and composition,
  *  not effects. These sit on the most-viewed section of the site. */
 const FEATURED_COPY: Record<string, string> = {
+  'reta': 'The flagship blend. Five peptides, one vial, published COA.',
   'klow-uae': 'The flagship blend. Five peptides, one vial, published COA.',
   'wolverine-stack-uae': 'Repair blend in pen or vial. Two formats, one batch record.',
   'glow-uae': 'Three-peptide preparation, cold-chain dispatched.',
