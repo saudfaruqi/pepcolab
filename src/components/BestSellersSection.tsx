@@ -278,7 +278,7 @@ export default function BestSellersSection({
           gap: 10px;
         }
         @media (min-width: 900px) {
-          .bs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+          .bs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
         }
         .bs-card {
           transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
