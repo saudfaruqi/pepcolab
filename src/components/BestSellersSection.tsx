@@ -61,7 +61,7 @@ export default function BestSellersSection({
         borderBottom: '1px solid rgba(255,255,255,.06)',
       }}
     >
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 clamp(16px,3vw,32px)' }}>
+      <div style={{ maxWidth: 1500, margin: '0 auto', padding: '0 clamp(16px,3vw,32px)' }}>
 
         {/* Header */}
         <div
