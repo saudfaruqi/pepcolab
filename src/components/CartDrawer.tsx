@@ -440,9 +440,9 @@ export default function CartDrawer() {
             {/* Trust badges */}
             <div className="flex justify-center items-center gap-4 flex-wrap mt-3">
               {[
-                { icon: '🔒', label: '256-bit SSL' },
-                { icon: '📋', label: 'COA Verified' },
-                { icon: '❄️', label: 'Cold-Chain' },
+                { icon: '.', label: 'Visa' },
+                { icon: '.', label: 'Mastercard' },
+                { icon: '.', label: 'American Express' },
               ].map(({ icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5 text-[10px] font-medium text-gray-400">
                   <span className="text-xs">{icon}</span>

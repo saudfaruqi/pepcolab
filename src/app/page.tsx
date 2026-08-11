@@ -1,11 +1,28 @@
 // src/app/page.tsx
 //
-// SSR: middleware.ts resolves the visitor's country from IP into a
-// `pepcolab_country` cookie; layout.tsx feeds it to CountryProvider as
-// `initialCountry` so `ready` is true on first render, and this page fetches
-// products server-side for that country. The first HTML response therefore
-// contains real products at the right price, and the client only refetches
-// if the visitor switches markets.
+// RENDERING: statically generated and revalidated every 5 minutes.
+//
+// This page previously read the `pepcolab_country` cookie to fetch
+// country-correct prices server-side. Correct in principle, ruinous in
+// practice: cookies() opts the route out of static rendering, so the response
+// came back `cache-control: private, no-cache, no-store` with
+// `x-vercel-cache: MISS` on EVERY request. Every visitor paid for a cold
+// render plus a live Shopify round-trip — ~1.5s TTFB — and nothing was ever
+// served from the edge.
+//
+// The cookie read bought very little, because prices are corrected on the
+// client anyway: CountryProvider resolves the market, and normaliseProduct()
+// converts AED at that point. So the page is now built once in AED and cached;
+// GB visitors see dirhams for a few hundred milliseconds before the client
+// swaps them. That is a far better trade than 1.5s of blank screen for
+// everyone, and it restores edge caching, which is also what stops slow
+// hydration from delaying the cart's checkout button.
+//
+// IMPORTANT: this only works if layout.tsx ALSO stops calling cookies().
+// A cookies() call anywhere in the layout chain forces every route under it
+// to render dynamically, and this file's change alone will do nothing.
+// CountryProvider already falls back to localStorage then /api/country when
+// `initialCountry` is absent.
 //
 // PAYLOAD: getProducts() returns the full product record — description,
 // descriptionHtml, longDesc, sequence, every variant, every image. The
@@ -15,7 +32,6 @@
 // completes, no onClick handler on the page works, including the cart's.
 // pickCardFields() below strips it to what the cards actually read.
 
-import { cookies } from 'next/headers'
 import HomePageContent from '@/components/HomePageContent'
 import { getProducts } from '@/lib/shopify'
 
@@ -73,9 +89,16 @@ function pickCardFields(p: any) {
   }
 }
 
+// Rebuild at most every 5 minutes. Prices and stock rarely move faster than
+// that, and it keeps the page on the edge cache the rest of the time.
+export const revalidate = 300
+
 export default async function Home() {
-  // Next.js 15's cookies() is async — must be awaited.
-  const country = (await cookies()).get('pepcolab_country')?.value ?? 'AE'
+  // Baseline market. Not the visitor's real country — that's resolved
+  // client-side by CountryProvider, which is what allows this page to stay
+  // static. AED is the currency Shopify actually charges in, so it's also the
+  // safest thing to have in the cached HTML that crawlers see.
+  const country = 'AE'
 
   let initialProducts: any[] = []
   try {
