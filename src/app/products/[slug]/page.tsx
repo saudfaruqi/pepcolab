@@ -2,14 +2,15 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductVariantView from '@/components/ProductVariantView'
-import RelatedProducts from '@/components/RelatedProducts'
 
 import { ChevronRight } from 'lucide-react'
-import { getProducts, getProductByHandle } from '@/lib/shopify'
+import { getProducts, getProductByHandle, isInMarket } from '@/lib/shopify'
+import { displayPrice, chargeNotice, type Market } from '@/lib/pricing'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -17,13 +18,28 @@ interface Props {
   params: { slug: string }
 }
 
-// NOTE: if you upgrade to Next 15, `params` becomes a Promise and this
-// signature changes to `{ params }: { params: Promise<{ slug: string }> }`
-// with `const { slug } = await params`. On Next 14 the below is correct.
+/**
+ * MARKET GUARD & RENDERING MODE
+ * -----------------------------
+ * This page reads the `pepcolab_country` cookie (set by middleware.ts) so a
+ * GB visitor who lands on a UAE-only product from search or a shared link
+ * can't add something we won't ship to them.
+ *
+ * Reading cookies() opts the route out of static rendering — generateStaticParams
+ * below still enumerates the slugs, but pages render per-request. Deliberate
+ * trade: with 34 products and `revalidate: 60` on the Shopify fetch the data
+ * is still cached, so the cost is small, and shipping an unfulfillable order
+ * is a more expensive problem than a warm render.
+ *
+ * To restore full SSG: drop the cookies() read and the isInMarket() check, and
+ * move the guard into ProductActions, which already consumes useCountry().
+ * SEO is unaffected either way — see the note on isInMarket() in shopify.ts.
+ */
+export const revalidate = 60
 
 export async function generateStaticParams() {
-  // Keep this cap in sync with sitemap.ts. If they drift, you get sitemap
-  // entries with no pre-rendered page (or pages absent from the sitemap).
+  // No country argument -> unfiltered, so BOTH catalogues get enumerated.
+  // Keep this cap in sync with sitemap.ts.
   const products = await getProducts(250)
   return products.map((product) => ({ slug: product.handle }))
 }
@@ -33,20 +49,19 @@ export async function generateStaticParams() {
 /* -------------------------------------------------------------------------- */
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // Generated without a market so Googlebot always gets a full, indexable
+  // page regardless of which catalogue the product belongs to.
   const product = await getProductByHandle(params.slug)
 
   if (!product) {
-    return {
-      title: 'Product not found',
-      robots: { index: false, follow: false },
-    }
+    return { title: 'Product not found', robots: { index: false, follow: false } }
   }
 
   const canonical = `/products/${product.handle}`
 
   // Factual and compound-focused. No effects, benefits, outcomes or
-  // indications — the meta description is the most screenshotted surface
-  // on the site and the easiest thing for a regulator to quote back.
+  // indications — the meta description is the most screenshotted surface on
+  // the site and the easiest thing for a regulator to quote back.
   const description =
     `${product.title} — research-grade compound with published certificate of analysis` +
     (product.purity ? `, ${product.purity}% HPLC-verified purity` : '') +
@@ -79,6 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /* HELPERS                                                                     */
 /* -------------------------------------------------------------------------- */
 
+/** ProductVariantView renders `product.oneLiner`, so it's derived here. */
 function getOneLiner(description?: string): string {
   if (!description) return ''
   const sentences = description.split(/(?<=[.!?])\s+/)
@@ -104,28 +120,22 @@ function buildJsonLd(product: any) {
     image: product.images?.map((i: any) => i.url).filter(Boolean) ?? [],
     brand: { '@type': 'Brand', name: 'PepcoLab' },
     // Deliberately NO aggregateRating / review. Marking up invented reviews is
-    // a Google structured-data policy violation (manual action risk) and, in
-    // the UK, a banned practice under the DMCC Act 2024. Add these only once
-    // real verified-purchase reviews exist.
+    // a Google structured-data policy violation and, in the UK, a banned
+    // practice under the DMCC Act 2024.
   }
 
-  // Only emit offers if we actually have a price — an Offer with a null price
-  // fails validation and can suppress the whole block.
+  // Structured data always advertises the CHARGED currency (AED), never the
+  // GBP display conversion — Google surfaces this price in search results and
+  // it has to match what the customer is actually billed.
   if (product.price != null) {
     productLd.offers = {
       '@type': 'Offer',
       url,
-      // FIX: was hardcoded 'GBP' regardless of which market the page was
-      // built/served for. Every AE-priced product was declaring GBP prices
-      // in its structured data — a real mismatch for Google Merchant/rich
-      // results, independent of the on-page display currency bug. Falls
-      // back to GBP only if normaliseProduct() genuinely didn't set one.
-      priceCurrency: product.currencyCode ?? 'GBP',
+      priceCurrency: product.currencyCode ?? 'AED',
       price: String(product.price),
-      availability:
-        product.inStock === false
-          ? 'https://schema.org/OutOfStock'
-          : 'https://schema.org/InStock',
+      availability: product.inStock === false
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock',
       seller: { '@type': 'Organization', name: 'PepcoLab' },
     }
   }
@@ -148,32 +158,34 @@ function buildJsonLd(product: any) {
 /* -------------------------------------------------------------------------- */
 
 export default async function ProductPage({ params }: Props) {
-  const [shopifyProduct, allProducts] = await Promise.all([
-    getProductByHandle(params.slug),
-    getProducts(100),
-  ])
+  const market = cookies().get('pepcolab_country')?.value as Market | undefined
 
-  // Was: return <div>Product not found</div> — which sent HTTP 200 and let
-  // Google index every bad URL as a thin duplicate page. notFound() renders
-  // src/app/not-found.tsx and returns a real 404.
+  const shopifyProduct = await getProductByHandle(params.slug, market ?? 'AE')
+
+  // Real 404 (renders src/app/not-found.tsx) rather than a 200 with a
+  // "not found" message, which Google indexes as a thin duplicate page.
   if (!shopifyProduct) {
     notFound()
   }
 
-  // `oneLiner` now lives on the merged product object (rather than being a
-  // separate variable page.tsx rendered inline) because ProductVariantView
-  // — the new client component that owns the image/strength sync — needs it
-  // too, and it's simplest to compute it once here and pass one object down.
+  // Sold in another market only. isInMarket() returns true when market is
+  // undefined, so crawlers still get the full page.
+  const availableHere = isInMarket(shopifyProduct.tags, market)
+
+  // ProductVariantView owns the whole two-column layout and passes
+  // selectedVariantId / onSelectVariant down to ProductActions, so the format
+  // picker can drive the main image. It reads `oneLiner` off the product, so
+  // that gets derived here on the server.
   const product = {
     ...shopifyProduct,
     id: shopifyProduct.shopifyId,
     slug: shopifyProduct.handle,
     name: shopifyProduct.title,
     shortName: shopifyProduct.title,
+    oneLiner: getOneLiner(shopifyProduct.description),
     category: shopifyProduct.tags?.[0] || '',
     categorySlug: shopifyProduct.tags?.[0]?.toLowerCase().replace(/\s+/g, '-') || '',
     badge: undefined as undefined,
-    oneLiner: getOneLiner(shopifyProduct.description),
     color: {
       bg: '#f5f7fb', accent: '#2563eb', pill: '#dbeafe', pillText: '#1d4ed8',
       purityBar: '#2563eb', btn: '#2563eb', vialFrom: '#2563eb', vialTo: '#7c3aed',
@@ -181,6 +193,11 @@ export default async function ProductPage({ params }: Props) {
   }
 
   const jsonLd = buildJsonLd(shopifyProduct)
+
+  // Shopify charges in AED on this store regardless of market (the gateway is
+  // single-currency), so GBP is a presentation conversion and the AED figure
+  // must stay visible. See src/lib/pricing.ts.
+  const notice = chargeNotice(displayPrice(shopifyProduct.price ?? 0, market ?? 'AE'))
 
   return (
     <>
@@ -196,41 +213,52 @@ export default async function ProductPage({ params }: Props) {
 
       <main style={{ background: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
 
+        {/* Breadcrumb */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 16px 0' }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: '#9ca3af' }}>
             <a href="/" style={{ color: '#9ca3af', textDecoration: 'none' }}>Home</a>
             <ChevronRight size={12} />
             <a href="/products" style={{ color: '#9ca3af', textDecoration: 'none' }}>Products</a>
             <ChevronRight size={12} />
-            <span style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{shopifyProduct.title}</span>
+            <span style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
+              {shopifyProduct.title}
+            </span>
           </div>
         </div>
 
-        {/*
-          Image column + strength picker + price/CTA/tabs used to be laid
-          out here directly, split across a server-rendered image block and
-          the client-rendered <ProductActions>. Moved into one client
-          component (ProductVariantView) because selecting a strength
-          (Pen/Nasal Spray/Vial) needs to update the displayed image, and
-          that requires shared state — which a server component can't hold.
-        */}
+        {/* Out-of-market notice. The page still renders in full — better than
+            a 404 for a shared link, and it keeps the URL indexable. */}
+        {!availableHere && (
+          <div style={{ maxWidth: 1400, margin: '12px auto 0', padding: '0 16px' }}>
+            <div style={{
+              border: '1px solid #FDE68A', background: '#FFFBEB', borderRadius: 12,
+              padding: '12px 16px', fontSize: 13, color: '#92400E', lineHeight: 1.6,
+            }}>
+              <strong>Not stocked for your region.</strong> This compound is held in our{' '}
+              {shopifyProduct.tags?.includes('uk') ? 'United Kingdom' : 'United Arab Emirates'}{' '}
+              catalogue only.{' '}
+              <a href="/products" style={{ color: '#92400E', fontWeight: 600 }}>
+                Browse what we ship to you →
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Converted-price disclosure. Required wherever a GBP figure is
+            shown: UK consumer law requires the price actually payable to be
+            clear before purchase, and the card is billed in AED. */}
+        {notice && (
+          <div style={{ maxWidth: 1400, margin: '10px auto 0', padding: '0 16px' }}>
+            <p style={{ fontSize: 11.5, lineHeight: 1.6, color: '#9ca3af', margin: 0 }}>
+              {notice}
+            </p>
+          </div>
+        )}
+
         <ProductVariantView product={product} />
 
-        {/*
-          Recommended Products — RelatedProducts is a client component that
-          re-fetches `allProducts` once the visitor's country resolves to
-          something other than AE, the same pattern ProductActions already
-          uses for the main price. It also owns its own "no related items"
-          empty state, so the heading/"Browse all" link never renders over
-          an empty grid if the GB-refetched product set doesn't have a match
-          (see comment in RelatedProducts.tsx).
-        */}
-        <RelatedProducts
-          initialProducts={allProducts}
-          currentHandle={shopifyProduct.handle}
-          currentTag={shopifyProduct.tags?.[0]}
-        />
-
+        {/* Layout classes used by ProductVariantView live here so the grid
+            stays with the route rather than being duplicated per component. */}
         <style>{`
           *, *::before, *::after { box-sizing: border-box; }
 
@@ -243,12 +271,10 @@ export default async function ProductPage({ params }: Props) {
             gap: 24px;
           }
 
-          .pp-image-col {
-            width: 100%;
-            min-width: 0;
-          }
+          .pp-image-col { width: 100%; min-width: 0; }
 
-          /* Square image container — uses padding-top trick for reliable square on all devices */
+          /* Square image container — padding-top trick for a reliable square
+             on all devices. */
           .pp-image-box {
             position: relative;
             width: 100%;
@@ -266,26 +292,9 @@ export default async function ProductPage({ params }: Props) {
             height: 100%;
             object-fit: contain;
             padding: 20px;
-            /* Small crossfade so swapping images on variant/thumbnail change
-               doesn't pop jarringly — matched to the ~250ms range used
-               elsewhere on the site (nav dropdowns, cards). */
-            animation: pp-img-fade .25s ease;
           }
 
-          @keyframes pp-img-fade {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-          }
-
-          .pp-info-col {
-            width: 100%;
-            min-width: 0;
-            /* Explicit auto height so this grid item never stretches to
-               match the sticky image column's box and clip its own
-               content (the root cause of the tab panel's internal
-               scrollbar — see ProductActions.tsx). */
-            height: auto;
-          }
+          .pp-info-col { width: 100%; min-width: 0; }
 
           .pp-trust-desktop { display: none; }
 
@@ -296,25 +305,6 @@ export default async function ProductPage({ params }: Props) {
             margin-bottom: 4px;
           }
 
-          .pp-related {
-            background: #f7f7f5;
-            padding: clamp(40px,6vw,72px) 0;
-            margin-top: clamp(24px,4vw,40px);
-          }
-
-          .pp-related-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
-          }
-
-          @media (min-width: 768px) {
-            .pp-related-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-          }
-          @media (min-width: 1200px) {
-            .pp-related-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-          }
-
           @media (min-width: 900px) {
             .pp-outer {
               grid-template-columns: 1fr 1fr;
@@ -323,11 +313,7 @@ export default async function ProductPage({ params }: Props) {
               padding: 28px 32px 100px;
             }
 
-            .pp-image-col {
-              position: sticky;
-              top: 80px;
-              align-self: start;
-            }
+            .pp-image-col { position: sticky; top: 80px; }
 
             .pp-trust-desktop {
               display: flex;

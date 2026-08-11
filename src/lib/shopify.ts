@@ -1,7 +1,3 @@
-
-
-
-
 // src/lib/shopify.ts
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
@@ -111,6 +107,46 @@ export async function getLocalization(buyerCountry?: string): Promise<ShopifyLoc
       },
     }
   }
+}
+
+// ─── Markets ───────────────────────────────────────────────────────────────
+//
+// PepcoLab runs two catalogues out of one Shopify store. Availability is
+// driven by product tags, NOT by Shopify Markets catalogs — market-scoped
+// price lists require multi-currency, which this store cannot enable
+// (the payment gateway only supports a single currency, so marketUpdate
+// rejects a GBP base currency on the UK market). Tags give the same
+// availability control without that dependency.
+
+export type Market = 'AE' | 'GB'
+
+export const MARKET_TAG: Record<Market, string> = {
+  AE: 'uae',
+  GB: 'uk',
+}
+
+function normaliseMarket(country?: string): Market | undefined {
+  if (country === 'AE' || country === 'GB') return country
+  return undefined
+}
+
+/** Storefront search-syntax filter for a market, or undefined for no filter. */
+export function marketQuery(country?: string): string | undefined {
+  const market = normaliseMarket(country)
+  return market ? `tag:${MARKET_TAG[market]}` : undefined
+}
+
+/**
+ * Whether a product is sold in a given market.
+ *
+ * Returns TRUE when country is unknown. Googlebot crawls from US IPs with no
+ * market cookie — if this defaulted to AE, every UK-only product would 404
+ * to Google and drop out of the index.
+ */
+export function isInMarket(tags: string[] = [], country?: string): boolean {
+  const market = normaliseMarket(country)
+  if (!market) return true
+  return tags.map((t) => t.toLowerCase()).includes(MARKET_TAG[market])
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -518,10 +554,20 @@ export function normaliseProduct(node: ShopifyProduct) {
 // this fix landing first. generateStaticParams-style callers that don't
 // care about country still work identically (buyerCountry stays undefined).
 export async function getProducts(first = 40, buyerCountry?: string) {
+  // Market filter. Products are tagged `uae` and/or `uk`; a product carrying
+  // both appears in both markets. Filtering happens in the Storefront query
+  // rather than client-side, so the other market's catalogue never ships in
+  // the page source.
+  //
+  // No buyerCountry -> no filter. That path is used by sitemap.ts and
+  // generateStaticParams, which must see BOTH catalogues so every product
+  // is pre-rendered and indexable. Do not "tighten" this to default to AE.
+  const query = buyerCountry ? marketQuery(buyerCountry) : undefined
+
   if (typeof window === 'undefined') {
     const data = await shopifyFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
       PRODUCTS_QUERY,
-      { first },
+      { first, query },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
     return data.products.edges.map(({ node }) => normaliseProduct(node))
@@ -531,7 +577,7 @@ export async function getProducts(first = 40, buyerCountry?: string) {
   const { shopifyClientFetch } = await import('./shopifyClient')
   const data = await shopifyClientFetch<{ products: { edges: { node: ShopifyProduct }[] } }>(
     PRODUCTS_QUERY,
-    { first },
+    { first, query },
     buyerCountry
   )
   return data.products.edges.map(({ node }) => normaliseProduct(node))
@@ -542,8 +588,8 @@ export async function getProducts(first = 40, buyerCountry?: string) {
 // have 2-7 variants (different mg strengths); fetching only the first
 // meant stock/price were checked against a single, arbitrary variant.
 const PRODUCTS_QUERY = /* GraphQL */ `
-  query getProducts($first: Int!) {
-    products(first: $first) {
+  query getProducts($first: Int!, $query: String) {
+    products(first: $first, query: $query) {
       edges {
         node {
           id handle title description tags updatedAt productType
