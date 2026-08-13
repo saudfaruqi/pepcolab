@@ -244,7 +244,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
               {[
                 { label: 'Lot number',   value: p.lot || 'N/A' },
                 { label: 'Test date',    value: p.testDate || 'N/A' },
-                { label: 'Testing lab',  value: 'Eurofins UK (3rd party)' },
+                { label: 'Testing lab',  value: 'Freedom Diagnostics (3rd party)' },
                 { label: 'Document',     value: hasDirectCoa ? 'Full COA available' : 'Search certificate library' },
               ].map(({ label, value }) => (
                 <div key={label} style={{

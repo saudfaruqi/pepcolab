@@ -498,7 +498,7 @@ function CertificatesContent() {
                           marginTop: 4,
                         }}
                       >
-                        Eurofins UK
+                        Freedom Diagnostics
                       </div>
                     </div>
                   </div>

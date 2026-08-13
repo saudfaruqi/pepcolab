@@ -14,13 +14,13 @@ const ITEMS = [
   '✦ Next day delivery available in the UK',
   '✦ Cold-chain verified packaging on every order',
   '✦ Same-day dispatch on orders before 2 pm',
-  '✦ Eurofins-verified COA for every batch',
+  '✦ Freedom Diagnostics-verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',
   '✦ Free shipping on all orders',
   '✦ Next day delivery available in the UK',
   '✦ Cold-chain verified packaging on every order',
   '✦ Same-day dispatch on orders before 2 pm',
-  '✦ Eurofins-verified COA for every batch',
+  '✦ Freedom Diagnostics-verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',
 ]
 

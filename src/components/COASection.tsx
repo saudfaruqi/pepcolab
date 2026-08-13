@@ -191,7 +191,7 @@ export default function COASection() {
               </div>
 
               {/* Footer note — updated to name the real lab rather than
-                  the previous generic "Eurofins UK" placeholder. */}
+                  the previous generic "Freedom Diagnostics USA" placeholder. */}
               <div className="px-5 pb-4 flex items-start gap-2">
                 <AlertCircle size={11} className="text-gray-700 mt-0.5 flex-shrink-0" />
                 <p className="text-[10px] text-gray-700 leading-[1.6]">

@@ -23,7 +23,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: 'Independently Tested, Every Batch',
-    desc: 'Third-party HPLC purity analysis by Eurofins UK, with the certificate published per lot — not asserted.',
+    desc: 'Third-party HPLC purity analysis by Freedom Diagnostics, with the certificate published per lot — not asserted.',
     color: '#E6F5EE',
     accent: '#0A7B45',
   },

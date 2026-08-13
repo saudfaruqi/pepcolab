@@ -790,7 +790,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'callout',
-        text: 'A specific, checkable claim beats a generic superlative every time: "Eurofins-tested, batch BT10, 99.26% purity, COA attached" tells you something. "The UK\'s most trusted peptide supplier" tells you nothing you can verify.',
+        text: 'A specific, checkable claim beats a generic superlative every time: "Freedom Diagnostics-tested, batch BT10, 99.26% purity, COA attached" tells you something. "The USA\'s most trusted peptide supplier" tells you nothing you can verify.',
       },
       {
         type: 'heading',

@@ -51,7 +51,7 @@ const VALUES = [
   {
     icon: ShieldCheck,
     title: 'Verified Transparency',
-    text: 'Every batch we sell is backed by a published Certificate of Analysis, tested by Eurofins UK, covering identity and HPLC purity — not a purity number asserted on a product page with nothing behind it.',
+    text: 'Every batch we sell is backed by a published Certificate of Analysis, tested by Freedom Diagnostics, covering identity and HPLC purity — not a purity number asserted on a product page with nothing behind it.',
   },
   {
     icon: FlaskConical,
@@ -177,14 +177,14 @@ export default function AboutPage() {
 
               <p>
                 PepcoLab was built around a simple operating rule: every batch we sell has a
-                Certificate of Analysis behind it, tested by Eurofins UK, published for that specific
+                Certificate of Analysis behind it, tested by Freedom Diagnostics, published for that specific
                 lot — not a generic PDF reused across every unit we've ever sold. If we can't produce
                 that documentation for a batch, we don't sell it.
               </p>
 
               <p>
                 Our compounds are manufactured and sourced from Denver, Colorado, USA, then batch-tested
-                by Eurofins UK before being released for dispatch to the UK and UAE — the same supply
+                by Freedom Diagnostics before being released for dispatch to the UK and UAE — the same supply
                 chain and documentation standard regardless of which market an order ships to.
               </p>
 

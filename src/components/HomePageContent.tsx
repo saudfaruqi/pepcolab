@@ -1,6 +1,3 @@
-
-
-
 // components/HomePageContent.tsx
 
 "use client";
@@ -75,7 +72,7 @@ type NormalisedProduct = {
 // ─── Static data ──────────────────────────────────────────────────────────────
 
 const TRUST_ITEMS = [
-  "HPLC-Verified Purity", "Eurofins UK Tested", "Cold-Chain Dispatch",
+  "HPLC-Verified Purity", "Freedom Diagnostics Tested", "Cold-Chain Dispatch",
   "Batch COA Published", "Carbon Neutral Shipping", "Next-Day UK Delivery",
   "99%+ Purity Guaranteed", "Free Tracked Shipping Over AED80",
 ];
@@ -89,7 +86,7 @@ const TRUST_ITEMS = [
 // institutions. Swap this array out entirely once real reviews are collected.
 const REVIEWS = [
   { author: "Sarah M.",  role: "Research Scientist",        initials: "SM", text: "Batch COA published on the site for every single product. This level of transparency is rare in the peptide space.",                              sub: "Verified · BPC-157 5mg"  },
-  { author: "James T.",  role: "Sports Science Researcher",  initials: "JT", text: "Cold-chain packaging intact on arrival. Eurofins result matched what they advertise on my BPC-157 batch.",                                          sub: "Verified · TB-500 5mg"   },
+  { author: "James T.",  role: "Sports Science Researcher",  initials: "JT", text: "Cold-chain packaging intact on arrival. Freedom Diagnostics result matched what they advertise on my BPC-157 batch.",                                          sub: "Verified · TB-500 5mg"   },
   { author: "Priya K.",  role: "Independent Researcher",     initials: "PK", text: "Finally a supplier that treats researchers like professionals. Ordered 4 compounds — all delivered next day, all with QR-coded COAs.",              sub: "Verified · GLP-1 5mg"    },
   { author: "Marcus R.", role: "Performance Coach",          initials: "MR", text: "The GHK-Cu results have been remarkable for my skin research protocols. Will be a repeat customer.",                                               sub: "Verified · GHK-Cu 200mg" },
   { author: "Lena W.",   role: "Biochemistry Researcher",    initials: "LW", text: "Third-party testing and batch traceability are exactly what researchers need. PepcoLab delivers both without compromise.",                          sub: "Verified · Selank 5mg"   },
@@ -852,7 +849,7 @@ export default function PepcoLabPage({
           <FadeUp delay={0.1}>
             <div className="diff-grid">
               {[
-                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Eurofins UK. COA downloadable per batch."        },
+                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Freedom Diagnostics. COA downloadable per batch."        },
                 { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch."     },
                 { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception."   },
                 { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom."    },
