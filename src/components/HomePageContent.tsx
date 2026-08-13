@@ -810,7 +810,7 @@ export default function PepcoLabPage({
                       <span style={{ display: window.innerWidth < 400 ? "inline" : "none" }}>
                         Add
                       </span>
-                      <svg width="clamp(14px,1.5vw,16px)" height="clamp(14px,1.5vw,16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg style={{ width: 'clamp(14px,1.5vw,16px)', height: 'clamp(14px,1.5vw,16px)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="5" y1="12" x2="19" y2="12" />
                         <polyline points="12 5 19 12 12 19" />
                       </svg>
