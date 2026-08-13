@@ -459,6 +459,20 @@ export default function PepcoLabPage({
         @media(max-width:900px) {
           .stacks-grid { grid-template-columns:1fr; gap:20px; }
         }
+        .stack-cta-row { flex-wrap: nowrap; }
+        @media(max-width:420px) {
+          .stack-cta-row { flex-wrap: wrap; }
+        }
+        .stack-cta-btn { width: auto; }
+        @media(max-width:420px) {
+          .stack-cta-btn { width: 100%; justify-content: center; }
+        }
+        .stack-cta-full { display: inline; }
+        .stack-cta-short { display: none; }
+        @media(max-width:400px) {
+          .stack-cta-full { display: none; }
+          .stack-cta-short { display: inline; }
+        }          
       `}</style>
 
       {/* ── Trust ticker ── */}
@@ -731,14 +745,13 @@ export default function PepcoLabPage({
                   {b.desc}
                 </p>
 
-                <div style={{ 
+              <div className="stack-cta-row" style={{ 
                   display:"flex", 
                   justifyContent:"space-between", 
                   alignItems:"center", 
                   gap: "clamp(10px,2vw,16px)", 
                   paddingTop: "clamp(16px,2.5vw,22px)", 
                   borderTop:"1px solid rgba(255,255,255,.06)",
-                  flexWrap: window.innerWidth < 420 ? "wrap" : "nowrap"
                 }}>
                   <div style={{ minWidth:0 }}>
                     <div style={{ display:"flex", alignItems:"baseline", gap: "clamp(6px,1vw,10px)", flexWrap:"wrap" }}>
@@ -769,6 +782,7 @@ export default function PepcoLabPage({
                   
                   <button
                     onClick={() => addBundleToCart(b)}
+                    className="stack-cta-btn"
                     style={{ 
                       height: "clamp(44px,6vw,52px)", 
                       padding: "0 clamp(20px,3vw,28px)", 
@@ -785,8 +799,6 @@ export default function PepcoLabPage({
                       flexShrink:0,
                       position: "relative",
                       overflow: "hidden",
-                      width: window.innerWidth < 420 ? "100%" : "auto",
-                      justifyContent: "center"
                     }}
                     onMouseEnter={e => {
                       if (window.innerWidth > 768) {
@@ -804,10 +816,10 @@ export default function PepcoLabPage({
                     }}
                   >
                     <span style={{ display: "flex", alignItems: "center", gap: "clamp(6px,1vw,8px)" }}>
-                      <span style={{ display: window.innerWidth < 400 ? "none" : "inline" }}>
+                      <span className="stack-cta-full">
                         Add Stack
                       </span>
-                      <span style={{ display: window.innerWidth < 400 ? "inline" : "none" }}>
+                      <span className="stack-cta-short">
                         Add
                       </span>
                       <svg style={{ width: 'clamp(14px,1.5vw,16px)', height: 'clamp(14px,1.5vw,16px)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
