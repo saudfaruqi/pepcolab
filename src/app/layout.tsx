@@ -223,16 +223,6 @@ export default async function RootLayout({
           }}
         />
 
-        {/* STORE SCHEMA
-            Now reflects what the storefront actually sells: AED pricing,
-            UAE + UK service area, real price band from the live catalogue.
-            No `telephone` — '+44' is a dialling code, not a number, and it
-            invalidated the block. Add the real E.164 number or leave it out.
-
-            NOTE ON (R): dropped everywhere in this file. Under s.95 Trade
-            Marks Act 1994 it is a criminal offence in the UK to represent a
-            mark as registered when it is not. Use (TM) while an application
-            is pending, and reinstate (R) only once registration is granted. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -261,10 +251,10 @@ export default async function RootLayout({
             0.0.0 with the exact version you have tested, and consider moving
             this <Script> into checkout/page.tsx so it only loads where it's
             actually used. */}
-<Script
-  src="https://unpkg.com/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
-  strategy="lazyOnload"
-/>
+        <Script
+          src="https://unpkg.com/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
+          strategy="lazyOnload"
+        />
 
         <CountryProvider initialCountry={initialCountry}>
           {/* Gate sits inside CountryProvider so a UAE/UK selection can call
