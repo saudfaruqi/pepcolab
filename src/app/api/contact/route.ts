@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import nodemailer from 'nodemailer'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,53 +22,62 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Send to PHP backend
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pepcolab.com'
-    
-    const response = await fetch(`${baseUrl}/api/contact.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+    // Build email content
+    const emailSubject = `Website Contact: ${subject}`
+    const emailBody = `
+New contact form submission
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Name:    ${name}
+Email:   ${email}
+Company: ${company || 'Not provided'}
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Subject:
+${subject}
+
+Message:
+${message}
+━━━━━━━━━━━━━━━━━━━━━━━━━
+This message was sent from the PepcoLab contact form.
+    `
+
+    // Configure SMTP transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.secureserver.net',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER || 'hello@pepcolab.com',
+        pass: process.env.SMTP_PASS || 'pepcolab@1',
       },
-      body: JSON.stringify({ name, email, company, subject, message }),
-      // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(10000),
+      tls: {
+        ciphers: 'SSLv3',
+        rejectUnauthorized: false,
+      },
     })
 
-    // Get response text first
-    const responseText = await response.text()
-    
-    // Try to parse as JSON
-    let data
-    try {
-      data = JSON.parse(responseText)
-    } catch (parseError) {
-      console.error('[Contact API] Invalid JSON response:', responseText)
-      // Return a user-friendly error
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Unable to send email. Please try again later.' 
-        },
-        { status: 500 }
-      )
-    }
+    // Send email
+    await transporter.sendMail({
+      from: `"PepcoLab" <${process.env.SMTP_FROM || 'hello@pepcolab.com'}>`,
+      to: 'hello@pepcolab.com',
+      replyTo: email,
+      subject: emailSubject,
+      text: emailBody,
+    })
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to send email')
-    }
-
-    return NextResponse.json(data)
+    return NextResponse.json({
+      success: true,
+      message: 'Message sent successfully.',
+    })
 
   } catch (error: any) {
-    console.error('[Contact API] Error:', error.message)
+    console.error('[Contact API] Error:', error)
     
-    // Return a user-friendly error
     return NextResponse.json(
       { 
         success: false, 
-        message: 'Unable to send email. Please try again later or contact us directly at hello@pepcolab.com.' 
+        message: 'Unable to send email. Please try again or contact us at hello@pepcolab.com.' 
       },
       { status: 500 }
     )

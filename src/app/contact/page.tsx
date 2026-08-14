@@ -41,8 +41,7 @@ export default function ContactPage() {
     setSuccess(false)
 
     try {
-      // Direct PHP call with proper URL
-      const response = await fetch('/api/contact.php', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,17 +49,7 @@ export default function ContactPage() {
         body: JSON.stringify(form),
       })
 
-      // Handle non-JSON responses
-      const contentType = response.headers.get('content-type')
-      let data
-
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json()
-      } else {
-        const text = await response.text()
-        console.error('Non-JSON response:', text)
-        throw new Error('Server error. Please try again.')
-      }
+      const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.message || 'Something went wrong')
