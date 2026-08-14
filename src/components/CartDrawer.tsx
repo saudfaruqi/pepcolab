@@ -154,6 +154,12 @@ export default function CartDrawer() {
       const baseUrl = process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin
       const currency = displayCurrency || 'AED'
       
+      // STRABL's documented schema (docs.strabl.io/cart-session-request) wants
+      // `cart.items`, not `cart.lineItems`, and each item requires `zeroPay`.
+      // Sending the wrong key means STRABL sees an empty cart — no items to
+      // total — which is why paymentMethods showed amount:"" / currency:""
+      // and Paymob rejected the transaction with a 400 on every attempt,
+      // across every product, amount, and payment method.
       const validLineItems = lines
         .filter(l => l.variantId && l.quantity > 0 && l.price > 0)
         .map(l => ({
@@ -166,6 +172,7 @@ export default function CartDrawer() {
           image: l.image || '',
           url: l.slug ? `${baseUrl}/products/${l.slug}` : `${baseUrl}/products`,
           variantOptions: l.variantTitle ? [l.variantTitle] : [],
+          zeroPay: false,
         }))
 
       if (validLineItems.length === 0) {
@@ -174,15 +181,17 @@ export default function CartDrawer() {
         return
       }
 
+      // merchantUrls only supports successUrl/failureUrl per STRABL's schema.
+      // cancelUrl isn't a documented field — dropped rather than sent as an
+      // unrecognised key.
       const cartData = {
         currency,
         country: detectedCountry || 'AE',
-        lineItems: validLineItems,
+        items: validLineItems,
         extra: {},
         merchantUrls: {
           successUrl: `${baseUrl}/checkout/success`,
           failureUrl: `${baseUrl}/checkout/failure`,
-          cancelUrl: `${baseUrl}/checkout/cancel`,
         },
       }
       
