@@ -173,7 +173,7 @@ export default function CartDrawer() {
           quantity: Number(l.quantity) || 1,
           productId: l.variantId,
           variantId: l.variantId,
-          image: l.image || '',
+          image: l.image || `${baseUrl}/pepcologo.png`,
           url: l.slug ? `${baseUrl}/products/${l.slug}` : `${baseUrl}/products`,
           variantOptions: l.variantTitle ? [l.variantTitle] : [],
           zeroPay: false,
