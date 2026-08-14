@@ -124,7 +124,7 @@ export default function CheckoutFailurePage() {
           flexWrap: 'wrap'
         }}>
           <Link
-            href="/cart"
+            href="/products"
             style={{
               display: 'inline-block',
               background: '#0d0d0d',
