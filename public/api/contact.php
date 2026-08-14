@@ -1,116 +1,139 @@
-import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+<?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't show errors in output
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { name, email, company, subject, message } = body
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
 
-    // Validation
-    if (!name || !email || !subject || !message) {
-      return NextResponse.json(
-        { success: false, message: 'Please complete all required fields.' },
-        { status: 400 }
-      )
-    }
+// Always return JSON, even on errors
+function sendJsonResponse($success, $message, $statusCode = 200) {
+    http_response_code($statusCode);
+    echo json_encode([
+        "success" => $success,
+        "message" => $message
+    ]);
+    exit;
+}
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, message: 'Invalid email address.' },
-        { status: 400 }
-      )
-    }
+// Check request method
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJsonResponse(false, "Method not allowed", 405);
+}
 
-    // Build email content
-    const emailSubject = `Website Contact: ${subject}`
-    const emailBody = `
+// Get and parse input
+$input = file_get_contents("php://input");
+if (!$input) {
+    sendJsonResponse(false, "No input received", 400);
+}
+
+$data = json_decode($input, true);
+if (!$data) {
+    sendJsonResponse(false, "Invalid JSON input", 400);
+}
+
+// Extract and trim values
+$name = trim($data['name'] ?? '');
+$email = trim($data['email'] ?? '');
+$company = trim($data['company'] ?? '');
+$subject = trim($data['subject'] ?? '');
+$message = trim($data['message'] ?? '');
+
+// Validate required fields
+if (!$name || !$email || !$subject || !$message) {
+    sendJsonResponse(false, "Please complete all required fields.", 400);
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    sendJsonResponse(false, "Invalid email address.", 400);
+}
+
+// Email configuration
+$to = "hello@pepcolab.com";
+$emailSubject = "Website Contact: " . $subject;
+
+$emailBody = "
 New contact form submission
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
-Name:    ${name}
-Email:   ${email}
-Company: ${company || 'Not provided'}
+Name:    {$name}
+Email:   {$email}
+Company: " . ($company ?: 'Not provided') . "
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Subject:
-${subject}
+{$subject}
 
 Message:
-${message}
+{$message}
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 This message was sent from the PepcoLab contact form.
-    `
+";
 
-    // Try SMTP first
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.secureserver.net',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER || 'hello@pepcolab.com',
-          pass: process.env.SMTP_PASS || 'pepcolab@1',
-        },
-        tls: {
-          ciphers: 'SSLv3',
-          rejectUnauthorized: false,
-        },
-      })
+// SMTP Configuration from environment or defaults
+$smtp_host = getenv('SMTP_HOST') ?: 'smtp.secureserver.net';
+$smtp_port = getenv('SMTP_PORT') ?: 587;
+$smtp_user = getenv('SMTP_USER') ?: 'hello@pepcolab.com';
+$smtp_pass = getenv('SMTP_PASS') ?: 'pepcolab@1';
+$smtp_from = getenv('SMTP_FROM') ?: 'hello@pepcolab.com';
 
-      await transporter.sendMail({
-        from: `"PepcoLab" <${process.env.SMTP_FROM || 'hello@pepcolab.com'}>`,
-        to: process.env.SMTP_USER || 'hello@pepcolab.com',
-        replyTo: email,
-        subject: emailSubject,
-        text: emailBody,
-      })
+// Try sending via SMTP with fsockopen (no external libraries needed)
+$mailSent = false;
+$errorMessage = '';
 
-      return NextResponse.json({
-        success: true,
-        message: 'Message sent successfully.',
-      })
-      
-    } catch (smtpError: any) {
-      console.error('[Contact API] SMTP Error:', smtpError)
+// Use PHPMailer if available via Composer autoload
+if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
+    require_once __DIR__ . '/../../vendor/autoload.php';
+    
+    if (class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
+        try {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host = $smtp_host;
+            $mail->SMTPAuth = true;
+            $mail->Username = $smtp_user;
+            $mail->Password = $smtp_pass;
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = $smtp_port;
+            $mail->SMTPDebug = 0; // Disable debug output
 
-      // Fallback to PHP endpoint
-      try {
-        const phpResponse = await fetch('https://www.pepcolab.com/api/contact.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name, email, company, subject, message }),
-        })
+            $mail->setFrom($smtp_from, 'PepcoLab');
+            $mail->addReplyTo($email, $name);
+            $mail->addAddress($to);
+            $mail->Subject = $emailSubject;
+            $mail->Body = $emailBody;
 
-        const phpData = await phpResponse.json()
-
-        if (!phpResponse.ok) {
-          throw new Error(phpData.message || 'Failed to send email')
+            $mailSent = $mail->send();
+        } catch (Exception $e) {
+            $errorMessage = $mail->ErrorInfo;
+            error_log("PHPMailer Error: " . $mail->ErrorInfo);
         }
-
-        return NextResponse.json(phpData)
-        
-      } catch (fallbackError: any) {
-        console.error('[Contact API] Fallback failed:', fallbackError)
-        
-        // Final fallback - log the error but return a user-friendly message
-        return NextResponse.json(
-          { 
-            success: false, 
-            message: 'Unable to send email. Please try again later or contact us directly at hello@pepcolab.com.' 
-          },
-          { status: 500 }
-        )
-      }
     }
-
-  } catch (error: any) {
-    console.error('[Contact API] Error:', error)
-    return NextResponse.json(
-      { success: false, message: 'An unexpected error occurred.' },
-      { status: 500 }
-    )
-  }
 }
+
+// Fallback: Try using mail() function
+if (!$mailSent) {
+    $headers = "From: PepcoLab <{$smtp_from}>\r\n";
+    $headers .= "Reply-To: {$email}\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion();
+
+    $mailSent = mail($to, $emailSubject, $emailBody, $headers);
+    
+    if (!$mailSent) {
+        error_log("mail() function failed to send email");
+    }
+}
+
+// If all sending methods failed
+if (!$mailSent) {
+    // Log the error but return a user-friendly message
+    error_log("All email sending methods failed for contact form submission from {$email}");
+    
+    sendJsonResponse(false, "Unable to send email. Please try again later or contact us directly at hello@pepcolab.com.", 500);
+}
+
+// Success
+sendJsonResponse(true, "Message sent successfully. We'll get back to you soon.", 200);

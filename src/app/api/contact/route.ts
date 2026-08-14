@@ -1,4 +1,3 @@
-// app/api/contact/route.ts - Simplified version
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
@@ -23,15 +22,37 @@ export async function POST(req: NextRequest) {
     }
 
     // Send to PHP backend
-    const response = await fetch('https://www.pepcolab.com/api/contact.php', {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pepcolab.com'
+    
+    const response = await fetch(`${baseUrl}/api/contact.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ name, email, company, subject, message }),
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(10000),
     })
 
-    const data = await response.json()
+    // Get response text first
+    const responseText = await response.text()
+    
+    // Try to parse as JSON
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('[Contact API] Invalid JSON response:', responseText)
+      // Return a user-friendly error
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Unable to send email. Please try again later.' 
+        },
+        { status: 500 }
+      )
+    }
 
     if (!response.ok) {
       throw new Error(data.message || 'Failed to send email')
@@ -40,9 +61,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data)
 
   } catch (error: any) {
-    console.error('[Contact API] Error:', error)
+    console.error('[Contact API] Error:', error.message)
+    
+    // Return a user-friendly error
     return NextResponse.json(
-      { success: false, message: 'Unable to send email. Please try again later.' },
+      { 
+        success: false, 
+        message: 'Unable to send email. Please try again later or contact us directly at hello@pepcolab.com.' 
+      },
       { status: 500 }
     )
   }
