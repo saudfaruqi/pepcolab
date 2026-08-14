@@ -1,6 +1,7 @@
 // src/app/sitemap.ts
 import type { MetadataRoute } from 'next'
 import { getProducts } from '@/lib/shopify'
+import { CATEGORIES } from '@/app/data'
 
 const BASE_URL = 'https://www.pepcolab.com'
 
@@ -12,10 +13,10 @@ type StaticRoute = {
 
 /**
  * Excluded deliberately: /checkout/*, /api/*, /not-found.
- * Also excluded: /products?cat=… — query-string variants of an already-listed
- * page, which self-canonical to /products. If you want category pages
- * indexed, make them real routes (/products/category/[cat]) with unique
- * copy, then add them here.
+ * /products?cat=… (the query-string filter) stays excluded — it
+ * self-canonicals to /products. The 7 real category routes below
+ * (/products/category/[cat], added for exactly this reason — see that
+ * page's file header) are what get indexed per-category now.
  */
 const STATIC_ROUTES: StaticRoute[] = [
   { path: '/',             changeFrequency: 'weekly',  priority: 1.0 },
@@ -33,12 +34,18 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/privacy',      changeFrequency: 'yearly',  priority: 0.2 },
 ]
 
+// One entry per real category slug (excludes the synthetic 'all' entry in
+// CATEGORIES). Priority sits just under /products itself.
+const CATEGORY_ROUTES: StaticRoute[] = CATEGORIES.filter((c) => c.slug !== 'all').map(
+  (c) => ({ path: `/products/category/${c.slug}`, changeFrequency: 'daily' as const, priority: 0.85 })
+)
+
 export const revalidate = 3600 // regenerate hourly so new products appear
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
+  const staticEntries: MetadataRoute.Sitemap = [...STATIC_ROUTES, ...CATEGORY_ROUTES].map((route) => ({
     url: `${BASE_URL}${route.path}`,
     lastModified: now,
     changeFrequency: route.changeFrequency,

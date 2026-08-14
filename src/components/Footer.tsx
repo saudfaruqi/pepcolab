@@ -4,10 +4,12 @@ import { useState } from 'react'
 
 const LINKS = {
   Products: [
-    { label: 'All Compounds',    href: '/products'              },
-    { label: 'Recovery',         href: '/products?cat=recovery' },
-    { label: 'Metabolic',        href: '/products?cat=metabolic'},
-    { label: 'Cognitive',        href: '/products?cat=cognitive'},
+    { label: 'All Compounds',    href: '/products'                       },
+    // Real crawlable category routes (SEO) rather than the query-string
+    // filter — see app/products/category/[category]/page.tsx.
+    { label: 'Recovery',         href: '/products/category/recovery'     },
+    { label: 'Metabolic',        href: '/products/category/metabolic'    },
+    { label: 'Cognitive',        href: '/products/category/cognitive'    },
     { label: 'Bundles & Stacks', href: '/bundles'               },
   ],
   Research: [

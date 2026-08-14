@@ -303,7 +303,7 @@ export default async function ProductPage({ params }: Props) {
                 </div>
 
                 <Link
-                  href={relatedCategory ? `/products?cat=${relatedCategory}#catalogue` : '/products'}
+                  href={relatedCategory ? `/products/category/${relatedCategory}` : '/products'}
                   style={{
                     fontSize: 13,
                     fontWeight: 600,

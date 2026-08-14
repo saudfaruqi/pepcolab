@@ -120,13 +120,25 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
+                  <Phone className="mt-1" size={18} />
+                  <div>
+                    <div className="font-medium">
+                      Phone
+                    </div>
+                    <div className="text-neutral-600">
+                      +44 7838 879669
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
                   <MapPin className="mt-1" size={18} />
                   <div>
                     <div className="font-medium">
                       Office
                     </div>
                     <div className="text-neutral-600">
-                      United Kingdom
+                      London, United Kingdom
                     </div>
                   </div>
                 </div>

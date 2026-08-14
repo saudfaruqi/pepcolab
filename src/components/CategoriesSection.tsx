@@ -222,7 +222,11 @@ export default function CategoriesSection() {
             categories.map((cat) => (
               <a
                 key={cat.slug}
-                href={`/products?cat=${cat.slug}#catalogue`}
+                // Real, crawlable category route (see products/category/[category]/page.tsx)
+                // instead of the query-string filter — query params on
+                // /products still work for on-page filtering, but this is
+                // what gets indexed and ranked per category.
+                href={`/products/category/${cat.slug}`}
                 className="group relative flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-[0_8px_28px_rgba(26,86,219,0.12)]"
                 style={{ background: cat.color.bg, borderColor: cat.color.border }}
               >

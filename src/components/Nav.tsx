@@ -160,8 +160,12 @@ export default function Nav() {
       label: 'Products', href: '/products#catalogue', hasDrop: true,
       items: [
         { label: 'All Compounds',   href: '/products#catalogue',  sub: products.length > 0 ? `${products.length} compounds` : 'Browse catalogue' },
+        // Real crawlable category routes now (see
+        // app/products/category/[category]/page.tsx) rather than the
+        // query-string filter — no #catalogue needed since each route is
+        // its own full page, not a scroll target on /products.
         ...Object.entries(CATEGORY_LABELS).map(([slug, label]) => ({
-          label, href: `/products?cat=${slug}#catalogue`,
+          label, href: `/products/category/${slug}`,
           sub: categoryCounts[slug] != null ? `${categoryCounts[slug]} product${categoryCounts[slug] !== 1 ? 's' : ''}` : undefined,
         })),
         { label: 'Bundles & Stacks', href: '/bundles', sub: 'Save 10% on combinations' },

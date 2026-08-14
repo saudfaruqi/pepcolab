@@ -1,3 +1,6 @@
+
+
+
 // components/HomePageContent.tsx
 
 "use client";
@@ -1231,7 +1234,7 @@ export default function PepcoLabPage({
               return (
                 <FadeUp key={c.slug} delay={i * 0.06}>
                   <Link
-                    href={`/products?cat=${c.slug}#catalogue`}
+                    href={`/products/category/${c.slug}`}
                     className="area-card"
                     style={{ display: "block", textDecoration: "none", background: "linear-gradient(145deg,#000,#111)", borderRadius: 24, padding: "36px 28px 32px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,.06)" }}
                   >
