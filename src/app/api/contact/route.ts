@@ -263,19 +263,45 @@ Best regards,
 PepcoLab Team
     `
 
-    // Try GoDaddy SMTP (your working configuration)
+    // ─── EMAIL CONFIGURATION FROM ENV ───
+    const smtpHost = process.env.SMTP_HOST
+    const smtpPort = parseInt(process.env.SMTP_PORT || '465')
+    const smtpUser = process.env.SMTP_USER
+    const smtpPass = process.env.SMTP_PASS
+    const smtpFrom = process.env.SMTP_FROM
+
+    // Validate environment variables
+    if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+      console.error('[Contact API] Missing SMTP configuration in environment variables')
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Email service is not configured. Please contact support.',
+        },
+        { status: 500 }
+      )
+    }
+
+    console.log('[Contact API] SMTP Configuration:', {
+      host: smtpHost,
+      port: smtpPort,
+      user: smtpUser,
+      secure: smtpPort === 465,
+    })
+
+    // ─── SEND EMAILS ───
     let mailSent = false
     let lastError: any = null
 
-    // Attempt 1: SMTP with SSL on port 465
+    // Attempt 1: SMTP with SSL on port 465 (GoDaddy TITAN)
     try {
       const transporter = nodemailer.createTransport({
-        host: 'smtpout.secureserver.net',
-        port: 465,
-        secure: true,
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
         auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASSWORD,
+          user: smtpUser,
+          pass: smtpPass,
         },
         tls: {
           rejectUnauthorized: false,
@@ -284,41 +310,46 @@ PepcoLab Team
         socketTimeout: 30000,
       })
 
+      // Verify connection
+      await transporter.verify()
+      console.log('[Contact API] SMTP connection verified')
+
       // Send admin email
       await transporter.sendMail({
-        from: '"PepcoLab" <hello@pepcolab.com>',
+        from: `"PepcoLab" <${smtpFrom}>`,
         to: 'hello@pepcolab.com',
         replyTo: email,
         subject: `Website Contact: ${subject}`,
         text: adminEmailText,
       })
+      console.log('[Contact API] Admin email sent')
 
       // Send user confirmation
       await transporter.sendMail({
-        from: '"PepcoLab" <hello@pepcolab.com>',
+        from: `"PepcoLab" <${smtpFrom}>`,
         to: email,
         subject: `✅ We've Received Your Message - PepcoLab`,
         text: userEmailText,
         html: userEmailHtml,
       })
+      console.log('[Contact API] User confirmation sent')
 
       mailSent = true
-      console.log('[Contact API] Emails sent successfully via GoDaddy SSL')
     } catch (error: any) {
       lastError = error
-      console.error('[Contact API] GoDaddy SSL attempt failed:', error.message)
+      console.error('[Contact API] SMTP attempt 1 (SSL) failed:', error.message)
     }
 
     // Attempt 2: SMTP with TLS on port 587 (fallback)
     if (!mailSent) {
       try {
         const transporter = nodemailer.createTransport({
-          host: 'smtpout.secureserver.net',
+          host: smtpHost,
           port: 587,
           secure: false,
           auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD,
+            user: smtpUser,
+            pass: smtpPass,
           },
           tls: {
             rejectUnauthorized: false,
@@ -327,68 +358,34 @@ PepcoLab Team
           socketTimeout: 30000,
         })
 
+        // Verify connection
+        await transporter.verify()
+        console.log('[Contact API] SMTP connection verified (TLS)')
+
         // Send admin email
         await transporter.sendMail({
-          from: '"PepcoLab" <hello@pepcolab.com>',
+          from: `"PepcoLab" <${smtpFrom}>`,
           to: 'hello@pepcolab.com',
           replyTo: email,
           subject: `Website Contact: ${subject}`,
           text: adminEmailText,
         })
+        console.log('[Contact API] Admin email sent (TLS)')
 
         // Send user confirmation
         await transporter.sendMail({
-          from: '"PepcoLab" <hello@pepcolab.com>',
+          from: `"PepcoLab" <${smtpFrom}>`,
           to: email,
           subject: `✅ We've Received Your Message - PepcoLab`,
           text: userEmailText,
           html: userEmailHtml,
         })
+        console.log('[Contact API] User confirmation sent (TLS)')
 
         mailSent = true
-        console.log('[Contact API] Emails sent successfully via GoDaddy TLS')
       } catch (error: any) {
         lastError = error
-        console.error('[Contact API] GoDaddy TLS attempt failed:', error.message)
-      }
-    }
-
-    // Attempt 3: Gmail SMTP (ultimate fallback)
-    if (!mailSent && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD,
-          },
-        })
-
-        // Send admin email
-        await transporter.sendMail({
-          from: `"PepcoLab" <${process.env.GMAIL_USER}>`,
-          to: 'hello@pepcolab.com',
-          replyTo: email,
-          subject: `Website Contact: ${subject}`,
-          text: adminEmailText,
-        })
-
-        // Send user confirmation
-        await transporter.sendMail({
-          from: `"PepcoLab" <${process.env.GMAIL_USER}>`,
-          to: email,
-          subject: `✅ We've Received Your Message - PepcoLab`,
-          text: userEmailText,
-          html: userEmailHtml,
-        })
-
-        mailSent = true
-        console.log('[Contact API] Emails sent successfully via Gmail')
-      } catch (error: any) {
-        lastError = error
-        console.error('[Contact API] Gmail attempt failed:', error.message)
+        console.error('[Contact API] SMTP attempt 2 (TLS) failed:', error.message)
       }
     }
 
