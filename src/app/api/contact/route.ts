@@ -73,9 +73,7 @@ export async function POST(req: NextRequest) {
       letter-spacing: 0.04em;
       font-weight: 600;
     }
-    .content {
-      padding: 32px 30px 28px;
-    }
+    .content { padding: 32px 30px 28px; }
     .alert-banner {
       background: #eff6ff;
       border-left: 4px solid #2563eb;
@@ -184,36 +182,29 @@ export async function POST(req: NextRequest) {
       <div class="alert-banner">
         <p>⚠️ A new message has been received from the website contact form.</p>
       </div>
-
       <div class="field">
         <div class="label">👤 Name</div>
         <div class="value">${name}</div>
       </div>
-
       <div class="field">
         <div class="label">📧 Email</div>
         <div class="value"><a href="mailto:${email}" style="color:#2563eb;text-decoration:none;">${email}</a></div>
       </div>
-
       ${company ? `
       <div class="field">
         <div class="label">🏢 Company</div>
         <div class="value company">${company}</div>
       </div>
       ` : ''}
-
       <div class="field">
         <div class="label">📝 Subject</div>
         <div class="value">${subject}</div>
       </div>
-
       <div class="message-box">
         <div class="label">💬 Message</div>
         <div class="value">${message}</div>
       </div>
-
       <div class="divider"></div>
-
       <div style="text-align:center;">
         <a href="mailto:${email}" class="action-btn">Reply to ${name}</a>
       </div>
@@ -273,11 +264,7 @@ export async function POST(req: NextRequest) {
       0%, 100% { background-position: 0% 0%; }
       50% { background-position: 100% 0%; }
     }
-    .header .check {
-      font-size: 44px;
-      display: block;
-      margin-bottom: 8px;
-    }
+    .header .check { font-size: 44px; display: block; margin-bottom: 8px; }
     .header h1 {
       font-size: 24px;
       font-weight: 700;
@@ -290,18 +277,14 @@ export async function POST(req: NextRequest) {
       font-size: 13px;
       margin-top: 4px;
     }
-    .content {
-      padding: 32px 30px 28px;
-    }
+    .content { padding: 32px 30px 28px; }
     .greeting {
       font-size: 18px;
       font-weight: 600;
       color: #0d0d0d;
       margin-bottom: 8px;
     }
-    .greeting span {
-      color: #2563eb;
-    }
+    .greeting span { color: #2563eb; }
     .body-text {
       font-size: 15px;
       color: rgba(26,26,26,0.7);
@@ -374,9 +357,6 @@ export async function POST(req: NextRequest) {
       font-size: 13px;
       font-weight: 500;
     }
-    .social-links a:hover {
-      color: #0d0d0d;
-    }
     .footer {
       background: #f8f7f4;
       padding: 20px 30px 24px;
@@ -409,12 +389,10 @@ export async function POST(req: NextRequest) {
     </div>
     <div class="content">
       <div class="greeting">Hi ${name.split(' ')[0]} 👋</div>
-
       <p class="body-text">
         Thank you for reaching out to PepcoLab. We've received your message and
         our team will review it shortly.
       </p>
-
       <div class="summary-box">
         <div class="label">📝 Your Message</div>
         <div class="value" style="margin-top:4px;"><strong>Subject:</strong> ${subject}</div>
@@ -422,7 +400,6 @@ export async function POST(req: NextRequest) {
           ${message.length > 100 ? message.substring(0, 100) + '...' : message}
         </div>
       </div>
-
       <div class="next-steps">
         <h4>⏳ What Happens Next</h4>
         <ul>
@@ -431,13 +408,10 @@ export async function POST(req: NextRequest) {
           <li>For urgent matters, feel free to follow up with us</li>
         </ul>
       </div>
-
       <div class="divider"></div>
-
       <p style="font-size:14px;color:rgba(26,26,26,0.5);text-align:center;margin:0;">
         In the meantime, explore our resources:
       </p>
-
       <div class="social-links">
         <a href="https://www.pepcolab.com/products">🔬 Products</a>
         <a href="https://www.pepcolab.com/certificates">📄 COA Library</a>
@@ -453,14 +427,32 @@ export async function POST(req: NextRequest) {
 </html>
     `
 
-    // ─── SEND EMAILS USING GODADDY SMTP ───
+    // ─── EMAIL CONFIGURATION (ALL FROM ENV) ───
+    const smtpHost = process.env.SMTP_HOST
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587')
+    const smtpUser = process.env.SMTP_USER
+    const smtpPass = process.env.SMTP_PASS
+    const smtpFrom = process.env.SMTP_FROM
+
+    // Validate environment variables
+    if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+      console.error('[Contact API] Missing SMTP configuration')
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Email service is not configured. Please contact support.' 
+        },
+        { status: 500 }
+      )
+    }
+
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.secureserver.net',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: smtpUser,
+        pass: smtpPass,
       },
       tls: {
         rejectUnauthorized: false,
@@ -469,9 +461,9 @@ export async function POST(req: NextRequest) {
       socketTimeout: 30000,
     })
 
-    const fromEmail = `"PepcoLab" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`
+    const fromEmail = `"PepcoLab" <${smtpFrom}>`
 
-    // Send admin email
+    // ─── SEND ADMIN EMAIL ───
     await transporter.sendMail({
       from: fromEmail,
       to: 'hello@pepcolab.com',
@@ -481,7 +473,7 @@ export async function POST(req: NextRequest) {
       html: adminEmailHtml,
     })
 
-    // Send user confirmation
+    // ─── SEND USER CONFIRMATION ───
     await transporter.sendMail({
       from: fromEmail,
       to: email,
@@ -498,7 +490,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[Contact API] Error:', error)
     
-    // Return user-friendly error
     return NextResponse.json(
       { 
         success: false, 
