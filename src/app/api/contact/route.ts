@@ -264,22 +264,11 @@ PepcoLab Team
     `
 
     // ─── EMAIL CONFIGURATION FROM ENV ───
-    const smtpHost = process.env.SMTP_HOST
-    const smtpPort = parseInt(process.env.SMTP_PORT || '587')
     const smtpUser = process.env.SMTP_USER
     const smtpPass = process.env.SMTP_PASS
     const smtpFrom = process.env.SMTP_FROM
 
-    console.log('[Contact API] SMTP Config:', {
-      host: smtpHost,
-      port: smtpPort,
-      user: smtpUser,
-      from: smtpFrom,
-      hasPass: !!smtpPass
-    })
-
-    // Validate environment variables
-    if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+    if (!smtpUser || !smtpPass || !smtpFrom) {
       console.error('[Contact API] Missing SMTP configuration')
       return NextResponse.json(
         {
@@ -290,122 +279,45 @@ PepcoLab Team
       )
     }
 
-    // ─── TRY MULTIPLE CONFIGURATIONS ───
-    let mailSent = false
-    let lastError: any = null
-
-    const configs = [
-      // Config 1: Your GoDaddy TITAN with port 465
-      {
-        name: 'GoDaddy SSL 465',
-        config: {
-          host: smtpHost,
-          port: 465,
-          secure: true,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          socketTimeout: 30000,
-        }
+    // ─── WORKING SMTP CONFIGURATION (GoDaddy Out SSL 465) ───
+    const transporter = nodemailer.createTransport({
+      host: 'smtpout.secureserver.net',
+      port: 465,
+      secure: true,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
       },
-      // Config 2: Your GoDaddy TITAN with port 587
-      {
-        name: 'GoDaddy TLS 587',
-        config: {
-          host: smtpHost,
-          port: 587,
-          secure: false,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          socketTimeout: 30000,
-        }
+      tls: {
+        rejectUnauthorized: false,
       },
-      // Config 3: smtpout.secureserver.net with port 465
-      {
-        name: 'GoDaddy Out SSL 465',
-        config: {
-          host: 'smtpout.secureserver.net',
-          port: 465,
-          secure: true,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          socketTimeout: 30000,
-        }
-      },
-      // Config 4: smtpout.secureserver.net with port 587
-      {
-        name: 'GoDaddy Out TLS 587',
-        config: {
-          host: 'smtpout.secureserver.net',
-          port: 587,
-          secure: false,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 30000,
-          socketTimeout: 30000,
-        }
-      }
-    ]
+      connectionTimeout: 30000,
+      socketTimeout: 30000,
+    })
 
-    for (const config of configs) {
-      if (mailSent) break
+    // Verify connection
+    await transporter.verify()
+    console.log('[Contact API] SMTP connection verified')
 
-      try {
-        console.log(`[Contact API] Trying ${config.name}...`)
-        const transporter = nodemailer.createTransport(config.config)
+    // Send admin email
+    await transporter.sendMail({
+      from: `"PepcoLab" <${smtpFrom}>`,
+      to: 'hello@pepcolab.com',
+      replyTo: email,
+      subject: `Website Contact: ${subject}`,
+      text: adminEmailText,
+    })
+    console.log('[Contact API] Admin email sent')
 
-        // Verify connection
-        await transporter.verify()
-        console.log(`[Contact API] ${config.name} - Connection verified`)
-
-        // Send admin email
-        await transporter.sendMail({
-          from: `"PepcoLab" <${smtpFrom}>`,
-          to: 'hello@pepcolab.com',
-          replyTo: email,
-          subject: `Website Contact: ${subject}`,
-          text: adminEmailText,
-        })
-        console.log(`[Contact API] ${config.name} - Admin email sent`)
-
-        // Send user confirmation
-        await transporter.sendMail({
-          from: `"PepcoLab" <${smtpFrom}>`,
-          to: email,
-          subject: `✅ We've Received Your Message - PepcoLab`,
-          text: userEmailText,
-          html: userEmailHtml,
-        })
-        console.log(`[Contact API] ${config.name} - User confirmation sent`)
-
-        mailSent = true
-        console.log(`[Contact API] ✅ Success with ${config.name}`)
-
-      } catch (error: any) {
-        lastError = error
-        console.error(`[Contact API] ${config.name} failed:`, error.message)
-      }
-    }
-
-    if (!mailSent) {
-      console.error('[Contact API] All email methods failed:', lastError)
-      
-      const errorMessage = lastError?.code === 'ETIMEDOUT'
-        ? 'Connection to email server timed out. Please check your network or try again later.'
-        : lastError?.code === 'EAUTH'
-        ? 'Email authentication failed. Please check your SMTP credentials.'
-        : 'Unable to send email. Please try again or contact us at hello@pepcolab.com.'
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: errorMessage,
-        },
-        { status: 500 }
-      )
-    }
+    // Send user confirmation
+    await transporter.sendMail({
+      from: `"PepcoLab" <${smtpFrom}>`,
+      to: email,
+      subject: `✅ We've Received Your Message - PepcoLab`,
+      text: userEmailText,
+      html: userEmailHtml,
+    })
+    console.log('[Contact API] User confirmation sent')
 
     return NextResponse.json({
       success: true,
@@ -413,10 +325,19 @@ PepcoLab Team
     })
   } catch (error: any) {
     console.error('[Contact API] Error:', error)
+
+    let errorMessage = 'Unable to send email. Please try again or contact us at hello@pepcolab.com.'
+    
+    if (error?.code === 'ETIMEDOUT') {
+      errorMessage = 'Connection to email server timed out. Please try again later.'
+    } else if (error?.code === 'EAUTH') {
+      errorMessage = 'Email authentication failed. Please check your email credentials.'
+    }
+
     return NextResponse.json(
       {
         success: false,
-        message: 'Unable to send email. Please try again or contact us at hello@pepcolab.com.',
+        message: errorMessage,
       },
       { status: 500 }
     )
