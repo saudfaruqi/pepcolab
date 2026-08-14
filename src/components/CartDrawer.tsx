@@ -85,13 +85,17 @@ export default function CartDrawer() {
       if (!window.StrablCheckout) return false
 
       try {
+        // STRABL requires store.logo (and store.url) to be a publicly
+        // accessible HTTPS URL — a relative path like '/pepcologo.png'
+        // fails their session-creation validation.
+        const origin = process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin
         // @ts-ignore
         window.StrablCheckout.initialize({
           platformUuid,
           environment,
           storeName: 'PepcoLab',
-          storeUrl: process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin,
-          storeLogo: '/pepcologo.png',
+          storeUrl: origin,
+          storeLogo: `${origin}/pepcologo.png`,
           buttonSelector: '#checkout-button',
         })
         setSdkReady(true)
