@@ -43,7 +43,7 @@ export default function ContactPage() {
 
     try {
       const response = await fetch(
-        'https://yourdomain.com/api/contact.php',
+        'https://www.pepcolab.com/api/contact.php',
         {
           method: 'POST',
           headers: {
