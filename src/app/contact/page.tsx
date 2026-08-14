@@ -5,7 +5,6 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import {
   Mail,
-  Phone,
   MapPin,
   Send,
   CheckCircle2,
@@ -42,16 +41,14 @@ export default function ContactPage() {
     setSuccess(false)
 
     try {
-      const response = await fetch(
-        'https://www.pepcolab.com/api/contact.php',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(form),
-        }
-      )
+      // Use absolute URL or relative path - both work
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      })
 
       const data = await response.json()
 
@@ -69,7 +66,7 @@ export default function ContactPage() {
         message: '',
       })
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Failed to send message. Please try again.')
     }
 
     setLoading(false)
@@ -160,7 +157,7 @@ export default function ContactPage() {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="Full Name"
-                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
                 <input
@@ -170,7 +167,7 @@ export default function ContactPage() {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="Email Address"
-                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
                 <input
@@ -178,7 +175,7 @@ export default function ContactPage() {
                   value={form.company}
                   onChange={handleChange}
                   placeholder="Company (optional)"
-                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
                 <input
@@ -187,7 +184,7 @@ export default function ContactPage() {
                   value={form.subject}
                   onChange={handleChange}
                   placeholder="Subject"
-                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
                 <textarea
@@ -197,12 +194,13 @@ export default function ContactPage() {
                   value={form.message}
                   onChange={handleChange}
                   placeholder="Your message..."
-                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 resize-none"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
                 <button
+                  type="submit"
                   disabled={loading}
-                  className="w-full bg-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2"
+                  className="w-full bg-black text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-neutral-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Sending...' : 'Send Message'}
                   <Send size={16} />
