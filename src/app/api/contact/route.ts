@@ -52,8 +52,8 @@ This message was sent from the PepcoLab contact form.
         port: 465,
         secure: true,
         auth: {
-          user: 'hello@pepcolab.com',
-          pass: 'pepcolab@1',
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
         },
         tls: {
           rejectUnauthorized: false,
@@ -84,8 +84,8 @@ This message was sent from the PepcoLab contact form.
           port: 587,
           secure: false,
           auth: {
-            user: 'hello@pepcolab.com',
-            pass: 'pepcolab@1',
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
           },
           tls: {
             rejectUnauthorized: false,
