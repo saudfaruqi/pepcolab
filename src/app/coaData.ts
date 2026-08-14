@@ -1,36 +1,162 @@
-// coaData.ts
+// app/coaData.ts
+//
+// Single source of truth for published Certificates of Analysis. Each
+// entry corresponds to one real Freedom Diagnostics report, one real
+// accession number, and one PDF file living in /public/pdf. Everything
+// referencing COAs — the homepage terminal preview (COASection.tsx), the
+// /certificates search page (via coaIndex.ts), and any other component —
+// should read from this array rather than hardcoding batch data.
+//
+// `code` is the short product-code identifier printed on the vial cap
+// label (e.g. what a customer would actually check against their order).
+// Adjust these to match your real cap-color/code scheme if it differs —
+// they're placeholders derived from compound + strength here.
+
 export interface CoaBatch {
-  lot: string          // cap colour / crimp — matches vial label
-  code: string         // internal product code on the vial (e.g. "BC10")
-  product: string       // compound name confirmed by LC-MS
-  purityVial1: string
-  purityVial2: string
+  accession: string
+  code: string
+  lot: string
+  product: string
+  identity: string
+  // Numeric purity for UI code that does math/formatting with it (e.g.
+  // the /certificates card, which renders `${product.purity}%` and
+  // computes an average across all products). purityAvg is the
+  // pre-formatted display string ("99.82%") used in COASection.tsx's
+  // terminal preview — keep both in sync when adding a batch.
+  purity: number
   purityAvg: string
   netContentAvg: string
-  identity: string      // LC-MS identity confirmation string as reported
-  accession: string
   received: string
   reported: string
+  appearance: string
+  pdfUrl: string
 }
 
 export const COA_BATCHES: CoaBatch[] = [
-  { lot: 'Grey Cap',        code: 'BB10',          product: 'BPC-157 / Thymosin Alpha-1 blend', purityVial1: '99.88%', purityVial2: '99.87%', purityAvg: '99.88%', netContentAvg: 'BPC-157 5.26mg / TB-4 5.53mg', identity: 'Confirmed (LC-MS)', accession: '2606220754', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Blue Cap',        code: 'BC10',          product: 'BPC-157',       purityVial1: '99.30%', purityVial2: '99.36%', purityAvg: '99.33%', netContentAvg: '11.97 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220744', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Red Cap',         code: 'BT10',          product: 'Thymosin Alpha-1', purityVial1: '99.22%', purityVial2: '99.29%', purityAvg: '99.26%', netContentAvg: '11.56 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220746', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Purple Cap',      code: 'CU100',         product: 'GHK-Cu',        purityVial1: '99.88%', purityVial2: '99.83%', purityAvg: '99.86%', netContentAvg: '110.29 mg', identity: 'Confirmed (LC-MS)', accession: '2606220760', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Clear Cap/Bronze', code: 'NJ1000',       product: 'NAD+',          purityVial1: '99.91%', purityVial2: '99.93%', purityAvg: '99.92%', netContentAvg: '1053.46 mg', identity: 'Confirmed (LC-MS)', accession: '2606220736', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Red Cap',         code: 'XA10',          product: 'Semax',         purityVial1: '99.73%', purityVial2: '99.82%', purityAvg: '99.78%', netContentAvg: '12.25 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220742', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Purple Cap',      code: 'MS10',          product: 'MOTS-C',        purityVial1: '99.39%', purityVial2: '99.31%', purityAvg: '99.35%', netContentAvg: '10.82 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220756', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Yellow Cap',      code: 'MOTS-C 20mg',   product: 'MOTS-C',        purityVial1: '99.74%', purityVial2: '99.76%', purityAvg: '99.75%', netContentAvg: '24.43 mg',  identity: 'Confirmed (LC-MS)', accession: '2607130572', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'White Cap',       code: 'MOTS-C 40mg',   product: 'MOTS-C',        purityVial1: '99.26%', purityVial2: '99.26%', purityAvg: '99.26%', netContentAvg: '41.51 mg',  identity: 'Confirmed (LC-MS)', accession: '2607130574', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Green Cap',       code: 'RT10',          product: 'Retatrutide',   purityVial1: '99.89%', purityVial2: '99.85%', purityAvg: '99.87%', netContentAvg: '11.47 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220748', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Black Cap',       code: 'Retatrutide 30mg', product: 'Retatrutide', purityVial1: '99.89%', purityVial2: '99.86%', purityAvg: '99.88%', netContentAvg: '33.52 mg', identity: 'Confirmed (LC-MS)', accession: '2607130560', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Blue Cap',        code: 'Retatrutide 40mg', product: 'Retatrutide', purityVial1: '99.90%', purityVial2: '99.92%', purityAvg: '99.91%', netContentAvg: '44.45 mg', identity: 'Confirmed (LC-MS)', accession: '2607130562', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Grey Cap',        code: 'Retatrutide 60mg', product: 'Retatrutide', purityVial1: '99.86%', purityVial2: '99.84%', purityAvg: '99.85%', netContentAvg: '61.07 mg', identity: 'Confirmed (LC-MS)', accession: '2607130564', received: '2026-07-13', reported: '2026-07-15' },
-  { lot: 'Black Cap',       code: 'TSM10',         product: 'Tesamorelin',   purityVial1: '99.24%', purityVial2: '99.33%', purityAvg: '99.29%', netContentAvg: '11.49 mg',  identity: 'Confirmed (LC-MS)', accession: '2606220740', received: '2026-06-22', reported: '2026-06-25' },
-  { lot: 'Red Cap',         code: 'Tesamorelin 20mg', product: 'Tesamorelin', purityVial1: '99.89%', purityVial2: '99.87%', purityAvg: '99.88%', netContentAvg: '24.02 mg', identity: 'Confirmed (LC-MS)', accession: '2607130568', received: '2026-07-13', reported: '2026-07-15' },
+  {
+    accession: '2606090460',
+    purity: 99.82,
+    code: 'TES5',
+    lot: 'PAL-TES5-2605-01',
+    product: 'Tesamorelin 5mg',
+    identity: 'Tesamorelin',
+    purityAvg: '99.82%',
+    netContentAvg: '9.47 mg',
+    received: '06/09/2026',
+    reported: '06/12/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_Tesamorelin_5mg_COA.pdf',
+  },
+  {
+    accession: '2606090459',
+    purity: 99.7,
+    code: 'IGF1',
+    lot: 'PAL-IGF1-2606-01',
+    product: 'IGF1-LR3 1mg',
+    identity: 'IGF-LR3',
+    purityAvg: '99.70%',
+    netContentAvg: '1.08 mg',
+    received: '06/09/2026',
+    reported: '06/12/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_IGF1-LR3_1mg_COA.pdf',
+  },
+  {
+    accession: '2606090458',
+    purity: 99.86,
+    code: 'MT2-10',
+    lot: 'PAL-MT2-2605-01',
+    product: 'MT2 10mg',
+    identity: 'Melanotan-II',
+    purityAvg: '99.86%',
+    netContentAvg: '10.71 mg',
+    received: '06/09/2026',
+    reported: '06/12/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_MT2_10mg_COA.pdf',
+  },
+  {
+    accession: '2605180344',
+    purity: 99.58,
+    code: 'GLOW70',
+    lot: 'PAL-GLO70-2605-02',
+    product: 'GLOW 70mg',
+    identity: 'GHK-Cu/TB-500/BPC-157',
+    purityAvg: '99.58%',
+    netContentAvg: 'GHK-Cu 56.85mg / TB-500 8.53mg / BPC-157 13.86mg',
+    received: '05/18/2026',
+    reported: '05/19/2026',
+    appearance: 'Blue Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_GLOW_70mg_COA.pdf',
+  },
+  {
+    accession: '2605180343',
+    purity: 99.86,
+    code: 'TZP40',
+    lot: 'PAL-TZP40-2605-01',
+    product: 'Tirzepatide (GLP2) 40mg',
+    identity: 'GLP TZ',
+    purityAvg: '99.86%',
+    netContentAvg: '39.86 mg',
+    received: '05/18/2026',
+    reported: '05/19/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_Tirzepatide_40mg_COA.pdf',
+  },
+  {
+    accession: '2605180342',
+    purity: 99.33,
+    code: 'SER10',
+    lot: 'PAL-SER10-2605-01',
+    product: 'Sermorelin 10mg',
+    identity: 'Sermorelin',
+    purityAvg: '99.33%',
+    netContentAvg: '10.86 mg',
+    received: '05/18/2026',
+    reported: '05/19/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_Sermorelin_10mg_COA.pdf',
+  },
+  {
+    accession: '2605180341',
+    purity: 99.95,
+    code: 'SS31-50',
+    lot: 'PAL-SS50-2605-01',
+    product: 'SS-31 50mg',
+    identity: 'SS-31',
+    purityAvg: '99.95%',
+    netContentAvg: '52.15 mg',
+    received: '05/18/2026',
+    reported: '05/19/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_SS-31_50mg_COA.pdf',
+  },
+  {
+    accession: '2605110026',
+    purity: 99.81,
+    code: 'RET30',
+    lot: 'PAL-RET30-2605-01',
+    product: 'Retatrutide 30mg (GLP3)',
+    identity: 'GLP RT',
+    purityAvg: '99.81%',
+    netContentAvg: '28.57 mg',
+    received: '05/11/2026',
+    reported: '05/12/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_Retatrutide_30mg_COA.pdf',
+  },
+  {
+    accession: '2605110025',
+    purity: 99.5,
+    code: 'RET20',
+    lot: 'PAL-RET20-2605-01',
+    product: 'Retatrutide 20mg (GLP3)',
+    identity: 'GLP RT',
+    purityAvg: '99.50%',
+    netContentAvg: '22.30 mg',
+    received: '05/11/2026',
+    reported: '05/12/2026',
+    appearance: 'White Lyophilized Powder',
+    pdfUrl: '/pdf/PepcoLab_Retatrutide_20mg_COA.pdf',
+  },
 ]
-
-// EXCLUDED: RT20 (accession 2606220750) — Identity (LC-MS) field reads
-// "#REF!" on the source certificate, a spreadsheet error, not a lab
-// result. Add back once the lab re-issues a corrected COA.

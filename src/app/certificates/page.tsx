@@ -77,11 +77,31 @@ function CertificatesContent() {
     )
   }, [query, products])
 
-  const avgPurity =
-    products.length > 0
-      ? products.reduce((acc: number, p: any) => acc + (p.purity ?? 99), 0) /
-        products.length
-      : 0
+  // Previously: avgPurity defaulted every product with no purity data to
+  // 99%, which just papers over missing data with a flattering number
+  // instead of reporting it — and the stat cards below showed
+  // products.length (every product in the catalogue, tested or not) for
+  // both "Published COAs" and "Verified Batches", while the list underneath
+  // was visibly showing most of them as "COA pending upload". Compute the
+  // same coaUrl/purity fallback used per-card (Shopify metafield, then the
+  // matching local batch in coaData.ts) once here, and only count/average
+  // products that actually resolve to a real result.
+  const coaStats = useMemo(() => {
+    let resolvedCount = 0
+    const purityValues: number[] = []
+    for (const p of products as any[]) {
+      const localCoa = resolveLocalCoa(p.name, p.mg)
+      const coaUrl = p.coaUrl || localCoa?.url
+      const purity = p.purity ?? localCoa?.purity
+      if (coaUrl) resolvedCount++
+      if (typeof purity === 'number') purityValues.push(purity)
+    }
+    const avgPurity =
+      purityValues.length > 0
+        ? purityValues.reduce((a, b) => a + b, 0) / purityValues.length
+        : 0
+    return { resolvedCount, avgPurity }
+  }, [products])
 
   // Filtering already happens live as the person types (see filteredProducts
   // above) — "Verify Batch" had no onClick at all, so clicking it did
@@ -254,17 +274,17 @@ function CertificatesContent() {
               {[
                 {
                   label: 'Published COAs',
-                  value: products.length,
+                  value: coaStats.resolvedCount,
                   icon: FileText,
                 },
                 {
                   label: 'Average Purity',
-                  value: `${avgPurity.toFixed(1)}%`,
+                  value: coaStats.avgPurity > 0 ? `${coaStats.avgPurity.toFixed(2)}%` : '—',
                   icon: FlaskConical,
                 },
                 {
                   label: 'Verified Batches',
-                  value: products.length,
+                  value: coaStats.resolvedCount,
                   icon: CheckCircle2,
                 },
               ].map(stat => (
@@ -359,10 +379,20 @@ function CertificatesContent() {
               }}
             >
               {filteredProducts.map(product => {
-                // Real Shopify metafield wins if set; otherwise fall back
-                // to the combined local PDF using the product's base mg.
-                const localCoa = product.coaUrl ? undefined : resolveLocalCoa(product.name, product.mg)
+                // Real Shopify metafields win if set; otherwise fall back to
+                // the matching published batch in coaData.ts (via
+                // coaIndex.ts). Previously this fallback only covered the
+                // PDF link (coaUrl) — lot/purity/testDate were read straight
+                // from Shopify metafields with no fallback at all, so a
+                // product could correctly link to its real COA and still
+                // show "N/A" for every field on the card. Compute the local
+                // match once and fall back per-field, the same pattern
+                // coaUrl already used.
+                const localCoa = resolveLocalCoa(product.name, product.mg)
                 const coaUrl = product.coaUrl || localCoa?.url
+                const lot = product.lot || localCoa?.lot
+                const purity = product.purity ?? localCoa?.purity
+                const testDate = product.testDate || localCoa?.testDate
                 return (
                 <div
                   key={product.id}
@@ -436,7 +466,7 @@ function CertificatesContent() {
                           marginTop: 4,
                         }}
                       >
-                        {product.lot || 'N/A'}
+                        {lot || 'N/A'}
                       </div>
                     </div>
 
@@ -454,11 +484,11 @@ function CertificatesContent() {
                         style={{
                           fontSize: 14,
                           fontWeight: 700,
-                          color: product.purity ? '#16A34A' : 'rgba(13,13,13,.4)',
+                          color: purity ? '#16A34A' : 'rgba(13,13,13,.4)',
                           marginTop: 4,
                         }}
                       >
-                        {product.purity ? `${product.purity}%` : 'N/A'}
+                        {purity ? `${purity}%` : 'N/A'}
                       </div>
                     </div>
 
@@ -478,7 +508,7 @@ function CertificatesContent() {
                           marginTop: 4,
                         }}
                       >
-                        {product.testDate || 'N/A'}
+                        {testDate || 'N/A'}
                       </div>
                     </div>
 
