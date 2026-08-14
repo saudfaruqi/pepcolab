@@ -1,3 +1,4 @@
+// app/api/contact/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
@@ -22,8 +23,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Build email content
-    const emailSubject = `Website Contact: ${subject}`
     const emailBody = `
 New contact form submission
 
@@ -42,27 +41,27 @@ ${message}
 This message was sent from the PepcoLab contact form.
     `
 
-    // Configure SMTP transporter
+    // GoDaddy SMTP Configuration
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.secureserver.net',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
+      host: 'smtpout.secureserver.net', // Try this instead of smtp.secureserver.net
+      port: 465, // Try 465 with SSL instead of 587
+      secure: true, // true for 465, false for 587
       auth: {
-        user: process.env.SMTP_USER || 'hello@pepcolab.com',
-        pass: process.env.SMTP_PASS || 'pepcolab@1',
+        user: 'hello@pepcolab.com',
+        pass: 'pepcolab@1',
       },
       tls: {
-        ciphers: 'SSLv3',
         rejectUnauthorized: false,
       },
+      connectionTimeout: 30000, // 30 seconds timeout
+      socketTimeout: 30000,
     })
 
-    // Send email
     await transporter.sendMail({
-      from: `"PepcoLab" <${process.env.SMTP_FROM || 'hello@pepcolab.com'}>`,
+      from: '"PepcoLab" <hello@pepcolab.com>',
       to: 'hello@pepcolab.com',
       replyTo: email,
-      subject: emailSubject,
+      subject: `Website Contact: ${subject}`,
       text: emailBody,
     })
 
@@ -74,12 +73,45 @@ This message was sent from the PepcoLab contact form.
   } catch (error: any) {
     console.error('[Contact API] Error:', error)
     
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Unable to send email. Please try again or contact us at hello@pepcolab.com.' 
-      },
-      { status: 500 }
-    )
+    // Try alternative SMTP port
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtpout.secureserver.net',
+        port: 587,
+        secure: false,
+        auth: {
+          user: 'hello@pepcolab.com',
+          pass: 'pepcolab@1',
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+        connectionTimeout: 30000,
+        socketTimeout: 30000,
+      })
+
+      await transporter.sendMail({
+        from: '"PepcoLab" <hello@pepcolab.com>',
+        to: 'hello@pepcolab.com',
+        replyTo: email,
+        subject: `Website Contact: ${subject}`,
+        text: emailBody,
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: 'Message sent successfully.',
+      })
+    } catch (fallbackError: any) {
+      console.error('[Contact API] Fallback also failed:', fallbackError)
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Unable to send email. Please try again or contact us at hello@pepcolab.com.' 
+        },
+        { status: 500 }
+      )
+    }
   }
 }
