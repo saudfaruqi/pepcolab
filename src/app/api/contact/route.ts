@@ -41,44 +41,16 @@ ${message}
 This message was sent from the PepcoLab contact form.
     `
 
-    // GoDaddy SMTP Configuration
-    const transporter = nodemailer.createTransport({
-      host: 'smtpout.secureserver.net', // Try this instead of smtp.secureserver.net
-      port: 465, // Try 465 with SSL instead of 587
-      secure: true, // true for 465, false for 587
-      auth: {
-        user: 'hello@pepcolab.com',
-        pass: 'pepcolab@1',
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 30000, // 30 seconds timeout
-      socketTimeout: 30000,
-    })
+    // Try GoDaddy SMTP
+    let mailSent = false
+    let lastError: any = null
 
-    await transporter.sendMail({
-      from: '"PepcoLab" <hello@pepcolab.com>',
-      to: 'hello@pepcolab.com',
-      replyTo: email,
-      subject: `Website Contact: ${subject}`,
-      text: emailBody,
-    })
-
-    return NextResponse.json({
-      success: true,
-      message: 'Message sent successfully.',
-    })
-
-  } catch (error: any) {
-    console.error('[Contact API] Error:', error)
-    
-    // Try alternative SMTP port
+    // Attempt 1: SMTP with SSL on port 465
     try {
       const transporter = nodemailer.createTransport({
         host: 'smtpout.secureserver.net',
-        port: 587,
-        secure: false,
+        port: 465,
+        secure: true,
         auth: {
           user: 'hello@pepcolab.com',
           pass: 'pepcolab@1',
@@ -97,14 +69,100 @@ This message was sent from the PepcoLab contact form.
         subject: `Website Contact: ${subject}`,
         text: emailBody,
       })
-
-      return NextResponse.json({
-        success: true,
-        message: 'Message sent successfully.',
-      })
-    } catch (fallbackError: any) {
-      console.error('[Contact API] Fallback also failed:', fallbackError)
       
+      mailSent = true
+    } catch (error: any) {
+      lastError = error
+      console.error('[Contact API] SMTP attempt 1 failed:', error.message)
+    }
+
+    // Attempt 2: SMTP with TLS on port 587
+    if (!mailSent) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtpout.secureserver.net',
+          port: 587,
+          secure: false,
+          auth: {
+            user: 'hello@pepcolab.com',
+            pass: 'pepcolab@1',
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 30000,
+          socketTimeout: 30000,
+        })
+
+        await transporter.sendMail({
+          from: '"PepcoLab" <hello@pepcolab.com>',
+          to: 'hello@pepcolab.com',
+          replyTo: email,
+          subject: `Website Contact: ${subject}`,
+          text: emailBody,
+        })
+        
+        mailSent = true
+      } catch (error: any) {
+        lastError = error
+        console.error('[Contact API] SMTP attempt 2 failed:', error.message)
+      }
+    }
+
+    // Attempt 3: Gmail SMTP (if configured)
+    if (!mailSent && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
+          },
+        })
+
+        await transporter.sendMail({
+          from: `"PepcoLab" <${process.env.GMAIL_USER}>`,
+          to: 'hello@pepcolab.com',
+          replyTo: email,
+          subject: `Website Contact: ${subject}`,
+          text: emailBody,
+        })
+        
+        mailSent = true
+      } catch (error: any) {
+        lastError = error
+        console.error('[Contact API] Gmail SMTP failed:', error.message)
+      }
+    }
+
+    // Attempt 4: Send to PHP fallback (if available)
+    if (!mailSent) {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pepcolab.com'
+        const response = await fetch(`${baseUrl}/api/contact.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, email, company, subject, message }),
+          signal: AbortSignal.timeout(5000),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            mailSent = true
+          }
+        }
+      } catch (error: any) {
+        console.error('[Contact API] PHP fallback failed:', error.message)
+      }
+    }
+
+    if (!mailSent) {
+      console.error('[Contact API] All email methods failed:', lastError)
       return NextResponse.json(
         { 
           success: false, 
@@ -113,5 +171,20 @@ This message was sent from the PepcoLab contact form.
         { status: 500 }
       )
     }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Message sent successfully.',
+    })
+
+  } catch (error: any) {
+    console.error('[Contact API] Error:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Unable to send email. Please try again or contact us at hello@pepcolab.com.' 
+      },
+      { status: 500 }
+    )
   }
 }
