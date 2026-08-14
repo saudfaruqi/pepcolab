@@ -433,7 +433,7 @@ export async function POST(req: NextRequest) {
     const smtpUser = process.env.SMTP_USER
     const smtpPass = process.env.SMTP_PASS
     const smtpFrom = process.env.SMTP_FROM
-
+   
     // Validate environment variables
     if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
       console.error('[Contact API] Missing SMTP configuration')
