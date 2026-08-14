@@ -1,4 +1,3 @@
-// src/app/contact/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -42,7 +41,7 @@ export default function ContactPage() {
     setSuccess(false)
 
     try {
-      const response = await fetch('/api/contact.php', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,21 +55,16 @@ export default function ContactPage() {
         throw new Error(data.message || 'Something went wrong')
       }
 
-      if (data.success) {
-        setSuccess(true)
-        setForm({
-          name: '',
-          email: '',
-          company: '',
-          subject: '',
-          message: '',
-        })
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      } else {
-        throw new Error(data.message || 'Failed to send message')
-      }
+      setSuccess(true)
+      setForm({
+        name: '',
+        email: '',
+        company: '',
+        subject: '',
+        message: '',
+      })
     } catch (err: any) {
-      setError(err.message || 'Failed to send message. Please try again.')
+      setError(err.message)
     }
 
     setLoading(false)
@@ -111,31 +105,16 @@ export default function ContactPage() {
                 <div className="flex gap-4">
                   <Mail className="mt-1" size={18} />
                   <div>
-                    <div className="font-medium">
-                      Email
-                    </div>
-                    <div className="text-neutral-600">
-                      hello@pepcolab.com
-                    </div>
+                    <div className="font-medium">Email</div>
+                    <div className="text-neutral-600">hello@pepcolab.com</div>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
                   <MapPin className="mt-1" size={18} />
                   <div>
-                    <div className="font-medium">
-                      Office
-                    </div>
-                    <div className="text-neutral-600">
-                      United Kingdom
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-neutral-200">
-                  <div className="text-sm text-neutral-500">
-                    <p className="font-medium text-neutral-700">Research Enquiries</p>
-                    <p>Available Mon-Fri, 9am-6pm (GMT)</p>
+                    <div className="font-medium">Office</div>
+                    <div className="text-neutral-600">United Kingdom</div>
                   </div>
                 </div>
               </div>
@@ -143,14 +122,12 @@ export default function ContactPage() {
 
             {/* Form */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 lg:p-10">
-              <h2 className="font-serif text-3xl mb-8">
-                Send us a message
-              </h2>
+              <h2 className="font-serif text-3xl mb-8">Send us a message</h2>
 
               {success && (
                 <div className="mb-6 bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 flex items-center gap-3">
                   <CheckCircle2 size={18} />
-                  Message sent successfully! We'll get back to you soon.
+                  Message sent successfully. We'll get back to you soon.
                 </div>
               )}
 
@@ -167,7 +144,7 @@ export default function ContactPage() {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  placeholder="Full Name *"
+                  placeholder="Full Name"
                   className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
@@ -177,7 +154,7 @@ export default function ContactPage() {
                   name="email"
                   value={form.email}
                   onChange={handleChange}
-                  placeholder="Email Address *"
+                  placeholder="Email Address"
                   className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
@@ -194,7 +171,7 @@ export default function ContactPage() {
                   name="subject"
                   value={form.subject}
                   onChange={handleChange}
-                  placeholder="Subject *"
+                  placeholder="Subject"
                   className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
@@ -204,7 +181,7 @@ export default function ContactPage() {
                   name="message"
                   value={form.message}
                   onChange={handleChange}
-                  placeholder="Your message... *"
+                  placeholder="Your message..."
                   className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
                 />
 
@@ -215,10 +192,7 @@ export default function ContactPage() {
                 >
                   {loading ? (
                     <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <span className="inline-block animate-spin mr-2">⟳</span>
                       Sending...
                     </>
                   ) : (
@@ -228,10 +202,6 @@ export default function ContactPage() {
                     </>
                   )}
                 </button>
-
-                <p className="text-xs text-neutral-400 text-center">
-                  By submitting this form, you agree to our privacy policy.
-                </p>
               </form>
             </div>
           </div>
