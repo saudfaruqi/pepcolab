@@ -74,7 +74,7 @@ This message was sent from the PepcoLab contact form.
 
 // SMTP Configuration from environment or defaults
 $smtp_host = getenv('SMTP_HOST') ?: 'smtp.secureserver.net';
-$smtp_port = getenv('SMTP_PORT') ?: 587;
+$smtp_port = getenv('SMTP_PORT') ?: 465;
 $smtp_user = getenv('SMTP_USER') ?: 'hello@pepcolab.com';
 $smtp_pass = getenv('SMTP_PASS') ?: 'pepcolab@1';
 $smtp_from = getenv('SMTP_FROM') ?: 'hello@pepcolab.com';
