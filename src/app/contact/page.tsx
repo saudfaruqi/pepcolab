@@ -1,3 +1,4 @@
+// app/contact/page.tsx (or wherever your contact page is)
 'use client'
 
 import { useState } from 'react'
@@ -221,6 +222,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Enter your full name"
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
+                    style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
                 </div>
 
@@ -236,6 +238,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="you@example.com"
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
+                    style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
                 </div>
 
@@ -249,6 +252,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Your company name"
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
+                    style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
                 </div>
 
@@ -263,6 +267,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Brief subject line"
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
+                    style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
                 </div>
 
@@ -278,6 +283,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Tell us how we can help..."
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
+                    style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
                 </div>
 

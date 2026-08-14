@@ -42,33 +42,45 @@ ${message}
 This message was sent from the PepcoLab contact form.
     `
 
-    // ─── USER CONFIRMATION EMAIL (HTML) ───
+    // ─── USER CONFIRMATION EMAIL (HTML - Light Theme Only) ───
     const userEmailHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
   <title>Thank You for Contacting PepcoLab</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Force light theme */
+    :root { color-scheme: light !important; }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: #f5f4f0;
+      background: #f5f4f0 !important;
       padding: 40px 20px;
       line-height: 1.6;
-      color: #1a1a1a;
+      color: #1a1a1a !important;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100% !important;
     }
     .container {
       max-width: 580px;
       margin: 0 auto;
-      background: #ffffff;
+      background: #ffffff !important;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 4px 40px rgba(0,0,0,0.04);
     }
     .header {
-      background: #0d0d0d;
+      background: #0d0d0d !important;
       padding: 32px 30px 24px;
       text-align: center;
       position: relative;
@@ -88,35 +100,40 @@ This message was sent from the PepcoLab contact form.
       0%, 100% { background-position: 0% 0%; }
       50% { background-position: 100% 0%; }
     }
-    .header .check { font-size: 44px; display: block; margin-bottom: 8px; }
+    .header .check { 
+      font-size: 44px; 
+      display: block; 
+      margin-bottom: 8px; 
+      color: #ffffff !important;
+    }
     .header h1 {
       font-size: 24px;
       font-weight: 700;
-      color: #ffffff;
+      color: #ffffff !important;
       letter-spacing: -0.02em;
       margin: 0;
     }
     .header .sub {
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.4) !important;
       font-size: 13px;
       margin-top: 4px;
     }
-    .content { padding: 32px 30px 28px; }
+    .content { padding: 32px 30px 28px; background: #ffffff !important; }
     .greeting {
       font-size: 18px;
       font-weight: 600;
-      color: #0d0d0d;
+      color: #0d0d0d !important;
       margin-bottom: 8px;
     }
-    .greeting span { color: #2563eb; }
+    .greeting span { color: #2563eb !important; }
     .body-text {
       font-size: 15px;
-      color: rgba(26,26,26,0.7);
+      color: rgba(26,26,26,0.7) !important;
       line-height: 1.8;
       margin-bottom: 20px;
     }
     .summary-box {
-      background: #f8f7f4;
+      background: #f8f7f4 !important;
       border-radius: 12px;
       padding: 16px 20px;
       margin: 20px 0;
@@ -127,15 +144,15 @@ This message was sent from the PepcoLab contact form.
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: rgba(26,26,26,0.3);
+      color: rgba(26,26,26,0.3) !important;
     }
     .summary-box .value {
       font-size: 14px;
-      color: #1a1a1a;
+      color: #1a1a1a !important;
       font-weight: 500;
     }
     .next-steps {
-      background: #f0f7ff;
+      background: #f0f7ff !important;
       border-radius: 12px;
       padding: 16px 20px;
       margin: 20px 0;
@@ -143,7 +160,7 @@ This message was sent from the PepcoLab contact form.
     .next-steps h4 {
       font-size: 13px;
       font-weight: 700;
-      color: #1e40af;
+      color: #1e40af !important;
       margin: 0 0 8px;
     }
     .next-steps ul {
@@ -154,19 +171,19 @@ This message was sent from the PepcoLab contact form.
     .next-steps li {
       padding: 4px 0;
       font-size: 14px;
-      color: rgba(26,26,26,0.6);
+      color: rgba(26,26,26,0.6) !important;
       display: flex;
       align-items: center;
       gap: 8px;
     }
     .next-steps li::before {
       content: "→";
-      color: #2563eb;
+      color: #2563eb !important;
       font-weight: 700;
     }
     .divider {
       height: 1px;
-      background: rgba(26,26,26,0.06);
+      background: rgba(26,26,26,0.06) !important;
       margin: 24px 0;
     }
     .social-links {
@@ -176,26 +193,58 @@ This message was sent from the PepcoLab contact form.
     .social-links a {
       display: inline-block;
       margin: 0 10px;
-      color: rgba(26,26,26,0.3);
+      color: rgba(26,26,26,0.3) !important;
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
     }
+    .social-links a:hover {
+      color: #2563eb !important;
+    }
     .footer {
-      background: #f8f7f4;
+      background: #f8f7f4 !important;
       padding: 20px 30px 24px;
       text-align: center;
       border-top: 1px solid rgba(26,26,26,0.04);
     }
     .footer p {
       font-size: 13px;
-      color: rgba(26,26,26,0.4);
+      color: rgba(26,26,26,0.4) !important;
       margin: 0;
     }
     .footer .meta {
       font-size: 11px;
-      color: rgba(26,26,26,0.25);
+      color: rgba(26,26,26,0.25) !important;
       margin-top: 4px;
+    }
+    /* Force light background on all elements */
+    .container, .content, .summary-box, .next-steps, .footer {
+      background-color: #ffffff !important;
+    }
+    /* Link styles */
+    a {
+      color: #2563eb !important;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    /* Email client specific fixes */
+    .ExternalClass, .ReadMsgBody {
+      width: 100%;
+      background-color: #f5f4f0 !important;
+    }
+    .yshortcuts a {
+      border-bottom: none !important;
+    }
+    /* Apple Mail dark mode override */
+    @media (prefers-color-scheme: dark) {
+      body, .container, .content, .summary-box, .next-steps, .footer {
+        background-color: #ffffff !important;
+      }
+      body, p, h1, h2, h3, h4, div, span, li, .value, .greeting {
+        color: #1a1a1a !important;
+      }
     }
     @media (max-width: 480px) {
       .header { padding: 24px 20px 18px; }
@@ -204,49 +253,63 @@ This message was sent from the PepcoLab contact form.
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <span class="check">✓</span>
-      <h1>We've Received Your Message</h1>
-      <div class="sub">PepcoLab — Research-Grade Peptides</div>
-    </div>
-    <div class="content">
-      <div class="greeting">Hi ${name.split(' ')[0]} 👋</div>
-      <p class="body-text">
-        Thank you for reaching out to PepcoLab. We've received your message and
-        our team will review it shortly.
-      </p>
-      <div class="summary-box">
-        <div class="label">📝 Your Message</div>
-        <div class="value" style="margin-top:4px;"><strong>Subject:</strong> ${subject}</div>
-        <div class="value" style="font-weight:400;color:rgba(26,26,26,0.6);margin-top:2px;font-size:13px;">
-          ${message.length > 100 ? message.substring(0, 100) + '...' : message}
+<body style="background:#f5f4f0 !important; margin:0; padding:40px 20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust:100% !important;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f4f0 !important;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <div class="container" style="max-width:580px; margin:0 auto; background:#ffffff !important; border-radius:20px; overflow:hidden; box-shadow:0 4px 40px rgba(0,0,0,0.04);">
+          <div class="header" style="background:#0d0d0d !important; padding:32px 30px 24px; text-align:center; position:relative;">
+            <span class="check" style="font-size:44px; display:block; margin-bottom:8px; color:#ffffff !important;">✓</span>
+            <h1 style="font-size:24px; font-weight:700; color:#ffffff !important; letter-spacing:-0.02em; margin:0;">We've Received Your Message</h1>
+            <div class="sub" style="color:rgba(255,255,255,0.4) !important; font-size:13px; margin-top:4px;">PepcoLab — Research-Grade Peptides</div>
+          </div>
+          <div class="content" style="padding:32px 30px 28px; background:#ffffff !important;">
+            <div class="greeting" style="font-size:18px; font-weight:600; color:#0d0d0d !important; margin-bottom:8px;">Hi ${name.split(' ')[0]} 👋</div>
+            <p class="body-text" style="font-size:15px; color:rgba(26,26,26,0.7) !important; line-height:1.8; margin-bottom:20px;">
+              Thank you for reaching out to PepcoLab. We've received your message and
+              our team will review it shortly.
+            </p>
+            <div class="summary-box" style="background:#f8f7f4 !important; border-radius:12px; padding:16px 20px; margin:20px 0; border-left:3px solid #2563eb;">
+              <div class="label" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:rgba(26,26,26,0.3) !important;">📝 Your Message</div>
+              <div class="value" style="margin-top:4px; font-size:14px; color:#1a1a1a !important; font-weight:500;">
+                <strong>Subject:</strong> ${subject}
+              </div>
+              <div class="value" style="font-weight:400; color:rgba(26,26,26,0.6) !important; margin-top:2px; font-size:13px;">
+                ${message.length > 100 ? message.substring(0, 100) + '...' : message}
+              </div>
+            </div>
+            <div class="next-steps" style="background:#f0f7ff !important; border-radius:12px; padding:16px 20px; margin:20px 0;">
+              <h4 style="font-size:13px; font-weight:700; color:#1e40af !important; margin:0 0 8px;">⏳ What Happens Next</h4>
+              <ul style="list-style:none; padding:0; margin:0;">
+                <li style="padding:4px 0; font-size:14px; color:rgba(26,26,26,0.6) !important; display:flex; align-items:center; gap:8px;">
+                  <span style="color:#2563eb !important; font-weight:700;">→</span> Our team will review your inquiry within 1 business day
+                </li>
+                <li style="padding:4px 0; font-size:14px; color:rgba(26,26,26,0.6) !important; display:flex; align-items:center; gap:8px;">
+                  <span style="color:#2563eb !important; font-weight:700;">→</span> We'll respond via email to the address you provided
+                </li>
+                <li style="padding:4px 0; font-size:14px; color:rgba(26,26,26,0.6) !important; display:flex; align-items:center; gap:8px;">
+                  <span style="color:#2563eb !important; font-weight:700;">→</span> For urgent matters, feel free to follow up with us
+                </li>
+              </ul>
+            </div>
+            <div class="divider" style="height:1px; background:rgba(26,26,26,0.06) !important; margin:24px 0;"></div>
+            <p style="font-size:14px; color:rgba(26,26,26,0.5) !important; text-align:center; margin:0;">
+              In the meantime, explore our resources:
+            </p>
+            <div class="social-links" style="text-align:center; margin:16px 0 0;">
+              <a href="https://www.pepcolab.com/products" style="display:inline-block; margin:0 10px; color:rgba(26,26,26,0.3) !important; text-decoration:none; font-size:13px; font-weight:500;">🔬 Products</a>
+              <a href="https://www.pepcolab.com/certificates" style="display:inline-block; margin:0 10px; color:rgba(26,26,26,0.3) !important; text-decoration:none; font-size:13px; font-weight:500;">📄 COA Library</a>
+              <a href="https://www.pepcolab.com/guides" style="display:inline-block; margin:0 10px; color:rgba(26,26,26,0.3) !important; text-decoration:none; font-size:13px; font-weight:500;">📚 Guides</a>
+            </div>
+          </div>
+          <div class="footer" style="background:#f8f7f4 !important; padding:20px 30px 24px; text-align:center; border-top:1px solid rgba(26,26,26,0.04);">
+            <p style="font-size:13px; color:rgba(26,26,26,0.4) !important; margin:0;">PepcoLab — Research-grade peptides for laboratory use only</p>
+            <p class="meta" style="font-size:11px; color:rgba(26,26,26,0.25) !important; margin-top:4px;">SEE BEE DEE LIMITED • Companies House #17072052</p>
+          </div>
         </div>
-      </div>
-      <div class="next-steps">
-        <h4>⏳ What Happens Next</h4>
-        <ul>
-          <li>Our team will review your inquiry within 1 business day</li>
-          <li>We'll respond via email to the address you provided</li>
-          <li>For urgent matters, feel free to follow up with us</li>
-        </ul>
-      </div>
-      <div class="divider"></div>
-      <p style="font-size:14px;color:rgba(26,26,26,0.5);text-align:center;margin:0;">
-        In the meantime, explore our resources:
-      </p>
-      <div class="social-links">
-        <a href="https://www.pepcolab.com/products">🔬 Products</a>
-        <a href="https://www.pepcolab.com/certificates">📄 COA Library</a>
-        <a href="https://www.pepcolab.com/guides">📚 Guides</a>
-      </div>
-    </div>
-    <div class="footer">
-      <p>PepcoLab — Research-grade peptides for laboratory use only</p>
-      <p class="meta">SEE BEE DEE LIMITED • Companies House #17072052</p>
-    </div>
-  </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `
