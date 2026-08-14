@@ -42,7 +42,7 @@ export default function ContactPage() {
     setSuccess(false)
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/api/contact.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +65,6 @@ export default function ContactPage() {
           subject: '',
           message: '',
         })
-        // Scroll to top to show success message
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         throw new Error(data.message || 'Failed to send message')
@@ -149,100 +148,65 @@ export default function ContactPage() {
               </h2>
 
               {success && (
-                <div className="mb-6 bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 flex items-center gap-3 animate-fadeIn">
-                  <CheckCircle2 size={18} className="flex-shrink-0" />
-                  <span>Message sent successfully! We'll get back to you soon.</span>
+                <div className="mb-6 bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 flex items-center gap-3">
+                  <CheckCircle2 size={18} />
+                  Message sent successfully! We'll get back to you soon.
                 </div>
               )}
 
               {error && (
-                <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 flex items-center gap-3 animate-fadeIn">
-                  <AlertCircle size={18} className="flex-shrink-0" />
-                  <span>{error}</span>
+                <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 flex items-center gap-3">
+                  <AlertCircle size={18} />
+                  {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                <div>
-                  <label htmlFor="name" className="sr-only">
-                    Full Name
-                  </label>
-                  <input
-                    id="name"
-                    required
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Full Name *"
-                    className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
-                    disabled={loading}
-                  />
-                </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <input
+                  required
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Full Name *"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
+                />
 
-                <div>
-                  <label htmlFor="email" className="sr-only">
-                    Email Address
-                  </label>
-                  <input
-                    id="email"
-                    required
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="Email Address *"
-                    className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  required
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="Email Address *"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
+                />
 
-                <div>
-                  <label htmlFor="company" className="sr-only">
-                    Company
-                  </label>
-                  <input
-                    id="company"
-                    name="company"
-                    value={form.company}
-                    onChange={handleChange}
-                    placeholder="Company (optional)"
-                    className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  name="company"
+                  value={form.company}
+                  onChange={handleChange}
+                  placeholder="Company (optional)"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
+                />
 
-                <div>
-                  <label htmlFor="subject" className="sr-only">
-                    Subject
-                  </label>
-                  <input
-                    id="subject"
-                    required
-                    name="subject"
-                    value={form.subject}
-                    onChange={handleChange}
-                    placeholder="Subject *"
-                    className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
-                    disabled={loading}
-                  />
-                </div>
+                <input
+                  required
+                  name="subject"
+                  value={form.subject}
+                  onChange={handleChange}
+                  placeholder="Subject *"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
+                />
 
-                <div>
-                  <label htmlFor="message" className="sr-only">
-                    Your Message
-                  </label>
-                  <textarea
-                    id="message"
-                    required
-                    rows={7}
-                    name="message"
-                    value={form.message}
-                    onChange={handleChange}
-                    placeholder="Your message... *"
-                    className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
-                    disabled={loading}
-                  />
-                </div>
+                <textarea
+                  required
+                  rows={7}
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  placeholder="Your message... *"
+                  className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition"
+                />
 
                 <button
                   type="submit"
@@ -251,25 +215,9 @@ export default function ContactPage() {
                 >
                   {loading ? (
                     <>
-                      <svg 
-                        className="animate-spin h-5 w-5 text-white" 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" 
-                        viewBox="0 0 24 24"
-                      >
-                        <circle 
-                          className="opacity-25" 
-                          cx="12" 
-                          cy="12" 
-                          r="10" 
-                          stroke="currentColor" 
-                          strokeWidth="4"
-                        />
-                        <path 
-                          className="opacity-75" 
-                          fill="currentColor" 
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
                       Sending...
                     </>
