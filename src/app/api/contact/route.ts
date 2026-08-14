@@ -1,58 +1,5 @@
 // src/app/api/contact/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
-
-// List of SMTP configurations to try
-const SMTP_CONFIGS = [
-  // Config 1: Standard GoDaddy
-  {
-    host: 'smtp.secureserver.net',
-    port: 587,
-    secure: false,
-  },
-  // Config 2: GoDaddy with SSL
-  {
-    host: 'smtp.secureserver.net',
-    port: 465,
-    secure: true,
-  },
-  // Config 3: Alternative GoDaddy host
-  {
-    host: 'smtpout.secureserver.net',
-    port: 587,
-    secure: false,
-  },
-  // Config 4: Without TLS
-  {
-    host: 'smtp.secureserver.net',
-    port: 25,
-    secure: false,
-  },
-]
-
-async function trySendEmail(config: any, mailOptions: any) {
-  const transporter = nodemailer.createTransport({
-    ...config,
-    auth: {
-      user: process.env.SMTP_USER || 'hello@pepcolab.com',
-      pass: process.env.SMTP_PASS || 'pepcolab@1',
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 5000,
-  })
-
-  try {
-    await transporter.verify()
-    const info = await transporter.sendMail(mailOptions)
-    return { success: true, info }
-  } catch (error: any) {
-    return { success: false, error: error.message, config }
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,7 +9,10 @@ export async function POST(req: NextRequest) {
     // ─── VALIDATION ───
     if (!name || !email || !subject || !message) {
       return NextResponse.json(
-        { success: false, message: 'Please complete all required fields.' },
+        { 
+          success: false, 
+          message: 'Please complete all required fields.' 
+        },
         { status: 400 }
       )
     }
@@ -70,69 +20,130 @@ export async function POST(req: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { success: false, message: 'Invalid email address.' },
+        { 
+          success: false, 
+          message: 'Invalid email address.' 
+        },
         { status: 400 }
       )
     }
 
-    // ─── EMAIL CONTENT ───
-    const mailOptions = {
-      from: `"PepcoLab Website" <${process.env.SMTP_USER || 'hello@pepcolab.com'}>`,
-      to: 'hello@pepcolab.com',
-      replyTo: email,
-      subject: `Website Contact: ${subject}`,
-      text: `
-        Name: ${name}
-        Email: ${email}
-        Company: ${company || 'N/A'}
-        Subject: ${subject}
-        Message: ${message}
-      `,
-    }
+    // ─── LOG THE MESSAGE ───
+    console.log('📧 Contact Form Submission:')
+    console.log('─────────────────────────────')
+    console.log('Name:    ', name)
+    console.log('Email:   ', email)
+    console.log('Company: ', company || 'N/A')
+    console.log('Subject: ', subject)
+    console.log('Message: ')
+    console.log(message)
+    console.log('─────────────────────────────')
+    console.log('Timestamp:', new Date().toISOString())
 
-    // ─── TRY EACH SMTP CONFIG ───
-    let lastError = null
-    
-    for (const config of SMTP_CONFIGS) {
-      console.log(`📡 Trying SMTP: ${config.host}:${config.port} (secure: ${config.secure})`)
-      const result = await trySendEmail(config, mailOptions)
-      
-      if (result.success) {
-        console.log(`✅ Email sent via ${config.host}:${config.port}`)
-        return NextResponse.json({
-          success: true,
-          message: 'Message sent successfully!',
-        })
-      } else {
-        console.log(`❌ Failed: ${result.error}`)
-        lastError = result.error
+    // ─── TRY TO SEND EMAIL USING SMTP ───
+    // This will try to send email but won't fail if it can't
+    let emailSent = false
+    let emailError = null
+
+    try {
+      // Dynamically import nodemailer only if available
+      let nodemailer
+      try {
+        nodemailer = await import('nodemailer')
+      } catch (importError) {
+        console.log('📦 nodemailer not installed - skipping email send')
+        // Continue without email - user gets success response
       }
+
+      if (nodemailer) {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'smtp.secureserver.net',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: false,
+          auth: {
+            user: process.env.SMTP_USER || 'hello@pepcolab.com',
+            pass: process.env.SMTP_PASS || 'pepcolab@1',
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+          socketTimeout: 5000,
+        })
+
+        await transporter.sendMail({
+          from: `"PepcoLab Website" <${process.env.SMTP_USER || 'hello@pepcolab.com'}>`,
+          to: 'hello@pepcolab.com',
+          replyTo: email,
+          subject: `Website Contact: ${subject}`,
+          text: `
+            Name: ${name}
+            Email: ${email}
+            Company: ${company || 'N/A'}
+            Subject: ${subject}
+            Message: ${message}
+          `,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+              <h2 style="color: #1a1a1a; border-bottom: 2px solid #1a4d8f; padding-bottom: 12px;">
+                New Contact Form Submission
+              </h2>
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                <tr>
+                  <td style="padding: 8px 12px; font-weight: 600; width: 100px; background: #f5f5f5;">Name</td>
+                  <td style="padding: 8px 12px;">${name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 12px; font-weight: 600; background: #f5f5f5;">Email</td>
+                  <td style="padding: 8px 12px;"><a href="mailto:${email}" style="color: #1a4d8f;">${email}</a></td>
+                </tr>
+                ${company ? `
+                <tr>
+                  <td style="padding: 8px 12px; font-weight: 600; background: #f5f5f5;">Company</td>
+                  <td style="padding: 8px 12px;">${company}</td>
+                </tr>
+                ` : ''}
+                <tr>
+                  <td style="padding: 8px 12px; font-weight: 600; background: #f5f5f5;">Subject</td>
+                  <td style="padding: 8px 12px; font-weight: 600;">${subject}</td>
+                </tr>
+              </table>
+              <div style="background: #f8f7f4; padding: 16px; border-radius: 6px; margin: 16px 0;">
+                <h4 style="margin: 0 0 8px 0; color: #333;">Message:</h4>
+                <p style="margin: 0; white-space: pre-wrap; color: #555;">${message}</p>
+              </div>
+              <p style="font-size: 12px; color: #999; border-top: 1px solid #e0e0e0; padding-top: 12px; margin-top: 16px;">
+                Sent from pepcolab.com on ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dubai' })}
+              </p>
+            </div>
+          `,
+        })
+        emailSent = true
+        console.log('✅ Email sent successfully')
+      }
+    } catch (err: any) {
+      emailError = err.message
+      console.error('❌ Email send error:', err.message)
+      // Don't fail - just log the error
     }
 
-    // ─── ALL SMTP CONFIGS FAILED ───
-    console.error('All SMTP configurations failed:', lastError)
-    
-    // Still return success to the user (they don't need to know about email issues)
-    // But log the message so we don't lose it
-    console.log('📧 Contact Form Submission (email failed):', {
-      name,
-      email,
-      company,
-      subject,
-      message,
-      error: lastError
-    })
-
+    // ─── RETURN SUCCESS ───
+    // Always return success to the user, even if email fails
     return NextResponse.json({
       success: true,
-      message: 'Message received! We will get back to you soon.',
-      debug: { emailSent: false, error: lastError }
+      message: emailSent 
+        ? 'Message sent successfully! We\'ll get back to you soon.' 
+        : 'Message received! We\'ll get back to you soon.',
     })
 
   } catch (error: any) {
     console.error('Contact form error:', error)
     return NextResponse.json(
-      { success: false, message: 'Unable to process request.' },
+      { 
+        success: false, 
+        message: 'Unable to process request. Please try again.' 
+      },
       { status: 500 }
     )
   }
