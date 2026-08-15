@@ -51,7 +51,16 @@ export async function POST(req: NextRequest) {
   try {
     verifyWebhook(webhookId, timestamp, signature, rawBody)
   } catch (err: any) {
+    // TEMP DEBUG: log every header STRABL actually sends, so we can see
+    // whether x-webhook-id / x-webhook-timestamp / x-webhook-signature are
+    // even the right names, and what format the timestamp is really in
+    // (seconds vs ms), instead of guessing. Remove once verification is
+    // confirmed working.
+    const allHeaders: Record<string, string> = {}
+    req.headers.forEach((value, key) => { allHeaders[key] = value })
     console.warn('[webhook] Verification rejected:', err.message)
+    console.warn('[webhook] DEBUG raw headers:', JSON.stringify(allHeaders, null, 2))
+    console.warn('[webhook] DEBUG raw body:', rawBody.slice(0, 2000))
     return NextResponse.json({ error: err.message }, { status: 400 })
   }
 
