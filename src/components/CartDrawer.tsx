@@ -4,13 +4,15 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
-  X, Minus, Plus, ArrowRight, ShoppingBag, Trash2,
+  X, Minus, Plus, ArrowRight, ShoppingBag, Trash2, Check, AlertCircle, Lock,
 } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { formatPrice } from '@/lib/utils'
 
+// 0 means "free shipping on every order" — no threshold to climb toward.
+// Bump this above 0 to switch the header back into progress-bar mode.
 const FREE_SHIPPING_THRESHOLD = 0
 
 export default function CartDrawer() {
@@ -36,8 +38,14 @@ export default function CartDrawer() {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [closeCart])
 
-  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
-  const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0)
+  // Guard against the divide-by-zero that FREE_SHIPPING_THRESHOLD = 0
+  // used to produce (subtotal / 0 = Infinity, silently clamped to a
+  // permanent 100%). Below a real threshold, shipping is simply free —
+  // there's nothing to show progress toward.
+  const hasShippingThreshold = FREE_SHIPPING_THRESHOLD > 0
+  const progress = hasShippingThreshold ? Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100) : 100
+  const remaining = hasShippingThreshold ? Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0) : 0
+
   // currencyCode comes from the cart itself — Shopify's cartBuyerIdentityUpdate
   // recalculates every line item's price AND currency together when the
   // country changes, so it's the only value that's guaranteed to match what
@@ -76,7 +84,7 @@ export default function CartDrawer() {
         }`}
       >
         {/* Header */}
-        <div className="bg-[#0b0b0b] text-white px-6 py-5 border-b border-white/10 flex-shrink-0">
+        <div className="bg-[#0d0d0d] text-white px-6 py-5 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">
@@ -101,27 +109,33 @@ export default function CartDrawer() {
             </div>
           </div>
 
-          {/* Free shipping progress */}
+          {/* Free shipping status */}
           {totalQuantity > 0 && (
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                <span>
-                  {progress >= 0
-                    ? '✓ Free shipping unlocked'
-                    : `${formatPrice(remaining, displayCurrency)} away from free shipping`}
-                </span>
-                <span className="text-white/30">{Math.round(progress)}%</span>
-              </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-400 ${
-                    progress >= 100
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-                      : 'bg-white/40'
-                  }`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+              {!hasShippingThreshold ? (
+                <div className="flex items-center gap-1.5 text-xs font-medium text-white/60">
+                  <Check size={13} className="text-white" strokeWidth={2.5} />
+                  Free shipping on every order
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between text-xs text-white/40 mb-1.5">
+                    <span className="flex items-center gap-1.5">
+                      {progress >= 100 && <Check size={13} className="text-white" strokeWidth={2.5} />}
+                      {progress >= 100
+                        ? 'Free shipping unlocked'
+                        : `${formatPrice(remaining, displayCurrency)} away from free shipping`}
+                    </span>
+                    <span className="text-white/30">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-white transition-all duration-400"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -130,9 +144,7 @@ export default function CartDrawer() {
         {(error || sdkError) && (
           <div className="bg-red-50 border-b border-red-200/50 px-5 py-3 flex items-center justify-between gap-3 flex-shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-4 h-4 rounded-full border-2 border-red-500 flex items-center justify-center flex-shrink-0">
-                <div className="w-1 h-1 bg-red-500 rounded-full" />
-              </div>
+              <AlertCircle size={16} className="text-red-500 flex-shrink-0" strokeWidth={2} />
               <span className="text-sm text-red-700">{sdkError || error}</span>
             </div>
             <button
@@ -141,6 +153,7 @@ export default function CartDrawer() {
                 clearSdkError()
               }}
               className="text-red-600 hover:text-red-800 p-1"
+              aria-label="Dismiss error"
             >
               <X size={14} />
             </button>
@@ -152,8 +165,8 @@ export default function CartDrawer() {
           {lines.length === 0 ? (
             /* Empty state */
             <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center px-6 py-10">
-              <div className="w-20 h-20 rounded-full bg-blue-50/80 border border-blue-100/50 flex items-center justify-center mb-5">
-                <ShoppingBag size={32} className="text-blue-400/60" strokeWidth={1.5} />
+              <div className="w-20 h-20 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-5">
+                <ShoppingBag size={32} className="text-gray-300" strokeWidth={1.5} />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h3>
               <p className="text-sm text-gray-500 max-w-[240px] leading-relaxed mb-6">
@@ -178,7 +191,7 @@ export default function CartDrawer() {
                 >
                   <div className="flex gap-3">
                     {/* Product image */}
-                    <div className="w-16 h-16 rounded-xl bg-blue-50/50 border border-blue-100/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {line.image ? (
                         <img
                           src={line.image}
@@ -186,7 +199,7 @@ export default function CartDrawer() {
                           className="w-full h-full object-contain p-1.5"
                         />
                       ) : (
-                        <div className="w-6 h-6 rounded bg-blue-100/30" />
+                        <div className="w-6 h-6 rounded bg-gray-200" />
                       )}
                     </div>
 
@@ -289,10 +302,7 @@ export default function CartDrawer() {
                 </>
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
+                  <Lock size={14} strokeWidth={2.2} />
                   Proceed to Checkout
                   <ArrowRight size={14} />
                 </>
@@ -307,19 +317,16 @@ export default function CartDrawer() {
               View full cart
             </Link>
 
-            {/* Trust badges */}
-            <div className="flex justify-center items-center gap-4 flex-wrap mt-3">
-              {[
-                { icon: '.', label: 'STRABL' },
-                { icon: '.', label: 'Visa' },
-                { icon: '.', label: 'Mastercard' },
-                { icon: '.', label: 'American Express' },
-              ].map(({ icon, label }) => (
-                <div key={label} className="flex items-center gap-1.5 text-[10px] font-medium text-gray-400">
-                  <span className="text-xs">{icon}</span>
-                  {label}
-                </div>
-              ))}
+            {/* Trust signal — plain text, no placeholder icons standing in
+               for card-brand logos we don't have license to reproduce. */}
+            <div className="flex flex-col items-center gap-1.5 mt-4">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-gray-400 uppercase">
+                <Lock size={10} strokeWidth={2.2} />
+                Secure checkout by STRABL
+              </div>
+              <div className="text-[10px] font-medium text-gray-300">
+                Visa &nbsp;·&nbsp; Mastercard &nbsp;·&nbsp; American Express
+              </div>
             </div>
           </div>
         )}
