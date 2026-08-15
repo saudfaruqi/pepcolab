@@ -22,6 +22,7 @@ const LINKS = {
     { label: 'About Us',  href: '/about'    },
     { label: 'Contact',   href: '/contact'  },
     { label: 'Shipping',  href: '/shipping' },
+    { label: 'Refunds',   href: '/refund-policy' },
     { label: 'Privacy',   href: '/privacy'  },
     { label: 'Terms',     href: '/terms'    },
   ],
@@ -404,6 +405,7 @@ export default function Footer() {
             <Link href="/privacy" className="footer-bottom-link">Privacy</Link>
             <Link href="/terms"   className="footer-bottom-link">Terms</Link>
             <Link href="/shipping" className="footer-bottom-link">Shipping</Link>
+            <Link href="/refund-policy" className="footer-bottom-link">Refunds</Link>
           </div>
           <div className="footer-badge">
             <span className="footer-badge-dot" />
