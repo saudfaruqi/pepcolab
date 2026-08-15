@@ -10,7 +10,7 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { formatPrice } from '@/lib/utils'
 
-const FREE_SHIPPING_THRESHOLD = 75
+const FREE_SHIPPING_THRESHOLD = 0
 
 export default function CartDrawer() {
   const {
@@ -259,7 +259,7 @@ export default function CartDrawer() {
             <div className="mt-4">
               <div className="flex justify-between text-xs text-white/40 mb-1.5">
                 <span>
-                  {progress >= 100
+                  {progress >= 0
                     ? '✓ Free shipping unlocked'
                     : `${formatPrice(remaining, displayCurrency)} away from free shipping`}
                 </span>
@@ -461,11 +461,6 @@ export default function CartDrawer() {
                   {label}
                 </div>
               ))}
-            </div>
-
-            {/* Disclaimer */}
-            <div className="mt-2 text-[10px] text-gray-300 text-center italic leading-relaxed">
-              For research use only · Not for human consumption
             </div>
           </div>
         )}
