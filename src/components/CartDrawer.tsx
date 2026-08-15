@@ -61,11 +61,11 @@ export default function CartDrawer() {
   //      using this exact shape.
   //   3. The npm README's documented Cart/Product interfaces.
   //
-  // Known limitation, not fixable from this file: checkout.strabl.io's own
-  // hosted payment page has a confirmed backend bug (transaction_discount /
-  // create return 400 even when STRABL's own backend has already resolved
-  // the correct amount/currency). That's tracked separately with STRABL
-  // support and isn't something a client-side payload change can work around.
+  // 2026-08-15 update: the transaction_discount 400 / blocked cross-origin
+  // frame on checkout.strabl.io WAS fixable from here after all — STRABL
+  // support confirmed productId/variantId must be the bare numeric Shopify
+  // ID, not the full gid://shopify/ProductVariant/... string. See
+  // toNumericId() below.
   // ============================================================
 
   const STRABL_ENV = process.env.NEXT_PUBLIC_STRABL_ENVIRONMENT || 'production'
@@ -166,19 +166,34 @@ export default function CartDrawer() {
       // lineItems: required fields per the actual SDK validation are title,
       // price, quantity>0, productId, variantId — everything else is
       // optional but included where we have real data.
+      //
+      // productId/variantId MUST be the bare numeric Shopify ID, not the full
+      // gid://shopify/ProductVariant/123... string — STRABL support confirmed
+      // (2026-08-15) that passing the full GID is what breaks the Paymob
+      // transaction_discount call downstream (400 + the blocked cross-origin
+      // frame on checkout.strabl.io). Same extraction the STRABL webhook
+      // route already does on the way back in, applied here on the way out.
+      const toNumericId = (gid: string): string => {
+        const match = gid.match(/(\d+)$/)
+        return match ? match[1] : gid
+      }
+
       const strablLineItems = lines
         .filter(l => l.variantId && l.quantity > 0 && l.price > 0)
-        .map(l => ({
-          title: l.title || 'Product',
-          description: l.variantTitle || l.title || 'Product',
-          price: Number(l.price) || 0,
-          quantity: Number(l.quantity) || 1,
-          productId: l.variantId,
-          variantId: l.variantId,
-          image: l.image || `${baseUrl}/pepcologo.png`,
-          url: l.slug ? `${baseUrl}/products/${l.slug}` : `${baseUrl}/products`,
-          variantOptions: l.variantTitle ? [l.variantTitle] : [],
-        }))
+        .map(l => {
+          const numericId = toNumericId(l.variantId)
+          return {
+            title: l.title || 'Product',
+            description: l.variantTitle || l.title || 'Product',
+            price: Number(l.price) || 0,
+            quantity: Number(l.quantity) || 1,
+            productId: numericId,
+            variantId: numericId,
+            image: l.image || `${baseUrl}/pepcologo.png`,
+            url: l.slug ? `${baseUrl}/products/${l.slug}` : `${baseUrl}/products`,
+            variantOptions: l.variantTitle ? [l.variantTitle] : [],
+          }
+        })
 
       if (strablLineItems.length === 0) {
         setSdkError('Your cart is empty or contains invalid items.')
