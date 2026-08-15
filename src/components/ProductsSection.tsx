@@ -251,8 +251,8 @@ export default function ProductsSection({ showAll = false, initialProducts, init
   }, [search, sort, category, format, showAll, allProducts])
 
   return (
-    <section style={{ padding: showAll ? '0 0 100px' : '72px 0' }}>
-      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 clamp(16px,4vw,64px)' }}>
+    <section style={{ padding: showAll ? '0 0 clamp(48px, 6vw, 100px)' : 'clamp(40px, 5vw, 72px) 0' }}>
+      <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 clamp(16px, 4vw, 64px)' }}>
 
         {/* Header */}
         <div ref={headRef} style={{ marginBottom: 28 }}>

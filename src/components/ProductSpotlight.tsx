@@ -43,7 +43,7 @@ export default function ProductSpotlight() {
     >
       <div
         style={{
-          maxWidth: '98%',
+          maxWidth: '1440',
           margin: '0 auto',
           padding: 'clamp(60px,8vw,120px) clamp(20px,4vw,64px)',
         }}
