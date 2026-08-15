@@ -30,6 +30,9 @@ export default function CartPage() {
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10">
         <div className="mb-8">
+          <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400 mb-1">
+            Research Order
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Your Cart</h1>
         </div>
 
@@ -168,10 +171,13 @@ export default function CartPage() {
                   {formatPrice(subtotal, displayCurrency)}
                 </strong>
               </div>
+              <p className="text-center text-[10px] text-gray-400 leading-relaxed px-2 mt-4 mb-1">
+                For in-vitro research use only. Not intended for human or veterinary use.
+              </p>
               <button
                 onClick={() => handleCheckout(lines, displayCurrency, detectedCountry)}
                 disabled={checkingOut || loading || !sdkReady}
-                className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-4 ${
+                className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-1 ${
                   checkingOut || loading || !sdkReady
                     ? 'bg-gray-300 text-white/60 cursor-not-allowed'
                     : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30'

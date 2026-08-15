@@ -79,6 +79,9 @@ export default function CartDrawer() {
         <div className="bg-[#0b0b0b] text-white px-6 py-5 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
+              <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">
+                Research Order
+              </div>
               <h2 className="text-2xl font-bold tracking-tight mt-0.5">Cart</h2>
             </div>
 
@@ -259,6 +262,10 @@ export default function CartDrawer() {
                 {formatPrice(subtotal, displayCurrency)}
               </strong>
             </div>
+
+            <p className="text-center text-[10px] text-gray-400 leading-relaxed px-2 mb-2">
+              For in-vitro research use only. Not intended for human or veterinary use.
+            </p>
 
             {/* Checkout button */}
             <button

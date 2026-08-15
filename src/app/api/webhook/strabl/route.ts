@@ -15,6 +15,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createShopifyOrder, markShopifyOrderPaid } from '@/lib/shopifyAdmin'
 import { saveOrderRecord, type OrderRecord } from '@/lib/orderStore'
+import { sendMailSafe } from '@/lib/mailer'
+
+const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
 // Use a Set for deduplication - in production, use Redis or similar
 const processedIds = new Set<string>()
@@ -65,10 +68,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 400 })
   }
 
+  // Dedup check happens up front (cheap, avoids reprocessing true
+  // duplicates), but marking a webhookId as processed is deferred until
+  // after we know order creation actually succeeded — see syncFailed
+  // below. Previously this was marked processed immediately on receipt,
+  // which meant a failed order-creation attempt could never actually be
+  // retried: STRABL's retry of the same webhookId would just hit this
+  // dedup check and get silently swallowed as a "duplicate" — the 500
+  // response was retried, but the retry never did any real work.
   if (webhookId && processedIds.has(webhookId)) {
     return new NextResponse(null, { status: 204 })
   }
-  if (webhookId) processedIds.add(webhookId)
 
   if (processedIds.size > 1000) {
     const toDelete = Math.floor(processedIds.size / 2)
@@ -79,6 +89,8 @@ export async function POST(req: NextRequest) {
       count++
     }
   }
+
+  let syncFailed = false
 
   let event: any
   try {
@@ -173,10 +185,28 @@ export async function POST(req: NextRequest) {
         await saveOrderRecord(buildOrderRecord(type === 'order_created' ? 'created' : 'updated'))
       } catch (err: any) {
         console.error('[webhook] ❌ Failed to create Shopify order:', err.message, err.stack)
-        return NextResponse.json(
-          { error: 'Shopify order creation failed', details: err.message },
-          { status: 500 }
-        )
+        syncFailed = true
+
+        // This is the important one: STRABL has already taken the
+        // customer's money at this point, but the Shopify order — the
+        // thing that actually gets it packed and shipped — doesn't exist.
+        // This has to reach a human, not just a log line, or the order
+        // silently vanishes until the customer complains.
+        await sendMailSafe({
+          to: ALERT_EMAIL,
+          subject: `⚠️ Order sync FAILED — payment taken, no Shopify order (${orderShortCode || orderUuid})`,
+          text: `A STRABL payment succeeded but creating the Shopify order failed. The customer HAS been charged — this order needs to be created manually.
+
+STRABL order: ${orderShortCode || '(no short code)'}
+STRABL order UUID: ${orderUuid || '(none)'}
+Customer email: ${customerUpdate.email || '(none)'}
+Customer name: ${[customerUpdate.firstName, customerUpdate.lastName].filter(Boolean).join(' ') || '(none)'}
+Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
+
+Error: ${err.message}
+
+STRABL will retry this webhook automatically (it received a 500). If retries keep failing, check the Shopify admin token, variant IDs, and API status, then create this order manually in Shopify and mark it paid (gateway: STRABL, message referencing the order UUID above).`,
+        })
       }
       break
     }
@@ -213,5 +243,14 @@ export async function POST(req: NextRequest) {
       console.log(`[webhook] ⚠️ Unhandled event type: ${type}`)
   }
 
+  if (syncFailed) {
+    // Deliberately NOT added to processedIds — see comment above the dedup
+    // check. Returning 500 tells STRABL this delivery didn't succeed, and
+    // because we didn't mark it processed, the retry will actually attempt
+    // order creation again instead of being swallowed as a duplicate.
+    return NextResponse.json({ error: 'Order sync failed, will retry' }, { status: 500 })
+  }
+
+  if (webhookId) processedIds.add(webhookId)
   return new NextResponse(null, { status: 204 })
 }
