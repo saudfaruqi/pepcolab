@@ -169,6 +169,19 @@ export default function CheckoutFailurePage() {
             Browse Products
           </Link>
         </div>
+
+        <Link
+          href="/track-order"
+          style={{
+            display: 'block',
+            marginTop: 16,
+            fontSize: 13,
+            color: 'rgba(13,13,13,.45)',
+            textDecoration: 'underline',
+          }}
+        >
+          Check your order status
+        </Link>
       </div>
     </div>
   )

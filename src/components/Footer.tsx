@@ -21,6 +21,7 @@ const LINKS = {
   Company: [
     { label: 'About Us',  href: '/about'    },
     { label: 'Contact',   href: '/contact'  },
+    { label: 'Track Order', href: '/track-order' },
     { label: 'Shipping',  href: '/shipping' },
     { label: 'Refunds',   href: '/refund-policy' },
     { label: 'Privacy',   href: '/privacy'  },

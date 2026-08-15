@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createShopifyOrder, markShopifyOrderPaid } from '@/lib/shopifyAdmin'
+import { saveOrderRecord, type OrderRecord } from '@/lib/orderStore'
 
 // Use a Set for deduplication - in production, use Redis or similar
 const processedIds = new Set<string>()
@@ -89,6 +90,39 @@ export async function POST(req: NextRequest) {
   // Real documented shape: { type, orderUpdate: {...}, customerUpdate: {...} }
   const { type, orderUpdate = {}, customerUpdate = {} } = event
   const orderUuid = orderUpdate.orderUuid
+  const orderShortCode = orderUpdate.orderShortCode || ''
+
+  // Builds the /track-order lookup record from whatever this event gave us.
+  // Called for every event type below (including failures) so a customer
+  // can look up an order regardless of how it ended — this is the piece
+  // that was missing before: order_failed used to only log to the server
+  // console, so a customer with a failed payment had literally nothing to
+  // look up.
+  const buildOrderRecord = (status: OrderRecord['status']): OrderRecord => {
+    const products = (orderUpdate.products || []).map((item: any) => ({
+      title: item.title || 'Product',
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 1,
+      variantOptions: item.extra || [],
+    }))
+    const total = products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
+    const firstName = customerUpdate.firstName || ''
+    const lastName = customerUpdate.lastName || ''
+
+    return {
+      orderShortCode,
+      orderUuid: orderUuid || '',
+      status,
+      failureReason: orderUpdate.failureReason || undefined,
+      email: (customerUpdate.email || '').toLowerCase().trim(),
+      customerName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
+      products,
+      currency: 'AED', // STRABL webhook payloads observed so far are AED-only per merchant config
+      total,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+  }
 
   switch (type) {
     case 'order_created':
@@ -131,10 +165,12 @@ export async function POST(req: NextRequest) {
             lastName,
             shippingAddress: { address1, address2, city, postalCode, countryCode },
             phone,
-          }
+          },
+          orderShortCode
         )
 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
+        await saveOrderRecord(buildOrderRecord(type === 'order_created' ? 'created' : 'updated'))
       } catch (err: any) {
         console.error('[webhook] ❌ Failed to create Shopify order:', err.message, err.stack)
         return NextResponse.json(
@@ -152,18 +188,25 @@ export async function POST(req: NextRequest) {
         `[webhook] ⚠️ Payment failed — strabl:${orderUuid} — reason: ${orderUpdate.failureReason} — meta:`,
         JSON.stringify(orderUpdate.meta)
       )
+      await saveOrderRecord(buildOrderRecord('failed'))
       break
 
     case 'order_refunded':
       console.info(`[webhook] 🔄 Order refunded — strabl:${orderUuid}`)
+      await saveOrderRecord(buildOrderRecord('refunded'))
       break
 
     case 'order_chargeback':
       console.info(`[webhook] 🔄 Chargeback — strabl:${orderUuid}`)
+      await saveOrderRecord(buildOrderRecord('chargeback'))
       break
 
     case 'order_abandoned':
-      console.info(`[webhook] 🛒 Order abandoned — strabl order: ${orderUpdate.orderShortCode}`)
+      // Deliberately NOT saved to the lookup store — an abandoned cart was
+      // never a real order attempt from the customer's point of view, and
+      // surfacing it in /track-order would be confusing ("I never placed
+      // this order").
+      console.info(`[webhook] 🛒 Order abandoned — strabl order: ${orderShortCode}`)
       break
 
     default:

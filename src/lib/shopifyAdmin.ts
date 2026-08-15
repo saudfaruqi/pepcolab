@@ -37,14 +37,18 @@ export interface CustomerInfoInput {
 export async function createShopifyOrder(
   lineItems: { variant_id: string; quantity: number }[], // variant_id should be numeric
   countryCode: string,
-  customerInfo?: CustomerInfoInput
+  customerInfo?: CustomerInfoInput,
+  strablOrderShortCode?: string
 ) {
+  const tags = ['strabl-pending']
+  if (strablOrderShortCode) tags.push(`strabl-order-${strablOrderShortCode}`)
+
   const orderData: any = {
     line_items: lineItems,
     financial_status: 'pending',
     send_receipt: false,
     send_fulfillment_receipt: false,
-    tags: 'strabl-pending',
+    tags: tags.join(', '),
     shipping_address: { country_code: countryCode },
   }
 
