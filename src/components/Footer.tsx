@@ -28,16 +28,6 @@ const LINKS = {
   ],
 }
 
-// Stats band content — the CSS for this (.footer-stats etc.) already
-// existed but was never rendered anywhere. Numbers below are placeholders
-// to make the section correct-looking; swap in real figures (catalogue
-// size, batches tested, etc.) before shipping.
-const STATS = [
-  { value: '78+',  label: 'Verified Compounds' },
-  { value: '100%', label: 'Batch HPLC Tested'  },
-  { value: '2',    label: 'Markets Served'     },
-  { value: '24h',  label: 'Cold-Chain Dispatch'},
-]
 
 export default function Footer() {
   const year = new Date().getFullYear()
@@ -364,15 +354,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Stats band ── */}
-      <div className="footer-stats">
-        {STATS.map(s => (
-          <div key={s.label} className="footer-stat">
-            <div className="footer-stat-value">{s.value}</div>
-            <div className="footer-stat-label">{s.label}</div>
-          </div>
-        ))}
-      </div>
 
       {/* ── Payment methods ──
           Requested by the business: show accepted card schemes near
@@ -387,7 +368,7 @@ export default function Footer() {
           wanted — don't recreate them by hand. */}
       <div className="footer-inner">
         <div className="footer-payments">
-          <span className="footer-payments-label">We accept</span>
+          <span className="footer-payments-label">Secure payments powered by STRBL</span>
           <div className="footer-payments-row">
             {['Visa', 'Mastercard', 'American Express'].map(brand => (
               <span key={brand} className="footer-payment-chip">{brand}</span>
