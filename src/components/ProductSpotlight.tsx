@@ -45,7 +45,7 @@ export default function ProductSpotlight() {
         style={{
           maxWidth: '1440',
           margin: '0 auto',
-          padding: 'clamp(60px,8vw,120px) clamp(20px,4vw,64px)',
+          padding: 'clamp(40px, 8vw, 120px) clamp(16px, 4vw, 64px)'
         }}
       >
         {/* Eyebrow */}
