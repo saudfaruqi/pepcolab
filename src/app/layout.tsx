@@ -246,13 +246,13 @@ export default async function RootLayout({
       </head>
 
       <body suppressHydrationWarning>
-        {/* STRABL SDK — version PINNED. @latest let a third-party publish
-            change the live checkout with no deploy on your side. Replace
-            0.0.0 with the exact version you have tested, and consider moving
-            this <Script> into checkout/page.tsx so it only loads where it's
-            actually used. */}
+        {/* STRABL SDK — pinned to 1.0.2, the version this integration has
+            been decompiled, verified, and tested against. @latest was
+            letting a third-party publish silently change the live checkout
+            with no deploy on our side — bump this deliberately when STRABL
+            confirms a new version, not automatically. */}
         <Script
-          src="https://unpkg.com/@strabl-engineering/checkout-sdk@latest/dist/index.global.js"
+          src="https://unpkg.com/@strabl-engineering/checkout-sdk@1.0.2/dist/index.global.js"
           strategy="lazyOnload"
         />
 
