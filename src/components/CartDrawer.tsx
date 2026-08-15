@@ -295,6 +295,14 @@ export default function CartDrawer() {
               )}
             </button>
 
+            <Link
+              href="/cart"
+              onClick={closeCart}
+              className="block text-center text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors mt-3"
+            >
+              View full cart
+            </Link>
+
             {/* Trust badges */}
             <div className="flex justify-center items-center gap-4 flex-wrap mt-3">
               {[
