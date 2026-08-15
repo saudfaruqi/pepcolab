@@ -30,9 +30,6 @@ export default function CartPage() {
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10">
         <div className="mb-8">
-          <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400 mb-1">
-            Research Order
-          </div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Your Cart</h1>
         </div>
 
