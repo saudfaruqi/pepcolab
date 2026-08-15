@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useCart } from '@/lib/cartContext'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
@@ -46,6 +47,7 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 export default function Nav() {
   const { totalQuantity, openCart } = useCart()
   const { country, currency, setCountry, ready } = useCountry()
+  const pathname = usePathname()
 
   const [mobileOpen,     setMobileOpen]     = useState(false)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
@@ -110,6 +112,14 @@ export default function Nav() {
     window.addEventListener('resize', fn, { passive: true })
     return () => window.removeEventListener('resize', fn)
   }, [])
+
+  // Route changes (including clicks on mobile sub-links) should close the
+  // mobile panel/dropdowns rather than leaving them open behind the new page.
+  useEffect(() => {
+    setMobileOpen(false)
+    setMobileExpanded(null)
+    setActiveDrop(null)
+  }, [pathname])
 
   const openDrop  = (l: string) => { if (dropTimer.current) clearTimeout(dropTimer.current); setActiveDrop(l) }
   const closeDrop = ()          => { dropTimer.current = setTimeout(() => setActiveDrop(null), 130) }
@@ -194,6 +204,27 @@ export default function Nav() {
     },
   ]
 
+  // ── Active-page detection ──────────────────────────────────────────────
+  // Strips query/hash so "/products#catalogue" and "/products?q=x" both
+  // resolve to the routable path "/products" for comparison against
+  // usePathname(), which never includes query/hash itself.
+  const basePath = (href: string) => href.split('#')[0].split('?')[0] || '/'
+
+  // True if the current route is that path or nested under it
+  // (e.g. "/products" also matches "/products/category/metabolic" and
+  // "/products/some-peptide-slug"), so a link stays highlighted while
+  // browsing anything beneath its section.
+  const pathMatches = (base: string) =>
+    pathname === base || pathname?.startsWith(base === '/' ? '/__never__' : `${base}/`)
+
+  // A top-level nav item is "current" if the route matches its own href
+  // or any of its dropdown items' hrefs — so e.g. visiting /bundles keeps
+  // "Products" highlighted even though /bundles isn't under /products.
+  const isLinkCurrent = (link: typeof NAV_LINKS[number]) =>
+    pathMatches(basePath(link.href)) || link.items.some(item => pathMatches(basePath(item.href)))
+
+  const isItemCurrent = (href: string) => pathMatches(basePath(href))
+
   return (
     <>
       <style>{`
@@ -238,6 +269,7 @@ export default function Nav() {
         }
         .nav-link-wrap { position: relative; }
         .nav-link {
+          position: relative;
           display: inline-flex;
           align-items: center;
           gap: 5px;
@@ -257,6 +289,23 @@ export default function Nav() {
         .nav-link:hover, .nav-link.active {
           background: #f4f3f0;
           color: #0d0d0d;
+        }
+        /* Persistent "you are here" state — distinct from the transient
+           hover/dropdown-open .active state above, since a page should
+           stay legible as current even after the pointer moves away. */
+        .nav-link.current {
+          color: #0d0d0d;
+          font-weight: 700;
+        }
+        .nav-link.current::after {
+          content: '';
+          position: absolute;
+          left: 13px;
+          right: 13px;
+          bottom: 1px;
+          height: 2px;
+          border-radius: 2px;
+          background: #0d0d0d;
         }
 
         /* Dropdown */
@@ -290,6 +339,18 @@ export default function Nav() {
         .nav-drop-item:hover { background: #f4f3f0; }
         .nav-drop-item-label { font-size: 13px; font-weight: 600; color: #0d0d0d; }
         .nav-drop-item-sub   { font-size: 11px; color: rgba(13,13,13,.42); margin-top: 2px; }
+        /* Highlight the specific dropdown item matching the current route */
+        .nav-drop-item.current { background: #f4f3f0; }
+        .nav-drop-item.current .nav-drop-item-label::before {
+          content: '';
+          display: inline-block;
+          width: 5px;
+          height: 5px;
+          border-radius: 999px;
+          background: #0d0d0d;
+          margin-right: 7px;
+          vertical-align: middle;
+        }
 
         /* Right actions */
         .nav-actions {
@@ -467,8 +528,20 @@ export default function Nav() {
           width: 100%;
           text-align: left;
           transition: background .12s;
+          position: relative;
         }
         .mob-link:hover { background: #faf9f7; }
+        /* Persistent current-page marker in the mobile panel: a left bar
+           plus a filled dot, since bold-weight alone is easy to miss on
+           a 15px label that's already semi-bold by default. */
+        .mob-link.current { background: #faf9f7; }
+        .mob-link.current::before {
+          content: '';
+          position: absolute;
+          left: 0; top: 0; bottom: 0;
+          width: 3px;
+          background: #0d0d0d;
+        }
         .mob-sub-links {
           background: #faf9f7;
           border-top: 1px solid rgba(13,13,13,.05);
@@ -483,7 +556,9 @@ export default function Nav() {
           transition: background .12s;
         }
         .mob-sub-link:hover { background: #f0efe9; }
+        .mob-sub-link.current { background: #f0efe9; }
         .mob-sub-label { font-size: 13.5px; font-weight: 600; color: #0d0d0d; }
+        .mob-sub-link.current .mob-sub-label { text-decoration: underline; text-underline-offset: 3px; }
         .mob-sub-sub   { font-size: 11px; color: rgba(13,13,13,.42); margin-top: 2px; }
         .mob-footer {
           padding: 16px;
@@ -710,30 +785,41 @@ export default function Nav() {
         </div>
 
         <div className="mob-links">
-          {NAV_LINKS.map(link => (
-            <div key={link.label} className="mob-link-row">
-              {link.hasDrop ? (
-                <>
-                  <button className="mob-link" onClick={() => setMobileExpanded(mobileExpanded === link.label ? null : link.label)}>
+          {NAV_LINKS.map(link => {
+            const current = isLinkCurrent(link)
+            return (
+              <div key={link.label} className="mob-link-row">
+                {link.hasDrop ? (
+                  <>
+                    <button
+                      className={`mob-link${current ? ' current' : ''}`}
+                      onClick={() => setMobileExpanded(mobileExpanded === link.label ? null : link.label)}
+                    >
+                      {link.label}
+                      <ChevronDown open={mobileExpanded === link.label} />
+                    </button>
+                    <div className="mob-sub-links" style={{ maxHeight: mobileExpanded === link.label ? link.items.length * 80 : 0, opacity: mobileExpanded === link.label ? 1 : 0 }}>
+                      {link.items.map(item => (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          className={`mob-sub-link${isItemCurrent(item.href) ? ' current' : ''}`}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          <span className="mob-sub-label">{item.label}</span>
+                          {item.sub && <span className="mob-sub-sub">{item.sub}</span>}
+                        </a>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <a href={link.href} className={`mob-link${current ? ' current' : ''}`} onClick={() => setMobileOpen(false)}>
                     {link.label}
-                    <ChevronDown open={mobileExpanded === link.label} />
-                  </button>
-                  <div className="mob-sub-links" style={{ maxHeight: mobileExpanded === link.label ? link.items.length * 80 : 0, opacity: mobileExpanded === link.label ? 1 : 0 }}>
-                    {link.items.map(item => (
-                      <a key={item.label} href={item.href} className="mob-sub-link" onClick={() => setMobileOpen(false)}>
-                        <span className="mob-sub-label">{item.label}</span>
-                        {item.sub && <span className="mob-sub-sub">{item.sub}</span>}
-                      </a>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <a href={link.href} className="mob-link" onClick={() => setMobileOpen(false)}>
-                  {link.label}
-                </a>
-              )}
-            </div>
-          ))}
+                  </a>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         <div className="mob-footer">
@@ -756,31 +842,42 @@ export default function Nav() {
 
           {/* Desktop links */}
           <div className="nav-links">
-            {NAV_LINKS.map(link => (
-              <div key={link.label} className="nav-link-wrap"
-                onMouseEnter={() => { if (link.hasDrop) openDrop(link.label) }}
-                onMouseLeave={() => { if (link.hasDrop) closeDrop() }}
-              >
-                <a href={link.href} className={`nav-link${activeDrop === link.label ? ' active' : ''}`}>
-                  {link.label}
-                  {link.hasDrop && <ChevronDown open={activeDrop === link.label} />}
-                </a>
-
-                {link.hasDrop && activeDrop === link.label && (
-                  <div className="nav-drop"
-                    onMouseEnter={() => openDrop(link.label)}
-                    onMouseLeave={closeDrop}
+            {NAV_LINKS.map(link => {
+              const current = isLinkCurrent(link)
+              return (
+                <div key={link.label} className="nav-link-wrap"
+                  onMouseEnter={() => { if (link.hasDrop) openDrop(link.label) }}
+                  onMouseLeave={() => { if (link.hasDrop) closeDrop() }}
+                >
+                  <a
+                    href={link.href}
+                    className={`nav-link${activeDrop === link.label ? ' active' : ''}${current ? ' current' : ''}`}
+                    aria-current={current ? 'page' : undefined}
                   >
-                    {link.items.map(item => (
-                      <a key={item.label} href={item.href} className="nav-drop-item">
-                        <span className="nav-drop-item-label">{item.label}</span>
-                        {item.sub && <span className="nav-drop-item-sub">{item.sub}</span>}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                    {link.label}
+                    {link.hasDrop && <ChevronDown open={activeDrop === link.label} />}
+                  </a>
+
+                  {link.hasDrop && activeDrop === link.label && (
+                    <div className="nav-drop"
+                      onMouseEnter={() => openDrop(link.label)}
+                      onMouseLeave={closeDrop}
+                    >
+                      {link.items.map(item => (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          className={`nav-drop-item${isItemCurrent(item.href) ? ' current' : ''}`}
+                        >
+                          <span className="nav-drop-item-label">{item.label}</span>
+                          {item.sub && <span className="nav-drop-item-sub">{item.sub}</span>}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
 
           {/* Actions */}
