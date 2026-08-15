@@ -111,7 +111,7 @@ export default function TrackOrderPage() {
               value={orderCode}
               onChange={(e) => setOrderCode(e.target.value)}
               placeholder="SOR-A5EVGI"
-              className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+              className="w-full h-12 px-4 text-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
               autoCapitalize="characters"
               required
             />
@@ -127,7 +127,7 @@ export default function TrackOrderPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+              className="w-full h-12 px-4 text-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
               required
             />
           </div>
