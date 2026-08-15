@@ -42,7 +42,7 @@ return (
   <main className="bg-white">
     {/* Hero */}
     <section className="border-b border-neutral-200 bg-[#f7f6f3]">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-20 lg:py-28">
+      <div className="max-w-7xl mx-auto px-3 lg:px-12 py-20 lg:py-28">
         <div className="text-[11px] uppercase tracking-[0.2em] font-semibold text-neutral-500 mb-4">
           Legal Information
         </div>

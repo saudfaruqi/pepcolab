@@ -122,7 +122,7 @@ export function ReconstitutionCalculator({ standalone = false }: { standalone?: 
   // page — bigger, no card chrome (the page itself supplies that), used
   // as the primary on-page content rather than one of a 2x2 grid.
   return (
-    <div className="rounded-3xl border border-zinc-200 bg-white p-8 lg:p-10 shadow-sm">
+    <div className="rounded-3xl border border-zinc-200 bg-white p-4 lg:p-10 shadow-sm">
       <div className="flex items-center gap-4 mb-8">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100">
           <FlaskConical size={24} />

@@ -124,7 +124,7 @@ export default function ContactPage() {
           </div>
         </section>
 
-        <section className="max-w-7xl mx-auto px-6 lg:px-12 py-20">
+        <section className="max-w-7xl mx-auto px-3 lg:px-12 py-20">
           <div className="grid lg:grid-cols-[420px,1fr] gap-12">
             {/* Contact Info */}
             <div>
@@ -178,7 +178,7 @@ export default function ContactPage() {
             </div>
 
             {/* Form */}
-            <div className="bg-white border border-neutral-200 rounded-3xl p-8 lg:p-10 shadow-sm">
+            <div className="bg-white border border-neutral-200 rounded-3xl p-4 lg:p-10 shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="font-serif text-3xl tracking-tight">Send us a message</h2>
                 <span className="text-xs text-neutral-400 font-medium">* Required</span>

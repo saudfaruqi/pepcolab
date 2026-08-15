@@ -47,7 +47,7 @@ export default function COASection() {
 
   return (
     <section className="bg-ink text-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-20">
+      <div className="max-w-7xl mx-auto px-3 lg:px-12 py-20">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
 
           {/* Left */}
