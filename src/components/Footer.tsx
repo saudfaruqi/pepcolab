@@ -388,10 +388,6 @@ export default function Footer() {
             <Link href="/shipping" className="footer-bottom-link">Shipping</Link>
             <Link href="/refund-policy" className="footer-bottom-link">Refunds</Link>
           </div>
-          <div className="footer-badge">
-            <span className="footer-badge-dot" />
-            Shipping to UK &amp; UAE
-          </div>
         </div>
       </div>
 
