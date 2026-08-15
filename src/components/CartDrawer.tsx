@@ -169,13 +169,17 @@ export default function CartDrawer() {
       //
       // productId/variantId MUST be the bare numeric Shopify ID, not the full
       // gid://shopify/ProductVariant/123... string — STRABL support confirmed
-      // (2026-08-15) that passing the full GID is what breaks the Paymob
-      // transaction_discount call downstream (400 + the blocked cross-origin
-      // frame on checkout.strabl.io). Same extraction the STRABL webhook
-      // route already does on the way back in, applied here on the way out.
+      // (2026-08-15, WhatsApp) that passing the full GID is what breaks the
+      // Paymob transaction_discount call downstream (400 + the blocked
+      // cross-origin frame on checkout.strabl.io). Same extraction the
+      // STRABL webhook route already does on the way back in, applied here
+      // on the way out. STRABL also confirmed a hard 20-char max on this
+      // field — Shopify's numeric IDs are ~14 digits today so this rarely
+      // bites, but slice defensively rather than relying on that holding.
       const toNumericId = (gid: string): string => {
         const match = gid.match(/(\d+)$/)
-        return match ? match[1] : gid
+        const numeric = match ? match[1] : gid
+        return numeric.slice(0, 20)
       }
 
       const strablLineItems = lines
