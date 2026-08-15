@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 
 const LINKS = {
   Products: [
@@ -29,6 +30,19 @@ const LINKS = {
   ],
 }
 
+// Deliberately no invented numbers here (no "500+ customers", no hardcoded
+// catalogue count) — Footer doesn't fetch product data, so any count would
+// drift stale the moment the catalogue changes. Every value below is a
+// claim already made elsewhere in the codebase (AgeLocationGate's 21+ gate,
+// the metadata description's "cold-chain dispatch", the Store schema's
+// areaServed, the Organization schema's published COAs), so this band
+// stays true by construction instead of needing separate upkeep.
+const STATS = [
+  { value: 'UAE & UK',   label: 'Markets Served' },
+  { value: 'COA',        label: 'Published Every Batch' },
+  { value: 'Cold-Chain', label: 'Temperature-Controlled Dispatch' },
+  { value: '21+',        label: 'Age-Verified Entry' },
+]
 
 export default function Footer() {
   const year = new Date().getFullYear()
@@ -37,7 +51,8 @@ export default function Footer() {
   const [submitting,  setSubmitting]  = useState(false)
   const [error,       setError]       = useState<string | null>(null)
 
-  async function handleSubscribe() {
+  async function handleSubscribe(e: React.FormEvent) {
+    e.preventDefault()
     const trimmed = email.trim()
     if (!trimmed.includes('@') || !trimmed.includes('.')) {
       setError('Enter a valid email address.')
@@ -203,12 +218,12 @@ export default function Footer() {
           padding: clamp(20px,3vw,32px) clamp(16px,3vw,32px);
         }
         .footer-stat-value {
-          font-size: clamp(26px,3vw,38px);
+          font-size: clamp(22px,2.6vw,32px);
           font-weight: 700;
-          letter-spacing: -.06em;
+          letter-spacing: -.03em;
           color: #fff;
           margin-bottom: 4px;
-          line-height: 1;
+          line-height: 1.1;
         }
         .footer-stat-label {
           font-size: 10px;
@@ -291,6 +306,7 @@ export default function Footer() {
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
+          margin-left: auto;
         }
         .footer-payment-chip {
           font-size: 11px;
@@ -318,24 +334,29 @@ export default function Footer() {
             </p>
             {subbed ? (
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,.55)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ color: '#22c55e' }}>✓</span> You're subscribed to research updates.
+                <Check size={14} strokeWidth={3} style={{ color: '#22c55e', flexShrink: 0 }} />
+                You're subscribed to research updates.
               </div>
             ) : (
               <>
-                <div className="footer-newsletter">
+                {/* A real <form> (not a bare input+button+onKeyDown) so Enter
+                   submits consistently across desktop and mobile virtual
+                   keyboards, and so autofill/password-manager heuristics and
+                   screen readers see a proper submit control. */}
+                <form className="footer-newsletter" onSubmit={handleSubscribe}>
                   <input
                     type="email"
                     aria-label="Email address"
+                    autoComplete="email"
                     placeholder="your@email.com"
                     value={email}
                     disabled={submitting}
                     onChange={e => { setEmail(e.target.value); if (error) setError(null) }}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSubscribe() }}
                   />
-                  <button onClick={handleSubscribe} disabled={submitting}>
+                  <button type="submit" disabled={submitting}>
                     {submitting ? 'Subscribing…' : 'Subscribe'}
                   </button>
-                </div>
+                </form>
                 {error && <div className="footer-newsletter-error">{error}</div>}
                 <div className="footer-newsletter-note">Research updates, new compounds & batch COA alerts. No spam.</div>
               </>
@@ -355,6 +376,19 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* ── Stats band ──
+          This grid existed in CSS but was never rendered — dead markup.
+          Wired it up with claims already made elsewhere in the codebase
+          (see the STATS comment above) rather than inventing numbers a
+          footer component has no data source to back up. */}
+      <div className="footer-stats">
+        {STATS.map(stat => (
+          <div key={stat.label} className="footer-stat">
+            <div className="footer-stat-value">{stat.value}</div>
+            <div className="footer-stat-label">{stat.label}</div>
+          </div>
+        ))}
+      </div>
 
       {/* ── Payment methods ──
           Requested by the business: show accepted card schemes near
@@ -369,7 +403,17 @@ export default function Footer() {
           wanted — don't recreate them by hand. */}
       <div className="footer-inner">
         <div className="footer-payments">
-          <span className="footer-payments-label">Secure payments powered by STRBL</span>
+          {/* Was "STRBL" — the SDK, hook, and every other trust badge on
+             the site (see useStrablCheckout.ts, CartDrawer.tsx) spell it
+             STRABL. */}
+          <span className="footer-payments-label">Secure payments powered by STRABL</span>
+          {/* .footer-badge / .footer-badge-dot were also defined in CSS
+             but never rendered anywhere — the green dot strongly implies
+             a live/status signal, so this is the other half of that. */}
+          <span className="footer-badge">
+            <span className="footer-badge-dot" />
+            SSL Secured Checkout
+          </span>
           <div className="footer-payments-row">
             {['Visa', 'Mastercard', 'American Express'].map(brand => (
               <span key={brand} className="footer-payment-chip">{brand}</span>
@@ -382,6 +426,12 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-bottom">
           <div className="footer-bottom-left">
+            {/* NOTE: layout.tsx's Organization schema declares legalName
+               "SEE BEE DEE LIMITED" (with an unverified Companies House
+               number — see the TODO in layout.tsx), while this copyright
+               line says "PepcoLab Ltd." A copyright notice should name the
+               actual registered entity; confirm which name is correct and
+               make the two consistent rather than picking one here. */}
             <span className="footer-bottom-text">© {year} PepcoLab Ltd.</span>
             <div className="footer-dot" />
             <Link href="/privacy" className="footer-bottom-link">Privacy</Link>

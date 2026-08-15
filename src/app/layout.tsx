@@ -17,7 +17,16 @@ export const viewport: Viewport = {
   initialScale: 1,
   // No maximumScale — blocking pinch-zoom is a WCAG 2.1 failure (1.4.4).
   themeColor: '#050505',
-  colorScheme: 'dark',
+  // 'light', not 'dark': the actual UI (Nav, CartDrawer, page content) is a
+  // white/light theme — only AgeLocationGate's entry overlay is dark, and
+  // it's a fully opaque full-screen layer with its own explicit colors
+  // (including accent-color on its checkbox), so it doesn't need the
+  // document-level scheme. Declaring 'dark' here was telling the browser
+  // to render native chrome — scrollbars, unstyled form controls, the
+  // default focus ring color — in dark mode on top of a light page, which
+  // is a real (if subtle) visual mismatch on any control this codebase
+  // hasn't explicitly re-themed.
+  colorScheme: 'light',
 }
 
 export const metadata: Metadata = {
@@ -157,6 +166,11 @@ export default async function RootLayout({
           rel="stylesheet"
         />
 
+        {/* The STRABL SDK below is fetched from unpkg at runtime — this
+            lets that connection start warming immediately instead of only
+            once the lazyOnload <Script> actually requests it. */}
+        <link rel="preconnect" href="https://unpkg.com" crossOrigin="anonymous" />
+
         {/* No hardcoded <link rel="canonical"> here — metadata.alternates
             handles it per-route. A static one would point every page at the
             homepage. */}
@@ -177,9 +191,18 @@ export default async function RootLayout({
               description:
                 'Research-grade peptides and laboratory compounds for in-vitro research use.',
               email: 'hello@pepcolab.com',
-              // TODO: replace with the real registered address. A
-              // PostalAddress carrying only addressCountry is incomplete and
-              // Google may discard the whole block.
+              // TODO — VERIFIED, NEEDS A REAL FIX BEFORE SHIPPING:
+              // 1) Companies House number 17072052 does not currently
+              //    resolve to "SEE BEE DEE LIMITED" — a search for that
+              //    number/name pulls up unrelated dissolved companies with
+              //    similar-sounding names instead. Either the number or the
+              //    legalName is wrong; confirm both against the actual
+              //    incorporation certificate before this ships, since a
+              //    structured-data identifier that doesn't match the real
+              //    company record is worse than omitting it.
+              // 2) A PostalAddress with only addressCountry is still
+              //    incomplete either way — fill in the real registered
+              //    address once (1) is resolved.
               address: {
                 '@type': 'PostalAddress',
                 streetAddress: '',
@@ -196,8 +219,14 @@ export default async function RootLayout({
                 { '@type': 'Country', name: 'United Arab Emirates' },
                 { '@type': 'Country', name: 'United Kingdom' },
               ],
-              // TODO: delete any entry whose profile does not exist. A 404
-              // from your own structured data is a negative trust signal.
+              // TODO — VERIFIED: neither profile turns up in search right
+              // now. Neither instagram.com/pepcolab nor x.com/pepcolab
+              // returns a matching account — searches surface unrelated
+              // accounts with similar names instead. That's consistent
+              // with the original note ("delete any entry whose profile
+              // does not exist"), but a search miss isn't proof of
+              // non-existence (private/unindexed accounts are possible) —
+              // confirm by loading the URLs directly before removing them.
               sameAs: [
                 'https://instagram.com/pepcolab',
                 'https://x.com/pepcolab',
