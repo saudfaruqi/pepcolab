@@ -38,14 +38,23 @@ export async function createShopifyOrder(
   lineItems: { variant_id: string; quantity: number }[], // variant_id should be numeric
   countryCode: string,
   customerInfo?: CustomerInfoInput,
-  strablOrderShortCode?: string
+  strablOrderShortCode?: string,
+  options?: {
+    // 'voided' is Shopify's status for "no money was ever actually taken" —
+    // used for failed/abandoned STRABL attempts so they're visible in the
+    // Orders list for follow-up, but Shopify's own sales/revenue reports
+    // exclude voided orders by default, so they don't skew real numbers.
+    financialStatus?: 'pending' | 'voided'
+    extraTag?: string
+  }
 ) {
   const tags = ['strabl-pending']
   if (strablOrderShortCode) tags.push(`strabl-order-${strablOrderShortCode}`)
+  if (options?.extraTag) tags.push(options.extraTag)
 
   const orderData: any = {
     line_items: lineItems,
-    financial_status: 'pending',
+    financial_status: options?.financialStatus || 'pending',
     send_receipt: false,
     send_fulfillment_receipt: false,
     tags: tags.join(', '),

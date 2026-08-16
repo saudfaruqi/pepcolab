@@ -5,13 +5,13 @@
 // or how many signups were lost.
 //
 // No ESP (Mailchimp/Klaviyo) is wired up yet, so this stores subscribers
-// in the same Vercel KV used by orderStore.ts and emails an admin
+// in the same Upstash Redis used by orderStore.ts and emails an admin
 // notification per signup via the existing SMTP config (lib/mailer.ts).
 // That's enough to stop losing signups today. When you're ready to run
-// actual campaigns, swap the kv.sadd() call below for a real ESP's
+// actual campaigns, swap the redis.sadd() call below for a real ESP's
 // subscribe API call — everything else here stays the same.
 import { NextRequest, NextResponse } from 'next/server'
-import { kv } from '@vercel/kv'
+import { redis } from '@/lib/redis'
 import { sendMailSafe } from '@/lib/mailer'
 
 const SUBSCRIBERS_KEY = 'newsletter:subscribers' // Redis set, one email per member
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   try {
     // sadd returns 0 if the member already existed — lets us skip sending
     // a duplicate admin notification for a repeat signup attempt.
-    const added = await kv.sadd(SUBSCRIBERS_KEY, email)
+    const added = await redis.sadd(SUBSCRIBERS_KEY, email)
 
     if (added) {
       await sendMailSafe({

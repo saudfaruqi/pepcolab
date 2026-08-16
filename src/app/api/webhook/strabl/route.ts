@@ -136,48 +136,61 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Shared by order_created/updated, order_failed, and order_abandoned —
+  // all three now create a real Shopify order (see below), just with
+  // different financial_status/tags, so this extraction avoids writing
+  // the same address/line-item mapping three times.
+  const buildShopifyOrderInputs = () => {
+    const shippingAddress = customerUpdate.shipping || {}
+
+    const lineItems = (orderUpdate.products || []).map((item: any) => {
+      let variantId = item.externalVariantId || item.externalProductId || ''
+      if (variantId.includes('gid://')) {
+        const match = variantId.match(/(\d+)$/)
+        if (match) variantId = match[1]
+      }
+      return { variant_id: variantId, quantity: item.quantity || 1 }
+    })
+
+    const email = customerUpdate.email || ''
+    const phone = customerUpdate.phoneNumber || ''
+    const address1 = shippingAddress.address_1 || ''
+    const address2 = shippingAddress.address_2 || ''
+    const city = shippingAddress.city || ''
+    const postalCode = shippingAddress.postcode || ''
+    const countryCode = shippingAddress.country || 'AE'
+    const firstName = customerUpdate.firstName || shippingAddress.first_name || ''
+    const lastName = customerUpdate.lastName || shippingAddress.last_name || ''
+
+    return {
+      lineItems,
+      countryCode,
+      customerInfo: {
+        email,
+        firstName,
+        lastName,
+        shippingAddress: { address1, address2, city, postalCode, countryCode },
+        phone,
+      },
+    }
+  }
+
   switch (type) {
     case 'order_created':
     case 'order_updated': {
       try {
-        const shippingAddress = customerUpdate.shipping || {}
-
-        const lineItems = (orderUpdate.products || []).map((item: any) => {
-          let variantId = item.externalVariantId || item.externalProductId || ''
-          if (variantId.includes('gid://')) {
-            const match = variantId.match(/(\d+)$/)
-            if (match) variantId = match[1]
-          }
-          return { variant_id: variantId, quantity: item.quantity || 1 }
-        })
+        const { lineItems, countryCode, customerInfo } = buildShopifyOrderInputs()
 
         if (lineItems.length === 0) {
           console.warn('[webhook] No line items in STRABL order, skipping')
           break
         }
-
-        const email = customerUpdate.email || ''
-        if (!email) console.warn('[webhook] No customer email found in STRABL order')
-
-        const phone = customerUpdate.phoneNumber || ''
-        const address1 = shippingAddress.address_1 || ''
-        const address2 = shippingAddress.address_2 || ''
-        const city = shippingAddress.city || ''
-        const postalCode = shippingAddress.postcode || ''
-        const countryCode = shippingAddress.country || 'AE'
-        const firstName = customerUpdate.firstName || shippingAddress.first_name || ''
-        const lastName = customerUpdate.lastName || shippingAddress.last_name || ''
+        if (!customerInfo.email) console.warn('[webhook] No customer email found in STRABL order')
 
         const shopifyOrder = await createShopifyOrder(
           lineItems,
           countryCode,
-          {
-            email,
-            firstName,
-            lastName,
-            shippingAddress: { address1, address2, city, postalCode, countryCode },
-            phone,
-          },
+          customerInfo,
           orderShortCode
         )
 
@@ -211,7 +224,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
       break
     }
 
-    case 'order_failed':
+    case 'order_failed': {
       // This is the field we've been missing entirely — STRABL's own stated
       // reason for the failure, straight from their backend, no guessing.
       console.error(
@@ -219,7 +232,31 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         JSON.stringify(orderUpdate.meta)
       )
       await saveOrderRecord(buildOrderRecord('failed'))
+
+      // Also create a real Shopify order so failed attempts are visible in
+      // the Orders list for follow-up, not just in /track-order. financial_
+      // status 'voided' means no money was taken — Shopify's own sales
+      // reports exclude voided orders from revenue by default, so this
+      // doesn't skew real numbers. Tagged 'strabl-failed' so it's easy to
+      // filter out (or specifically find) in the admin.
+      //
+      // This is visibility, not a money-critical path — if it fails, log
+      // and move on rather than alerting or blocking the webhook response
+      // (unlike order_created/updated above, where a failure means a paid
+      // order silently doesn't exist).
+      try {
+        const { lineItems, countryCode, customerInfo } = buildShopifyOrderInputs()
+        if (lineItems.length > 0) {
+          await createShopifyOrder(lineItems, countryCode, customerInfo, orderShortCode, {
+            financialStatus: 'voided',
+            extraTag: 'strabl-failed',
+          })
+        }
+      } catch (err: any) {
+        console.error('[webhook] Failed to create voided order for failed payment:', err.message)
+      }
       break
+    }
 
     case 'order_refunded':
       console.info(`[webhook] 🔄 Order refunded — strabl:${orderUuid}`)
@@ -231,13 +268,27 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
       await saveOrderRecord(buildOrderRecord('chargeback'))
       break
 
-    case 'order_abandoned':
-      // Deliberately NOT saved to the lookup store — an abandoned cart was
-      // never a real order attempt from the customer's point of view, and
-      // surfacing it in /track-order would be confusing ("I never placed
-      // this order").
+    case 'order_abandoned': {
       console.info(`[webhook] 🛒 Order abandoned — strabl order: ${orderShortCode}`)
+      await saveOrderRecord(buildOrderRecord('abandoned'))
+
+      // Same reasoning as order_failed above: real but voided Shopify
+      // order, tagged for filtering, so abandoned carts are visible for
+      // manual recovery follow-up (call/email the customer) instead of
+      // only existing in server logs.
+      try {
+        const { lineItems, countryCode, customerInfo } = buildShopifyOrderInputs()
+        if (lineItems.length > 0) {
+          await createShopifyOrder(lineItems, countryCode, customerInfo, orderShortCode, {
+            financialStatus: 'voided',
+            extraTag: 'strabl-abandoned',
+          })
+        }
+      } catch (err: any) {
+        console.error('[webhook] Failed to create voided order for abandoned checkout:', err.message)
+      }
       break
+    }
 
     default:
       console.log(`[webhook] ⚠️ Unhandled event type: ${type}`)

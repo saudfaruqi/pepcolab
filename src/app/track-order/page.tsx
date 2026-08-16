@@ -17,7 +17,7 @@ interface OrderProduct {
 
 interface OrderResult {
   orderShortCode: string
-  status: 'created' | 'updated' | 'failed' | 'refunded' | 'chargeback'
+  status: 'created' | 'updated' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
   failureReason: string | null
   customerName: string | null
   products: OrderProduct[]
@@ -30,6 +30,7 @@ const STATUS_DISPLAY: Record<OrderResult['status'], { label: string; color: stri
   created: { label: 'Confirmed', color: 'text-green-700', bg: 'bg-green-50 border-green-200/60', icon: Package },
   updated: { label: 'Confirmed', color: 'text-green-700', bg: 'bg-green-50 border-green-200/60', icon: Package },
   failed: { label: 'Payment Failed', color: 'text-red-700', bg: 'bg-red-50 border-red-200/60', icon: XCircle },
+  abandoned: { label: 'Not Completed', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200/60', icon: XCircle },
   refunded: { label: 'Refunded', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200/60', icon: RotateCcw },
   chargeback: { label: 'Chargeback', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200/60', icon: AlertTriangle },
 }
@@ -111,7 +112,7 @@ export default function TrackOrderPage() {
               value={orderCode}
               onChange={(e) => setOrderCode(e.target.value)}
               placeholder="SOR-A5EVGI"
-              className="w-full h-12 px-4 text-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
               autoCapitalize="characters"
               required
             />
@@ -127,7 +128,7 @@ export default function TrackOrderPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full h-12 px-4 text-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
               required
             />
           </div>
@@ -170,6 +171,11 @@ export default function TrackOrderPage() {
                   "This payment couldn't be completed. No charge was made — feel free to try again with a different card."}
               </p>
             )}
+            {result.status === 'abandoned' && (
+              <p className="text-sm text-gray-600 mb-5 leading-relaxed">
+                Looks like checkout wasn't completed for this order. No charge was made — you're welcome to pick up where you left off.
+              </p>
+            )}
 
             <div className="flex flex-col gap-3 mb-5">
               {result.products.map((p, i) => (
@@ -195,7 +201,7 @@ export default function TrackOrderPage() {
               </strong>
             </div>
 
-            {result.status === 'failed' && (
+            {(result.status === 'failed' || result.status === 'abandoned') && (
               <Link
                 href="/products"
                 className="w-full h-11 rounded-xl bg-gray-900 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors mt-5"

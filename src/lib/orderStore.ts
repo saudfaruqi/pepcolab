@@ -12,17 +12,17 @@
 // trip to Shopify, and without polluting Shopify's order data with
 // payment attempts that never actually became real orders.
 //
-// Requires Vercel KV: run `vercel env pull` after adding the KV
-// integration in the Vercel dashboard (Storage tab) so KV_REST_API_URL /
-// KV_REST_API_TOKEN exist locally. If you'd rather not add a KV
-// dependency, this file is the only place that would need to change —
-// swap the two functions below for reads/writes against whatever store
-// you prefer (Postgres, Supabase, etc). Everything else (webhook route,
-// lookup API, /track-order page) only calls saveOrderRecord/getOrderRecord.
+// Requires the Upstash Redis integration (Vercel dashboard → Storage →
+// Upstash). Vercel KV itself was sunset — see lib/redis.ts for details on
+// the credential env vars. If you'd rather not add a Redis dependency,
+// this file is the only place that would need to change — swap the two
+// functions below for reads/writes against whatever store you prefer
+// (Postgres, Supabase, etc). Everything else (webhook route, lookup API,
+// /track-order page) only calls saveOrderRecord/getOrderRecord.
 
-import { kv } from '@vercel/kv'
+import { redis } from '@/lib/redis'
 
-export type OrderStatus = 'created' | 'updated' | 'failed' | 'refunded' | 'chargeback'
+export type OrderStatus = 'created' | 'updated' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
 
 export interface OrderRecord {
   orderShortCode: string
@@ -56,7 +56,7 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
     return
   }
   try {
-    await kv.set(keyFor(record.orderShortCode), record, { ex: RECORD_TTL_SECONDS })
+    await redis.set(keyFor(record.orderShortCode), record, { ex: RECORD_TTL_SECONDS })
   } catch (err) {
     // Never let a lookup-store failure break the actual order/webhook flow —
     // this is a nice-to-have UI feature, not the source of truth.
@@ -66,7 +66,7 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
 
 export async function getOrderRecord(orderShortCode: string): Promise<OrderRecord | null> {
   try {
-    const record = await kv.get<OrderRecord>(keyFor(orderShortCode))
+    const record = await redis.get<OrderRecord>(keyFor(orderShortCode))
     return record ?? null
   } catch (err) {
     console.error('[orderStore] Failed to read order record:', err)
