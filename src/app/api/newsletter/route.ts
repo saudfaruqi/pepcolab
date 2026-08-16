@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { redis } from '@/lib/redis'
 import { sendMailSafe } from '@/lib/mailer'
 
-const SUBSCRIBERS_KEY = 'newsletter:subscribers' // Redis set, one email per member
+const SUBSCRIBERS_KEY = 'newsletter:subscribers' // Redis sorted set: member=email, score=subscribedAt (ms)
 const ADMIN_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
 function isValidEmail(email: string): boolean {
@@ -35,15 +35,21 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // sadd returns 0 if the member already existed — lets us skip sending
-    // a duplicate admin notification for a repeat signup attempt.
-    const added = await redis.sadd(SUBSCRIBERS_KEY, email)
+    // A sorted set (score = subscribe timestamp) rather than a plain set —
+    // lets /api/newsletter/export report when each person signed up, and
+    // lets a future "export only what's new since my last export" filter
+    // use ZRANGEBYSCORE. zscore existing-check first so re-subscribing
+    // doesn't re-trigger the admin notification email or bump the date.
+    const existingScore = await redis.zscore(SUBSCRIBERS_KEY, email)
+    const isNew = existingScore === null
 
-    if (added) {
+    await redis.zadd(SUBSCRIBERS_KEY, { score: Date.now(), member: email })
+
+    if (isNew) {
       await sendMailSafe({
         to: ADMIN_EMAIL,
         subject: `📬 New newsletter signup: ${email}`,
-        text: `${email} subscribed to the PepcoLab newsletter via the site footer.`,
+        text: `${email} subscribed to the PepcoLab newsletter.`,
       })
     }
 

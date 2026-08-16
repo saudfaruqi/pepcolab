@@ -1,6 +1,3 @@
-
-
-
 // components/HomePageContent.tsx
 
 "use client";
@@ -224,6 +221,7 @@ export default function PepcoLabPage({
   const [email,       setEmail]       = useState("");
   const [emailError,  setEmailError]  = useState<string | null>(null); // FIX #7
   const [subbed,      setSubbed]      = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
   const [products,    setProducts]    = useState<NormalisedProduct[]>(initialProducts ?? []);
   const [loaded,      setLoaded]      = useState(Boolean(initialProducts && initialProducts.length > 0));
   const [loadError,   setLoadError]   = useState(false); // FIX #2
@@ -363,7 +361,12 @@ export default function PepcoLabPage({
   // never drift out of sync.
   const featuredReview = REVIEWS[0];
 
-  const handleSubscribe = () => {
+  // FIX 2026-08-16: this previously only set local state — no request was
+  // ever made, so the email was validated and then discarded. "✓ Done"
+  // showed regardless of whether anything was captured. Now posts to the
+  // real /api/newsletter route (see Footer.tsx for the same fix applied
+  // there) and surfaces a real error instead of a fake success if it fails.
+  const handleSubscribe = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
       setEmailError("Enter your email address.");
@@ -377,8 +380,25 @@ export default function PepcoLabPage({
       return;
     }
     setEmailError(null);
-    setSubbed(true);
-    setEmail("");
+    setSubscribing(true);
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setEmailError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+      setSubbed(true);
+      setEmail("");
+    } catch {
+      setEmailError("Something went wrong. Please check your connection and try again.");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   const p1 = products[0];
@@ -1324,9 +1344,10 @@ export default function PepcoLabPage({
                     />
                     <button
                       onClick={handleSubscribe}
-                      style={{ height: 48, padding: "0 20px", borderRadius: 999, border: "none", background: subbed ? "#0A7B45" : "#C8992A", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, transition: "background .2s" }}
+                      disabled={subscribing}
+                      style={{ height: 48, padding: "0 20px", borderRadius: 999, border: "none", background: subbed ? "#0A7B45" : "#C8992A", color: "#fff", fontSize: 13, fontWeight: 700, cursor: subscribing ? "not-allowed" : "pointer", opacity: subscribing ? 0.7 : 1, whiteSpace: "nowrap", flexShrink: 0, transition: "background .2s" }}
                     >
-                      {subbed ? "✓ Done" : "Subscribe"}
+                      {subbed ? "✓ Done" : subscribing ? "..." : "Subscribe"}
                     </button>
                   </div>
                   {/* FIX #7: real feedback on invalid/empty email instead of a silent no-op */}
