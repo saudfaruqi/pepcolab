@@ -104,10 +104,40 @@ export async function sendOrderConfirmationEmail(params: {
   })
 }
 
+export async function sendReviewRequestEmail(params: {
+  to: string
+  orderShortCode: string
+  productTitle: string
+}) {
+  // Pre-fills /track-order so the customer lands straight on the review
+  // form instead of having to re-type their order number and email —
+  // that re-entry step is exactly the kind of friction that was keeping
+  // review volume at zero even after the submission system existed.
+  const trackUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(params.orderShortCode)}&email=${encodeURIComponent(params.to)}`
+  const html = emailShell(`
+    <h1 style="font-size:22px; font-weight:700; letter-spacing:-.02em; color:${BLACK}; margin:0 0 8px;">How was ${params.productTitle}?</h1>
+    <p style="font-size:14px; line-height:1.6; color:rgba(13,13,13,.6); margin:0 0 28px;">
+      A minute of your time helps other researchers know what to expect. Every review we publish is tied to a real order — yours included.
+    </p>
+    <a href="${trackUrl}" style="display:block; text-align:center; background:${GOLD}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px; border-radius:999px;">
+      Leave a Review
+    </a>
+    <p style="font-size:11px; color:rgba(13,13,13,.35); text-align:center; margin:16px 0 0;">
+      Order ${params.orderShortCode}
+    </p>
+  `)
+
+  await sendMailSafe({
+    to: params.to,
+    subject: `How was your order? — ${params.orderShortCode}`,
+    text: `How was ${params.productTitle}?\n\nA minute of your time helps other researchers know what to expect.\n\nLeave a review: ${trackUrl}\n\nOrder ${params.orderShortCode}`,
+    html,
+  })
+}
+
 export async function sendPaymentFailedEmail(params: {
   to: string
   orderShortCode: string
-  failureReason?: string
 }) {
   const trackUrl = `${SITE_URL}/track-order`
   const html = emailShell(`

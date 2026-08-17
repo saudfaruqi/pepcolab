@@ -1,7 +1,8 @@
 // src/app/track-order/page.tsx
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -45,9 +46,13 @@ const FAILURE_REASON_COPY: Record<string, string> = {
   EXPIRED_CARD: 'The card used had expired.',
 }
 
-export default function TrackOrderPage() {
-  const [orderCode, setOrderCode] = useState('')
-  const [email, setEmail] = useState('')
+function TrackOrderContent() {
+  const params = useSearchParams()
+  const prefillCode = params.get('code') || ''
+  const prefillEmail = params.get('email') || ''
+
+  const [orderCode, setOrderCode] = useState(prefillCode)
+  const [email, setEmail] = useState(prefillEmail)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<OrderResult | null>(null)
@@ -64,9 +69,10 @@ export default function TrackOrderPage() {
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!orderCode.trim() || !email.trim()) return
+  const runLookup = async (codeArg?: string, emailArg?: string) => {
+    const codeToUse = (codeArg ?? orderCode).trim()
+    const emailToUse = (emailArg ?? email).trim()
+    if (!codeToUse || !emailToUse) return
 
     setLoading(true)
     setError(null)
@@ -80,7 +86,7 @@ export default function TrackOrderPage() {
       const res = await fetch('/api/orders/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderCode: orderCode.trim(), email: email.trim() }),
+        body: JSON.stringify({ orderCode: codeToUse, email: emailToUse }),
       })
       const data = await res.json()
 
@@ -96,6 +102,23 @@ export default function TrackOrderPage() {
       setLoading(false)
     }
   }
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    runLookup()
+  }
+
+  // Arriving from a review-request or confirmation email with ?code=&email=
+  // already in the URL — look the order up immediately instead of making
+  // the customer re-type what the email already told us. This is the whole
+  // point of pre-filling the link: zero-friction path straight to the
+  // review form.
+  useEffect(() => {
+    if (prefillCode && prefillEmail) {
+      runLookup(prefillCode, prefillEmail)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleReviewSubmit = async (e: FormEvent) => {
     e.preventDefault()

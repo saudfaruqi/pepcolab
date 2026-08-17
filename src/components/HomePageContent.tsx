@@ -311,11 +311,17 @@ export default function PepcoLabPage({
   // catalogues, which is why UK visitors were seeing UAE categories.
   const categories = useMemo(() => {
     const counts = new Map<string, number>()
+    const samples = new Map<string, string[]>()
     for (const p of products) {
       for (const tag of p.tags ?? []) {
         const slug = tag.toLowerCase()
         if (MARKET_TAGS.has(slug)) continue
         counts.set(slug, (counts.get(slug) ?? 0) + 1)
+        const list = samples.get(slug) ?? []
+        // Real compound names, not decoration — capped at 3 so the row
+        // stays a preview rather than trying to list the whole category.
+        if (list.length < 3 && p.name) list.push(p.name)
+        samples.set(slug, list)
       }
     }
     return [...counts.entries()]
@@ -325,6 +331,7 @@ export default function PepcoLabPage({
         label:
           AREA_LABELS[slug] ??
           slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        sampleNames: samples.get(slug) ?? [],
       }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
   }, [products])  
@@ -458,8 +465,33 @@ export default function PepcoLabPage({
         }
         .stack-card { transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease; }
         .stack-card:hover { transform:translateY(-8px); border-color:rgba(255,255,255,.16) !important; box-shadow:0 30px 60px rgba(0,0,0,.4); }
-        .area-card { transition:transform .3s ease,box-shadow .3s ease; cursor:pointer; }
-        .area-card:hover { transform:translateY(-6px); box-shadow:0 24px 48px rgba(0,0,0,.12); }
+        .area-row {
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:24px;
+          padding:26px 4px 26px 20px;
+          border-top:1px solid rgba(255,255,255,.09);
+          text-decoration:none;
+          position:relative;
+          transition:padding-left .25s cubic-bezier(.22,1,.36,1);
+        }
+        .areas-grid-wrap .area-row:last-child { border-bottom:1px solid rgba(255,255,255,.09); }
+        .area-row:hover { padding-left:28px; }
+        .area-row-accent {
+          position:absolute;
+          left:0; top:14px; bottom:14px;
+          width:3px;
+          opacity:.25;
+          transition:opacity .25s ease;
+        }
+        .area-row:hover .area-row-accent { opacity:1; }
+        .area-row-arrow { transition:transform .25s cubic-bezier(.22,1,.36,1); }
+        .area-row:hover .area-row-arrow { transform:translateX(4px); stroke:rgba(255,255,255,.8); }
+        @media(max-width:480px) {
+          .area-row { gap:14px; padding:20px 4px 20px 16px; }
+          .area-row:hover { padding-left:22px; }
+        }
         .review-marquee-track { display:flex; width:max-content; animation:marquee 40s linear infinite; }
         .review-marquee-track:hover { animation-play-state:paused; }
         .diff-grid {
@@ -484,17 +516,6 @@ export default function PepcoLabPage({
         }
         @media(max-width:900px) {
           .spotlight-grid { grid-template-columns:1fr; gap:40px; }
-        }
-        .areas-grid {
-          display:grid;
-          grid-template-columns:repeat(3,minmax(0,1fr));
-          gap:20px;
-        }
-        @media(max-width:900px) {
-          .areas-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-        }
-        @media(max-width:480px) {
-          .areas-grid { grid-template-columns:1fr; }
         }
         .stacks-grid {
           display:grid;
@@ -537,351 +558,351 @@ export default function PepcoLabPage({
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
 
-      {/* ── Research Stacks ── */}
-      <section style={{ 
-        background: "#0A0A0A", 
-        padding: "clamp(40px,8vw,140px) 0",
-        position: "relative",
-        overflow: "hidden"
+{/* ── Research Stacks ── */}
+<section style={{ 
+  background: "#0A0A0A", 
+  padding: "clamp(40px,8vw,140px) 0",
+  position: "relative",
+  overflow: "hidden"
+}}>
+  {/* Subtle background glow */}
+  <div style={{
+    position: "absolute",
+    top: "-20%",
+    right: "-10%",
+    width: "60%",
+    height: "80%",
+    background: "radial-gradient(ellipse, rgba(59,130,246,0.04) 0%, transparent 70%)",
+    pointerEvents: "none"
+  }} />
+  
+  <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(12px,4vw,60px)" }}>
+    <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(32px,6vw,90px)" }}>
+      <div style={{ 
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 10,
+        fontSize: "clamp(10px,1.2vw,11px)", 
+        fontWeight: 600, 
+        letterSpacing: ".18em", 
+        textTransform: "uppercase", 
+        color: "rgba(255,255,255,.3)", 
+        marginBottom: "clamp(14px,2vw,20px)" 
       }}>
-        {/* Subtle background glow */}
-        <div style={{
-          position: "absolute",
-          top: "-20%",
-          right: "-10%",
-          width: "60%",
-          height: "80%",
-          background: "radial-gradient(ellipse, rgba(59,130,246,0.04) 0%, transparent 70%)",
-          pointerEvents: "none"
-        }} />
-        
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(12px,4vw,60px)" }}>
-          <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(32px,6vw,90px)" }}>
-            <div style={{ 
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              fontSize: "clamp(10px,1.2vw,11px)", 
-              fontWeight: 600, 
-              letterSpacing: ".18em", 
-              textTransform: "uppercase", 
-              color: "rgba(255,255,255,.3)", 
-              marginBottom: "clamp(14px,2vw,20px)" 
-            }}>
-              <span style={{ width: "clamp(16px,2vw,24px)", height: 1, background: "rgba(255,255,255,.15)" }} />
-              Research Stacks
-            </div>
-            <h2 style={{ 
-              fontSize: "clamp(28px,6vw,84px)", 
-              lineHeight: ".92", 
-              letterSpacing: "-.07em", 
-              color: "#fff", 
-              fontWeight: 700, 
-              margin: "0 0 clamp(8px,1.5vw,16px)" 
-            }}>
-              Purpose-built<br />
-              <span style={{ background: "linear-gradient(135deg, #fff 60%, rgba(255,255,255,.4))", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                compound stacks.
-              </span>
-            </h2>
-            <p style={{ 
-              fontSize: "clamp(13px,2vw,17px)", 
-              lineHeight: "1.7", 
-              color: "rgba(255,255,255,.5)", 
-              maxWidth: 520 
-            }}>
-              Curated combinations, independently tested, bundled for specific research objectives.
-              <span style={{ display: "block", color: "rgba(255,255,255,.3)", fontSize: ".9em", marginTop: 4 }}>
-                Save 10% versus individual pricing
-              </span>
-            </p>
-          </FadeUp>
+        <span style={{ width: "clamp(16px,2vw,24px)", height: 1, background: "rgba(255,255,255,.15)" }} />
+        Research Stacks
+      </div>
+      <h2 style={{ 
+        fontSize: "clamp(28px,6vw,84px)", 
+        lineHeight: ".92", 
+        letterSpacing: "-.07em", 
+        color: "#fff", 
+        fontWeight: 700, 
+        margin: "0 0 clamp(8px,1.5vw,16px)" 
+      }}>
+        Purpose-built<br />
+        <span style={{ background: "linear-gradient(135deg, #fff 60%, rgba(255,255,255,.4))", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          compound stacks.
+        </span>
+      </h2>
+      <p style={{ 
+        fontSize: "clamp(13px,2vw,17px)", 
+        lineHeight: "1.7", 
+        color: "rgba(255,255,255,.5)", 
+        maxWidth: 520 
+      }}>
+        Curated combinations, independently tested, bundled for specific research objectives.
+        <span style={{ display: "block", color: "rgba(255,255,255,.3)", fontSize: ".9em", marginTop: 4 }}>
+          Save 10% versus individual pricing
+        </span>
+      </p>
+    </FadeUp>
 
-          {loadError ? (
-            <div style={{ 
-              color: "rgba(255,255,255,.4)", 
-              fontSize: "clamp(13px,2vw,14px)", 
-              textAlign: "center", 
-              padding: "clamp(40px,8vw,60px) 0" 
-            }}>
-              <span style={{ fontSize: "clamp(28px,5vw,32px)", display: "block", marginBottom: 12 }}>🔬</span>
-              Stacks are unavailable right now — reload the catalogue above to try again.
-            </div>
-          ) : products.length === 0 ? (
-            <div className="stacks-grid" style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-              gap: "clamp(16px,2.5vw,30px)"
-            }}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{ 
-                  background: "#111", 
-                  borderRadius: "clamp(20px,3vw,28px)", 
-                  height: "clamp(380px,50vh,460px)", 
-                  animation: "pulse 1.6s ease infinite", 
-                  animationDelay: `${i * .15}s` 
-                }} />
-              ))}
-            </div>
-          ) : BUNDLES.length === 0 ? null : (
-            <div className="stacks-grid" style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-              gap: "clamp(20px,2.5vw,30px)"
-            }}>
-              {BUNDLES.map((b, bi) => (
-                <FadeUp key={b.id} delay={bi * 0.1}>
-                  <div className="stack-card" style={{ 
-                    background: "linear-gradient(145deg, #111111 0%, #0d0d0d 100%)", 
-                    border: "1px solid rgba(255,255,255,.06)", 
-                    borderRadius: "clamp(20px,3vw,28px)", 
+    {loadError ? (
+      <div style={{ 
+        color: "rgba(255,255,255,.4)", 
+        fontSize: "clamp(13px,2vw,14px)", 
+        textAlign: "center", 
+        padding: "clamp(40px,8vw,60px) 0" 
+      }}>
+        <span style={{ fontSize: "clamp(28px,5vw,32px)", display: "block", marginBottom: 12 }}>🔬</span>
+        Stacks are unavailable right now — reload the catalogue above to try again.
+      </div>
+    ) : products.length === 0 ? (
+      <div className="stacks-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+        gap: "clamp(16px,2.5vw,30px)"
+      }}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{ 
+            background: "#111", 
+            borderRadius: "clamp(20px,3vw,28px)", 
+            height: "clamp(380px,50vh,460px)", 
+            animation: "pulse 1.6s ease infinite", 
+            animationDelay: `${i * .15}s` 
+          }} />
+        ))}
+      </div>
+    ) : BUNDLES.length === 0 ? null : (
+      <div className="stacks-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+        gap: "clamp(20px,2.5vw,30px)"
+      }}>
+        {BUNDLES.map((b, bi) => (
+          <FadeUp key={b.id} delay={bi * 0.1}>
+            <div className="stack-card" style={{ 
+              background: "linear-gradient(145deg, #111111 0%, #0d0d0d 100%)", 
+              border: "1px solid rgba(255,255,255,.06)", 
+              borderRadius: "clamp(20px,3vw,28px)", 
+              overflow: "hidden",
+              transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+              position: "relative",
+              cursor: "default",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column"
+            }}
+            onMouseEnter={e => {
+              if (window.innerWidth > 768) {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,.6)";
+              }
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,.06)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            >
+              {/* Visual - Larger image area */}
+              <div style={{
+                background: "linear-gradient(180deg, #161616 0%, #121212 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "clamp(20px,3vw,32px)",
+                padding: "clamp(30px,5vw,50px) clamp(20px,4vw,32px)",
+                minHeight: "clamp(200px,30vh,260px)",
+                position: "relative",
+                overflow: "hidden",
+                flexShrink: 0
+              }}>
+                {/* Enhanced glow orbs */}
+                {b.products.map((p, idx) => (
+                  <div key={p.id} style={{
+                    position: "absolute",
+                    width: "clamp(150px,25vw,220px)",
+                    height: "clamp(150px,25vw,220px)",
+                    borderRadius: "50%",
+                    background: `radial-gradient(circle, ${p.from}30 0%, transparent 70%)`,
+                    top: `${10 + idx * 35}%`,
+                    left: `${5 + idx * 45}%`,
+                    filter: "blur(60px)",
+                    pointerEvents: "none"
+                  }} />
+                ))}
+                
+                {/* Larger Vials with improved styling */}
+                {b.products.map((p, pi) => (
+                  <div key={p.id} style={{
+                    width: "clamp(90px,15vw,120px)",
+                    height: "clamp(90px,15vw,120px)",
+                    borderRadius: "clamp(16px,2.5vw,24px)",
                     overflow: "hidden",
-                    transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                    background: "rgba(255,255,255,.06)",
+                    backdropFilter: "blur(4px)",
+                    border: "1px solid rgba(255,255,255,.08)",
+                    flexShrink: 0,
                     position: "relative",
-                    cursor: "default",
-                    height: "100%",
+                    zIndex: 1,
                     display: "flex",
-                    flexDirection: "column"
+                    alignItems: "center",
+                    justifyContent: "center",
+                    animation: `floatVial 3s ease ${pi * .4}s infinite`,
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    boxShadow: "0 8px 32px rgba(0,0,0,.4)"
                   }}
                   onMouseEnter={e => {
                     if (window.innerWidth > 768) {
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
-                      e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,.6)";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                      e.currentTarget.style.boxShadow = "0 12px 48px rgba(0,0,0,.6)";
                     }
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,.06)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,.4)";
                   }}
                   >
-                    {/* Visual - Larger image area */}
-                    <div style={{
-                      background: "linear-gradient(180deg, #161616 0%, #121212 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "clamp(20px,3vw,32px)",
-                      padding: "clamp(30px,5vw,50px) clamp(20px,4vw,32px)",
-                      minHeight: "clamp(200px,30vh,260px)",
-                      position: "relative",
-                      overflow: "hidden",
-                      flexShrink: 0
-                    }}>
-                      {/* Enhanced glow orbs */}
-                      {b.products.map((p, idx) => (
-                        <div key={p.id} style={{
-                          position: "absolute",
-                          width: "clamp(150px,25vw,220px)",
-                          height: "clamp(150px,25vw,220px)",
-                          borderRadius: "50%",
-                          background: `radial-gradient(circle, ${p.from}30 0%, transparent 70%)`,
-                          top: `${10 + idx * 35}%`,
-                          left: `${5 + idx * 45}%`,
-                          filter: "blur(60px)",
-                          pointerEvents: "none"
+                    {p.image
+                      ? <img src={p.image} alt={p.title} style={{ 
+                          width: "100%", 
+                          height: "100%", 
+                          objectFit: "contain", 
+                          padding: "clamp(10px,2vw,16px)",
+                          filter: "drop-shadow(0 4px 12px rgba(0,0,0,.3))"
                         }} />
-                      ))}
-                      
-                      {/* Larger Vials with improved styling */}
-                      {b.products.map((p, pi) => (
-                        <div key={p.id} style={{
-                          width: "clamp(90px,15vw,120px)",
-                          height: "clamp(90px,15vw,120px)",
-                          borderRadius: "clamp(16px,2.5vw,24px)",
-                          overflow: "hidden",
-                          background: "rgba(255,255,255,.06)",
-                          backdropFilter: "blur(4px)",
-                          border: "1px solid rgba(255,255,255,.08)",
-                          flexShrink: 0,
-                          position: "relative",
-                          zIndex: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          animation: `floatVial 3s ease ${pi * .4}s infinite`,
-                          transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                          boxShadow: "0 8px 32px rgba(0,0,0,.4)"
-                        }}
-                        onMouseEnter={e => {
-                          if (window.innerWidth > 768) {
-                            e.currentTarget.style.transform = "scale(1.1)";
-                            e.currentTarget.style.boxShadow = "0 12px 48px rgba(0,0,0,.6)";
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,.4)";
-                        }}
-                        >
-                          {p.image
-                            ? <img src={p.image} alt={p.title} style={{ 
-                                width: "100%", 
-                                height: "100%", 
-                                objectFit: "contain", 
-                                padding: "clamp(10px,2vw,16px)",
-                                filter: "drop-shadow(0 4px 12px rgba(0,0,0,.3))"
-                              }} />
-                            : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="lg" />
-                          }
-                          
-                          {/* Subtle shimmer effect on hover */}
-                          <div style={{
-                            position: "absolute",
-                            inset: 0,
-                            background: "linear-gradient(135deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 50%, rgba(255,255,255,0) 60%)",
-                            backgroundSize: "200% 200%",
-                            animation: "shimmer 3s ease-in-out infinite",
-                            pointerEvents: "none",
-                            opacity: 0.5
-                          }} />
-                        </div>
-                      ))}            
-                    </div>
+                      : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="lg" />
+                    }
+                    
+                    {/* Subtle shimmer effect on hover */}
+                    <div style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(135deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 50%, rgba(255,255,255,0) 60%)",
+                      backgroundSize: "200% 200%",
+                      animation: "shimmer 3s ease-in-out infinite",
+                      pointerEvents: "none",
+                      opacity: 0.5
+                    }} />
+                  </div>
+                ))}            
+              </div>
 
-                    <div style={{ 
-                      padding: "clamp(20px,3.5vw,30px) clamp(20px,3.5vw,30px) clamp(24px,4vw,32px)",
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column"
+              <div style={{ 
+                padding: "clamp(20px,3.5vw,30px) clamp(20px,3.5vw,30px) clamp(24px,4vw,32px)",
+                flex: 1,
+                display: "flex",
+                flexDirection: "column"
+              }}>
+                {/* Compound pills - larger */}
+                <div style={{ 
+                  display:"flex", 
+                  gap: "clamp(6px,1vw,8px)", 
+                  flexWrap:"wrap", 
+                  marginBottom: "clamp(12px,1.8vw,18px)" 
+                }}>
+                  {b.products.map(p => (
+                    <span key={p.id} style={{ 
+                      fontSize: "clamp(10px,1.2vw,11px)", 
+                      fontWeight: 600, 
+                      letterSpacing: ".08em", 
+                      textTransform: "uppercase", 
+                      background: "rgba(255,255,255,.07)", 
+                      color: "rgba(255,255,255,.5)", 
+                      padding: "clamp(4px,0.8vw,6px) clamp(10px,1.5vw,14px)", 
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,.05)"
                     }}>
-                      {/* Compound pills - larger */}
-                      <div style={{ 
-                        display:"flex", 
-                        gap: "clamp(6px,1vw,8px)", 
-                        flexWrap:"wrap", 
-                        marginBottom: "clamp(12px,1.8vw,18px)" 
-                      }}>
-                        {b.products.map(p => (
-                          <span key={p.id} style={{ 
-                            fontSize: "clamp(10px,1.2vw,11px)", 
-                            fontWeight: 600, 
-                            letterSpacing: ".08em", 
-                            textTransform: "uppercase", 
-                            background: "rgba(255,255,255,.07)", 
-                            color: "rgba(255,255,255,.5)", 
-                            padding: "clamp(4px,0.8vw,6px) clamp(10px,1.5vw,14px)", 
-                            borderRadius: 999,
-                            border: "1px solid rgba(255,255,255,.05)"
-                          }}>
-                            {p.shortName}
-                          </span>
-                        ))}
-                      </div>
+                      {p.shortName}
+                    </span>
+                  ))}
+                </div>
 
-                      <h3 style={{ 
-                        fontSize: "clamp(20px,4vw,30px)", 
-                        lineHeight: "1.05", 
-                        letterSpacing: "-.04em", 
-                        color: "#fff", 
-                        margin: "0 0 clamp(6px,1vw,10px)", 
-                        fontWeight: 700 
-                      }}>
-                        {b.name}
-                      </h3>
-                      <p style={{ 
-                        color: "rgba(255,255,255,.45)", 
-                        lineHeight: "1.65", 
-                        fontSize: "clamp(13px,1.5vw,14px)", 
-                        margin: "0 0 clamp(16px,2.5vw,22px)",
-                        flex: 1
-                      }}>
-                        {b.desc}
-                      </p>
+                <h3 style={{ 
+                  fontSize: "clamp(20px,4vw,30px)", 
+                  lineHeight: "1.05", 
+                  letterSpacing: "-.04em", 
+                  color: "#fff", 
+                  margin: "0 0 clamp(6px,1vw,10px)", 
+                  fontWeight: 700 
+                }}>
+                  {b.name}
+                </h3>
+                <p style={{ 
+                  color: "rgba(255,255,255,.45)", 
+                  lineHeight: "1.65", 
+                  fontSize: "clamp(13px,1.5vw,14px)", 
+                  margin: "0 0 clamp(16px,2.5vw,22px)",
+                  flex: 1
+                }}>
+                  {b.desc}
+                </p>
 
-                    <div className="stack-cta-row" style={{ 
-                        display:"flex", 
-                        justifyContent:"space-between", 
-                        alignItems:"center", 
-                        gap: "clamp(10px,2vw,16px)", 
-                        paddingTop: "clamp(16px,2.5vw,22px)", 
-                        borderTop:"1px solid rgba(255,255,255,.06)",
+              <div className="stack-cta-row" style={{ 
+                  display:"flex", 
+                  justifyContent:"space-between", 
+                  alignItems:"center", 
+                  gap: "clamp(10px,2vw,16px)", 
+                  paddingTop: "clamp(16px,2.5vw,22px)", 
+                  borderTop:"1px solid rgba(255,255,255,.06)",
+                }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ display:"flex", alignItems:"baseline", gap: "clamp(6px,1vw,10px)", flexWrap:"wrap" }}>
+                      <span style={{ 
+                        fontSize: "clamp(22px,4vw,32px)", 
+                        fontWeight: 700, 
+                        color:"#fff", 
+                        letterSpacing:"-.04em" 
                       }}>
-                        <div style={{ minWidth:0 }}>
-                          <div style={{ display:"flex", alignItems:"baseline", gap: "clamp(6px,1vw,10px)", flexWrap:"wrap" }}>
-                            <span style={{ 
-                              fontSize: "clamp(22px,4vw,32px)", 
-                              fontWeight: 700, 
-                              color:"#fff", 
-                              letterSpacing:"-.04em" 
-                            }}>
-                              {formatPrice(b.price, storeCurrency)}
-                            </span>
-                            <span style={{ 
-                              fontSize: "clamp(12px,1.4vw,14px)", 
-                              color:"rgba(255,255,255,.2)", 
-                              textDecoration:"line-through" 
-                            }}>
-                              {formatPrice(b.originalPrice, storeCurrency)}
-                            </span>
-                          </div>
-                          <div style={{ 
-                            fontSize: "clamp(11px,1.2vw,12px)", 
-                            color:"rgba(255,255,255,.25)", 
-                            marginTop: 2 
-                          }}>
-                            {b.products.length} compounds · COA included
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={() => addBundleToCart(b)}
-                          className="stack-cta-btn"
-                          style={{ 
-                            height: "clamp(44px,6vw,52px)", 
-                            padding: "0 clamp(20px,3vw,28px)", 
-                            borderRadius: 999, 
-                            border:"none",
-                            background: "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)",
-                            color:"#fff", 
-                            fontSize: "clamp(12px,1.2vw,13px)", 
-                            fontWeight: 600, 
-                            cursor:"pointer", 
-                            letterSpacing:".06em", 
-                            transition:"all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
-                            whiteSpace:"nowrap", 
-                            flexShrink:0,
-                            position: "relative",
-                            overflow: "hidden",
-                          }}
-                          onMouseEnter={e => {
-                            if (window.innerWidth > 768) {
-                              e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.08) 100%)";
-                              e.currentTarget.style.transform = "scale(1.05)";
-                              e.currentTarget.style.borderColor = "rgba(255,255,255,.25)";
-                              e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,.4)";
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)";
-                            e.currentTarget.style.transform = "scale(1)";
-                            e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
-                            e.currentTarget.style.boxShadow = "none";
-                          }}
-                        >
-                          <span style={{ display: "flex", alignItems: "center", gap: "clamp(6px,1vw,8px)" }}>
-                            <span className="stack-cta-full">
-                              Add Stack
-                            </span>
-                            <span className="stack-cta-short">
-                              Add
-                            </span>
-                            <svg style={{ width: 'clamp(14px,1.5vw,16px)', height: 'clamp(14px,1.5vw,16px)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="5" y1="12" x2="19" y2="12" />
-                              <polyline points="12 5 19 12 12 19" />
-                            </svg>
-                          </span>
-                        </button>
-                      </div>
+                        {formatPrice(b.price, storeCurrency)}
+                      </span>
+                      <span style={{ 
+                        fontSize: "clamp(12px,1.4vw,14px)", 
+                        color:"rgba(255,255,255,.2)", 
+                        textDecoration:"line-through" 
+                      }}>
+                        {formatPrice(b.originalPrice, storeCurrency)}
+                      </span>
+                    </div>
+                    <div style={{ 
+                      fontSize: "clamp(11px,1.2vw,12px)", 
+                      color:"rgba(255,255,255,.25)", 
+                      marginTop: 2 
+                    }}>
+                      {b.products.length} compounds · COA included
                     </div>
                   </div>
-                </FadeUp>
-              ))}
+                  
+                  <button
+                    onClick={() => addBundleToCart(b)}
+                    className="stack-cta-btn"
+                    style={{ 
+                      height: "clamp(44px,6vw,52px)", 
+                      padding: "0 clamp(20px,3vw,28px)", 
+                      borderRadius: 999, 
+                      border:"none",
+                      background: "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)",
+                      color:"#fff", 
+                      fontSize: "clamp(12px,1.2vw,13px)", 
+                      fontWeight: 600, 
+                      cursor:"pointer", 
+                      letterSpacing:".06em", 
+                      transition:"all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
+                      whiteSpace:"nowrap", 
+                      flexShrink:0,
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                    onMouseEnter={e => {
+                      if (window.innerWidth > 768) {
+                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.08) 100%)";
+                        e.currentTarget.style.transform = "scale(1.05)";
+                        e.currentTarget.style.borderColor = "rgba(255,255,255,.25)";
+                        e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,.4)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)";
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: "clamp(6px,1vw,8px)" }}>
+                      <span className="stack-cta-full">
+                        Add Stack
+                      </span>
+                      <span className="stack-cta-short">
+                        Add
+                      </span>
+                      <svg style={{ width: 'clamp(14px,1.5vw,16px)', height: 'clamp(14px,1.5vw,16px)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </FadeUp>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* ── Why Pepco — 4-up diff strip ── */}
       <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
@@ -928,6 +949,7 @@ export default function PepcoLabPage({
               <FadeUp>
                 <div style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:24, padding:"clamp(28px,3.5vw,40px)", display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
                   <div>
+                    <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(13,13,13,.4)", marginBottom:8 }}>No reviews yet</div>
                     <p style={{ fontSize:16, lineHeight:1.6, color:"rgba(13,13,13,.65)", maxWidth:480, margin:0 }}>
                       Every review we publish is tied to a real, verified order — no exceptions. Placed one recently? Be the first to share your experience.
                     </p>
@@ -1003,504 +1025,360 @@ export default function PepcoLabPage({
         </section>
       )}
 
-{/* ── Research Areas ── */}
-
-<section
-  className="research-section"
-  style={{
-    background: "#0A0A0A",
-    padding: "clamp(80px, 10vw, 140px) 0",
+{/* ── Research Spotlight ── */}
+{p1 && p2 && (
+  <section style={{
+    background: "linear-gradient(180deg, #F7F5F1 0%, #F0EDE6 100%)",
+    padding: "clamp(60px, 8vw, 140px) 0",
+    borderBottom: "1px solid rgba(13,13,13,.06)",
     position: "relative",
-    overflow: "hidden",
-  }}
->
-  {/* Subtle background glow */}
-  <div
-    style={{
+    overflow: "hidden"
+  }}>
+    {/* Decorative background element */}
+    <div style={{
       position: "absolute",
-      top: "-40%",
-      right: "-20%",
+      top: "-30%",
+      right: "-10%",
       width: "60%",
       height: "80%",
-      background: "radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)",
-      pointerEvents: "none",
-    }}
-  />
+      background: "radial-gradient(circle at 70% 30%, rgba(13,13,13,.03) 0%, transparent 70%)",
+      pointerEvents: "none"
+    }} />
 
-  <div
-    style={{
-      maxWidth: 1440,
-      margin: "0 auto",
-      padding: "0 clamp(20px, 5vw, 60px)",
-      position: "relative",
-      zIndex: 1,
-    }}
-  >
-    {/* Header */}
-    <FadeUp
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-end",
-        marginBottom: 64,
-        flexWrap: "wrap",
-        gap: 24,
-      }}
-    >
-      <div>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,0.3)",
-            marginBottom: 12,
-          }}
-        >
-          Research Categories
-        </div>
-        <h2
-          style={{
-            fontSize: "clamp(36px, 5vw, 72px)",
-            lineHeight: 1.05,
-            letterSpacing: "-0.05em",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            margin: 0,
-          }}
-        >
-          Explore our
-          <br />
-          <span>focus areas</span>
-        </h2>
-      </div>
-
-      <div
-        style={{
+    <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px, 5vw, 60px)", position: "relative", zIndex: 1 }}>
+      
+      {/* Header */}
+      <FadeUp>
+        <div style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          padding: "8px 16px",
-          borderRadius: 100,
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: "rgba(255,255,255,0.5)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {categories.length} Categories
-        </span>
-      </div>
-    </FadeUp>
-
-    {/* Grid */}
-    <div
-      className="areas-grid"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-        gap: 20,
-      }}
-    >
-      {categories.map((c, i) => {
-        const accent = AREA_ACCENTS[c.slug] ?? "#ffffff";
-
-        return (
-          <FadeUp key={c.slug} delay={i * 0.06}>
-            <Link
-              href={`/products/category/${c.slug}`}
-              className="area-card"
-              style={{
-                display: "block",
-                textDecoration: "none",
-                background: "linear-gradient(145deg, #121212, #0A0A0A)",
-                borderRadius: 20,
-                padding: "28px 24px 24px",
-                position: "relative",
-                border: "1px solid rgba(255,255,255,0.06)",
-                transition: "all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                cursor: "pointer",
-                height: "100%",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = `rgba(255,255,255,0.15)`;
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 ${accent}22`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              {/* Decorative elements */}
-              <div/>
-              <div/>
-
-              {/* Content */}
-              <div style={{ position: "relative", zIndex: 1 }}>
-
-                <h3
-                  style={{
-                    fontSize: "clamp(22px, 2.2vw, 30px)",
-                    fontWeight: 600,
-                    letterSpacing: "-0.03em",
-                    color: "#FFFFFF",
-                    margin: "0 0 6px 0",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {c.label}
-                </h3>
-
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.4)",
-                    margin: 0,
-                    fontWeight: 400,
-                  }}
-                >
-                  {c.count} compound{c.count !== 1 ? "s" : ""}
-                </p>
-
-                {/* Accent line */}
-                <div
-                  style={{
-                    marginTop: 20,
-                    width: 32,
-                    height: 2,
-                    background: `linear-gradient(90deg, ${accent}66, transparent)`,
-                    borderRadius: 2,
-                    transition: "width 0.3s ease",
-                  }}
-                  className="area-card-line"
-                />
-              </div>
-            </Link>
-          </FadeUp>
-        );
-      })}
-    </div>
-  </div>
-
-  {/* Optional: Add hover styles via CSS-in-JS or className */}
-  <style>{`
-    .area-card:hover .area-card-line {
-      width: 48px !important;
-    }
-  `}</style>
-</section>
-
-      {/* ── Research Spotlight ── */}
-      {p1 && p2 && (
-        <section style={{
-          background: "linear-gradient(180deg, #F7F5F1 0%, #F0EDE6 100%)",
-          padding: "clamp(60px, 8vw, 140px) 0",
-          borderBottom: "1px solid rgba(13,13,13,.06)",
-          position: "relative",
-          overflow: "hidden"
+          gap: 12,
+          marginBottom: 14
         }}>
-          {/* Decorative background element */}
+
           <div style={{
-            position: "absolute",
-            top: "-30%",
-            right: "-10%",
-            width: "60%",
-            height: "80%",
-            background: "radial-gradient(circle at 70% 30%, rgba(13,13,13,.03) 0%, transparent 70%)",
-            pointerEvents: "none"
-          }} />
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".18em",
+            textTransform: "uppercase",
+            color: "rgba(13,13,13,.35)"
+          }}>
+            Research Spotlight
+          </div>
+        </div>
+        
+        <h2 style={{
+          fontSize: "clamp(32px, 6vw, 80px)",
+          lineHeight: ".92",
+          letterSpacing: "-.06em",
+          fontWeight: 700,
+          color: "#0D0D0D",
+          margin: "0 0 clamp(32px, 5vw, 48px)"
+        }}>
+          {p1.shortName} &amp;<br style={{ display: "block" }} />
+          <span style={{ 
+            background: "linear-gradient(135deg, #0D0D0D 40%, rgba(13,13,13,.5))",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent"
+          }}>
+            {p2.shortName}
+          </span>
+        </h2>
+      </FadeUp>
 
-          <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px, 5vw, 60px)", position: "relative", zIndex: 1 }}>
+      {/* Cards Grid */}
+      <FadeUp delay={0.05} style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "clamp(12px, 2vw, 20px)",
+        marginBottom: "clamp(28px, 4vw, 48px)"
+      }}>
+        {[p1, p2].map((p, i) => (
+          <div key={p.id} style={{
+            background: "#ffffff",
+            borderRadius: "clamp(16px, 2vw, 24px)",
+            overflow: "hidden",
+            boxShadow: "0 2px 20px rgba(13,13,13,.04)",
+            transition: "transform .3s ease, box-shadow .3s ease",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-4px)";
+            e.currentTarget.style.boxShadow = "0 8px 40px rgba(13,13,13,.08)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 2px 20px rgba(13,13,13,.04)";
+          }}>
             
-            {/* Header */}
-            <FadeUp>
+            {/* Image Container */}
+            <div style={{
+              aspectRatio: "1/1",
+              background: `linear-gradient(145deg, #FCFBF8, ${p.color.vialFrom}15)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              overflow: "hidden",
+              padding: 16,
+            }}>
+              {/* Ambient glow */}
               <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 14
-              }}>
-
+                position: "absolute",
+                width: "80%",
+                height: "80%",
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${p.color.vialFrom}25, transparent 70%)`,
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%,-50%)",
+              }} />
+              
+              {/* Content */}
+              {p.image ? (
+                <img src={p.image} alt={p.title} style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  position: "relative",
+                  zIndex: 1,
+                  filter: "drop-shadow(0 4px 12px rgba(0,0,0,.06))"
+                }} />
+              ) : (
                 <div style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: ".18em",
-                  textTransform: "uppercase",
-                  color: "rgba(13,13,13,.35)"
+                  position: "relative",
+                  zIndex: 1,
+                  animation: `floatVial ${3 + i * .4}s ease ${i * .3}s infinite`
                 }}>
-                  Research Spotlight
+                  <Vial fromColor={p.color.vialFrom} toColor={p.color.vialTo} mg={p.mg} size={isMobile ? "md" : "lg"} />
                 </div>
+              )}
+              
+              {/* Purity Badge */}
+              {p.purity && (
+                <div style={{
+                  position: "absolute",
+                  top: 12,
+                  right: 12,
+                  background: "rgba(255,255,255,.92)",
+                  backdropFilter: "blur(12px)",
+                  padding: "6px 10px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(13,13,13,.06)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,.04)",
+                }}>
+                  <div style={{
+                    fontSize: 7,
+                    color: "rgba(13,13,13,.35)",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: ".12em"
+                  }}>Purity</div>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: "#0d0d0d",
+                    lineHeight: 1.1,
+                    letterSpacing: "-.02em"
+                  }}>{p.purity}%</div>
+                </div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ padding: "clamp(8px, 1vw, 16px)" }}>
+              <div style={{
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: ".12em",
+                textTransform: "uppercase",
+                color: "rgba(13,13,13,.3)",
+                marginBottom: 6
+              }}>
+                {p.category || "Research Compound"}
               </div>
               
-              <h2 style={{
-                fontSize: "clamp(32px, 6vw, 80px)",
-                lineHeight: ".92",
-                letterSpacing: "-.06em",
+              <div style={{
+                fontSize: "clamp(14px, 2vw, 18px)",
                 fontWeight: 700,
-                color: "#0D0D0D",
-                margin: "0 0 clamp(32px, 5vw, 48px)"
+                letterSpacing: "-.03em",
+                color: "#0d0d0d",
+                marginBottom: 6,
+                lineHeight: 1.1
               }}>
-                {p1.shortName} &amp;<br style={{ display: "block" }} />
-                <span style={{ 
-                  background: "linear-gradient(135deg, #0D0D0D 40%, rgba(13,13,13,.5))",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent"
-                }}>
-                  {p2.shortName}
-                </span>
-              </h2>
-            </FadeUp>
-
-            {/* Cards Grid */}
-            <FadeUp delay={0.05} style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "clamp(12px, 2vw, 20px)",
-              marginBottom: "clamp(28px, 4vw, 48px)"
-            }}>
-              {[p1, p2].map((p, i) => (
-                <div key={p.id} style={{
-                  background: "#ffffff",
-                  borderRadius: "clamp(16px, 2vw, 24px)",
-                  overflow: "hidden",
-                  boxShadow: "0 2px 20px rgba(13,13,13,.04)",
-                  transition: "transform .3s ease, box-shadow .3s ease",
-                  cursor: "pointer",
+                {p.shortName}
+              </div>
+              
+              <div style={{
+                fontSize: "clamp(18px, 3vw, 24px)",
+                fontWeight: 700,
+                color: "#0d0d0d",
+                marginBottom: 14,
+                letterSpacing: "-.02em"
+              }}>
+                {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
+              </div>
+              
+              <button
+                onClick={() => addToCart(p)}
+                disabled={!p.inStock}
+                style={{
+                  width: "100%",
+                  height: "clamp(40px, 5vw, 48px)",
+                  borderRadius: 999,
+                  border: "none",
+                  background: p.inStock ? "#0d0d0d" : "rgba(13,13,13,.06)",
+                  color: p.inStock ? "#fff" : "rgba(13,13,13,.25)",
+                  fontSize: "clamp(11px, 1.6vw, 13px)",
+                  fontWeight: 700,
+                  cursor: p.inStock ? "pointer" : "not-allowed",
+                  letterSpacing: ".06em",
+                  transition: "all .2s ease",
+                  ...(p.inStock && {
+                    ":hover": {
+                      background: "#2a2a2a",
+                      transform: "scale(1.01)"
+                    }
+                  })
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 40px rgba(13,13,13,.08)";
+                  if (p.inStock) {
+                    e.currentTarget.style.background = "#2a2a2a";
+                    e.currentTarget.style.transform = "scale(1.01)";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 20px rgba(13,13,13,.04)";
-                }}>
-                  
-                  {/* Image Container */}
-                  <div style={{
-                    aspectRatio: "1/1",
-                    background: `linear-gradient(145deg, #FCFBF8, ${p.color.vialFrom}15)`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
-                    overflow: "hidden",
-                    padding: 16,
-                  }}>
-                    {/* Ambient glow */}
-                    <div style={{
-                      position: "absolute",
-                      width: "80%",
-                      height: "80%",
-                      borderRadius: "50%",
-                      background: `radial-gradient(circle, ${p.color.vialFrom}25, transparent 70%)`,
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%,-50%)",
-                    }} />
-                    
-                    {/* Content */}
-                    {p.image ? (
-                      <img src={p.image} alt={p.title} style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain",
-                        position: "relative",
-                        zIndex: 1,
-                        filter: "drop-shadow(0 4px 12px rgba(0,0,0,.06))"
-                      }} />
-                    ) : (
-                      <div style={{
-                        position: "relative",
-                        zIndex: 1,
-                        animation: `floatVial ${3 + i * .4}s ease ${i * .3}s infinite`
-                      }}>
-                        <Vial fromColor={p.color.vialFrom} toColor={p.color.vialTo} mg={p.mg} size={isMobile ? "md" : "lg"} />
-                      </div>
-                    )}
-                    
-                    {/* Purity Badge */}
-                    {p.purity && (
-                      <div style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        background: "rgba(255,255,255,.92)",
-                        backdropFilter: "blur(12px)",
-                        padding: "6px 10px",
-                        borderRadius: 10,
-                        border: "1px solid rgba(13,13,13,.06)",
-                        boxShadow: "0 2px 8px rgba(0,0,0,.04)",
-                      }}>
-                        <div style={{
-                          fontSize: 7,
-                          color: "rgba(13,13,13,.35)",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: ".12em"
-                        }}>Purity</div>
-                        <div style={{
-                          fontSize: 14,
-                          fontWeight: 800,
-                          color: "#0d0d0d",
-                          lineHeight: 1.1,
-                          letterSpacing: "-.02em"
-                        }}>{p.purity}%</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ padding: "clamp(8px, 1vw, 16px)" }}>
-                    <div style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: ".12em",
-                      textTransform: "uppercase",
-                      color: "rgba(13,13,13,.3)",
-                      marginBottom: 6
-                    }}>
-                      {p.category || "Research Compound"}
-                    </div>
-                    
-                    <div style={{
-                      fontSize: "clamp(14px, 2vw, 18px)",
-                      fontWeight: 700,
-                      letterSpacing: "-.03em",
-                      color: "#0d0d0d",
-                      marginBottom: 6,
-                      lineHeight: 1.1
-                    }}>
-                      {p.shortName}
-                    </div>
-                    
-                    <div style={{
-                      fontSize: "clamp(18px, 3vw, 24px)",
-                      fontWeight: 700,
-                      color: "#0d0d0d",
-                      marginBottom: 14,
-                      letterSpacing: "-.02em"
-                    }}>
-                      {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
-                    </div>
-                    
-                    <button
-                      onClick={() => addToCart(p)}
-                      disabled={!p.inStock}
-                      style={{
-                        width: "100%",
-                        height: "clamp(40px, 5vw, 48px)",
-                        borderRadius: 999,
-                        border: "none",
-                        background: p.inStock ? "#0d0d0d" : "rgba(13,13,13,.06)",
-                        color: p.inStock ? "#fff" : "rgba(13,13,13,.25)",
-                        fontSize: "clamp(11px, 1.6vw, 13px)",
-                        fontWeight: 700,
-                        cursor: p.inStock ? "pointer" : "not-allowed",
-                        letterSpacing: ".06em",
-                        transition: "all .2s ease",
-                        ...(p.inStock && {
-                          ":hover": {
-                            background: "#2a2a2a",
-                            transform: "scale(1.01)"
-                          }
-                        })
-                      }}
-                      onMouseEnter={(e) => {
-                        if (p.inStock) {
-                          e.currentTarget.style.background = "#2a2a2a";
-                          e.currentTarget.style.transform = "scale(1.01)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (p.inStock) {
-                          e.currentTarget.style.background = "#0d0d0d";
-                          e.currentTarget.style.transform = "scale(1)";
-                        }
-                      }}
-                    >
-                      {p.inStock ? `${p.shortName}` : "Out of Stock"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </FadeUp>
-
-            {/* Stats Row */}
-            <FadeUp delay={0.1} style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "clamp(12px, 3vw, 32px)",
-              marginBottom: "clamp(24px, 4vw, 36px)",
-              paddingTop: "clamp(24px, 4vw, 40px)",
-              borderTop: "1px solid rgba(13,13,13,.06)"
-            }}>
-              {([
-                [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
-                ["COA", "Included"],
-                ["24hr", "Dispatch"]
-              ] as [string, string][]).map(([value, label]) => (
-                <div key={label}>
-                  <div style={{
-                    fontSize: "clamp(24px, 4vw, 42px)",
-                    fontWeight: 700,
-                    letterSpacing: "-.05em",
-                    color: "#0D0D0D",
-                    marginBottom: 2
-                  }}>
-                    {value}
-                  </div>
-                  <div style={{
-                    fontSize: "clamp(9px, 1.2vw, 11px)",
-                    textTransform: "uppercase",
-                    letterSpacing: ".12em",
-                    color: "rgba(13,13,13,.35)"
-                  }}>
-                    {label}
-                  </div>
-                </div>
-              ))}
-            </FadeUp>
-
-            {/* Footer */}
-            <FadeUp delay={0.15}>
-              <p style={{
-                fontSize: "clamp(14px, 2vw, 17px)",
-                lineHeight: 1.7,
-                color: "rgba(13,13,13,.5)",
-                maxWidth: 620,
-                marginBottom: 10,
-                fontWeight: 400
-              }}>
-                {p1.description
-                  ? p1.description.slice(0, 180).trim() + (p1.description.length > 180 ? "…" : "")
-                  : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
-              </p>
-              <div style={{
-                fontSize: 10,
-                color: "rgba(13,13,13,.25)",
-                lineHeight: 1.5,
-                letterSpacing: ".02em"
-              }}>
-                For laboratory and research purposes only. Not for human consumption.
-              </div>
-            </FadeUp>
+                  if (p.inStock) {
+                    e.currentTarget.style.background = "#0d0d0d";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }
+                }}
+              >
+                {p.inStock ? `${p.shortName}` : "Out of Stock"}
+              </button>
+            </div>
           </div>
-        </section>
-      )}      
+        ))}
+      </FadeUp>
+
+      {/* Stats Row */}
+      <FadeUp delay={0.1} style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: "clamp(12px, 3vw, 32px)",
+        marginBottom: "clamp(24px, 4vw, 36px)",
+        paddingTop: "clamp(24px, 4vw, 40px)",
+        borderTop: "1px solid rgba(13,13,13,.06)"
+      }}>
+        {([
+          [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
+          ["COA", "Included"],
+          ["24hr", "Dispatch"]
+        ] as [string, string][]).map(([value, label]) => (
+          <div key={label}>
+            <div style={{
+              fontSize: "clamp(24px, 4vw, 42px)",
+              fontWeight: 700,
+              letterSpacing: "-.05em",
+              color: "#0D0D0D",
+              marginBottom: 2
+            }}>
+              {value}
+            </div>
+            <div style={{
+              fontSize: "clamp(9px, 1.2vw, 11px)",
+              textTransform: "uppercase",
+              letterSpacing: ".12em",
+              color: "rgba(13,13,13,.35)"
+            }}>
+              {label}
+            </div>
+          </div>
+        ))}
+      </FadeUp>
+
+      {/* Footer */}
+      <FadeUp delay={0.15}>
+        <p style={{
+          fontSize: "clamp(14px, 2vw, 17px)",
+          lineHeight: 1.7,
+          color: "rgba(13,13,13,.5)",
+          maxWidth: 620,
+          marginBottom: 10,
+          fontWeight: 400
+        }}>
+          {p1.description
+            ? p1.description.slice(0, 180).trim() + (p1.description.length > 180 ? "…" : "")
+            : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
+        </p>
+        <div style={{
+          fontSize: 10,
+          color: "rgba(13,13,13,.25)",
+          lineHeight: 1.5,
+          letterSpacing: ".02em"
+        }}>
+          For laboratory and research purposes only. Not for human consumption.
+        </div>
+      </FadeUp>
+    </div>
+  </section>
+)}
+
+      {/* ── Research Areas ── */}
+      {/* FIX 2026-08-17: was a 3-up card grid with floating gradient-blur
+          circles behind a gradient-on-black fill — decoration with no
+          connection to the subject. Rebuilt as an index/ledger layout in
+          the same spirit as the COA library elsewhere on the site: each
+          row is real catalogue data (actual compound names pulled from
+          `products`, not filler copy), separated by hairline rules rather
+          than cards, with a left accent bar that's the only motion on
+          hover. Nothing here is decorative; every element is either the
+          category name, a real sample of what's in it, or the count. */}
+      <section style={{ background:"#0A0A0A", padding:"clamp(72px,9vw,120px) 0" }}>
+        <div style={{ maxWidth:1120, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
+          <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:48, flexWrap:"wrap", gap:24 }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.35)", marginBottom:16 }}>Research Categories</div>
+              <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#fff" }}>Explore research<br />focus areas.</h2>
+            </div>
+            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{categories.length} Categories</span>
+          </FadeUp>
+
+          <div className="areas-grid-wrap">
+            {categories.map((c, i) => {
+              const accent = AREA_ACCENTS[c.slug] ?? "#fff"
+              return (
+                <FadeUp key={c.slug} delay={i * 0.05}>
+                  <Link href={`/products/category/${c.slug}`} className="area-row">
+                    <span className="area-row-accent" style={{ background: accent }} />
+                    <span style={{ display:"flex", flexDirection:"column", gap:6, minWidth:0 }}>
+                      <span style={{ fontSize:"clamp(22px,2.6vw,30px)", fontWeight:700, letterSpacing:"-.03em", color:"#fff", lineHeight:1.1 }}>{c.label}</span>
+                      {c.sampleNames.length > 0 && (
+                        <span style={{ fontSize:13, color:"rgba(255,255,255,.4)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {c.sampleNames.join(' · ')}
+                        </span>
+                      )}
+                    </span>
+                    <span style={{ display:"flex", alignItems:"center", gap:20, flexShrink:0 }}>
+                      <span style={{ textAlign:"right" }}>
+                        <span style={{ display:"block", fontSize:22, fontWeight:700, color:"#fff", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>{c.count}</span>
+                        <span style={{ display:"block", fontSize:10.5, color:"rgba(255,255,255,.35)", marginTop:4, letterSpacing:".04em" }}>compound{c.count !== 1 ? "s" : ""}</span>
+                      </span>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="area-row-arrow">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    </span>
+                  </Link>
+                </FadeUp>
+              )
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* ── Member Benefits ── */}
-      <section style={{ background:"#0A0A0A", padding:"clamp(80px,9vw,120px) 0", borderBottom:"1px solid rgba(255,255,255,.06)" }}>
+      <section style={{ background:"#111", padding:"clamp(80px,9vw,120px) 0", borderBottom:"1px solid rgba(255,255,255,.06)" }}>
         <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:30, flexWrap:"wrap", marginBottom:52 }}>
             <div>
@@ -1575,7 +1453,9 @@ export default function PepcoLabPage({
                   </div>
                   {/* FIX #7: real feedback on invalid/empty email instead of a silent no-op */}
                   <div style={{ fontSize: 11, color: emailError ? "#E27676" : "rgba(255,255,255,.22)", lineHeight: 1.5 }}>
-                    {emailError ?? "No spam. Unsubscribe anytime."}
+                    {emailError ?? (
+                      <>No spam. <Link href="/unsubscribe" style={{ color: "rgba(255,255,255,.35)", textDecoration: "underline" }}>Unsubscribe anytime.</Link></>
+                    )}
                   </div>
                 </div>
               </div>

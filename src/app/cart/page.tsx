@@ -205,13 +205,30 @@ export default function CartPage() {
                 )}
               </button>
 
-              <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-                {['STRABL', 'Visa', 'Mastercard', 'American Express'].map((label) => (
-                  <span key={label} className="text-[10px] font-medium text-gray-400">
-                    {label}
+              <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-3">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                You'll be securely redirected to STRABL to complete payment
+              </p>
+
+              <div className="flex justify-center items-center gap-3 flex-wrap mt-4">
+                {[
+                  { label: 'Visa', style: 'font-serif italic font-bold text-[13px] tracking-tight' },
+                  { label: 'Mastercard', style: 'font-bold text-[11px]' },
+                  { label: 'Amex', style: 'font-bold text-[11px]' },
+                  { label: 'Apple Pay', style: 'font-semibold text-[11px]' },
+                ].map((m) => (
+                  <span
+                    key={m.label}
+                    className={`${m.style} text-gray-400 border border-gray-200 rounded-md px-2.5 py-1 bg-white`}
+                  >
+                    {m.label}
                   </span>
                 ))}
               </div>
+              <p className="text-center text-[10px] text-gray-300 mt-2">Powered by STRABL · PCI-DSS compliant</p>
             </div>
           </div>
         )}

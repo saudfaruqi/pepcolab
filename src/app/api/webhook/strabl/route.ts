@@ -259,7 +259,6 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         await sendPaymentFailedEmail({
           to: failedRecord.email,
           orderShortCode: failedRecord.orderShortCode,
-          failureReason: failedRecord.failureReason,
         })
       }
 

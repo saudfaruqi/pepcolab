@@ -41,10 +41,16 @@ export interface OrderRecord {
   total: number
   createdAt: string // ISO timestamp of the underlying order, not this record
   updatedAt: string // ISO timestamp this record was last written
+  reviewRequestSentAt?: string // set once the post-delivery review-request email has gone out — prevents re-sending on every cron run
 }
 
 const KEY_PREFIX = 'order-lookup:'
 const RECORD_TTL_SECONDS = 60 * 60 * 24 * 365 // 1 year — orders shouldn't vanish from lookup
+// Sorted set of completed order short codes, score = createdAt (ms). Lets
+// the review-request cron ask "which completed orders were placed N days
+// ago" without scanning every key — Redis has no native "list all keys
+// matching prefix, sorted by field" operation.
+const COMPLETED_INDEX_KEY = 'order-lookup:completed-index'
 
 function keyFor(orderShortCode: string): string {
   return `${KEY_PREFIX}${orderShortCode.trim().toUpperCase()}`
@@ -57,6 +63,12 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
   }
   try {
     await redis.set(keyFor(record.orderShortCode), record, { ex: RECORD_TTL_SECONDS })
+    if (record.status === 'created' || record.status === 'updated') {
+      await redis.zadd(COMPLETED_INDEX_KEY, {
+        score: new Date(record.createdAt).getTime() || Date.now(),
+        member: record.orderShortCode.trim().toUpperCase(),
+      })
+    }
   } catch (err) {
     // Never let a lookup-store failure break the actual order/webhook flow —
     // this is a nice-to-have UI feature, not the source of truth.
@@ -71,5 +83,20 @@ export async function getOrderRecord(orderShortCode: string): Promise<OrderRecor
   } catch (err) {
     console.error('[orderStore] Failed to read order record:', err)
     return null
+  }
+}
+
+// Completed orders with createdAt between [startMs, endMs] — used by the
+// review-request cron to find orders that are now old enough to ask for a
+// review, without re-scanning orders that are too new or already handled.
+export async function getCompletedOrdersInWindow(startMs: number, endMs: number): Promise<OrderRecord[]> {
+  try {
+    const codes = (await redis.zrange(COMPLETED_INDEX_KEY, startMs, endMs, { byScore: true })) as string[]
+    if (codes.length === 0) return []
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return records.filter((r): r is OrderRecord => r !== null)
+  } catch (err) {
+    console.error('[orderStore] Failed to query completed orders in window:', err)
+    return []
   }
 }
