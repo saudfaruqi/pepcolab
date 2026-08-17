@@ -46,10 +46,6 @@ function useInView(rootMargin = "0px 0px -60px 0px") {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-// FIX #3: dropped the `[key: string]: any` catch-all. If truly dynamic/unknown
-// fields come back from Shopify, model them explicitly below (metafields) rather
-// than reopening the type to `any`, which had silently defeated every other
-// field's type-checking.
 
 type ProductColor = {
   bg: string; accent: string; pill: string; pillText: string;
@@ -65,7 +61,6 @@ type NormalisedProduct = {
   category: string; categorySlug: string; description: string; testDate: string;
   purity?: number; lot?: string; sequence?: string; longDesc?: string;
   color: ProductColor;
-  /** Any additional Shopify metafields not yet promoted to a typed field above. */
   metafields?: Record<string, string | number | boolean | null>;
 };
 
@@ -77,14 +72,6 @@ const TRUST_ITEMS = [
   "99%+ Purity Guaranteed", "Free Tracked Shipping Over AED80",
 ];
 
-// FIX 2026-08-16: the previous REVIEWS array (and data.ts's separate copy)
-// were fabricated quotes attached to invented names, job titles, and in
-// data.ts's case, real institutions — a genuine DMCC Act 2024 fake-reviews
-// problem, not just weak copy. This now fetches real reviews from
-// /api/reviews, which only ever contains reviews tied to a verified
-// completed order (see lib/reviewStore.ts + api/reviews/submit). When
-// there are zero real reviews yet, the section below shows an honest
-// empty state instead of inventing content to fill the space.
 interface RealReview {
   id: string
   productTitle: string
@@ -99,15 +86,6 @@ function initialsFor(name: string): string {
   return parts.slice(0, 2).map((p) => p.charAt(0).toUpperCase()).join('')
 }
 
-// Accent colours keyed to the real Shopify category slugs (metabolic,
-// hormonal, cognitive, recovery, anti-ageing, accessories, immune) — same
-// palette CategoriesSection.tsx uses, so a category reads the same way
-// whether you land on it from here or from /products. The previous AREAS
-// array here was a fourth, independently-hardcoded category list (data.ts,
-// CategoriesSection.tsx, and ProductsSection.tsx's KNOWN_CATEGORIES were
-// the other three) with invented labels ("Tissue Repair", "Skin &
-// Collagen"...) that didn't match any real product tag, and the cards
-// weren't even links — clicking one did nothing.
 const AREA_ACCENTS: Record<string, string> = {
   metabolic:     "#3B82F6",
   hormonal:      "#F59E0B",
@@ -118,10 +96,6 @@ const AREA_ACCENTS: Record<string, string> = {
   immune:        "#FBBF24",
 }
 
-
-// Display labels for the category tags that exist in Shopify. A tag with no
-// entry here falls back to a title-cased version of its slug, so adding a new
-// category in Shopify never renders a blank card.
 const AREA_LABELS: Record<string, string> = {
   metabolic:     "Metabolic",
   hormonal:      "Hormonal",
@@ -132,8 +106,121 @@ const AREA_LABELS: Record<string, string> = {
   immune:        "Immune",
 }
 
-// Market tags are catalogue plumbing, not research categories — never render.
 const MARKET_TAGS = new Set(["uae", "uk"])
+
+// ─── Typography System ──────────────────────────────────────────────────────
+
+const TYPOGRAPHY = {
+  label: {
+    fontSize: "clamp(10px, 0.8vw, 11px)",
+    fontWeight: 600,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase" as const,
+    color: "rgba(13,13,13,0.3)",
+  },
+  labelLight: {
+    fontSize: "clamp(10px, 0.8vw, 11px)",
+    fontWeight: 600,
+    letterSpacing: "0.15em",
+    textTransform: "uppercase" as const,
+    color: "rgba(255,255,255,0.3)",
+  },
+  heading: {
+    fontSize: "clamp(32px, 5vw, 52px)",
+    fontWeight: 600,
+    letterSpacing: "-0.03em",
+    lineHeight: "1.1",
+    color: "#0D0D0D",
+  },
+  headingLight: {
+    fontSize: "clamp(32px, 5vw, 52px)",
+    fontWeight: 600,
+    letterSpacing: "-0.03em",
+    lineHeight: "1.1",
+    color: "#FFFFFF",
+  },
+  subheading: {
+    fontSize: "clamp(13px, 1.1vw, 15px)",
+    fontWeight: 400,
+    lineHeight: "1.6",
+    color: "rgba(13,13,13,0.4)",
+  },
+  subheadingLight: {
+    fontSize: "clamp(13px, 1.1vw, 15px)",
+    fontWeight: 400,
+    lineHeight: "1.6",
+    color: "rgba(255,255,255,0.4)",
+  },
+  cardTitle: {
+    fontSize: "clamp(16px, 1.5vw, 20px)",
+    fontWeight: 600,
+    letterSpacing: "-0.02em",
+    lineHeight: "1.2",
+    color: "#0D0D0D",
+  },
+  cardTitleLight: {
+    fontSize: "clamp(16px, 1.5vw, 20px)",
+    fontWeight: 600,
+    letterSpacing: "-0.02em",
+    lineHeight: "1.2",
+    color: "#FFFFFF",
+  },
+  cardMeta: {
+    fontSize: "clamp(10px, 0.8vw, 11px)",
+    fontWeight: 500,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase" as const,
+    color: "rgba(13,13,13,0.3)",
+  },
+  cardMetaLight: {
+    fontSize: "clamp(10px, 0.8vw, 11px)",
+    fontWeight: 500,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase" as const,
+    color: "rgba(255,255,255,0.3)",
+  },
+  cardDesc: {
+    fontSize: "clamp(12px, 1vw, 13px)",
+    fontWeight: 400,
+    lineHeight: "1.6",
+    color: "rgba(13,13,13,0.4)",
+  },
+  cardDescLight: {
+    fontSize: "clamp(12px, 1vw, 13px)",
+    fontWeight: 400,
+    lineHeight: "1.6",
+    color: "rgba(255,255,255,0.4)",
+  },
+  price: {
+    fontSize: "clamp(18px, 1.8vw, 22px)",
+    fontWeight: 600,
+    letterSpacing: "-0.02em",
+    color: "#0D0D0D",
+  },
+  priceLight: {
+    fontSize: "clamp(18px, 1.8vw, 22px)",
+    fontWeight: 600,
+    letterSpacing: "-0.02em",
+    color: "#FFFFFF",
+  },
+  button: {
+    fontSize: "clamp(11px, 0.9vw, 12px)",
+    fontWeight: 500,
+    letterSpacing: "0.04em",
+  },
+  small: {
+    fontSize: "clamp(9px, 0.7vw, 10px)",
+    fontWeight: 400,
+    lineHeight: "1.5",
+    color: "rgba(13,13,13,0.2)",
+  },
+  smallLight: {
+    fontSize: "clamp(9px, 0.7vw, 10px)",
+    fontWeight: 400,
+    lineHeight: "1.5",
+    color: "rgba(255,255,255,0.2)",
+  },
+} as const;
 
 // ─── Vial SVG ─────────────────────────────────────────────────────────────────
 
@@ -176,9 +263,6 @@ function ProductSkeleton() {
   );
 }
 
-// FIX #2: real error state instead of console.error into the void. Shows a
-// message plus a retry button, since a failed fetch used to leave users
-// staring at skeletons forever.
 function ProductLoadError({ onRetry }: { onRetry: () => void }) {
   return (
     <div style={{
@@ -217,21 +301,17 @@ export default function PepcoLabPage({
   initialProducts,
   initialCountry,
 }: {
-  /** Product data already fetched server-side in page.tsx for the visitor's
-   *  resolved country — lets the first paint show real products instead of
-   *  loading skeletons, and is what makes this component safe to render
-   *  without `dynamic(..., { ssr: false })`. */
   initialProducts?: NormalisedProduct[]
   initialCountry?: string
 }) {
   const [email,       setEmail]       = useState("");
-  const [emailError,  setEmailError]  = useState<string | null>(null); // FIX #7
+  const [emailError,  setEmailError]  = useState<string | null>(null);
   const [subbed,      setSubbed]      = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [products,    setProducts]    = useState<NormalisedProduct[]>(initialProducts ?? []);
   const [loaded,      setLoaded]      = useState(Boolean(initialProducts && initialProducts.length > 0));
-  const [loadError,   setLoadError]   = useState(false); // FIX #2
-  const [retryToken,  setRetryToken]  = useState(0);      // FIX #2: bump to re-trigger fetch
+  const [loadError,   setLoadError]   = useState(false);
+  const [retryToken,  setRetryToken]  = useState(0);
 
   const [realReviews, setRealReviews] = useState<RealReview[]>([]);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
@@ -243,10 +323,7 @@ export default function PepcoLabPage({
       .then((data) => {
         if (!cancelled) setRealReviews(Array.isArray(data.reviews) ? data.reviews : []);
       })
-      .catch(() => {
-        // Fail quietly into the empty state below — a reviews-fetch error
-        // shouldn't ever block the rest of the homepage from rendering.
-      })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setReviewsLoaded(true);
       });
@@ -258,11 +335,6 @@ export default function PepcoLabPage({
 
   const { country, ready } = useCountry()
 
-  // Skip the client fetch on the very first run if page.tsx already fetched
-  // matching data server-side for this exact country — avoids an
-  // instant, pointless refetch of what's already on screen. Any later
-  // country change (via the picker in AgeLocationGate) still refetches
-  // normally, since `hasHydrated.current` is only true once.
   const hasHydrated = useRef(false);
 
   useEffect(() => {
@@ -296,7 +368,7 @@ export default function PepcoLabPage({
         if (cancelled) return;
         console.error("Failed to load products:", err);
         setLoadError(true);
-        setLoaded(true); // stop showing skeletons; show the error state instead
+        setLoaded(true);
       });
 
     return () => { cancelled = true; };
@@ -304,11 +376,6 @@ export default function PepcoLabPage({
 
   const storeCurrency = products[0]?.currencyCode ?? 'AED';
 
-
-// Derived from the products actually loaded for this market, so the cards
-  // and their counts follow the visitor's catalogue automatically. Replaces
-  // the hardcoded CATEGORIES array in data.ts — a static list can't switch
-  // catalogues, which is why UK visitors were seeing UAE categories.
   const categories = useMemo(() => {
     const counts = new Map<string, number>()
     const samples = new Map<string, string[]>()
@@ -318,8 +385,6 @@ export default function PepcoLabPage({
         if (MARKET_TAGS.has(slug)) continue
         counts.set(slug, (counts.get(slug) ?? 0) + 1)
         const list = samples.get(slug) ?? []
-        // Real compound names, not decoration — capped at 3 so the row
-        // stays a preview rather than trying to list the whole category.
         if (list.length < 3 && p.name) list.push(p.name)
         samples.set(slug, list)
       }
@@ -340,21 +405,6 @@ export default function PepcoLabPage({
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
   }, [addItem]);
 
-  // FIX #6 (kept): round bundle pricing to 2 decimals so a discount
-  // multiplication can't produce floating-point cents.
-  //
-  // Previously this built "bundles" from raw array position — products[0]+
-  // products[1] for "Recovery Stack", products[1]+products[2] for "Skin
-  // Research Stack", etc. — against whatever order Shopify happened to
-  // return that request. The bundle names/descriptions were specific
-  // ("Recovery Stack: BPC-157 + GHK-Cu") but the products actually bundled
-  // were arbitrary and could silently change on every refetch. Now matches
-  // the same curated, handle-based BUNDLES config data.ts and
-  // BundlesSection.tsx use, so /bundles and the homepage always describe
-  // the same stacks. Pricing is derived from each matched product's live,
-  // country-correct price (see BundlesSection.tsx for the same pattern),
-  // preserving the discount depth configured in data.ts rather than a
-  // frozen AED-only number.
   const BUNDLES = useMemo(() => {
     return CURATED_BUNDLES.map((bundle) => {
       const bp = bundle.products
@@ -389,23 +439,14 @@ export default function PepcoLabPage({
     bundle.products.forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
   }, [addItem]);
 
-  // Highest-rated real review, most recent as tiebreaker — undefined when
-  // there are none yet, handled by the empty state in the JSX below.
   const featuredReview = [...realReviews].sort((a, b) => b.rating - a.rating)[0];
 
-  // FIX 2026-08-16: this previously only set local state — no request was
-  // ever made, so the email was validated and then discarded. "✓ Done"
-  // showed regardless of whether anything was captured. Now posts to the
-  // real /api/newsletter route (see Footer.tsx for the same fix applied
-  // there) and surfaces a real error instead of a fake success if it fails.
   const handleSubscribe = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
       setEmailError("Enter your email address.");
       return;
     }
-    // Simple, deliberately permissive email shape check — not RFC-exhaustive,
-    // just enough to catch obvious typos before hitting the backend.
     const looksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
     if (!looksValid) {
       setEmailError("That email doesn't look right — check for typos.");
@@ -439,21 +480,15 @@ export default function PepcoLabPage({
   return (
     <div style={{ background: "#FAFAF8", color: "#0d0d0d", minHeight: "100vh" }}>
 
-      {/* ── Global styles ── */}
       <style>{`
         @keyframes ticker    { 0%{transform:translateX(0)}      100%{transform:translateX(-33.33%)} }
         @keyframes marquee   { 0%{transform:translateX(0)}      100%{transform:translateX(-50%)} }
         @keyframes pulse     { 0%,100%{opacity:.5}              50%{opacity:.8} }
-        @keyframes floatVial { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
         * { box-sizing:border-box; margin:0; padding:0; }
         html { scroll-behavior:smooth; }
         @media(prefers-reduced-motion:reduce) {
           *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
         }
-        /* FIX #5: scrollbar hiding scoped to elements that intentionally scroll
-           horizontally (ticker/marquee), instead of every scrollable element
-           on the page. Global hiding removes a real affordance anywhere a
-           modal or dropdown gets added later. */
         .scrollbar-hidden::-webkit-scrollbar { display:none; }
         .products-grid {
           display:grid;
@@ -463,8 +498,6 @@ export default function PepcoLabPage({
         @media(max-width:768px) {
           .products-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
         }
-        .stack-card { transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease; }
-        .stack-card:hover { transform:translateY(-8px); border-color:rgba(255,255,255,.16) !important; box-shadow:0 30px 60px rgba(0,0,0,.4); }
         .area-row {
           display:flex;
           align-items:center;
@@ -508,45 +541,24 @@ export default function PepcoLabPage({
         @media(max-width:480px) {
           .diff-grid { grid-template-columns:1fr; }
         }
-        .spotlight-grid {
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:80px;
-          align-items:center;
-        }
-        @media(max-width:900px) {
-          .spotlight-grid { grid-template-columns:1fr; gap:40px; }
-        }
-        .stacks-grid {
-          display:grid;
-          grid-template-columns:repeat(3,minmax(0,1fr));
-          gap:28px;
-        }
-        @media(max-width:900px) {
-          .stacks-grid { grid-template-columns:1fr; gap:20px; }
-        }
-        .stack-cta-row { flex-wrap: nowrap; }
-        @media(max-width:420px) {
-          .stack-cta-row { flex-wrap: wrap; }
-        }
-        .stack-cta-btn { width: auto; }
-        @media(max-width:420px) {
-          .stack-cta-btn { width: 100%; justify-content: center; }
-        }
-        .stack-cta-full { display: inline; }
-        .stack-cta-short { display: none; }
-        @media(max-width:400px) {
-          .stack-cta-full { display: none; }
-          .stack-cta-short { display: inline; }
-        }          
       `}</style>
 
       {/* ── Trust ticker ── */}
       <div className="scrollbar-hidden" style={{ background: "#0d0d0d", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
         <div style={{ display: "flex", width: "max-content", animation: "ticker 36s linear infinite" }}>
           {[...TRUST_ITEMS, ...TRUST_ITEMS, ...TRUST_ITEMS].map((t, i) => (
-            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 32px", fontSize: 11, fontWeight: 600, letterSpacing: ".1em", color: "rgba(255,255,255,.45)", whiteSpace: "nowrap", borderRight: "1px solid rgba(255,255,255,.06)", textTransform: "uppercase" }}>
-              <span style={{ width: 3, height: 3, background: "#C8992A", borderRadius: "50%", flexShrink: 0 }} />{t}
+            <span key={i} style={{ 
+              display: "inline-flex", 
+              alignItems: "center", 
+              gap: 10, 
+              padding: "10px 32px", 
+              ...TYPOGRAPHY.labelLight,
+              color: "rgba(255,255,255,.45)",
+              whiteSpace: "nowrap", 
+              borderRight: "1px solid rgba(255,255,255,.06)",
+            }}>
+              <span style={{ width: 3, height: 3, background: "#C8992A", borderRadius: "50%", flexShrink: 0 }} />
+              {t}
             </span>
           ))}
         </div>
@@ -558,375 +570,290 @@ export default function PepcoLabPage({
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
 
-{/* ── Research Stacks ── */}
-<section style={{ 
-  background: "#0A0A0A", 
-  padding: "clamp(40px,8vw,140px) 0",
-  position: "relative",
-  overflow: "hidden"
-}}>
-  {/* Subtle background glow */}
-  <div style={{
-    position: "absolute",
-    top: "-20%",
-    right: "-10%",
-    width: "60%",
-    height: "80%",
-    background: "radial-gradient(ellipse, rgba(59,130,246,0.04) 0%, transparent 70%)",
-    pointerEvents: "none"
-  }} />
-  
-  <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(12px,4vw,60px)" }}>
-    <FadeUp style={{ maxWidth: 680, marginBottom: "clamp(32px,6vw,90px)" }}>
-      <div style={{ 
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 10,
-        fontSize: "clamp(10px,1.2vw,11px)", 
-        fontWeight: 600, 
-        letterSpacing: ".18em", 
-        textTransform: "uppercase", 
-        color: "rgba(255,255,255,.3)", 
-        marginBottom: "clamp(14px,2vw,20px)" 
+      {/* ── Research Stacks ── */}
+      <section style={{
+        background: "#0A0A0A",
+        padding: "clamp(48px, 8vw, 100px) 0",
+        borderTop: "1px solid rgba(255,255,255,0.04)",
       }}>
-        <span style={{ width: "clamp(16px,2vw,24px)", height: 1, background: "rgba(255,255,255,.15)" }} />
-        Research Stacks
-      </div>
-      <h2 style={{ 
-        fontSize: "clamp(28px,6vw,84px)", 
-        lineHeight: ".92", 
-        letterSpacing: "-.07em", 
-        color: "#fff", 
-        fontWeight: 700, 
-        margin: "0 0 clamp(8px,1.5vw,16px)" 
-      }}>
-        Purpose-built<br />
-        <span style={{ background: "linear-gradient(135deg, #fff 60%, rgba(255,255,255,.4))", backgroundClip: "text", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          compound stacks.
-        </span>
-      </h2>
-      <p style={{ 
-        fontSize: "clamp(13px,2vw,17px)", 
-        lineHeight: "1.7", 
-        color: "rgba(255,255,255,.5)", 
-        maxWidth: 520 
-      }}>
-        Curated combinations, independently tested, bundled for specific research objectives.
-        <span style={{ display: "block", color: "rgba(255,255,255,.3)", fontSize: ".9em", marginTop: 4 }}>
-          Save 10% versus individual pricing
-        </span>
-      </p>
-    </FadeUp>
+        <div style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 clamp(16px, 4vw, 40px)",
+        }}>
+          <div style={{
+            marginBottom: "clamp(40px, 6vw, 56px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "6px",
+          }}>
+            <h2 style={TYPOGRAPHY.headingLight}>
+              Purpose-built compound stacks
+            </h2>
+            <p style={TYPOGRAPHY.subheadingLight}>
+              Curated combinations of research compounds, bundled for specific study objectives.
+              <span style={{ display: "block", color: "rgba(255,255,255,0.2)", fontSize: "0.9em", marginTop: 4 }}>
+                Save 10% vs. individual pricing
+              </span>
+            </p>
+          </div>
 
-    {loadError ? (
-      <div style={{ 
-        color: "rgba(255,255,255,.4)", 
-        fontSize: "clamp(13px,2vw,14px)", 
-        textAlign: "center", 
-        padding: "clamp(40px,8vw,60px) 0" 
-      }}>
-        <span style={{ fontSize: "clamp(28px,5vw,32px)", display: "block", marginBottom: 12 }}>🔬</span>
-        Stacks are unavailable right now — reload the catalogue above to try again.
-      </div>
-    ) : products.length === 0 ? (
-      <div className="stacks-grid" style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-        gap: "clamp(16px,2.5vw,30px)"
-      }}>
-        {[0,1,2].map(i => (
-          <div key={i} style={{ 
-            background: "#111", 
-            borderRadius: "clamp(20px,3vw,28px)", 
-            height: "clamp(380px,50vh,460px)", 
-            animation: "pulse 1.6s ease infinite", 
-            animationDelay: `${i * .15}s` 
-          }} />
-        ))}
-      </div>
-    ) : BUNDLES.length === 0 ? null : (
-      <div className="stacks-grid" style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-        gap: "clamp(20px,2.5vw,30px)"
-      }}>
-        {BUNDLES.map((b, bi) => (
-          <FadeUp key={b.id} delay={bi * 0.1}>
-            <div className="stack-card" style={{ 
-              background: "linear-gradient(145deg, #111111 0%, #0d0d0d 100%)", 
-              border: "1px solid rgba(255,255,255,.06)", 
-              borderRadius: "clamp(20px,3vw,28px)", 
-              overflow: "hidden",
-              transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-              position: "relative",
-              cursor: "default",
-              height: "100%",
-              display: "flex",
-              flexDirection: "column"
-            }}
-            onMouseEnter={e => {
-              if (window.innerWidth > 768) {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,.6)";
-              }
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,.06)";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-            >
-              {/* Visual - Larger image area */}
-              <div style={{
-                background: "linear-gradient(180deg, #161616 0%, #121212 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "clamp(20px,3vw,32px)",
-                padding: "clamp(30px,5vw,50px) clamp(20px,4vw,32px)",
-                minHeight: "clamp(200px,30vh,260px)",
-                position: "relative",
-                overflow: "hidden",
-                flexShrink: 0
-              }}>
-                {/* Enhanced glow orbs */}
-                {b.products.map((p, idx) => (
-                  <div key={p.id} style={{
-                    position: "absolute",
-                    width: "clamp(150px,25vw,220px)",
-                    height: "clamp(150px,25vw,220px)",
-                    borderRadius: "50%",
-                    background: `radial-gradient(circle, ${p.from}30 0%, transparent 70%)`,
-                    top: `${10 + idx * 35}%`,
-                    left: `${5 + idx * 45}%`,
-                    filter: "blur(60px)",
-                    pointerEvents: "none"
-                  }} />
-                ))}
-                
-                {/* Larger Vials with improved styling */}
-                {b.products.map((p, pi) => (
-                  <div key={p.id} style={{
-                    width: "clamp(90px,15vw,120px)",
-                    height: "clamp(90px,15vw,120px)",
-                    borderRadius: "clamp(16px,2.5vw,24px)",
+          {loadError ? (
+            <div style={{
+              textAlign: "center",
+              padding: "60px 20px",
+              color: "rgba(255,255,255,0.3)",
+              fontSize: "14px",
+            }}>
+              <div style={{ fontSize: "28px", marginBottom: "12px" }}>⚠️</div>
+              Could not load stacks. Please refresh the page.
+            </div>
+          ) : products.length === 0 ? (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: "20px",
+            }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{
+                  background: "#111",
+                  borderRadius: "16px",
+                  height: "340px",
+                }} />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "20px",
+            }}>
+              {BUNDLES.map((b) => (
+                <div
+                  key={b.id}
+                  style={{
+                    background: "#111",
+                    borderRadius: "16px",
+                    border: "1px solid rgba(255,255,255,0.06)",
                     overflow: "hidden",
-                    background: "rgba(255,255,255,.06)",
-                    backdropFilter: "blur(4px)",
-                    border: "1px solid rgba(255,255,255,.08)",
-                    flexShrink: 0,
-                    position: "relative",
-                    zIndex: 1,
+                    transition: "border-color 0.2s ease, transform 0.2s ease",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div style={{
+                    background: "#141414",
+                    padding: "24px 20px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    animation: `floatVial 3s ease ${pi * .4}s infinite`,
-                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                    boxShadow: "0 8px 32px rgba(0,0,0,.4)"
-                  }}
-                  onMouseEnter={e => {
-                    if (window.innerWidth > 768) {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                      e.currentTarget.style.boxShadow = "0 12px 48px rgba(0,0,0,.6)";
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,.4)";
-                  }}
-                  >
-                    {p.image
-                      ? <img src={p.image} alt={p.title} style={{ 
-                          width: "100%", 
-                          height: "100%", 
-                          objectFit: "contain", 
-                          padding: "clamp(10px,2vw,16px)",
-                          filter: "drop-shadow(0 4px 12px rgba(0,0,0,.3))"
-                        }} />
-                      : <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="lg" />
-                    }
-                    
-                    {/* Subtle shimmer effect on hover */}
+                    gap: "14px",
+                    minHeight: "120px",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}>
+                    {b.products.map((p) => (
+                      <div
+                        key={p.id}
+                        style={{
+                          width: "64px",
+                          height: "64px",
+                          borderRadius: "12px",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                          flexShrink: 0,
+                          transition: "transform 0.2s ease",
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = "scale(1.06)";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = "scale(1)";
+                        }}
+                      >
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.title}
+                            style={{
+                              width: "70%",
+                              height: "70%",
+                              objectFit: "contain",
+                            }}
+                          />
+                        ) : (
+                          <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="sm" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{
+                    padding: "18px 20px 20px",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}>
                     <div style={{
-                      position: "absolute",
-                      inset: 0,
-                      background: "linear-gradient(135deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 50%, rgba(255,255,255,0) 60%)",
-                      backgroundSize: "200% 200%",
-                      animation: "shimmer 3s ease-in-out infinite",
-                      pointerEvents: "none",
-                      opacity: 0.5
-                    }} />
-                  </div>
-                ))}            
-              </div>
-
-              <div style={{ 
-                padding: "clamp(20px,3.5vw,30px) clamp(20px,3.5vw,30px) clamp(24px,4vw,32px)",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column"
-              }}>
-                {/* Compound pills - larger */}
-                <div style={{ 
-                  display:"flex", 
-                  gap: "clamp(6px,1vw,8px)", 
-                  flexWrap:"wrap", 
-                  marginBottom: "clamp(12px,1.8vw,18px)" 
-                }}>
-                  {b.products.map(p => (
-                    <span key={p.id} style={{ 
-                      fontSize: "clamp(10px,1.2vw,11px)", 
-                      fontWeight: 600, 
-                      letterSpacing: ".08em", 
-                      textTransform: "uppercase", 
-                      background: "rgba(255,255,255,.07)", 
-                      color: "rgba(255,255,255,.5)", 
-                      padding: "clamp(4px,0.8vw,6px) clamp(10px,1.5vw,14px)", 
-                      borderRadius: 999,
-                      border: "1px solid rgba(255,255,255,.05)"
+                      display: "flex",
+                      gap: "4px",
+                      flexWrap: "wrap",
                     }}>
-                      {p.shortName}
-                    </span>
-                  ))}
-                </div>
-
-                <h3 style={{ 
-                  fontSize: "clamp(20px,4vw,30px)", 
-                  lineHeight: "1.05", 
-                  letterSpacing: "-.04em", 
-                  color: "#fff", 
-                  margin: "0 0 clamp(6px,1vw,10px)", 
-                  fontWeight: 700 
-                }}>
-                  {b.name}
-                </h3>
-                <p style={{ 
-                  color: "rgba(255,255,255,.45)", 
-                  lineHeight: "1.65", 
-                  fontSize: "clamp(13px,1.5vw,14px)", 
-                  margin: "0 0 clamp(16px,2.5vw,22px)",
-                  flex: 1
-                }}>
-                  {b.desc}
-                </p>
-
-              <div className="stack-cta-row" style={{ 
-                  display:"flex", 
-                  justifyContent:"space-between", 
-                  alignItems:"center", 
-                  gap: "clamp(10px,2vw,16px)", 
-                  paddingTop: "clamp(16px,2.5vw,22px)", 
-                  borderTop:"1px solid rgba(255,255,255,.06)",
-                }}>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ display:"flex", alignItems:"baseline", gap: "clamp(6px,1vw,10px)", flexWrap:"wrap" }}>
-                      <span style={{ 
-                        fontSize: "clamp(22px,4vw,32px)", 
-                        fontWeight: 700, 
-                        color:"#fff", 
-                        letterSpacing:"-.04em" 
-                      }}>
-                        {formatPrice(b.price, storeCurrency)}
-                      </span>
-                      <span style={{ 
-                        fontSize: "clamp(12px,1.4vw,14px)", 
-                        color:"rgba(255,255,255,.2)", 
-                        textDecoration:"line-through" 
-                      }}>
-                        {formatPrice(b.originalPrice, storeCurrency)}
-                      </span>
+                      {b.products.map(p => (
+                        <span
+                          key={p.id}
+                          style={{
+                            ...TYPOGRAPHY.cardMetaLight,
+                            fontSize: "9px",
+                            color: "rgba(255,255,255,0.3)",
+                            background: "rgba(255,255,255,0.04)",
+                            padding: "2px 10px",
+                            borderRadius: "100px",
+                            border: "1px solid rgba(255,255,255,0.03)",
+                          }}
+                        >
+                          {p.shortName}
+                        </span>
+                      ))}
                     </div>
-                    <div style={{ 
-                      fontSize: "clamp(11px,1.2vw,12px)", 
-                      color:"rgba(255,255,255,.25)", 
-                      marginTop: 2 
+
+                    <h3 style={TYPOGRAPHY.cardTitleLight}>
+                      {b.name}
+                    </h3>
+
+                    <p style={TYPOGRAPHY.cardDescLight}>
+                      {b.desc}
+                    </p>
+
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingTop: "14px",
+                      borderTop: "1px solid rgba(255,255,255,0.04)",
+                      marginTop: "2px",
                     }}>
-                      {b.products.length} compounds · COA included
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => addBundleToCart(b)}
-                    className="stack-cta-btn"
-                    style={{ 
-                      height: "clamp(44px,6vw,52px)", 
-                      padding: "0 clamp(20px,3vw,28px)", 
-                      borderRadius: 999, 
-                      border:"none",
-                      background: "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)",
-                      color:"#fff", 
-                      fontSize: "clamp(12px,1.2vw,13px)", 
-                      fontWeight: 600, 
-                      cursor:"pointer", 
-                      letterSpacing:".06em", 
-                      transition:"all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
-                      whiteSpace:"nowrap", 
-                      flexShrink:0,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                    onMouseEnter={e => {
-                      if (window.innerWidth > 768) {
-                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.08) 100%)";
-                        e.currentTarget.style.transform = "scale(1.05)";
-                        e.currentTarget.style.borderColor = "rgba(255,255,255,.25)";
-                        e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,.4)";
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.04) 100%)";
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,.12)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: "clamp(6px,1vw,8px)" }}>
-                      <span className="stack-cta-full">
+                      <div>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "baseline",
+                          gap: "6px",
+                        }}>
+                          <span style={TYPOGRAPHY.priceLight}>
+                            {formatPrice(b.price, storeCurrency)}
+                          </span>
+                          <span style={{
+                            ...TYPOGRAPHY.smallLight,
+                            textDecoration: "line-through",
+                            color: "rgba(255,255,255,0.2)",
+                          }}>
+                            {formatPrice(b.originalPrice, storeCurrency)}
+                          </span>
+                        </div>
+                        <span style={{
+                          ...TYPOGRAPHY.smallLight,
+                          fontSize: "10px",
+                          color: "rgba(255,255,255,0.2)",
+                        }}>
+                          {b.products.length} compounds · COA included
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => addBundleToCart(b)}
+                        style={{
+                          height: "36px",
+                          padding: "0 18px",
+                          borderRadius: "100px",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "rgba(255,255,255,0.04)",
+                          color: "#fff",
+                          ...TYPOGRAPHY.button,
+                          cursor: "pointer",
+                          transition: "background 0.2s ease, border-color 0.2s ease",
+                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                          e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                          e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                        }}
+                      >
                         Add Stack
-                      </span>
-                      <span className="stack-cta-short">
-                        Add
-                      </span>
-                      <svg style={{ width: 'clamp(14px,1.5vw,16px)', height: 'clamp(14px,1.5vw,16px)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                      </svg>
-                    </span>
-                  </button>
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          </FadeUp>
-        ))}
-      </div>
-    )}
-  </div>
-</section>
+          )}
+        </div>
+      </section>
 
-      {/* ── Why Pepco — 4-up diff strip ── */}
+      {/* ── Why Pepco ── */}
       <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ gap:40, marginBottom:64, alignItems:"end" }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.38)", marginBottom:16 }}>Why Researchers Choose Pepco</div>
-              <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#0D0D0D" }}>Standards you<br />can verify.</h2>
+              <div style={TYPOGRAPHY.label}>Why Researchers Choose Pepco</div>
+              <h2 style={TYPOGRAPHY.heading}>Standards you<br />can verify.</h2>
             </div>
-            <p style={{ fontSize:18, lineHeight:1.9, color:"rgba(13,13,13,.55)", maxWidth:500, alignSelf:"end" }}>Every batch independently tested, documented, and handled under strict quality-control. No vague claims — just transparent, verifiable data.</p>
+            <p style={{ 
+              fontSize: "clamp(14px, 1.2vw, 18px)", 
+              lineHeight: 1.9, 
+              color: "rgba(13,13,13,.55)", 
+              maxWidth: 500, 
+              alignSelf:"end",
+              fontWeight: 400,
+            }}>
+              Every batch independently tested, documented, and handled under strict quality-control. No vague claims — just transparent, verifiable data.
+            </p>
           </FadeUp>
 
           <FadeUp delay={0.1}>
             <div className="diff-grid">
               {[
-                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Freedom Diagnostics. COA downloadable per batch."        },
-                { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch."     },
-                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception."   },
-                { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom."    },
+                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Freedom Diagnostics. COA downloadable per batch." },
+                { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch." },
+                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception." },
+                { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom." },
               ].map((d) => (
                 <div key={d.n} style={{ background:"#fff", padding:"36px 32px", position:"relative" }}>
-                  <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", color:"rgba(13,13,13,.25)", marginBottom:28 }}>{d.n}</div>
-                  <h3 style={{ fontSize:22, fontWeight:700, letterSpacing:"-.03em", color:"#0D0D0D", marginBottom:12, lineHeight:1.1 }}>{d.title}</h3>
-                  <p style={{ fontSize:14, lineHeight:1.85, color:"rgba(13,13,13,.55)" }}>{d.desc}</p>
+                  <div style={{ ...TYPOGRAPHY.cardMeta, fontSize: "10px", color: "rgba(13,13,13,.25)", marginBottom: 28 }}>{d.n}</div>
+                  <h3 style={{ ...TYPOGRAPHY.cardTitle, fontSize: "clamp(18px, 1.5vw, 22px)", marginBottom: 12 }}>{d.title}</h3>
+                  <p style={TYPOGRAPHY.cardDesc}>{d.desc}</p>
                 </div>
               ))}
             </div>
@@ -934,44 +861,51 @@ export default function PepcoLabPage({
         </div>
       </section>
 
-      {/* ── Reviews (or, until real ones exist, real COA verification instead) ── */}
+      {/* ── Reviews ── */}
       {!reviewsLoaded ? null : realReviews.length === 0 ? (
-        /* FIX 2026-08-16: was a hardcoded marquee of fabricated quotes + an
-           unverifiable "2,400 researchers" claim. Rather than leave an empty
-           gap until real reviews exist, this slot shows COASection — real,
-           independently-verifiable batch data that's currently only linked
-           from /certificates and not surfaced on the homepage at all. A
-           slim CTA above it invites the actual first review rather than
-           padding the space with more invented content. */
-        <>
-          <section style={{ background: "#fff", padding: "clamp(56px,6vw,80px) 0 0", paddingBottom: "56px" }}>
-            <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
-              <FadeUp>
-                <div style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:24, padding:"clamp(28px,3.5vw,40px)", display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
-                  <div>
-                    <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(13,13,13,.4)", marginBottom:8 }}>No reviews yet</div>
-                    <p style={{ fontSize:16, lineHeight:1.6, color:"rgba(13,13,13,.65)", maxWidth:480, margin:0 }}>
-                      Every review we publish is tied to a real, verified order — no exceptions. Placed one recently? Be the first to share your experience.
-                    </p>
-                  </div>
-                  <Link href="/track-order" style={{ display:"inline-block", background:"#0D0D0D", color:"#fff", padding:"14px 28px", borderRadius:999, textDecoration:"none", fontSize:14, fontWeight:700, whiteSpace:"nowrap" }}>
-                    Leave a Verified Review
-                  </Link>
+        <section style={{ background: "#fff", padding: "clamp(56px,6vw,80px) 0 0", paddingBottom: "56px" }}>
+          <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
+            <FadeUp>
+              <div style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:24, padding:"clamp(28px,3.5vw,40px)", display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
+                <div>
+                  <div style={TYPOGRAPHY.label}>No reviews yet</div>
+                  <p style={{ 
+                    fontSize: "clamp(14px, 1.1vw, 16px)", 
+                    lineHeight: 1.6, 
+                    color: "rgba(13,13,13,.65)", 
+                    maxWidth: 480, 
+                    margin: 0,
+                    fontWeight: 400,
+                  }}>
+                    Every review we publish is tied to a real, verified order — no exceptions. Placed one recently? Be the first to share your experience.
+                  </p>
                 </div>
-              </FadeUp>
-            </div>
-          </section>
-        </>
+                <Link href="/track-order" style={{ 
+                  display:"inline-block", 
+                  background:"#0D0D0D", 
+                  color:"#fff", 
+                  padding:"14px 28px", 
+                  borderRadius:999, 
+                  textDecoration:"none", 
+                  ...TYPOGRAPHY.button,
+                  fontWeight: 600,
+                  whiteSpace:"nowrap" 
+                }}>
+                  Leave a Verified Review
+                </Link>
+              </div>
+            </FadeUp>
+          </div>
+        </section>
       ) : (
         <section style={{ background: "#fff", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)", overflow: "hidden" }}>
           <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
             <FadeUp style={{ maxWidth:680, marginBottom:60 }}>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.38)", marginBottom:16 }}>Trusted By Researchers</div>
-              <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#0D0D0D" }}>What verified<br />researchers say.</h2>
+              <div style={TYPOGRAPHY.label}>Trusted By Researchers</div>
+              <h2 style={TYPOGRAPHY.heading}>What verified<br />researchers say.</h2>
             </FadeUp>
           </div>
 
-          {/* Scrolling review strip */}
           <div className="scrollbar-hidden" style={{ overflow:"hidden", marginBottom:56 }}>
             <div className="review-marquee-track">
               {[...realReviews, ...realReviews].map((r, i) => (
@@ -981,12 +915,18 @@ export default function PepcoLabPage({
                       <span key={j} style={{ color: j < r.rating ? "#C8992A" : "rgba(13,13,13,.12)", fontSize:13 }}>★</span>
                     ))}
                   </div>
-                  <p style={{ fontSize:14, lineHeight:1.8, color:"rgba(13,13,13,.7)", marginBottom:20 }}>"{r.text}"</p>
+                  <p style={{ 
+                    fontSize: "clamp(13px, 1vw, 14px)", 
+                    lineHeight: 1.8, 
+                    color: "rgba(13,13,13,.7)", 
+                    marginBottom: 20,
+                    fontWeight: 400,
+                  }}>"{r.text}"</p>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <div style={{ width:36, height:36, borderRadius:"50%", background:"#F0EDE6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#0d0d0d", flexShrink:0 }}>{initialsFor(r.authorName)}</div>
+                    <div style={{ width:36, height:36, borderRadius:"50%", background:"#F0EDE6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:600, color:"#0d0d0d", flexShrink:0 }}>{initialsFor(r.authorName)}</div>
                     <div>
-                      <div style={{ fontSize:13, fontWeight:700, color:"#0d0d0d" }}>{r.authorName}</div>
-                      <div style={{ fontSize:11, color:"rgba(13,13,13,.4)" }}>Verified · {r.productTitle}</div>
+                      <div style={{ fontSize: "clamp(12px, 0.9vw, 13px)", fontWeight: 600, color: "#0d0d0d" }}>{r.authorName}</div>
+                      <div style={{ fontSize: "clamp(10px, 0.8vw, 11px)", color: "rgba(13,13,13,.4)" }}>Verified · {r.productTitle}</div>
                     </div>
                   </div>
                 </div>
@@ -994,7 +934,6 @@ export default function PepcoLabPage({
             </div>
           </div>
 
-          {/* Featured quote — highest-rated real review */}
           {featuredReview && (
             <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
               <FadeUp>
@@ -1004,19 +943,24 @@ export default function PepcoLabPage({
                       <span key={i} style={{ color: i < featuredReview.rating ? "#C8992A" : "rgba(255,255,255,.15)", fontSize:16 }}>★</span>
                     ))}
                   </div>
-                  <p style={{ fontSize:"clamp(20px,2.8vw,36px)", lineHeight:1.35, letterSpacing:"-.03em", color:"#fff", margin:"0 0 32px", maxWidth:900 }}>
+                  <p style={{ 
+                    fontSize: "clamp(18px, 2.5vw, 32px)", 
+                    lineHeight: 1.35, 
+                    letterSpacing: "-0.02em", 
+                    color: "#fff", 
+                    margin: "0 0 32px", 
+                    maxWidth: 900,
+                    fontWeight: 500,
+                  }}>
                     "{featuredReview.text}"
                   </p>
                   <div style={{ display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
-                    <div style={{ width:50, height:50, borderRadius:"50%", background:"rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:"#fff" }}>{initialsFor(featuredReview.authorName)}</div>
+                    <div style={{ width:50, height:50, borderRadius:"50%", background:"rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:600, color:"#fff" }}>{initialsFor(featuredReview.authorName)}</div>
                     <div>
-                      <div style={{ fontWeight:700, color:"#fff", marginBottom:3 }}>{featuredReview.authorName}</div>
-                      <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>{featuredReview.productTitle}</div>
+                      <div style={{ fontSize: "clamp(14px, 1vw, 16px)", fontWeight: 600, color: "#fff", marginBottom: 3 }}>{featuredReview.authorName}</div>
+                      <div style={{ fontSize: "clamp(12px, 0.9vw, 13px)", color: "rgba(255,255,255,.45)" }}>{featuredReview.productTitle}</div>
                     </div>
-                    {/* This badge is now legitimate — every review here is
-                        gated on a real order lookup match, not decorative
-                        copy (see api/reviews/submit/route.ts). */}
-                    <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color:"#0A7B45", background:"rgba(10,123,69,.15)", padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>✓ VERIFIED PURCHASE</div>
+                    <div style={{ marginLeft:"auto", ...TYPOGRAPHY.label, fontSize: "10px", color:"#0A7B45", background:"rgba(10,123,69,.15)", padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>✓ VERIFIED PURCHASE</div>
                   </div>
                 </div>
               </FadeUp>
@@ -1025,324 +969,243 @@ export default function PepcoLabPage({
         </section>
       )}
 
-{/* ── Research Spotlight ── */}
-{p1 && p2 && (
-  <section style={{
-    background: "linear-gradient(180deg, #F7F5F1 0%, #F0EDE6 100%)",
-    padding: "clamp(60px, 8vw, 140px) 0",
-    borderBottom: "1px solid rgba(13,13,13,.06)",
-    position: "relative",
-    overflow: "hidden"
-  }}>
-    {/* Decorative background element */}
-    <div style={{
-      position: "absolute",
-      top: "-30%",
-      right: "-10%",
-      width: "60%",
-      height: "80%",
-      background: "radial-gradient(circle at 70% 30%, rgba(13,13,13,.03) 0%, transparent 70%)",
-      pointerEvents: "none"
-    }} />
-
-    <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(16px, 5vw, 60px)", position: "relative", zIndex: 1 }}>
-      
-      {/* Header */}
-      <FadeUp>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 14
+      {/* ── Research Spotlight ── */}
+      {p1 && p2 && (
+        <section style={{
+          background: "#F7F5F1",
+          padding: "clamp(48px, 6vw, 80px) 0",
+          borderBottom: "1px solid rgba(13,13,13,.06)",
         }}>
-
           <div style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: ".18em",
-            textTransform: "uppercase",
-            color: "rgba(13,13,13,.35)"
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 clamp(16px, 4vw, 40px)",
           }}>
-            Research Spotlight
-          </div>
-        </div>
-        
-        <h2 style={{
-          fontSize: "clamp(32px, 6vw, 80px)",
-          lineHeight: ".92",
-          letterSpacing: "-.06em",
-          fontWeight: 700,
-          color: "#0D0D0D",
-          margin: "0 0 clamp(32px, 5vw, 48px)"
-        }}>
-          {p1.shortName} &amp;<br style={{ display: "block" }} />
-          <span style={{ 
-            background: "linear-gradient(135deg, #0D0D0D 40%, rgba(13,13,13,.5))",
-            backgroundClip: "text",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent"
-          }}>
-            {p2.shortName}
-          </span>
-        </h2>
-      </FadeUp>
-
-      {/* Cards Grid */}
-      <FadeUp delay={0.05} style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "clamp(12px, 2vw, 20px)",
-        marginBottom: "clamp(28px, 4vw, 48px)"
-      }}>
-        {[p1, p2].map((p, i) => (
-          <div key={p.id} style={{
-            background: "#ffffff",
-            borderRadius: "clamp(16px, 2vw, 24px)",
-            overflow: "hidden",
-            boxShadow: "0 2px 20px rgba(13,13,13,.04)",
-            transition: "transform .3s ease, box-shadow .3s ease",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-4px)";
-            e.currentTarget.style.boxShadow = "0 8px 40px rgba(13,13,13,.08)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 2px 20px rgba(13,13,13,.04)";
-          }}>
-            
-            {/* Image Container */}
             <div style={{
-              aspectRatio: "1/1",
-              background: `linear-gradient(145deg, #FCFBF8, ${p.color.vialFrom}15)`,
+              marginBottom: "clamp(32px, 5vw, 48px)",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-              overflow: "hidden",
-              padding: 16,
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: "6px",
             }}>
-              {/* Ambient glow */}
-              <div style={{
-                position: "absolute",
-                width: "80%",
-                height: "80%",
-                borderRadius: "50%",
-                background: `radial-gradient(circle, ${p.color.vialFrom}25, transparent 70%)`,
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%,-50%)",
-              }} />
-              
-              {/* Content */}
-              {p.image ? (
-                <img src={p.image} alt={p.title} style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                  position: "relative",
-                  zIndex: 1,
-                  filter: "drop-shadow(0 4px 12px rgba(0,0,0,.06))"
-                }} />
-              ) : (
-                <div style={{
-                  position: "relative",
-                  zIndex: 1,
-                  animation: `floatVial ${3 + i * .4}s ease ${i * .3}s infinite`
-                }}>
-                  <Vial fromColor={p.color.vialFrom} toColor={p.color.vialTo} mg={p.mg} size={isMobile ? "md" : "lg"} />
-                </div>
-              )}
-              
-              {/* Purity Badge */}
-              {p.purity && (
-                <div style={{
-                  position: "absolute",
-                  top: 12,
-                  right: 12,
-                  background: "rgba(255,255,255,.92)",
-                  backdropFilter: "blur(12px)",
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(13,13,13,.06)",
-                  boxShadow: "0 2px 8px rgba(0,0,0,.04)",
-                }}>
-                  <div style={{
-                    fontSize: 7,
-                    color: "rgba(13,13,13,.35)",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: ".12em"
-                  }}>Purity</div>
-                  <div style={{
-                    fontSize: 14,
-                    fontWeight: 800,
-                    color: "#0d0d0d",
-                    lineHeight: 1.1,
-                    letterSpacing: "-.02em"
-                  }}>{p.purity}%</div>
-                </div>
-              )}
+              <h2 style={TYPOGRAPHY.heading}>
+                {p1.shortName} &amp; {p2.shortName}
+              </h2>
+              <p style={TYPOGRAPHY.subheading}>
+                Two of our most widely researched compounds, independently tested and batch-documented.
+              </p>
             </div>
 
-            {/* Info */}
-            <div style={{ padding: "clamp(8px, 1vw, 16px)" }}>
-              <div style={{
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: ".12em",
-                textTransform: "uppercase",
-                color: "rgba(13,13,13,.3)",
-                marginBottom: 6
-              }}>
-                {p.category || "Research Compound"}
-              </div>
-              
-              <div style={{
-                fontSize: "clamp(14px, 2vw, 18px)",
-                fontWeight: 700,
-                letterSpacing: "-.03em",
-                color: "#0d0d0d",
-                marginBottom: 6,
-                lineHeight: 1.1
-              }}>
-                {p.shortName}
-              </div>
-              
-              <div style={{
-                fontSize: "clamp(18px, 3vw, 24px)",
-                fontWeight: 700,
-                color: "#0d0d0d",
-                marginBottom: 14,
-                letterSpacing: "-.02em"
-              }}>
-                {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
-              </div>
-              
-              <button
-                onClick={() => addToCart(p)}
-                disabled={!p.inStock}
-                style={{
-                  width: "100%",
-                  height: "clamp(40px, 5vw, 48px)",
-                  borderRadius: 999,
-                  border: "none",
-                  background: p.inStock ? "#0d0d0d" : "rgba(13,13,13,.06)",
-                  color: p.inStock ? "#fff" : "rgba(13,13,13,.25)",
-                  fontSize: "clamp(11px, 1.6vw, 13px)",
-                  fontWeight: 700,
-                  cursor: p.inStock ? "pointer" : "not-allowed",
-                  letterSpacing: ".06em",
-                  transition: "all .2s ease",
-                  ...(p.inStock && {
-                    ":hover": {
-                      background: "#2a2a2a",
-                      transform: "scale(1.01)"
-                    }
-                  })
-                }}
-                onMouseEnter={(e) => {
-                  if (p.inStock) {
-                    e.currentTarget.style.background = "#2a2a2a";
-                    e.currentTarget.style.transform = "scale(1.01)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (p.inStock) {
-                    e.currentTarget.style.background = "#0d0d0d";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }
-                }}
-              >
-                {p.inStock ? `${p.shortName}` : "Out of Stock"}
-              </button>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "clamp(16px, 2vw, 24px)",
+              marginBottom: "clamp(32px, 4vw, 48px)",
+            }}>
+              {[p1, p2].map((p) => (
+                <div
+                  key={p.id}
+                  style={{
+                    background: "#ffffff",
+                    borderRadius: "16px",
+                    border: "1px solid rgba(13,13,13,0.06)",
+                    overflow: "hidden",
+                    transition: "border-color 0.2s ease, transform 0.2s ease",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "rgba(13,13,13,0.15)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "rgba(13,13,13,0.06)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div style={{
+                    background: "#FCFBF8",
+                    padding: "clamp(24px, 3vw, 32px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "clamp(140px, 20vh, 180px)",
+                    borderBottom: "1px solid rgba(13,13,13,0.04)",
+                    position: "relative",
+                  }}>
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.title}
+                        style={{
+                          height: "clamp(80px, 12vw, 120px)",
+                          width: "auto",
+                          objectFit: "contain",
+                        }}
+                      />
+                    ) : (
+                      <Vial
+                        fromColor={p.color?.vialFrom ?? "#3B82F6"}
+                        toColor={p.color?.vialTo ?? "#8B5CF6"}
+                        mg={p.mg}
+                        size="lg"
+                      />
+                    )}
+
+                    {p.purity && (
+                      <div style={{
+                        position: "absolute",
+                        top: "12px",
+                        right: "12px",
+                        background: "rgba(255,255,255,0.9)",
+                        padding: "4px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(13,13,13,0.06)",
+                        ...TYPOGRAPHY.cardMeta,
+                        fontSize: "10px",
+                        color: "#0D0D0D",
+                      }}>
+                        {p.purity}% purity
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{
+                    padding: "clamp(16px, 2vw, 20px)",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}>
+                    <div style={TYPOGRAPHY.cardMeta}>
+                      {p.category || "Research Compound"}
+                    </div>
+
+                    <h3 style={TYPOGRAPHY.cardTitle}>
+                      {p.shortName}
+                    </h3>
+
+                    <p style={TYPOGRAPHY.cardDesc}>
+                      {p.description?.slice(0, 100) + (p.description?.length > 100 ? "…" : "") ||
+                        "Independently tested research compound with published COA."}
+                    </p>
+
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingTop: "12px",
+                      borderTop: "1px solid rgba(13,13,13,0.04)",
+                      marginTop: "4px",
+                    }}>
+                      <span style={TYPOGRAPHY.price}>
+                        {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
+                      </span>
+
+                      <button
+                        onClick={() => addToCart(p)}
+                        disabled={!p.inStock}
+                        style={{
+                          height: "36px",
+                          padding: "0 18px",
+                          borderRadius: "100px",
+                          border: "1px solid rgba(13,13,13,0.08)",
+                          background: p.inStock ? "#0D0D0D" : "rgba(13,13,13,0.04)",
+                          color: p.inStock ? "#fff" : "rgba(13,13,13,0.25)",
+                          ...TYPOGRAPHY.button,
+                          cursor: p.inStock ? "pointer" : "not-allowed",
+                          transition: "background 0.2s ease, border-color 0.2s ease",
+                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                        onMouseEnter={e => {
+                          if (p.inStock) {
+                            e.currentTarget.style.background = "#2A2A2A";
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (p.inStock) {
+                            e.currentTarget.style.background = "#0D0D0D";
+                          }
+                        }}
+                      >
+                        {p.inStock ? "Add to Cart" : "Out of Stock"}
+                        {p.inStock && (
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "clamp(12px, 2vw, 24px)",
+              paddingTop: "clamp(20px, 3vw, 32px)",
+              borderTop: "1px solid rgba(13,13,13,0.06)",
+            }}>
+              {[
+                [p1.purity ? `${p1.purity}%` : "99%+", "Purity Verified"],
+                ["COA", "Batch Documented"],
+                ["24hr", "Dispatch"],
+              ].map(([value, label]) => (
+                <div key={label}>
+                  <div style={{
+                    fontSize: "clamp(20px, 2.5vw, 28px)",
+                    fontWeight: 600,
+                    letterSpacing: "-0.03em",
+                    color: "#0D0D0D",
+                  }}>
+                    {value}
+                  </div>
+                  <div style={{
+                    ...TYPOGRAPHY.cardMeta,
+                    fontSize: "clamp(9px, 0.8vw, 10px)",
+                    color: "rgba(13,13,13,0.3)",
+                    marginTop: "2px",
+                  }}>
+                    {label}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </FadeUp>
-
-      {/* Stats Row */}
-      <FadeUp delay={0.1} style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "clamp(12px, 3vw, 32px)",
-        marginBottom: "clamp(24px, 4vw, 36px)",
-        paddingTop: "clamp(24px, 4vw, 40px)",
-        borderTop: "1px solid rgba(13,13,13,.06)"
-      }}>
-        {([
-          [p1.purity ? `${p1.purity}%` : "99%+", "Purity"],
-          ["COA", "Included"],
-          ["24hr", "Dispatch"]
-        ] as [string, string][]).map(([value, label]) => (
-          <div key={label}>
-            <div style={{
-              fontSize: "clamp(24px, 4vw, 42px)",
-              fontWeight: 700,
-              letterSpacing: "-.05em",
-              color: "#0D0D0D",
-              marginBottom: 2
-            }}>
-              {value}
-            </div>
-            <div style={{
-              fontSize: "clamp(9px, 1.2vw, 11px)",
-              textTransform: "uppercase",
-              letterSpacing: ".12em",
-              color: "rgba(13,13,13,.35)"
-            }}>
-              {label}
-            </div>
-          </div>
-        ))}
-      </FadeUp>
-
-      {/* Footer */}
-      <FadeUp delay={0.15}>
-        <p style={{
-          fontSize: "clamp(14px, 2vw, 17px)",
-          lineHeight: 1.7,
-          color: "rgba(13,13,13,.5)",
-          maxWidth: 620,
-          marginBottom: 10,
-          fontWeight: 400
-        }}>
-          {p1.description
-            ? p1.description.slice(0, 180).trim() + (p1.description.length > 180 ? "…" : "")
-            : "One of the most widely researched peptide combinations. Independently tested, batch-documented, cold-chain dispatched."}
-        </p>
-        <div style={{
-          fontSize: 10,
-          color: "rgba(13,13,13,.25)",
-          lineHeight: 1.5,
-          letterSpacing: ".02em"
-        }}>
-          For laboratory and research purposes only. Not for human consumption.
-        </div>
-      </FadeUp>
-    </div>
-  </section>
-)}
+        </section>
+      )}
 
       {/* ── Research Areas ── */}
-      {/* FIX 2026-08-17: was a 3-up card grid with floating gradient-blur
-          circles behind a gradient-on-black fill — decoration with no
-          connection to the subject. Rebuilt as an index/ledger layout in
-          the same spirit as the COA library elsewhere on the site: each
-          row is real catalogue data (actual compound names pulled from
-          `products`, not filler copy), separated by hairline rules rather
-          than cards, with a left accent bar that's the only motion on
-          hover. Nothing here is decorative; every element is either the
-          category name, a real sample of what's in it, or the count. */}
       <section style={{ background:"#0A0A0A", padding:"clamp(72px,9vw,120px) 0" }}>
         <div style={{ maxWidth:1120, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:48, flexWrap:"wrap", gap:24 }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.35)", marginBottom:16 }}>Research Categories</div>
-              <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#fff" }}>Explore research<br />focus areas.</h2>
+              <div style={TYPOGRAPHY.labelLight}>Research Categories</div>
+              <h2 style={TYPOGRAPHY.headingLight}>Explore research<br />focus areas.</h2>
             </div>
-            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{categories.length} Categories</span>
+            <span style={{ 
+              fontSize: "clamp(12px, 1vw, 13px)", 
+              fontWeight: 500, 
+              color: "rgba(255,255,255,.35)", 
+              letterSpacing: ".04em" 
+            }}>
+              {categories.length} Categories
+            </span>
           </FadeUp>
 
           <div className="areas-grid-wrap">
@@ -1353,17 +1216,50 @@ export default function PepcoLabPage({
                   <Link href={`/products/category/${c.slug}`} className="area-row">
                     <span className="area-row-accent" style={{ background: accent }} />
                     <span style={{ display:"flex", flexDirection:"column", gap:6, minWidth:0 }}>
-                      <span style={{ fontSize:"clamp(22px,2.6vw,30px)", fontWeight:700, letterSpacing:"-.03em", color:"#fff", lineHeight:1.1 }}>{c.label}</span>
+                      <span style={{ 
+                        fontSize: "clamp(20px, 2.2vw, 28px)", 
+                        fontWeight: 600, 
+                        letterSpacing: "-0.02em", 
+                        color: "#fff", 
+                        lineHeight: 1.1 
+                      }}>
+                        {c.label}
+                      </span>
                       {c.sampleNames.length > 0 && (
-                        <span style={{ fontSize:13, color:"rgba(255,255,255,.4)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        <span style={{ 
+                          fontSize: "clamp(12px, 0.9vw, 13px)", 
+                          color: "rgba(255,255,255,.4)", 
+                          overflow: "hidden", 
+                          textOverflow: "ellipsis", 
+                          whiteSpace: "nowrap",
+                          fontWeight: 400,
+                        }}>
                           {c.sampleNames.join(' · ')}
                         </span>
                       )}
                     </span>
                     <span style={{ display:"flex", alignItems:"center", gap:20, flexShrink:0 }}>
                       <span style={{ textAlign:"right" }}>
-                        <span style={{ display:"block", fontSize:22, fontWeight:700, color:"#fff", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>{c.count}</span>
-                        <span style={{ display:"block", fontSize:10.5, color:"rgba(255,255,255,.35)", marginTop:4, letterSpacing:".04em" }}>compound{c.count !== 1 ? "s" : ""}</span>
+                        <span style={{ 
+                          display:"block", 
+                          fontSize: "clamp(18px, 1.8vw, 22px)", 
+                          fontWeight: 600, 
+                          color: "#fff", 
+                          fontVariantNumeric:"tabular-nums", 
+                          lineHeight:1 
+                        }}>
+                          {c.count}
+                        </span>
+                        <span style={{ 
+                          display:"block", 
+                          fontSize: "clamp(9px, 0.7vw, 10px)", 
+                          color: "rgba(255,255,255,.35)", 
+                          marginTop: 4, 
+                          letterSpacing:".04em",
+                          fontWeight: 400,
+                        }}>
+                          compound{c.count !== 1 ? "s" : ""}
+                        </span>
                       </span>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="area-row-arrow">
                         <path d="M5 12h14M13 6l6 6-6 6" />
@@ -1382,10 +1278,27 @@ export default function PepcoLabPage({
         <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:30, flexWrap:"wrap", marginBottom:52 }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.3)", marginBottom:16 }}>Member Access</div>
-              <h2 style={{ fontFamily:"Georgia,serif", fontSize:"clamp(32px,4.5vw,64px)", lineHeight:1.02, letterSpacing:"-.05em", color:"#fff" }}>The benefits of<br />becoming a member.</h2>
+              <div style={TYPOGRAPHY.labelLight}>Member Access</div>
+              <h2 style={{ 
+                fontSize: "clamp(28px, 4vw, 48px)", 
+                fontWeight: 600, 
+                letterSpacing: "-0.03em", 
+                lineHeight: 1.05, 
+                color: "#fff" 
+              }}>
+                The benefits of<br />becoming a member.
+              </h2>
             </div>
-            <p style={{ maxWidth:360, fontSize:14, lineHeight:1.85, color:"rgba(255,255,255,.45)", margin:0 }}>Unlock faster ordering, exclusive research access, full order tracking, and priority notifications.</p>
+            <p style={{ 
+              maxWidth:360, 
+              fontSize: "clamp(13px, 1vw, 14px)", 
+              lineHeight: 1.7, 
+              color: "rgba(255,255,255,.45)", 
+              margin: 0,
+              fontWeight: 400,
+            }}>
+              Unlock faster ordering, exclusive research access, full order tracking, and priority notifications.
+            </p>
           </FadeUp>
 
           <div style={{ display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:2, background:"rgba(255,255,255,.06)", borderRadius:20, overflow:"hidden", marginBottom:40 }}>
@@ -1396,8 +1309,23 @@ export default function PepcoLabPage({
               { title:"Priority Alerts",        desc:"Instant notifications for restocks and new compounds." },
             ].map((b) => (
               <div key={b.title} style={{ background:"#111", padding:"28px 8px" }}>
-                <div style={{ fontSize:15, fontWeight:700, letterSpacing:"-.02em", color:"#fff", marginBottom:10 }}>{b.title}</div>
-                <div style={{ fontSize:13, lineHeight:1.75, color:"rgba(255,255,255,.4)" }}>{b.desc}</div>
+                <div style={{ 
+                  fontSize: "clamp(14px, 1.2vw, 16px)", 
+                  fontWeight: 600, 
+                  letterSpacing: "-0.02em", 
+                  color: "#fff", 
+                  marginBottom: 8 
+                }}>
+                  {b.title}
+                </div>
+                <div style={{ 
+                  fontSize: "clamp(12px, 0.9vw, 13px)", 
+                  lineHeight: 1.7, 
+                  color: "rgba(255,255,255,.4)",
+                  fontWeight: 400,
+                }}>
+                  {b.desc}
+                </div>
                 <div style={{ marginTop:24, width:32, height:1, background:"rgba(255,255,255,.1)" }} />
               </div>
             ))}
@@ -1412,11 +1340,25 @@ export default function PepcoLabPage({
             <div style={{ background: "#0d0d0d", borderRadius: 32, overflow: "hidden" }}>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 0 }}>
                 <div style={{ padding: isMobile ? "36px 28px 24px" : "60px 56px", borderBottom: isMobile ? "1px solid rgba(255,255,255,.07)" : "none", borderRight: isMobile ? "none" : "1px solid rgba(255,255,255,.07)" }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "rgba(255,255,255,.28)", marginBottom: 14 }}>Research Updates</div>
-                  <h2 style={{ fontSize: isMobile ? 32 : "clamp(32px,3.5vw,52px)", lineHeight: ".95", letterSpacing: "-.06em", fontWeight: 700, color: "#fff", margin: "0 0 14px" }}>
+                  <div style={TYPOGRAPHY.labelLight}>Research Updates</div>
+                  <h2 style={{ 
+                    fontSize: isMobile ? "clamp(28px, 6vw, 32px)" : "clamp(32px, 3.5vw, 48px)", 
+                    lineHeight: ".95", 
+                    letterSpacing: "-.04em", 
+                    fontWeight: 600, 
+                    color: "#fff", 
+                    margin: "10px 0 14px" 
+                  }}>
                     Stay ahead of<br />new releases.
                   </h2>
-                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "rgba(255,255,255,.4)", margin: 0, maxWidth: 340 }}>
+                  <p style={{ 
+                    fontSize: "clamp(13px, 1vw, 14px)", 
+                    lineHeight: 1.7, 
+                    color: "rgba(255,255,255,.4)", 
+                    margin: 0, 
+                    maxWidth: 340,
+                    fontWeight: 400,
+                  }}>
                     Compound launches, COA updates, and fulfilment alerts — direct to your inbox.
                   </p>
                 </div>
@@ -1425,7 +1367,14 @@ export default function PepcoLabPage({
                   {!isMobile && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 8 }}>
                       {["New compound launches", "Batch-specific COA updates", "Research announcements", "Fulfilment & availability alerts"].map(item => (
-                        <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "rgba(255,255,255,.55)" }}>
+                        <div key={item} style={{ 
+                          display: "flex", 
+                          alignItems: "center", 
+                          gap: 10, 
+                          fontSize: "clamp(12px, 0.9vw, 13px)", 
+                          color: "rgba(255,255,255,.55)",
+                          fontWeight: 400,
+                        }}>
                           <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#C8992A", flexShrink: 0 }} />
                           {item}
                         </div>
@@ -1433,7 +1382,7 @@ export default function PepcoLabPage({
                     </div>
                   )}
 
-                  <div className="flex lg:flex-row flex-col" style={{ gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <input
                       type="email"
                       placeholder="your@email.com"
@@ -1441,18 +1390,48 @@ export default function PepcoLabPage({
                       onChange={e => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
                       onKeyDown={e => { if (e.key === "Enter") handleSubscribe(); }}
                       aria-invalid={!!emailError}
-                      style={{ flex: 1, minHeight: 48, width: "100%", borderRadius: 999, border: `1px solid ${emailError ? "#D64545" : "rgba(255,255,255,.1)"}`, padding: "0 18px", fontSize: 13, outline: "none", background: "rgba(255,255,255,.06)", color: "#fff", minWidth: 0 }}
+                      style={{ 
+                        flex: 1, 
+                        minHeight: 48, 
+                        minWidth: "180px",
+                        borderRadius: 999, 
+                        border: `1px solid ${emailError ? "#D64545" : "rgba(255,255,255,.1)"}`, 
+                        padding: "0 18px", 
+                        fontSize: "clamp(12px, 0.9vw, 13px)", 
+                        outline: "none", 
+                        background: "rgba(255,255,255,.06)", 
+                        color: "#fff",
+                        fontWeight: 400,
+                      }}
                     />
                     <button
                       onClick={handleSubscribe}
                       disabled={subscribing}
-                      style={{ height: 48, padding: "0 20px", borderRadius: 999, border: "none", background: subbed ? "#0A7B45" : "#C8992A", color: "#fff", fontSize: 13, fontWeight: 700, cursor: subscribing ? "not-allowed" : "pointer", opacity: subscribing ? 0.7 : 1, whiteSpace: "nowrap", flexShrink: 0, transition: "background .2s" }}
+                      style={{ 
+                        height: 48, 
+                        padding: "0 24px", 
+                        borderRadius: 999, 
+                        border: "none", 
+                        background: subbed ? "#0A7B45" : "#C8992A", 
+                        color: "#fff", 
+                        fontSize: "clamp(12px, 0.9vw, 13px)", 
+                        fontWeight: 600, 
+                        cursor: subscribing ? "not-allowed" : "pointer", 
+                        opacity: subscribing ? 0.7 : 1, 
+                        whiteSpace: "nowrap", 
+                        flexShrink: 0, 
+                        transition: "background .2s" 
+                      }}
                     >
                       {subbed ? "✓ Done" : subscribing ? "..." : "Subscribe"}
                     </button>
                   </div>
-                  {/* FIX #7: real feedback on invalid/empty email instead of a silent no-op */}
-                  <div style={{ fontSize: 11, color: emailError ? "#E27676" : "rgba(255,255,255,.22)", lineHeight: 1.5 }}>
+
+                  <div style={{ 
+                    fontSize: "clamp(10px, 0.8vw, 11px)", 
+                    color: emailError ? "#E27676" : "rgba(255,255,255,.22)", 
+                    lineHeight: 1.5 
+                  }}>
                     {emailError ?? (
                       <>No spam. <Link href="/unsubscribe" style={{ color: "rgba(255,255,255,.35)", textDecoration: "underline" }}>Unsubscribe anytime.</Link></>
                     )}
@@ -1461,11 +1440,24 @@ export default function PepcoLabPage({
               </div>
 
               <div style={{ borderTop: "1px solid rgba(255,255,255,.07)", padding: "14px 28px", display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,.25)" }}>Trusted by 2,400+ researchers across the UK.</div>
+                <div style={{ 
+                  fontSize: "clamp(10px, 0.8vw, 11px)", 
+                  color: "rgba(255,255,255,.25)",
+                  fontWeight: 400,
+                }}>
+                  Trusted by 2,400+ researchers across the UK.
+                </div>
                 {!isMobile && (
                   <div style={{ display: "flex", gap: 18 }}>
                     {["Independent Testing", "Published COAs", "Cold-Chain Fulfilment"].map(item => (
-                      <span key={item} style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.2)", letterSpacing: ".08em", textTransform: "uppercase" }}>{item}</span>
+                      <span key={item} style={{ 
+                        ...TYPOGRAPHY.labelLight,
+                        fontSize: "9px",
+                        color: "rgba(255,255,255,.2)",
+                        letterSpacing: ".08em",
+                      }}>
+                        {item}
+                      </span>
                     ))}
                   </div>
                 )}
