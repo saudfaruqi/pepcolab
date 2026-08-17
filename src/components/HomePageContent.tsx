@@ -77,21 +77,27 @@ const TRUST_ITEMS = [
   "99%+ Purity Guaranteed", "Free Tracked Shipping Over AED80",
 ];
 
-// FIX #1: The previous list attached specific named researchers to specific real
-// universities (UCL, Edinburgh, Oxford) as "Verified Purchase" testimonials.
-// That's a fabricated-credential problem, not a copy problem — it borrows the
-// authority of real institutions for quotes that don't exist. Until you have
-// genuine, consent-given customer reviews to display, use role descriptions
-// that read as authentic customer segments without naming or implying specific
-// institutions. Swap this array out entirely once real reviews are collected.
-const REVIEWS = [
-  { author: "Sarah M.",  role: "Research Scientist",        initials: "SM", text: "Batch COA published on the site for every single product. This level of transparency is rare in the peptide space.",                              sub: "Verified · BPC-157 5mg"  },
-  { author: "James T.",  role: "Sports Science Researcher",  initials: "JT", text: "Cold-chain packaging intact on arrival. Freedom Diagnostics result matched what they advertise on my BPC-157 batch.",                                          sub: "Verified · TB-500 5mg"   },
-  { author: "Priya K.",  role: "Independent Researcher",     initials: "PK", text: "Finally a supplier that treats researchers like professionals. Ordered 4 compounds — all delivered next day, all with QR-coded COAs.",              sub: "Verified · GLP-1 5mg"    },
-  { author: "Marcus R.", role: "Performance Coach",          initials: "MR", text: "The GHK-Cu results have been remarkable for my skin research protocols. Will be a repeat customer.",                                               sub: "Verified · GHK-Cu 200mg" },
-  { author: "Lena W.",   role: "Biochemistry Researcher",    initials: "LW", text: "Third-party testing and batch traceability are exactly what researchers need. PepcoLab delivers both without compromise.",                          sub: "Verified · Selank 5mg"   },
-  { author: "Tom H.",    role: "Exercise Physiologist",      initials: "TH", text: "Ordered on Friday, arrived Monday in perfect condition. The QR-code on the vial linking directly to the COA is a brilliant touch.",                  sub: "Verified · TB-500 10mg"  },
-];
+// FIX 2026-08-16: the previous REVIEWS array (and data.ts's separate copy)
+// were fabricated quotes attached to invented names, job titles, and in
+// data.ts's case, real institutions — a genuine DMCC Act 2024 fake-reviews
+// problem, not just weak copy. This now fetches real reviews from
+// /api/reviews, which only ever contains reviews tied to a verified
+// completed order (see lib/reviewStore.ts + api/reviews/submit). When
+// there are zero real reviews yet, the section below shows an honest
+// empty state instead of inventing content to fill the space.
+interface RealReview {
+  id: string
+  productTitle: string
+  authorName: string
+  rating: number
+  text: string
+  createdAt: string
+}
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return parts.slice(0, 2).map((p) => p.charAt(0).toUpperCase()).join('')
+}
 
 // Accent colours keyed to the real Shopify category slugs (metabolic,
 // hormonal, cognitive, recovery, anti-ageing, accessories, immune) — same
@@ -227,6 +233,26 @@ export default function PepcoLabPage({
   const [loadError,   setLoadError]   = useState(false); // FIX #2
   const [retryToken,  setRetryToken]  = useState(0);      // FIX #2: bump to re-trigger fetch
 
+  const [realReviews, setRealReviews] = useState<RealReview[]>([]);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/reviews')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setRealReviews(Array.isArray(data.reviews) ? data.reviews : []);
+      })
+      .catch(() => {
+        // Fail quietly into the empty state below — a reviews-fetch error
+        // shouldn't ever block the rest of the homepage from rendering.
+      })
+      .finally(() => {
+        if (!cancelled) setReviewsLoaded(true);
+      });
+    return () => { cancelled = true };
+  }, []);
+
   const { addItem } = useCart();
   const isMobile = useIsMobile();
 
@@ -356,10 +382,9 @@ export default function PepcoLabPage({
     bundle.products.forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
   }, [addItem]);
 
-  // FIX #4: featured quote now references REVIEWS[0] instead of duplicating
-  // the same author/text/role as a separate hardcoded block, so the two can
-  // never drift out of sync.
-  const featuredReview = REVIEWS[0];
+  // Highest-rated real review, most recent as tiebreaker — undefined when
+  // there are none yet, handled by the empty state in the JSX below.
+  const featuredReview = [...realReviews].sort((a, b) => b.rating - a.rating)[0];
 
   // FIX 2026-08-16: this previously only set local state — no request was
   // ever made, so the email was validated and then discarded. "✓ Done"
@@ -893,48 +918,86 @@ export default function PepcoLabPage({
         <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ maxWidth:680, marginBottom:60 }}>
             <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(13,13,13,.38)", marginBottom:16 }}>Trusted By Researchers</div>
-            <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#0D0D0D" }}>Trusted by over<br />2,400 researchers.</h2>
+            <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#0D0D0D" }}>
+              {realReviews.length > 0 ? <>What verified<br />researchers say.</> : <>Verified by the<br />researchers who order.</>}
+            </h2>
           </FadeUp>
         </div>
 
-        {/* Scrolling review strip */}
-        <div className="scrollbar-hidden" style={{ overflow:"hidden", marginBottom:56 }}>
-          <div className="review-marquee-track">
-            {[...REVIEWS, ...REVIEWS].map((r, i) => (
-              <div key={i} style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:20, padding:"24px 28px", width:340, flexShrink:0, marginRight:16 }}>
-                <div style={{ display:"flex", gap:3, marginBottom:12 }}>{"★★★★★".split("").map((s,j) => <span key={j} style={{ color:"#C8992A", fontSize:13 }}>{s}</span>)}</div>
-                <p style={{ fontSize:14, lineHeight:1.8, color:"rgba(13,13,13,.7)", marginBottom:20 }}>"{r.text}"</p>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:36, height:36, borderRadius:"50%", background:"#F0EDE6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#0d0d0d", flexShrink:0 }}>{r.initials}</div>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:700, color:"#0d0d0d" }}>{r.author}</div>
-                    <div style={{ fontSize:11, color:"rgba(13,13,13,.4)" }}>{r.role}</div>
-                  </div>
-                </div>
+        {!reviewsLoaded ? null : realReviews.length === 0 ? (
+          /* FIX 2026-08-16: was a hardcoded marquee of fabricated quotes +
+             an unverifiable "2,400 researchers" claim. Until real reviews
+             exist, show an honest state that leans on things that ARE
+             independently verifiable (COA library, lab testing) rather
+             than inventing social proof. */
+          <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
+            <FadeUp>
+              <div style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:32, padding:"clamp(40px,5vw,64px)", textAlign:"center" }}>
+                <div style={{ display:"flex", gap:4, marginBottom:20, justifyContent:"center" }}>{"★★★★★".split("").map((s,i) => <span key={i} style={{ color:"rgba(13,13,13,.15)", fontSize:20 }}>{s}</span>)}</div>
+                <p style={{ fontSize:18, lineHeight:1.7, color:"rgba(13,13,13,.6)", maxWidth:520, margin:"0 auto 28px" }}>
+                  No reviews yet — every one we publish is tied to a real, verified order. Placed one recently? Be the first to share your experience.
+                </p>
+                <Link href="/track-order" style={{ display:"inline-block", background:"#0D0D0D", color:"#fff", padding:"14px 32px", borderRadius:999, textDecoration:"none", fontSize:14, fontWeight:700 }}>
+                  Leave a Verified Review
+                </Link>
               </div>
-            ))}
+            </FadeUp>
           </div>
-        </div>
-
-        {/* Featured quote — now sourced from REVIEWS[0], no separate hardcoded copy */}
-        <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
-          <FadeUp>
-            <div style={{ background:"#0d0d0d", borderRadius:32, padding:"clamp(32px,4vw,56px)" }}>
-              <div style={{ display:"flex", gap:4, marginBottom:24 }}>{"★★★★★".split("").map((s,i) => <span key={i} style={{ color:"#C8992A", fontSize:16 }}>{s}</span>)}</div>
-              <p style={{ fontSize:"clamp(20px,2.8vw,36px)", lineHeight:1.35, letterSpacing:"-.03em", color:"#fff", margin:"0 0 32px", maxWidth:900 }}>
-                "{featuredReview.text}"
-              </p>
-              <div style={{ display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
-                <div style={{ width:50, height:50, borderRadius:"50%", background:"rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:"#fff" }}>{featuredReview.initials}</div>
-                <div>
-                  <div style={{ fontWeight:700, color:"#fff", marginBottom:3 }}>{featuredReview.author}</div>
-                  <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>{featuredReview.role}</div>
-                </div>
-                <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color:"#0A7B45", background:"rgba(10,123,69,.15)", padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>✓ VERIFIED PURCHASE</div>
+        ) : (
+          <>
+            {/* Scrolling review strip */}
+            <div className="scrollbar-hidden" style={{ overflow:"hidden", marginBottom:56 }}>
+              <div className="review-marquee-track">
+                {[...realReviews, ...realReviews].map((r, i) => (
+                  <div key={`${r.id}-${i}`} style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:20, padding:"24px 28px", width:340, flexShrink:0, marginRight:16 }}>
+                    <div style={{ display:"flex", gap:3, marginBottom:12 }}>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <span key={j} style={{ color: j < r.rating ? "#C8992A" : "rgba(13,13,13,.12)", fontSize:13 }}>★</span>
+                      ))}
+                    </div>
+                    <p style={{ fontSize:14, lineHeight:1.8, color:"rgba(13,13,13,.7)", marginBottom:20 }}>"{r.text}"</p>
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <div style={{ width:36, height:36, borderRadius:"50%", background:"#F0EDE6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#0d0d0d", flexShrink:0 }}>{initialsFor(r.authorName)}</div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:700, color:"#0d0d0d" }}>{r.authorName}</div>
+                        <div style={{ fontSize:11, color:"rgba(13,13,13,.4)" }}>Verified · {r.productTitle}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </FadeUp>
-        </div>
+
+            {/* Featured quote — highest-rated real review */}
+            {featuredReview && (
+              <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
+                <FadeUp>
+                  <div style={{ background:"#0d0d0d", borderRadius:32, padding:"clamp(32px,4vw,56px)" }}>
+                    <div style={{ display:"flex", gap:4, marginBottom:24 }}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i} style={{ color: i < featuredReview.rating ? "#C8992A" : "rgba(255,255,255,.15)", fontSize:16 }}>★</span>
+                      ))}
+                    </div>
+                    <p style={{ fontSize:"clamp(20px,2.8vw,36px)", lineHeight:1.35, letterSpacing:"-.03em", color:"#fff", margin:"0 0 32px", maxWidth:900 }}>
+                      "{featuredReview.text}"
+                    </p>
+                    <div style={{ display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+                      <div style={{ width:50, height:50, borderRadius:"50%", background:"rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:"#fff" }}>{initialsFor(featuredReview.authorName)}</div>
+                      <div>
+                        <div style={{ fontWeight:700, color:"#fff", marginBottom:3 }}>{featuredReview.authorName}</div>
+                        <div style={{ fontSize:13, color:"rgba(255,255,255,.45)" }}>{featuredReview.productTitle}</div>
+                      </div>
+                      {/* This badge is now legitimate — every review here is
+                          gated on a real order lookup match, not decorative
+                          copy (see api/reviews/submit/route.ts). */}
+                      <div style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color:"#0A7B45", background:"rgba(10,123,69,.15)", padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>✓ VERIFIED PURCHASE</div>
+                    </div>
+                  </div>
+                </FadeUp>
+              </div>
+            )}
+          </>
+        )}
       </section>
 
 {/* ── Research Spotlight ── */}

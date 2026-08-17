@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { formatPrice } from '@/lib/utils'
-import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight, Star } from 'lucide-react'
 
 interface OrderProduct {
   title: string
@@ -52,6 +52,18 @@ export default function TrackOrderPage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<OrderResult | null>(null)
 
+  // Review form — only shown for completed orders. Reuses the same
+  // orderCode/email the customer already proved ownership of above; the
+  // submit route re-verifies that server-side rather than trusting these
+  // client values, so this form can't be used to post a review for an
+  // order that isn't actually yours.
+  const [reviewProduct, setReviewProduct] = useState('')
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewText, setReviewText] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!orderCode.trim() || !email.trim()) return
@@ -59,6 +71,10 @@ export default function TrackOrderPage() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setReviewSubmitted(false)
+    setReviewError(null)
+    setReviewRating(0)
+    setReviewText('')
 
     try {
       const res = await fetch('/api/orders/lookup', {
@@ -73,10 +89,44 @@ export default function TrackOrderPage() {
         return
       }
       setResult(data.order)
+      setReviewProduct(data.order.products[0]?.title || '')
     } catch {
       setError('Something went wrong. Please check your connection and try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleReviewSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!result || reviewRating === 0 || reviewText.trim().length < 10) return
+
+    setReviewSubmitting(true)
+    setReviewError(null)
+
+    try {
+      const res = await fetch('/api/reviews/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderCode: orderCode.trim(),
+          email: email.trim(),
+          productTitle: reviewProduct,
+          rating: reviewRating,
+          text: reviewText.trim(),
+        }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setReviewError(data.error || 'Something went wrong. Please try again.')
+        return
+      }
+      setReviewSubmitted(true)
+    } catch {
+      setReviewError('Something went wrong. Please check your connection and try again.')
+    } finally {
+      setReviewSubmitting(false)
     }
   }
 
@@ -209,6 +259,99 @@ export default function TrackOrderPage() {
                 Try Again
                 <ArrowRight size={14} />
               </Link>
+            )}
+          </div>
+        )}
+
+        {result && (result.status === 'created' || result.status === 'updated') && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-5">
+            {reviewSubmitted ? (
+              <div className="text-center py-4">
+                <div className="w-12 h-12 rounded-full bg-green-50 border border-green-200/60 flex items-center justify-center mx-auto mb-3">
+                  <Star size={20} className="text-green-600" fill="currentColor" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Thanks for the review</h3>
+                <p className="text-xs text-gray-500">It'll appear on the site once we've reviewed it.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReviewSubmit} className="flex flex-col gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Leave a review</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Shown as a verified purchase — no fake reviews here.
+                  </p>
+                </div>
+
+                {result.products.length > 1 && (
+                  <div>
+                    <label htmlFor="reviewProduct" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                      Which product?
+                    </label>
+                    <select
+                      id="reviewProduct"
+                      value={reviewProduct}
+                      onChange={(e) => setReviewProduct(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+                    >
+                      {result.products.map((p, i) => (
+                        <option key={i} value={p.title}>{p.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Rating</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setReviewRating(n)}
+                        aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                        className="p-1"
+                      >
+                        <Star
+                          size={24}
+                          className={n <= reviewRating ? 'text-amber-400' : 'text-gray-200'}
+                          fill={n <= reviewRating ? 'currentColor' : 'none'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="reviewText" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                    Your review
+                  </label>
+                  <textarea
+                    id="reviewText"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    rows={4}
+                    placeholder="What was your experience like?"
+                    maxLength={2000}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={reviewSubmitting || reviewRating === 0 || reviewText.trim().length < 10}
+                  className={`w-full h-11 rounded-xl font-semibold text-sm transition-all ${
+                    reviewSubmitting || reviewRating === 0 || reviewText.trim().length < 10
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {reviewSubmitting ? 'Submitting…' : 'Submit Review'}
+                </button>
+
+                {reviewError && (
+                  <p className="text-sm text-red-600 text-center">{reviewError}</p>
+                )}
+              </form>
             )}
           </div>
         )}
