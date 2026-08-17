@@ -16,6 +16,7 @@ import crypto from 'crypto'
 import { createShopifyOrder, markShopifyOrderPaid } from '@/lib/shopifyAdmin'
 import { saveOrderRecord, type OrderRecord } from '@/lib/orderStore'
 import { sendMailSafe } from '@/lib/mailer'
+import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
@@ -195,7 +196,24 @@ export async function POST(req: NextRequest) {
         )
 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
-        await saveOrderRecord(buildOrderRecord(type === 'order_created' ? 'created' : 'updated'))
+        const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
+        await saveOrderRecord(record)
+
+        // This is the actual fix for "how does the customer find their
+        // order code again" — it previously only ever appeared transiently
+        // on STRABL's own post-checkout page. checkout/success has always
+        // claimed "you'll receive a confirmation email shortly"; now it's
+        // true. Best-effort — a failed email should never fail the webhook
+        // itself (the order is already real either way).
+        if (record.email) {
+          await sendOrderConfirmationEmail({
+            to: record.email,
+            orderShortCode: record.orderShortCode,
+            products: record.products,
+            total: record.total,
+            currency: record.currency,
+          })
+        }
       } catch (err: any) {
         console.error('[webhook] ❌ Failed to create Shopify order:', err.message, err.stack)
         syncFailed = true
@@ -231,7 +249,19 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         `[webhook] ⚠️ Payment failed — strabl:${orderUuid} — reason: ${orderUpdate.failureReason} — meta:`,
         JSON.stringify(orderUpdate.meta)
       )
-      await saveOrderRecord(buildOrderRecord('failed'))
+      const failedRecord = buildOrderRecord('failed')
+      await saveOrderRecord(failedRecord)
+
+      // Reassures the customer no money was taken and gives them the order
+      // code + a track-order link, rather than leaving them wondering what
+      // happened after being bounced off STRABL's checkout page.
+      if (failedRecord.email) {
+        await sendPaymentFailedEmail({
+          to: failedRecord.email,
+          orderShortCode: failedRecord.orderShortCode,
+          failureReason: failedRecord.failureReason,
+        })
+      }
 
       // Also create a real Shopify order so failed attempts are visible in
       // the Orders list for follow-up, not just in /track-order. financial_

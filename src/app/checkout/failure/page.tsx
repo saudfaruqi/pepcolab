@@ -2,187 +2,68 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import Nav from '@/components/Nav'
 
 export default function CheckoutFailurePage() {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText('hello@pepcolab.com')
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: '#f7f7f5',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      padding: '20px'
-    }}>
-      <div style={{
-        background: '#fff',
-        padding: '48px 40px',
-        borderRadius: 24,
-        maxWidth: 480,
-        width: '100%',
-        textAlign: 'center',
-        boxShadow: '0 8px 40px rgba(0,0,0,.08)'
-      }}>
-        <div style={{
-          width: 72,
-          height: 72,
-          borderRadius: '50%',
-          background: '#fee2e2',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 24px'
-        }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F7F5F1' }}>
+      <Nav />
 
-        <h1 style={{
-          fontSize: 28,
-          fontWeight: 700,
-          color: '#0d0d0d',
-          margin: '0 0 8px',
-          fontFamily: 'Georgia, serif'
-        }}>
-          Payment Failed
-        </h1>
-        <p style={{
-          fontSize: 15,
-          color: 'rgba(13,13,13,.55)',
-          lineHeight: 1.6,
-          margin: '0 0 8px'
-        }}>
-          We couldn't process your payment. This could be due to:
-        </p>
-        <ul style={{
-          textAlign: 'left',
-          fontSize: 13,
-          color: 'rgba(13,13,13,.45)',
-          lineHeight: 1.8,
-          paddingLeft: 20,
-          margin: '0 0 24px'
-        }}>
-          <li>Insufficient funds or payment method decline</li>
-          <li>Incorrect payment details entered</li>
-          <li>Bank security restrictions</li>
-        </ul>
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+        <div style={{ maxWidth: 460, width: '100%', textAlign: 'center' }}>
+          <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#B91C1C', background: 'rgba(185,28,28,.08)', padding: '7px 16px', borderRadius: 999, marginBottom: 24 }}>
+            Payment Not Completed
+          </div>
 
-        <div style={{
-          background: '#fafaf9',
-          padding: '14px',
-          borderRadius: 12,
-          fontSize: 13,
-          color: 'rgba(13,13,13,.45)',
-          marginBottom: 24,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8
-        }}>
-          <span>Need help? Contact us at</span>
-          <button
-            onClick={handleCopy}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#0d0d0d',
-              fontWeight: 600,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              fontSize: 13
-            }}
-          >
-            hello@pepcolab.com
-          </button>
-          {copied && (
-            <span style={{
-              fontSize: 11,
-              color: '#22c55e',
-              fontWeight: 500
-            }}>
-              ✓ Copied!
-            </span>
-          )}
-        </div>
+          <h1 style={{ fontSize: 'clamp(30px,4vw,40px)', fontWeight: 700, letterSpacing: '-.03em', lineHeight: 1.05, color: '#0D0D0D', margin: '0 0 12px' }}>
+            Your payment didn't go through.
+          </h1>
+          <p style={{ fontSize: 15, lineHeight: 1.6, color: 'rgba(13,13,13,.55)', maxWidth: 380, margin: '0 auto 28px' }}>
+            No charge was made. If your bank shows a pending hold, it will release automatically.
+          </p>
 
-        <div style={{
-          display: 'flex',
-          gap: 12,
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
+          <div style={{ background: '#fff', border: '1px solid rgba(13,13,13,.08)', borderRadius: 20, padding: '28px', marginBottom: 28, textAlign: 'left' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(13,13,13,.4)', marginBottom: 12 }}>
+              This is usually one of
+            </div>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+              {[
+                'The bank declined or couldn\u2019t complete 3D Secure verification',
+                'Insufficient funds or a card limit',
+                'Incorrect card details entered',
+              ].map((reason, i) => (
+                <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13.5, lineHeight: 1.6, color: 'rgba(13,13,13,.6)', marginBottom: i < 2 ? 10 : 0 }}>
+                  <span style={{ color: '#C8992A', flexShrink: 0, marginTop: 1 }}>—</span>
+                  {reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <Link
             href="/products"
-            style={{
-              display: 'inline-block',
-              background: '#0d0d0d',
-              color: '#fff',
-              padding: '12px 32px',
-              borderRadius: 999,
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              transition: 'background .2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#1a1a1a'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#0d0d0d'
-            }}
+            style={{ display: 'block', background: '#0D0D0D', color: '#fff', padding: '15px', borderRadius: 999, textDecoration: 'none', fontSize: 14, fontWeight: 700, marginBottom: 12, transition: 'background .2s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1a1a' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#0D0D0D' }}
           >
-            Return to Cart
+            Try Again
           </Link>
-          <Link
-            href="/products"
-            style={{
-              display: 'inline-block',
-              background: 'transparent',
-              color: '#0d0d0d',
-              padding: '12px 32px',
-              borderRadius: 999,
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              border: '1px solid rgba(13,13,13,.15)',
-              transition: 'border-color .2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#0d0d0d'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(13,13,13,.15)'
-            }}
-          >
-            Browse Products
-          </Link>
-        </div>
 
-        <Link
-          href="/track-order"
-          style={{
-            display: 'block',
-            marginTop: 16,
-            fontSize: 13,
-            color: 'rgba(13,13,13,.45)',
-            textDecoration: 'underline',
-          }}
-        >
-          Check your order status
-        </Link>
-      </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 8 }}>
+            <Link href="/track-order" style={{ fontSize: 13, fontWeight: 600, color: 'rgba(13,13,13,.5)', textDecoration: 'none' }}>
+              Check order status
+            </Link>
+            <span style={{ color: 'rgba(13,13,13,.2)' }}>·</span>
+            <a href="mailto:hello@pepcolab.com" style={{ fontSize: 13, fontWeight: 600, color: 'rgba(13,13,13,.5)', textDecoration: 'none' }}>
+              Contact support
+            </a>
+          </div>
+
+          <p style={{ fontSize: 11, color: 'rgba(13,13,13,.3)', lineHeight: 1.6, marginTop: 32 }}>
+            For laboratory and research purposes only. Not for human or veterinary use.
+          </p>
+        </div>
+      </main>
     </div>
   )
 }
