@@ -15,7 +15,6 @@ import { BUNDLES as CURATED_BUNDLES } from "@/app/data";
 
 import { useCountry } from '@/lib/countryContext'
 import BestSellersSection from "./BestSellersSection";
-import COASection from "./COASection";
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
@@ -941,7 +940,6 @@ export default function PepcoLabPage({
               </FadeUp>
             </div>
           </section>
-          <COASection />
         </>
       ) : (
         <section style={{ background: "#fff", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)", overflow: "hidden" }}>
