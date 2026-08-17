@@ -923,12 +923,11 @@ export default function PepcoLabPage({
            slim CTA above it invites the actual first review rather than
            padding the space with more invented content. */
         <>
-          <section style={{ background: "#fff", padding: "clamp(56px,6vw,80px) 0 0" }}>
+          <section style={{ background: "#fff", padding: "clamp(56px,6vw,80px) 0 0", paddingBottom: "56px" }}>
             <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
               <FadeUp>
                 <div style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:24, padding:"clamp(28px,3.5vw,40px)", display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
                   <div>
-                    <div style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(13,13,13,.4)", marginBottom:8 }}>No reviews yet</div>
                     <p style={{ fontSize:16, lineHeight:1.6, color:"rgba(13,13,13,.65)", maxWidth:480, margin:0 }}>
                       Every review we publish is tied to a real, verified order — no exceptions. Placed one recently? Be the first to share your experience.
                     </p>
@@ -1004,44 +1003,201 @@ export default function PepcoLabPage({
         </section>
       )}
 
-      {/* ── Research Areas ── */}
-      <section style={{ background:"#0A0A0A", padding:"clamp(80px,10vw,140px) 0" }}>
-        <div style={{ maxWidth:1440, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
-          <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:56, flexWrap:"wrap", gap:24 }}>
-            <div>
-              <div style={{ fontSize:11, fontWeight:700, letterSpacing:".18em", textTransform:"uppercase", color:"rgba(255,255,255,.35)", marginBottom:16 }}>Research Categories</div>
-              <h2 style={{ fontSize:"clamp(40px,5.5vw,80px)", lineHeight:".92", letterSpacing:"-.07em", fontWeight:700, color:"#fff" }}>Explore research<br />focus areas.</h2>
-            </div>
-            <span style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,.35)", letterSpacing:".06em" }}>{categories.length} Categories</span>
-          </FadeUp>
+{/* ── Research Areas ── */}
 
-          <div className="areas-grid">
-            {categories.map((c, i) => {
-              const accent = AREA_ACCENTS[c.slug] ?? "#fff"
-              return (
-                <FadeUp key={c.slug} delay={i * 0.06}>
-                  <Link
-                    href={`/products/category/${c.slug}`}
-                    className="area-card"
-                    style={{ display: "block", textDecoration: "none", background: "linear-gradient(145deg,#000,#111)", borderRadius: 24, padding: "36px 28px 32px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,.06)" }}
-                  >
-                    <div style={{ position:"absolute", top:-30, right:-30, width:120, height:120, borderRadius:"50%", background:`${accent}22` }} />
-                    <div style={{ position:"absolute", bottom:-20, left:-20, width:80, height:80, borderRadius:"50%", background:"rgba(255,255,255,.04)" }} />
-                    <div style={{ position:"relative", zIndex:1 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:40 }}>
-                        <span style={{ width:6, height:6, borderRadius:"50%", background:accent, flexShrink:0 }} />
-                        <span style={{ fontSize:11, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase", color:"rgba(255,255,255,.4)" }}>Research Area</span>
-                      </div>
-                      <h3 style={{ fontSize:isMobile?26:32, fontWeight:700, letterSpacing:"-.04em", color:"#fff", marginBottom:10, lineHeight:1 }}>{c.label}</h3>
-                      <p style={{ fontSize:13, color:"rgba(255,255,255,.55)", marginBottom:28 }}>{c.count} compound{c.count !== 1 ? "s" : ""}</p>
-                    </div>
-                  </Link>
-                </FadeUp>
-              )
-            })}
-          </div>
+<section
+  className="research-section"
+  style={{
+    background: "#0A0A0A",
+    padding: "clamp(80px, 10vw, 140px) 0",
+    position: "relative",
+    overflow: "hidden",
+  }}
+>
+  {/* Subtle background glow */}
+  <div
+    style={{
+      position: "absolute",
+      top: "-40%",
+      right: "-20%",
+      width: "60%",
+      height: "80%",
+      background: "radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)",
+      pointerEvents: "none",
+    }}
+  />
+
+  <div
+    style={{
+      maxWidth: 1440,
+      margin: "0 auto",
+      padding: "0 clamp(20px, 5vw, 60px)",
+      position: "relative",
+      zIndex: 1,
+    }}
+  >
+    {/* Header */}
+    <FadeUp
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        marginBottom: 64,
+        flexWrap: "wrap",
+        gap: 24,
+      }}
+    >
+      <div>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.3)",
+            marginBottom: 12,
+          }}
+        >
+          Research Categories
         </div>
-      </section>
+        <h2
+          style={{
+            fontSize: "clamp(36px, 5vw, 72px)",
+            lineHeight: 1.05,
+            letterSpacing: "-0.05em",
+            fontWeight: 700,
+            color: "#FFFFFF",
+            margin: 0,
+          }}
+        >
+          Explore our
+          <br />
+          <span>focus areas</span>
+        </h2>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 16px",
+          borderRadius: 100,
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: "rgba(255,255,255,0.5)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {categories.length} Categories
+        </span>
+      </div>
+    </FadeUp>
+
+    {/* Grid */}
+    <div
+      className="areas-grid"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+        gap: 20,
+      }}
+    >
+      {categories.map((c, i) => {
+        const accent = AREA_ACCENTS[c.slug] ?? "#ffffff";
+
+        return (
+          <FadeUp key={c.slug} delay={i * 0.06}>
+            <Link
+              href={`/products/category/${c.slug}`}
+              className="area-card"
+              style={{
+                display: "block",
+                textDecoration: "none",
+                background: "linear-gradient(145deg, #121212, #0A0A0A)",
+                borderRadius: 20,
+                padding: "28px 24px 24px",
+                position: "relative",
+                border: "1px solid rgba(255,255,255,0.06)",
+                transition: "all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                cursor: "pointer",
+                height: "100%",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = `rgba(255,255,255,0.15)`;
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 ${accent}22`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              {/* Decorative elements */}
+              <div/>
+              <div/>
+
+              {/* Content */}
+              <div style={{ position: "relative", zIndex: 1 }}>
+
+                <h3
+                  style={{
+                    fontSize: "clamp(22px, 2.2vw, 30px)",
+                    fontWeight: 600,
+                    letterSpacing: "-0.03em",
+                    color: "#FFFFFF",
+                    margin: "0 0 6px 0",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {c.label}
+                </h3>
+
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.4)",
+                    margin: 0,
+                    fontWeight: 400,
+                  }}
+                >
+                  {c.count} compound{c.count !== 1 ? "s" : ""}
+                </p>
+
+                {/* Accent line */}
+                <div
+                  style={{
+                    marginTop: 20,
+                    width: 32,
+                    height: 2,
+                    background: `linear-gradient(90deg, ${accent}66, transparent)`,
+                    borderRadius: 2,
+                    transition: "width 0.3s ease",
+                  }}
+                  className="area-card-line"
+                />
+              </div>
+            </Link>
+          </FadeUp>
+        );
+      })}
+    </div>
+  </div>
+
+  {/* Optional: Add hover styles via CSS-in-JS or className */}
+  <style>{`
+    .area-card:hover .area-card-line {
+      width: 48px !important;
+    }
+  `}</style>
+</section>
 
       {/* ── Research Spotlight ── */}
       {p1 && p2 && (
