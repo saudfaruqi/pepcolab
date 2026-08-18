@@ -391,3 +391,19 @@ function TrackOrderContent() {
     </div>
   )
 }
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Nav />
+        <main className="flex-1 flex items-center justify-center">
+          <span className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    }>
+      <TrackOrderContent />
+    </Suspense>
+  )
+}

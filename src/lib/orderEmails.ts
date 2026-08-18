@@ -138,6 +138,7 @@ export async function sendReviewRequestEmail(params: {
 export async function sendPaymentFailedEmail(params: {
   to: string
   orderShortCode: string
+  failureReason?: string
 }) {
   const trackUrl = `${SITE_URL}/track-order`
   const html = emailShell(`

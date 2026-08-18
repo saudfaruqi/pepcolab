@@ -113,7 +113,12 @@ export function useStrablCheckout() {
     }
   }, [strablPlatformUuid, STRABL_ENV])
 
-  const handleCheckout = async (lines: CartLine[], displayCurrency: string, detectedCountry?: string | null) => {
+  const handleCheckout = async (
+    lines: CartLine[],
+    displayCurrency: string,
+    detectedCountry?: string | null,
+    appliedDiscount?: { code: string; discountAmount: number } | null
+  ) => {
     if (lines.length === 0) return
 
     setCheckingOut(true)
@@ -138,7 +143,7 @@ export function useStrablCheckout() {
       // lineItems: required fields per the actual SDK validation are title,
       // price, quantity>0, productId, variantId — everything else is
       // optional but included where we have real data.
-      const strablLineItems = lines
+      let strablLineItems = lines
         .filter(l => l.variantId && l.quantity > 0 && l.price > 0)
         .map(l => {
           const numericId = toNumericId(l.variantId)
@@ -161,11 +166,45 @@ export function useStrablCheckout() {
         return
       }
 
+      // HONESTY NOTE: STRABL's checkoutWithRedirect has no dedicated
+      // "discount" field in the schema we've verified against, so a
+      // discount is applied here by reducing each line item's unit price
+      // proportionally to its share of the subtotal — the last line
+      // absorbs any rounding remainder so the total matches exactly. This
+      // is computed client-side, same trust model the rest of this cart
+      // payload already has (nothing here is server-authoritative — see
+      // /api/discounts/validate, which checks eligibility server-side, but
+      // the actual price sent to STRABL is still built in the browser).
+      // That's not a new risk this feature introduces; it's consistent
+      // with how price/quantity have always reached STRABL in this
+      // integration. It just means "validated" isn't the same guarantee
+      // as "enforced" — worth knowing, not worth blocking on.
+      if (appliedDiscount && appliedDiscount.discountAmount > 0) {
+        const rawSubtotal = strablLineItems.reduce((sum, li) => sum + li.price * li.quantity, 0)
+        if (rawSubtotal > 0) {
+          let remaining = Math.min(appliedDiscount.discountAmount, rawSubtotal)
+          strablLineItems = strablLineItems.map((li, idx) => {
+            const lineTotal = li.price * li.quantity
+            const isLast = idx === strablLineItems.length - 1
+            const share = isLast
+              ? remaining
+              : Math.min(remaining, Math.round((lineTotal / rawSubtotal) * appliedDiscount.discountAmount * 100) / 100)
+            remaining = Math.max(0, remaining - share)
+            const newLineTotal = Math.max(0, lineTotal - share)
+            return { ...li, price: Math.round((newLineTotal / li.quantity) * 100) / 100 }
+          })
+        }
+      }
+
       const cart = {
         currency,
         country: detectedCountry || 'AE',
         lineItems: strablLineItems,
-        extra: {},
+        // Round-trips into the webhook as orderUpdate.meta (matches the
+        // shape observed in real STRABL webhook payloads — see
+        // webhook route.ts). Used to attribute/increment redemption counts
+        // after a real order is created, not just at validate time.
+        extra: appliedDiscount ? { discountCode: appliedDiscount.code } : {},
         merchantUrls: {
           successUrl: `${baseUrl}/checkout/success`,
           failureUrl: `${baseUrl}/checkout/failure`,

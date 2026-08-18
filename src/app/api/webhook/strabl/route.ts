@@ -17,6 +17,7 @@ import { createShopifyOrder, markShopifyOrderPaid } from '@/lib/shopifyAdmin'
 import { saveOrderRecord, type OrderRecord } from '@/lib/orderStore'
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
+import { incrementRedemption } from '@/lib/discountStore'
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
@@ -214,6 +215,22 @@ export async function POST(req: NextRequest) {
             currency: record.currency,
           })
         }
+
+        // Best-effort, and deliberately only on 'order_created' (not
+        // 'order_updated') to avoid double-counting the same order if it
+        // fires both events. ASSUMPTION worth confirming with STRABL: that
+        // the `extra` object sent in the checkout cart payload round-trips
+        // back as `orderUpdate.meta` — inferred from the field naming and
+        // the empty `"meta": {}` already observed in real webhook payloads,
+        // not confirmed against a live discount-code order yet.
+        const discountCode = orderUpdate.meta?.discountCode
+        if (type === 'order_created' && discountCode) {
+          try {
+            await incrementRedemption(discountCode)
+          } catch (err) {
+            console.error('[webhook] Failed to increment discount redemption:', err)
+          }
+        }
       } catch (err: any) {
         console.error('[webhook] ❌ Failed to create Shopify order:', err.message, err.stack)
         syncFailed = true
@@ -259,6 +276,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         await sendPaymentFailedEmail({
           to: failedRecord.email,
           orderShortCode: failedRecord.orderShortCode,
+          failureReason: failedRecord.failureReason,
         })
       }
 
