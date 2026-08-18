@@ -304,7 +304,7 @@ This message was sent from the PepcoLab contact form.
           </div>
           <div class="footer" style="background:#f8f7f4 !important; padding:20px 30px 24px; text-align:center; border-top:1px solid rgba(26,26,26,0.04);">
             <p style="font-size:13px; color:rgba(26,26,26,0.4) !important; margin:0;">PepcoLab — Research-grade peptides for laboratory use only</p>
-            <p class="meta" style="font-size:11px; color:rgba(26,26,26,0.25) !important; margin-top:4px;">SEE BEE DEE LIMITED • Companies House #17072052</p>
+            <p class="meta" style="font-size:11px; color:rgba(26,26,26,0.25) !important; margin-top:4px;">SEE BEE DEE LIMITED</p>
           </div>
         </div>
       </td>

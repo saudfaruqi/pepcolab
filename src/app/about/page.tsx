@@ -89,7 +89,7 @@ export default function AboutPage() {
       name: 'PepcoLab',
       legalName: 'SEE BEE DEE LIMITED',
       url: SITE_URL,
-      identifier: { '@type': 'PropertyValue', name: 'Companies House', value: '17072052' },
+      identifier: { '@type': 'PropertyValue', name: 'Companies House', value: '' },
       areaServed: ['United Kingdom', 'United Arab Emirates'],
     },
   }
@@ -312,7 +312,7 @@ export default function AboutPage() {
               <h3 className="text-xl font-semibold mb-3 text-neutral-950">Registration</h3>
               <p className="text-neutral-600 leading-7">
                 PepcoLab is operated by SEE BEE DEE LIMITED, a company registered in the UK
-                (Companies House number 17072052). Read our{' '}
+                Read our{' '}
                 <Link href="/terms" className="underline decoration-neutral-300 hover:decoration-neutral-600">
                   terms
                 </Link>{' '}
