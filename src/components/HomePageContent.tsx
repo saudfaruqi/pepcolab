@@ -878,7 +878,6 @@ export default function PepcoLabPage({
             <FadeUp>
               <div style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:24, padding:"clamp(28px,3.5vw,40px)", display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
                 <div>
-                  <div style={TYPOGRAPHY.label}>No reviews yet</div>
                   <p style={{ 
                     fontSize: "clamp(14px, 1.1vw, 16px)", 
                     lineHeight: 1.6, 
