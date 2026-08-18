@@ -633,6 +633,86 @@ const PRODUCT_BY_HANDLE_QUERY = /* GraphQL */ `
   }
 `
 
+// ─── Reorder support ────────────────────────────────────────────────────
+// Resolves a list of bare numeric Shopify variant IDs (as saved on
+// OrderRecord.products by the STRABL webhook route) back to their current
+// price, stock, and parent product slug — used by /track-order's "Reorder"
+// action so it adds the *current* price/availability to cart rather than
+// silently reusing a stale price from months ago. Uses Shopify's standard
+// `nodes(ids: [...])` batch lookup so this is one request regardless of
+// how many line items the order had.
+//
+// NOTE: built following the exact same shopifyFetch/shopifyClientFetch
+// pattern as getProducts/getProductByHandle above, but hasn't been
+// exercised against a live store — worth a manual test against a real
+// order once deployed (a variant that's been deleted/renamed since the
+// order was placed should just be silently omitted from the result, not
+// throw).
+const VARIANTS_BY_ID_QUERY = /* GraphQL */ `
+  query getVariantsByIds($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on ProductVariant {
+        id
+        title
+        availableForSale
+        price { amount currencyCode }
+        image { url altText }
+        product { id handle title }
+      }
+    }
+  }
+`
+
+export interface ReorderVariant {
+  variantId: string
+  slug: string
+  title: string
+  variantTitle: string
+  price: number
+  image?: string
+  availableForSale: boolean
+}
+
+export async function getVariantsByIds(
+  numericIds: string[],
+  buyerCountry?: string
+): Promise<ReorderVariant[]> {
+  const ids = numericIds
+    .filter(Boolean)
+    .map((id) => `gid://shopify/ProductVariant/${id}`)
+  if (ids.length === 0) return []
+
+  const run = async () => {
+    if (typeof window === 'undefined') {
+      return shopifyFetch<{ nodes: (any | null)[] }>(
+        VARIANTS_BY_ID_QUERY,
+        { ids },
+        { serverSide: true, buyerCountry }
+      )
+    }
+    const { shopifyClientFetch } = await import('./shopifyClient')
+    return shopifyClientFetch<{ nodes: (any | null)[] }>(
+      VARIANTS_BY_ID_QUERY,
+      { ids },
+      buyerCountry
+    )
+  }
+
+  const data = await run()
+
+  return data.nodes
+    .filter((n): n is NonNullable<typeof n> => Boolean(n?.product))
+    .map((n) => ({
+      variantId: n.id.match(/(\d+)$/)?.[0] ?? n.id,
+      slug: n.product.handle,
+      title: n.product.title,
+      variantTitle: n.title === 'Default Title' ? '' : n.title,
+      price: convertFromAed(parseFloat(n.price?.amount ?? '0'), buyerCountry),
+      image: n.image?.url,
+      availableForSale: Boolean(n.availableForSale),
+    }))
+}
+
 export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
   if (typeof window === 'undefined') {
     // Server: used at build time via generateStaticParams/generateMetadata,

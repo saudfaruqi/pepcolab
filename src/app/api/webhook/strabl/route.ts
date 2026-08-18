@@ -112,12 +112,26 @@ export async function POST(req: NextRequest) {
   // that was missing before: order_failed used to only log to the server
   // console, so a customer with a failed payment had literally nothing to
   // look up.
+  // Shared by buildOrderRecord (for reorder) and buildShopifyOrderInputs
+  // (for the actual order creation below) — was previously only computed
+  // in the latter, so /track-order had no way to add a past order's items
+  // back to cart, only display them.
+  const extractVariantId = (item: any): string => {
+    let variantId = item.externalVariantId || item.externalProductId || ''
+    if (variantId.includes('gid://')) {
+      const match = variantId.match(/(\d+)$/)
+      if (match) variantId = match[1]
+    }
+    return variantId
+  }
+
   const buildOrderRecord = (status: OrderRecord['status']): OrderRecord => {
     const products = (orderUpdate.products || []).map((item: any) => ({
       title: item.title || 'Product',
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
       variantOptions: item.extra || [],
+      variantId: extractVariantId(item) || undefined,
     }))
     const total = products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
     const firstName = customerUpdate.firstName || ''
@@ -146,11 +160,7 @@ export async function POST(req: NextRequest) {
     const shippingAddress = customerUpdate.shipping || {}
 
     const lineItems = (orderUpdate.products || []).map((item: any) => {
-      let variantId = item.externalVariantId || item.externalProductId || ''
-      if (variantId.includes('gid://')) {
-        const match = variantId.match(/(\d+)$/)
-        if (match) variantId = match[1]
-      }
+      const variantId = extractVariantId(item)
       return { variant_id: variantId, quantity: item.quantity || 1 }
     })
 

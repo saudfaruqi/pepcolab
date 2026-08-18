@@ -7,13 +7,18 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { formatPrice } from '@/lib/utils'
-import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight, Star } from 'lucide-react'
+import { getVariantsByIds, type ReorderVariant } from '@/lib/shopify'
+import { useCart } from '@/lib/cartContext'
+import { useCountry } from '@/lib/countryContext'
+import { whatsAppCartLink } from '@/lib/whatsapp'
+import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight, Star, ShoppingBag, MessageCircle } from 'lucide-react'
 
 interface OrderProduct {
   title: string
   price: number
   quantity: number
   variantOptions?: string[]
+  variantId?: string
 }
 
 interface OrderResult {
@@ -51,11 +56,26 @@ function TrackOrderContent() {
   const prefillCode = params.get('code') || ''
   const prefillEmail = params.get('email') || ''
 
+  const { addItem } = useCart()
+  const { country } = useCountry()
+
   const [orderCode, setOrderCode] = useState(prefillCode)
   const [email, setEmail] = useState(prefillEmail)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<OrderResult | null>(null)
+
+  // Reorder — resolves the order's saved variantIds back to their current
+  // price/stock/slug (see getVariantsByIds) so "Add to cart" reflects
+  // today's catalogue, not what was true when this order was placed.
+  // Products with no variantId (orders saved before that field existed)
+  // or that no longer resolve (deleted/renamed variant) are simply left
+  // out of the cart-add and flagged — WhatsApp reorder below covers them
+  // regardless, since it doesn't depend on the live catalogue at all.
+  const [reordering, setReordering] = useState(false)
+  const [reorderDone, setReorderDone] = useState(false)
+  const [reorderSkipped, setReorderSkipped] = useState(0)
+  const [reorderError, setReorderError] = useState<string | null>(null)
 
   // Review form — only shown for completed orders. Reuses the same
   // orderCode/email the customer already proved ownership of above; the
@@ -81,6 +101,9 @@ function TrackOrderContent() {
     setReviewError(null)
     setReviewRating(0)
     setReviewText('')
+    setReorderDone(false)
+    setReorderSkipped(0)
+    setReorderError(null)
 
     try {
       const res = await fetch('/api/orders/lookup', {
@@ -152,6 +175,69 @@ function TrackOrderContent() {
       setReviewSubmitting(false)
     }
   }
+
+  const handleReorderToCart = async () => {
+    if (!result) return
+    const idsToResolve = result.products.map((p) => p.variantId).filter((v): v is string => Boolean(v))
+
+    setReordering(true)
+    setReorderError(null)
+    setReorderSkipped(0)
+
+    try {
+      const resolved: ReorderVariant[] = idsToResolve.length
+        ? await getVariantsByIds(idsToResolve, country)
+        : []
+      const byId = new Map(resolved.map((v) => [v.variantId, v]))
+
+      let added = 0
+      let skipped = 0
+      for (const p of result.products) {
+        const match = p.variantId ? byId.get(p.variantId) : undefined
+        if (!match || !match.availableForSale) {
+          skipped += 1
+          continue
+        }
+        // Uses the resolved current price, not the order's historical
+        // price — a product that's changed price since this order should
+        // add to cart at today's price, same as browsing normally would.
+        for (let i = 0; i < p.quantity; i++) {
+          await addItem(match.variantId, match.title, match.variantTitle, match.price, match.slug, match.image)
+        }
+        added += 1
+      }
+
+      setReorderSkipped(skipped)
+      if (added > 0) setReorderDone(true)
+      if (added === 0) {
+        setReorderError(
+          "None of these items could be added automatically — they may no longer be available. Try Reorder via WhatsApp below instead."
+        )
+      }
+    } catch {
+      setReorderError('Something went wrong while adding these items. Please try again, or use WhatsApp below.')
+    } finally {
+      setReordering(false)
+    }
+  }
+
+  // Built directly from the saved order record — doesn't depend on the
+  // live catalogue at all, so this always works even for fully
+  // discontinued products or if getVariantsByIds can't resolve anything.
+  const whatsAppReorderHref = result
+    ? whatsAppCartLink(
+        result.products.map((p, i) => ({
+          id: `reorder-${i}`,
+          quantity: p.quantity,
+          variantId: p.variantId || '',
+          title: p.title,
+          variantTitle: p.variantOptions?.filter((v) => v !== 'Default Title').join(', ') || '',
+          price: p.price,
+          slug: '',
+        })),
+        result.currency
+      )
+    : ''
 
   const statusInfo = result ? STATUS_DISPLAY[result.status] : null
   const StatusIcon = statusInfo?.icon
@@ -273,6 +359,51 @@ function TrackOrderContent() {
                 {formatPrice(result.total, result.currency)}
               </strong>
             </div>
+
+            {(result.status === 'created' || result.status === 'updated') && (
+              <div className="border-t border-gray-100 pt-5 mt-5">
+                {reorderDone ? (
+                  <div className="flex items-center gap-2.5 rounded-xl border border-green-200/60 bg-green-50 px-4 py-3 text-sm text-green-700 font-medium">
+                    <ShoppingBag size={16} />
+                    Added to your cart
+                    {reorderSkipped > 0 && (
+                      <span className="text-green-700/70 font-normal">
+                        {' '}— {reorderSkipped} item{reorderSkipped > 1 ? 's' : ''} could not be added automatically, try WhatsApp for those.
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={handleReorderToCart}
+                      disabled={reordering}
+                      className="flex-1 h-11 rounded-xl bg-gray-900 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-60"
+                    >
+                      {reordering ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <ShoppingBag size={14} />
+                          Reorder these items
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={whatsAppReorderHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <MessageCircle size={14} />
+                      Reorder via WhatsApp
+                    </a>
+                  </div>
+                )}
+                {reorderError && (
+                  <p className="text-sm text-red-600 text-center mt-3">{reorderError}</p>
+                )}
+              </div>
+            )}
 
             {(result.status === 'failed' || result.status === 'abandoned') && (
               <Link

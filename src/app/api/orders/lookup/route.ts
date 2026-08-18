@@ -75,7 +75,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Only return what a customer needs to see — no internal ids, no full
-  // shipping address (which the webhook payload does contain).
+  // shipping address (which the webhook payload does contain). variantId
+  // is fine to include: it's a public Shopify catalog reference, not PII,
+  // and is what lets /track-order offer a real "add to cart" reorder
+  // action instead of only display.
   return NextResponse.json({
     order: {
       orderShortCode: record.orderShortCode,
