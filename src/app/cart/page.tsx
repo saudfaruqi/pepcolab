@@ -275,9 +275,6 @@ export default function CartPage() {
                   {formatPrice(total, displayCurrency)}
                 </strong>
               </div>
-              <p className="text-center text-[10px] text-gray-400 leading-relaxed px-2 mt-4 mb-1">
-                For in-vitro research use only. Not intended for human or veterinary use.
-              </p>
               <button
                 onClick={() => handleCheckout(lines, displayCurrency, detectedCountry, appliedDiscount)}
                 disabled={checkingOut || loading || !sdkReady}

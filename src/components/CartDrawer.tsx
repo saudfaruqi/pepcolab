@@ -263,9 +263,6 @@ export default function CartDrawer() {
               </strong>
             </div>
 
-            <p className="text-center text-[10px] text-gray-400 leading-relaxed px-2 mb-2">
-              For in-vitro research use only. Not intended for human or veterinary use.
-            </p>
 
             {/* Checkout button */}
             <button
