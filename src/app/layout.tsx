@@ -9,6 +9,7 @@ import CartDrawer from '@/components/CartDrawer'
 import { CountryProvider } from '@/lib/countryContext'
 import AgeLocationGate from '@/components/AgeLocationGate'
 import FloatingCalculator from '@/components/FloatingCalculator'
+import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -295,6 +296,7 @@ export default async function RootLayout({
             {children}
             <CartDrawer />
             <FloatingCalculator />
+            <FloatingWhatsApp />
           </CartProvider>
         </CountryProvider>
       </body>

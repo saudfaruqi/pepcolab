@@ -1,10 +1,11 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, CheckCircle } from 'lucide-react'
+import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
 import { useCart } from '@/lib/cartContext'
 import { formatPrice } from '@/lib/utils'
+import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
 import type { Product } from '@/app/data'
 
 interface Props {
@@ -27,9 +28,19 @@ export default function ProductCard({ product: p, featured = false }: Props) {
   // hovering just keeps showing the primary image as before.
   const hoverImage: string | undefined = (p as any).images?.[1]?.url
 
+  // RETA (Retatrutide) — hardcoded exception: sold via a direct payment
+  // link, not the normal cart. See lib/restrictedCheckout.ts.
+  const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
+  const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(p.mg) : null
+  const paymentLinkIsPlaceholder = paymentLink ? isPlaceholderLink(paymentLink) : false
+
   const handleAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (paymentLinkOnly) {
+      if (!paymentLinkIsPlaceholder) window.open(paymentLink!, '_blank', 'noopener,noreferrer')
+      return
+    }
     if (!p.inStock || added) return
     setAdded(true)
     try {
@@ -292,8 +303,12 @@ export default function ProductCard({ product: p, featured = false }: Props) {
 
           <button
             onClick={handleAdd}
-            disabled={!p.inStock}
-            aria-label={added ? 'Added to cart' : `Add ${p.name} to cart`}
+            disabled={paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock}
+            aria-label={
+              paymentLinkOnly
+                ? 'Order via payment link'
+                : added ? 'Added to cart' : `Add ${p.name} to cart`
+            }
             style={{
               width: 40,
               height: 40,
@@ -302,11 +317,11 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               border: 'none',
               background: added
                 ? '#0A7B45'
-                : !p.inStock
+                : (paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock)
                 ? 'rgba(13,13,13,.08)'
                 : '#0d0d0d',
-              color: !p.inStock ? 'rgba(13,13,13,.25)' : '#fff',
-              cursor: !p.inStock ? 'not-allowed' : 'pointer',
+              color: (paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock) ? 'rgba(13,13,13,.25)' : '#fff',
+              cursor: (paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock) ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -315,7 +330,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               transform: hovered && p.inStock && !added ? 'scale(1.08)' : 'scale(1)',
             }}
           >
-            {added ? <CheckCircle size={13} /> : <ShoppingCart size={13} />}
+            {added ? <CheckCircle size={13} /> : paymentLinkOnly ? <CreditCard size={13} /> : <ShoppingCart size={13} />}
           </button>
         </div>
       </div>

@@ -9,7 +9,8 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { formatPrice } from '@/lib/utils'
-import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag } from 'lucide-react'
+import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag, MessageCircle } from 'lucide-react'
+import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 
 interface AppliedDiscount {
   code: string
@@ -305,6 +306,19 @@ export default function CartPage() {
                   </>
                 )}
               </button>
+
+              {isWhatsAppConfigured() && (
+                <a
+                  href={whatsAppCartLink(lines, displayCurrency)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-11 mt-2.5 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+                  style={{ borderColor: '#C7ECD3', color: '#128C4A', background: '#F0FDF4', textDecoration: 'none' }}
+                >
+                  <MessageCircle size={15} />
+                  Order via WhatsApp instead
+                </a>
+              )}
 
               <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-3">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">

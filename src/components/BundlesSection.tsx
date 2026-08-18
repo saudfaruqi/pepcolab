@@ -1,11 +1,12 @@
 'use client'
-import { ArrowRight, X, ShoppingCart, CheckCircle, Plus } from 'lucide-react'
+import { ArrowRight, X, ShoppingCart, CheckCircle, Plus, CreditCard } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 import React from 'react'
 import { BUNDLES } from '@/app/data'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/lib/cartContext'
+import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant } from '@/lib/restrictedCheckout'
 import Vial from '@/components/Vial'
 import type { Product } from '@/app/data'
 
@@ -163,6 +164,10 @@ export default function BundlesSection() {
     setAddingId(bundle.id)
     try {
       for (const p of prods) {
+        // RETA (payment-link-only) can't go through the cart — skip it here
+        // rather than silently adding a line that can never be paid for via
+        // STRABL. See lib/restrictedCheckout.ts.
+        if (isPaymentLinkOnlyProduct(p.slug)) continue
         await addItem(
           p.variantId || `gid://shopify/ProductVariant/${p.id}`,
           p.name,
@@ -376,18 +381,34 @@ export default function BundlesSection() {
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', flexShrink: 0 }}>
                       {formatPrice(p.price, p.currencyCode ?? openPricing.currencyCode)}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => addItem(p.variantId || `gid://shopify/ProductVariant/${p.id}`, p.name, p.mg, p.price, p.slug, p.image)}
-                      aria-label={`Add ${p.name} to cart`}
-                      style={{
-                        width: 30, height: 30, borderRadius: '50%', border: 'none',
-                        background: '#f0f0ee', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
-                      }}
-                    >
-                      <Plus size={14} />
-                    </button>
+                    {isPaymentLinkOnlyProduct(p.slug) ? (
+                      <a
+                        href={getPaymentLinkForVariant(p.mg)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Order ${p.name} via payment link`}
+                        style={{
+                          width: 30, height: 30, borderRadius: '50%',
+                          background: '#f0f0ee', display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                        }}
+                      >
+                        <CreditCard size={14} />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => addItem(p.variantId || `gid://shopify/ProductVariant/${p.id}`, p.name, p.mg, p.price, p.slug, p.image)}
+                        aria-label={`Add ${p.name} to cart`}
+                        style={{
+                          width: 30, height: 30, borderRadius: '50%', border: 'none',
+                          background: '#f0f0ee', display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                        }}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    )}
                   </div>
                 ))}
                 {openProds.length < openBundle.products.length && (

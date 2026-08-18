@@ -4,12 +4,13 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
-  X, Minus, Plus, ArrowRight, ShoppingBag, Trash2,
+  X, Minus, Plus, ArrowRight, ShoppingBag, Trash2, MessageCircle,
 } from 'lucide-react'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { formatPrice } from '@/lib/utils'
+import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 
 const FREE_SHIPPING_THRESHOLD = 0
 
@@ -53,6 +54,8 @@ export default function CartDrawer() {
   // the standalone /cart page share one implementation. See that file for
   // the full history/verification notes on the integration.
   const handleCheckout = () => strablCheckout(lines, displayCurrency, detectedCountry)
+
+  const whatsAppEnabled = isWhatsAppConfigured()
 
   return (
     <>
@@ -295,6 +298,19 @@ export default function CartDrawer() {
                 </>
               )}
             </button>
+
+            {whatsAppEnabled && (
+              <a
+                href={whatsAppCartLink(lines, displayCurrency)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-11 mt-2.5 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+                style={{ borderColor: '#C7ECD3', color: '#128C4A', background: '#F0FDF4', textDecoration: 'none' }}
+              >
+                <MessageCircle size={15} />
+                Order via WhatsApp instead
+              </a>
+            )}
 
             <Link
               href="/cart"

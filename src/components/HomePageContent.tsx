@@ -11,6 +11,7 @@ import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { BUNDLES as CURATED_BUNDLES } from "@/app/data";
+import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from "@/lib/restrictedCheckout";
 
 
 import { useCountry } from '@/lib/countryContext'
@@ -402,6 +403,13 @@ export default function PepcoLabPage({
   }, [products])  
 
   const addToCart = useCallback((product: NormalisedProduct) => {
+    // RETA (payment-link-only) can't go through the cart — send the visitor
+    // straight to its payment link instead. See lib/restrictedCheckout.ts.
+    if (isPaymentLinkOnlyProduct(product.slug)) {
+      const link = getPaymentLinkForVariant(product.mg)
+      if (!isPlaceholderLink(link)) window.open(link, '_blank', 'noopener,noreferrer')
+      return
+    }
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
   }, [addItem]);
 
@@ -436,7 +444,9 @@ export default function PepcoLabPage({
   }, [products]);
 
   const addBundleToCart = useCallback((bundle: typeof BUNDLES[0]) => {
-    bundle.products.forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
+    bundle.products
+      .filter(p => !isPaymentLinkOnlyProduct(p.slug)) // RETA can't go through the cart
+      .forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
   }, [addItem]);
 
   const featuredReview = [...realReviews].sort((a, b) => b.rating - a.rating)[0];

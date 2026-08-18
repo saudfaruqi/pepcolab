@@ -1,12 +1,14 @@
 // src/components/ProductActions.tsx
 'use client'
 import { useState, useMemo, useEffect } from 'react'
-import { ShoppingCart, Download, CheckCircle, ShieldCheck, FileText, ExternalLink } from 'lucide-react'
+import { ShoppingCart, Download, CheckCircle, ShieldCheck, FileText, ExternalLink, MessageCircle, CreditCard } from 'lucide-react'
 import { resolveLocalCoa } from '@/lib/coaIndex'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { getProductByHandle } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
+import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
+import { isWhatsAppConfigured, whatsAppProductLink } from '@/lib/whatsapp'
 import type { Product } from '@/app/data'
 
 interface Props {
@@ -89,8 +91,17 @@ export default function ProductActions({ product: initialProduct, selectedVarian
     if (el) el.scrollTop = 0
   }, [activeTab])
 
+  // RETA (Retatrutide) — hardcoded exception: sold via a direct payment
+  // link instead of the normal STRABL cart flow. See lib/restrictedCheckout.ts.
+  const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
+  const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(selectedVariant.title) : null
+  const paymentLinkIsPlaceholder = paymentLink ? isPlaceholderLink(paymentLink) : false
+
+  const whatsAppEnabled = isWhatsAppConfigured()
+  const whatsAppHref = whatsAppEnabled ? whatsAppProductLink(p.name, selectedVariant.title) : undefined
+
   const handleAdd = async () => {
-    if (!selectedVariant.availableForSale || added) return
+    if (paymentLinkOnly || !selectedVariant.availableForSale || added) return
     setAdded(true)
     await addItem(
       selectedVariant.id || `gid://shopify/ProductVariant/${p.id}`,
@@ -359,27 +370,53 @@ export default function ProductActions({ product: initialProduct, selectedVarian
       </div>
 
       {/* CTAs */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-        <button
-          onClick={handleAdd}
-          disabled={!selectedVariant.availableForSale}
-          style={{
-            flex: 1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            fontSize: 14, fontWeight: 600, color: '#fff',
-            padding: '14px 20px', borderRadius: 12, border: 'none',
-            background: added ? '#3B6D11' : 'linear-gradient(135deg,#1A56DB,#2563EB)',
-            boxShadow: selectedVariant.availableForSale && !added ? '0 4px 18px rgba(26,86,219,0.35)' : 'none',
-            cursor: selectedVariant.availableForSale ? 'pointer' : 'not-allowed',
-            opacity: selectedVariant.availableForSale ? 1 : 0.4,
-            transition: 'all .2s',
-          }}
-        >
-          {added
-            ? <><CheckCircle size={16} /> Added to cart</>
-            : <><ShoppingCart size={16} />{selectedVariant.availableForSale ? 'Add to Cart' : 'Out of Stock'}</>
-          }
-        </button>
+      <div style={{ display: 'flex', gap: 10, marginBottom: whatsAppEnabled ? 12 : 24, flexWrap: 'wrap' }}>
+        {paymentLinkOnly ? (
+          // RETA — payment-link-only ordering, no cart involved.
+          <a
+            href={paymentLinkIsPlaceholder ? undefined : paymentLink!}
+            target={paymentLinkIsPlaceholder ? undefined : '_blank'}
+            rel={paymentLinkIsPlaceholder ? undefined : 'noopener noreferrer'}
+            aria-disabled={paymentLinkIsPlaceholder}
+            onClick={(e) => { if (paymentLinkIsPlaceholder) e.preventDefault() }}
+            style={{
+              flex: 1,
+              minWidth: 180,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontSize: 14, fontWeight: 600, color: '#fff', textDecoration: 'none',
+              padding: '14px 20px', borderRadius: 12, border: 'none',
+              background: paymentLinkIsPlaceholder ? '#C5CBDA' : 'linear-gradient(135deg,#1A56DB,#2563EB)',
+              boxShadow: paymentLinkIsPlaceholder ? 'none' : '0 4px 18px rgba(26,86,219,0.35)',
+              cursor: paymentLinkIsPlaceholder ? 'not-allowed' : 'pointer',
+              transition: 'all .2s',
+            }}
+          >
+            <CreditCard size={16} />
+            {paymentLinkIsPlaceholder ? 'Payment link coming soon' : 'Order via Payment Link'}
+          </a>
+        ) : (
+          <button
+            onClick={handleAdd}
+            disabled={!selectedVariant.availableForSale}
+            style={{
+              flex: 1,
+              minWidth: 180,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontSize: 14, fontWeight: 600, color: '#fff',
+              padding: '14px 20px', borderRadius: 12, border: 'none',
+              background: added ? '#3B6D11' : 'linear-gradient(135deg,#1A56DB,#2563EB)',
+              boxShadow: selectedVariant.availableForSale && !added ? '0 4px 18px rgba(26,86,219,0.35)' : 'none',
+              cursor: selectedVariant.availableForSale ? 'pointer' : 'not-allowed',
+              opacity: selectedVariant.availableForSale ? 1 : 0.4,
+              transition: 'all .2s',
+            }}
+          >
+            {added
+              ? <><CheckCircle size={16} /> Added to cart</>
+              : <><ShoppingCart size={16} />{selectedVariant.availableForSale ? 'Add to Cart' : 'Out of Stock'}</>
+            }
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setActiveTab(CERT_TAB_INDEX)}
@@ -394,6 +431,27 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           COA
         </button>
       </div>
+
+      {/* WhatsApp ordering — available alongside cart/payment-link checkout,
+          not just as a RETA fallback. Renders nothing if no number is
+          configured yet (see lib/whatsapp.ts). */}
+      {whatsAppEnabled && (
+        <a
+          href={whatsAppHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontSize: 13.5, fontWeight: 600, padding: '13px 18px', borderRadius: 12,
+            border: '1px solid #C7ECD3', color: '#128C4A',
+            background: '#F0FDF4', textDecoration: 'none', marginBottom: 24,
+            transition: 'all .2s',
+          }}
+        >
+          <MessageCircle size={16} />
+          Order via WhatsApp
+        </a>
+      )}
 
       {/* Tabs */}
       <div style={{ borderTop: '1px solid #F0F0F0', paddingTop: 20 }}>
