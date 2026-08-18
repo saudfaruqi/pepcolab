@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
+import WishlistButton from '@/components/WishlistButton'
 import { useCart } from '@/lib/cartContext'
 import { formatPrice } from '@/lib/utils'
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
@@ -91,6 +92,23 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               : `linear-gradient(145deg, ${p.color.bg ?? '#eef2fd'}, #f0f0f8)`,
           }}
         >
+          <WishlistButton
+            item={{
+              slug: p.slug,
+              name: p.name,
+              mg: p.mg,
+              price: p.price,
+              oldPrice: p.oldPrice,
+              currencyCode,
+              image: p.image,
+              imageAlt: p.imageAlt,
+              category: p.category,
+              purity: p.purity,
+              inStock: p.inStock,
+              variantId: p.variantId,
+            }}
+          />
+
           {p.image ? (
             <>
               <img

@@ -11,6 +11,7 @@ const LINKS = {
     { label: 'Metabolic',        href: '/products/category/metabolic'    },
     { label: 'Cognitive',        href: '/products/category/cognitive'    },
     { label: 'Bundles & Stacks', href: '/bundles'               },
+    { label: 'Wishlist',         href: '/wishlist'              },
   ],
   Research: [
     { label: 'Research Hub',   href: '/research'      },

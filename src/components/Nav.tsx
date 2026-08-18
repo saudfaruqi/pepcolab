@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useCart } from '@/lib/cartContext'
+import { useWishlist } from '@/lib/wishlistContext'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import { useCountry } from '@/lib/countryContext'
@@ -27,6 +28,11 @@ const BagIcon = () => (
     <path d="M16 10a4 4 0 0 1-8 0"/>
   </svg>
 )
+const HeartIcon = ({ filled }: { filled?: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+  </svg>
+)
 const CloseIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -46,6 +52,7 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 
 export default function Nav() {
   const { totalQuantity, openCart } = useCart()
+  const { count: wishlistCount } = useWishlist()
   const { country, currency, setCountry, ready } = useCountry()
   const pathname = usePathname()
 
@@ -827,6 +834,9 @@ export default function Nav() {
           <button className="mob-cta-secondary" onClick={() => { setMobileOpen(false); openCart() }}>
             <BagIcon /> View Cart {totalQuantity > 0 && `(${totalQuantity})`}
           </button>
+          <a href="/wishlist" className="mob-cta-secondary" onClick={() => setMobileOpen(false)}>
+            <HeartIcon filled={wishlistCount > 0} /> Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
+          </a>
           <p className="mob-disclaimer">For research use only · Not for human consumption</p>
         </div>
       </div>
@@ -918,6 +928,14 @@ export default function Nav() {
               <span>Search</span>
               <kbd style={{ fontSize: 10, fontWeight: 600, border: '1px solid rgba(13,13,13,.1)', padding: '2px 6px', borderRadius: 5, lineHeight: 1.4, color: 'rgba(13,13,13,.35)' }}>⌘K</kbd>
             </button>
+
+            {/* Wishlist */}
+            <a href="/wishlist" className="nav-icon-btn" aria-label={`Wishlist (${wishlistCount})`}>
+              <HeartIcon filled={wishlistCount > 0} />
+              {wishlistCount > 0 && (
+                <span className="nav-cart-badge">{wishlistCount > 9 ? '9+' : wishlistCount}</span>
+              )}
+            </a>
 
             {/* Cart */}
             <button className="nav-icon-btn" onClick={openCart} aria-label={`Cart (${totalQuantity})`}>

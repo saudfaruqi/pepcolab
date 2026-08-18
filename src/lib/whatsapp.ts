@@ -10,6 +10,7 @@
 // Until it's set, WhatsApp CTAs render disabled with a "coming soon" style
 // instead of linking to a broken wa.me/undefined URL.
 import type { CartLine } from '@/lib/cartContext'
+import type { WishlistItem } from '@/lib/wishlistContext'
 
 export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || ''
 
@@ -45,6 +46,23 @@ export function whatsAppCartLink(lines: CartLine[], currencyCode: string): strin
   const message =
     `Hi PepcoLab, I'd like to order:\n${itemLines}\n\n` +
     `Subtotal: ${currencyCode} ${subtotal.toFixed(2)}`
+
+  return buildLink(message)
+}
+
+// Wishlist → WhatsApp: same "list + ask" pattern as whatsAppCartLink, kept
+// as its own function (rather than reusing CartLine) because wishlist
+// items aren't cart lines — no quantity, and the currency can vary per
+// item since it's read straight from each product's own currencyCode
+// rather than a single cart-wide one.
+export function whatsAppWishlistLink(items: WishlistItem[]): string {
+  if (items.length === 0) return whatsAppGeneralLink()
+
+  const itemLines = items
+    .map((i) => `• ${i.name}${i.mg ? ` (${i.mg})` : ''} — ${i.currencyCode ?? 'AED'} ${i.price.toFixed(2)}`)
+    .join('\n')
+
+  const message = `Hi PepcoLab, I'd like to ask about the items on my wishlist:\n${itemLines}`
 
   return buildLink(message)
 }

@@ -5,6 +5,8 @@ import { useMemo, useState } from 'react'
 import { ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
+import WishlistButton from '@/components/WishlistButton'
+import ShareButton from '@/components/ShareButton'
 
 interface Props {
   // Loosely typed to match the rest of the codebase's pragmatic handling of
@@ -151,17 +153,46 @@ export default function ProductVariantView({ product }: Props) {
           {product.tags?.[0] || 'Research Compound'}
         </div>
 
-        <h1 style={{
-          fontSize: 'clamp(24px, 5vw, 48px)',
-          lineHeight: 1.08,
-          marginBottom: 6,
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
-          color: '#0d0d0d',
-          wordBreak: 'break-word',
-        }}>
-          {product.title ?? product.name}
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <h1 style={{
+            fontSize: 'clamp(24px, 5vw, 48px)',
+            lineHeight: 1.08,
+            marginBottom: 6,
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
+            color: '#0d0d0d',
+            wordBreak: 'break-word',
+          }}>
+            {product.title ?? product.name}
+          </h1>
+
+          {/* Wishlist + Share — kept as a pair next to the title (rather
+              than down in the CTA row) so they read as "about this page",
+              not as competing with Add to Cart / WhatsApp for attention. */}
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginTop: 2 }}>
+            <WishlistButton
+              variant="icon"
+              item={{
+                slug: product.slug ?? product.handle,
+                name: product.title ?? product.name,
+                mg: product.mg,
+                price: selectedVariant?.price ?? product.price,
+                oldPrice: product.oldPrice,
+                currencyCode: (product as any).currencyCode ?? selectedVariant?.currencyCode,
+                image: activeImageUrl,
+                imageAlt: activeImageAlt,
+                category: product.category,
+                purity: product.purity,
+                inStock: selectedVariant?.availableForSale ?? product.inStock,
+                variantId: selectedVariantId,
+              }}
+            />
+            <ShareButton
+              title={`${product.title ?? product.name} — PepcoLab`}
+              text={product.oneLiner || product.description}
+            />
+          </div>
+        </div>
 
         {(product.lot || product.testDate) && (
           <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 14, fontWeight: 500 }}>
