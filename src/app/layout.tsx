@@ -98,8 +98,11 @@ export const metadata: Metadata = {
       'Published batch certificates of analysis and cold-chain dispatch across the UAE and UK. Research use only.',
     url: siteUrl,
     siteName: 'PepcoLab',
-    locale: 'en_GB',
-    alternateLocale: ['en_AE'],
+    // Matches the UAE-primary decision already made in the title/description
+    // above and middleware.ts's DEFAULT_COUNTRY — previously this said
+    // 'en_GB' with 'en_AE' as the alternate, disagreeing with both.
+    locale: 'en_AE',
+    alternateLocale: ['en_GB'],
     type: 'website',
     images: [
       {
@@ -154,7 +157,7 @@ export default async function RootLayout({
   const initialCountry = (await cookies()).get('pepcolab_country')?.value
 
   return (
-    <html lang="en-GB" suppressHydrationWarning>
+    <html lang="en-AE" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -248,7 +251,7 @@ export default async function RootLayout({
               '@type': 'WebSite',
               name: 'PepcoLab',
               url: siteUrl,
-              inLanguage: ['en-GB', 'en-AE'],
+              inLanguage: ['en-AE', 'en-GB'],
             }),
           }}
         />

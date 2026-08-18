@@ -4,7 +4,8 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
-import { isWhatsAppConfigured, whatsAppGeneralLink } from '@/lib/whatsapp'
+import { isWhatsAppConfigured, whatsAppGeneralLink, whatsAppCartLink } from '@/lib/whatsapp'
+import { useCart } from '@/lib/cartContext'
 
 /** Same hidden-on-checkout rule as FloatingCalculator — a WhatsApp bubble
  *  sitting over the STRABL payment UI is exactly the kind of thing that
@@ -13,6 +14,7 @@ const HIDDEN_PREFIXES = ['/checkout']
 
 export default function FloatingWhatsApp() {
   const pathname = usePathname()
+  const { lines, currencyCode } = useCart()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -23,10 +25,18 @@ export default function FloatingWhatsApp() {
   if (HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))) return null
   if (!isWhatsAppConfigured()) return null // no number set yet — render nothing rather than a dead link
 
+  // Same logic as the cart page/drawer CTA: if the visitor already has
+  // items in their cart, prefill the message with those so the sales rep
+  // isn't starting from zero context. Previously this always sent the
+  // generic "I'd like to place an order" message regardless of cart state,
+  // even though whatsAppCartLink() (used everywhere else WhatsApp appears)
+  // already handled this — the floating button was the one CTA that didn't.
+  const href = lines.length > 0 ? whatsAppCartLink(lines, currencyCode) : whatsAppGeneralLink()
+
   return (
     <>
       <a
-        href={whatsAppGeneralLink()}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Order via WhatsApp"
