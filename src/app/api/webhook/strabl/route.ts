@@ -104,6 +104,46 @@ async function getCachedShipping(orderShortCode: string): Promise<CachedShipping
   }
 }
 
+// Same problem as shipping, same fix: SOR-QJJJCS's order_updated event
+// almost certainly carried no usable `products` (empty price/list), which
+// hits the "no usable line items" branch below — that branch deliberately
+// returns success and emails an alert for MANUAL creation, but never
+// actually creates the Shopify order. STRABL considered the webhook
+// successfully delivered, so it never retried, and the order was never
+// created automatically. Caching a known-good products array from
+// whichever event has one lets a later sparse event still create the real
+// order instead of silently falling through to "email a human."
+const PRODUCTS_CACHE_PREFIX = 'strabl-products-cache:'
+const PRODUCTS_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7
+
+function productsCacheKey(orderShortCode: string): string {
+  return `${PRODUCTS_CACHE_PREFIX}${orderShortCode.trim().toUpperCase()}`
+}
+
+function hasUsableProducts(products: any[]): boolean {
+  return Array.isArray(products) && products.some((p) => Number(p?.price) > 0 && Number(p?.quantity ?? 1) > 0)
+}
+
+async function cacheProductsIfUsable(orderShortCode: string, products: any[]): Promise<void> {
+  if (!orderShortCode || !hasUsableProducts(products)) return
+  try {
+    await redis.set(productsCacheKey(orderShortCode), products, { ex: PRODUCTS_CACHE_TTL_SECONDS })
+  } catch (err) {
+    console.error('[webhook] Failed to cache products:', err)
+  }
+}
+
+async function getCachedProducts(orderShortCode: string): Promise<any[] | null> {
+  if (!orderShortCode) return null
+  try {
+    const cached = await redis.get<any[]>(productsCacheKey(orderShortCode))
+    return cached ?? null
+  } catch (err) {
+    console.error('[webhook] Failed to read cached products:', err)
+    return null
+  }
+}
+
 function verifyWebhook(webhookId: string, timestamp: string, signature: string, rawBody: string) {
   const secret = process.env.STRABL_WEBHOOK_SECRET
   if (!secret) {
@@ -186,6 +226,21 @@ export async function POST(req: NextRequest) {
   const orderUuid = orderUpdate.orderUuid
   const orderShortCode = orderUpdate.orderShortCode || ''
 
+  // Resolve products ONCE per request, same recovery pattern as shipping:
+  // if this event's own products/price are missing, fall back to a cached
+  // good copy from an earlier event on the same order rather than silently
+  // treating a real paid order as "no usable line items."
+  let resolvedProducts: any[] = orderUpdate.products || []
+  if (hasUsableProducts(resolvedProducts)) {
+    await cacheProductsIfUsable(orderShortCode, resolvedProducts)
+  } else {
+    const cachedProducts = await getCachedProducts(orderShortCode)
+    if (cachedProducts) {
+      console.info(`[webhook] Recovered products for ${orderShortCode} from cache (current event had none)`)
+      resolvedProducts = cachedProducts
+    }
+  }
+
   // Builds the /track-order lookup record from whatever this event gave us.
   // Called for every event type below (including failures) so a customer
   // can look up an order regardless of how it ended — this is the piece
@@ -193,7 +248,7 @@ export async function POST(req: NextRequest) {
   // console, so a customer with a failed payment had literally nothing to
   // look up.
   const buildOrderRecord = (status: OrderRecord['status']): OrderRecord => {
-    const products = (orderUpdate.products || []).map((item: any) => ({
+    const products = resolvedProducts.map((item: any) => ({
       title: item.title || 'Product',
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
@@ -235,7 +290,7 @@ export async function POST(req: NextRequest) {
   const buildShopifyOrderInputs = async () => {
     const shippingAddress = customerUpdate.shipping || {}
 
-    const lineItems: AdminLineItemInput[] = (orderUpdate.products || [])
+    const lineItems: AdminLineItemInput[] = resolvedProducts
       .map((item: any) => {
         let variantId = item.externalVariantId || item.externalProductId || ''
         if (variantId.includes('gid://')) {
