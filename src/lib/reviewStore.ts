@@ -17,11 +17,13 @@ import { redis } from '@/lib/redis'
 
 export interface Review {
   id: string
-  orderShortCode: string
+  orderShortCode: string | null // null for unverified (no order on file) reviews
   productTitle: string
+  productSlug: string | null // lets the product page fetch only its own reviews
   authorName: string
   rating: number // 1-5
   text: string
+  verified: boolean // true only when tied to a real, matching order — see submit/route.ts
   status: 'pending' | 'approved' | 'rejected'
   createdAt: string
 }
@@ -31,7 +33,10 @@ const PENDING_SET = 'reviews:pending' // sorted set, score = submitted-at
 const APPROVED_SET = 'reviews:approved' // sorted set, score = approved-at
 
 export async function createReview(
-  input: Pick<Review, 'orderShortCode' | 'productTitle' | 'authorName' | 'rating' | 'text'>
+  input: Pick<
+    Review,
+    'orderShortCode' | 'productTitle' | 'productSlug' | 'authorName' | 'rating' | 'text' | 'verified'
+  >
 ): Promise<Review> {
   const review: Review = {
     ...input,
@@ -71,13 +76,20 @@ export async function rejectReview(id: string): Promise<void> {
   await redis.zrem(PENDING_SET, id)
 }
 
-export async function getApprovedReviews(limit = 20): Promise<Review[]> {
+export async function getApprovedReviews(limit = 20, productSlug?: string): Promise<Review[]> {
   try {
-    // Most recently approved first.
-    const ids = (await redis.zrange(APPROVED_SET, 0, limit - 1, { rev: true })) as string[]
+    // Most recently approved first. When filtering by product we pull a
+    // larger window before slicing, since the set isn't per-product indexed
+    // and review volume per product is expected to stay small.
+    const pullCount = productSlug ? Math.max(limit * 10, 200) : limit
+    const ids = (await redis.zrange(APPROVED_SET, 0, pullCount - 1, { rev: true })) as string[]
     if (ids.length === 0) return []
     const reviews = await Promise.all(ids.map((id) => getReview(id)))
-    return reviews.filter((r): r is Review => r !== null)
+    let result = reviews.filter((r): r is Review => r !== null)
+    if (productSlug) {
+      result = result.filter((r) => r.productSlug === productSlug)
+    }
+    return result.slice(0, limit)
   } catch (err) {
     console.error('[reviewStore] Failed to list approved reviews:', err)
     return []

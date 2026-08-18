@@ -28,38 +28,60 @@ export async function POST(req: NextRequest) {
   const orderCode = String(body.orderCode || '').trim()
   const email = String(body.email || '').trim().toLowerCase()
   const productTitle = String(body.productTitle || '').trim()
+  const productSlug = String(body.productSlug || '').trim() || null
+  const nameInput = String(body.name || '').trim()
   const rating = Number(body.rating)
   const text = String(body.text || '').trim()
 
-  if (!orderCode || !email) {
-    return NextResponse.json({ error: 'Order number and email are required.' }, { status: 400 })
-  }
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     return NextResponse.json({ error: 'Rating must be between 1 and 5.' }, { status: 400 })
   }
   if (text.length < 10 || text.length > 2000) {
     return NextResponse.json({ error: 'Review should be between 10 and 2000 characters.' }, { status: 400 })
   }
+  if (!productTitle) {
+    return NextResponse.json({ error: 'Product is required.' }, { status: 400 })
+  }
 
-  // Same ownership proof as /track-order (order code + matching email),
-  // plus the order must actually be a completed purchase — not a failed or
-  // abandoned attempt. This is the whole point: every review that reaches
-  // moderation is tied to a real, verifiable order, not a free-text form
-  // anyone can fill in.
-  const order = await getOrderRecord(orderCode)
-  if (!order || order.email !== email || (order.status !== 'created' && order.status !== 'updated')) {
-    return NextResponse.json(
-      { error: "We couldn't verify a completed order matching that order number and email." },
-      { status: 404 }
-    )
+  // Reviews no longer require a matching order. If an order code + email are
+  // supplied AND they check out (same ownership proof as /track-order,
+  // completed-purchase statuses only), the review is marked verified and
+  // gets the customer's real name off the order. Otherwise it's accepted as
+  // an unverified review — every site gets these regardless of what's
+  // enforced at signup, so we label them honestly (verified: false) rather
+  // than pretend they're order-backed. Never silently upgrade a review to
+  // "verified" without an order actually matching — that's the exact
+  // DMCC Act 2024 misrepresentation the old hardcoded-reviews approach ran
+  // into (see reviewStore.ts).
+  let verified = false
+  let authorName = nameInput || 'Anonymous'
+  let orderShortCode: string | null = null
+
+  if (orderCode && email) {
+    const order = await getOrderRecord(orderCode)
+    if (order && order.email === email && (order.status === 'created' || order.status === 'updated')) {
+      verified = true
+      orderShortCode = orderCode
+      authorName = toDisplayName(order.customerName)
+    }
+    // If an order code/email were given but didn't check out, we don't hard
+    // fail — we just fall through as an unverified review rather than
+    // blocking someone who mistyped their order number from leaving
+    // feedback at all.
+  }
+
+  if (!nameInput && !verified) {
+    return NextResponse.json({ error: 'Name is required.' }, { status: 400 })
   }
 
   const review = await createReview({
-    orderShortCode: orderCode,
-    productTitle: productTitle || order.products[0]?.title || 'Product',
-    authorName: toDisplayName(order.customerName),
+    orderShortCode,
+    productTitle,
+    productSlug,
+    authorName,
     rating,
     text,
+    verified,
   })
 
   if (MODERATION_TOKEN) {
@@ -67,11 +89,11 @@ export async function POST(req: NextRequest) {
     const rejectUrl = `${SITE_URL}/api/reviews/moderate?id=${review.id}&token=${MODERATION_TOKEN}&action=reject`
     await sendMailSafe({
       to: ADMIN_EMAIL,
-      subject: `📝 New review pending approval — ${rating}★ (${orderCode})`,
-      text: `New review submitted, tied to a verified order.
+      subject: `📝 New ${verified ? 'verified' : 'unverified'} review pending approval — ${rating}★${orderShortCode ? ` (${orderShortCode})` : ''}`,
+      text: `New review submitted.
 
-Order: ${orderCode}
-Product: ${review.productTitle}
+Verified purchase: ${verified ? 'YES' : 'NO — no matching order on file'}
+${orderShortCode ? `Order: ${orderShortCode}\n` : ''}Product: ${review.productTitle}
 Rating: ${rating}/5
 Name shown publicly: ${review.authorName}
 

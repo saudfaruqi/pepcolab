@@ -8,6 +8,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductVariantView from '@/components/ProductVariantView'
 import ProductCard from '@/components/ProductCard'
+import ProductReviews from '@/components/ProductReviews'
 
 import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
@@ -250,6 +251,11 @@ export default async function ProductPage({ params }: Props) {
         </div>
 
         <ProductVariantView product={product} />
+
+        {/* Open to anyone — not gated behind proof of purchase. Verified
+            badge only appears when the submitted order actually checks out
+            server-side (see ProductReviews.tsx / submit/route.ts). */}
+        <ProductReviews productSlug={shopifyProduct.handle} productTitle={shopifyProduct.title} />
 
         {/* ── Related products ──────────────────────────────────────────────
             Server-rendered from the same catalogue fetch, so these are real
