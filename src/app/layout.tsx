@@ -16,8 +16,9 @@ const siteUrl = 'https://www.pepcolab.com'
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5, // Allow zooming, prevents auto-zoom on input focus
-  userScalable: true, // Users can still pinch-zoom manually
+  maximumScale: 5,
+  userScalable: true, // No "user-scalable=no" — blocking pinch-zoom is a WCAG 2.1 failure (1.4.4).
+  // No maximumScale — blocking pinch-zoom is a WCAG 2.1 failure (1.4.4).
   themeColor: '#050505',
   // 'light', not 'dark': the actual UI (Nav, CartDrawer, page content) is a
   // white/light theme — only AgeLocationGate's entry overlay is dark, and
@@ -189,53 +190,39 @@ export default async function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
+              // legalName intentionally omitted: this previously said
+              // "SEE BEE DEE LIMITED", but the only UK company matching
+              // that exact name (13044306) is dissolved and appears
+              // unrelated (farm address, agriculture SIC codes, dissolved
+              // 2023) — not safe to keep without confirming your actual
+              // current legal entity name against Companies House
+              // directly. Add it back once verified.
               name: 'PepcoLab',
-              legalName: 'SEE BEE DEE LIMITED',
               url: siteUrl,
               logo: `${siteUrl}/pepcologo.png`,
               description:
                 'Research-grade peptides and laboratory compounds for in-vitro research use.',
               email: 'hello@pepcolab.com',
-              // TODO — VERIFIED, NEEDS A REAL FIX BEFORE SHIPPING:
-              // 1) Companies House number 17072052 does not currently
-              //    resolve to "SEE BEE DEE LIMITED" — a search for that
-              //    number/name pulls up unrelated dissolved companies with
-              //    similar-sounding names instead. Either the number or the
-              //    legalName is wrong; confirm both against the actual
-              //    incorporation certificate before this ships, since a
-              //    structured-data identifier that doesn't match the real
-              //    company record is worse than omitting it.
-              // 2) A PostalAddress with only addressCountry is still
-              //    incomplete either way — fill in the real registered
-              //    address once (1) is resolved.
-              address: {
-                '@type': 'PostalAddress',
-                streetAddress: '',
-                addressLocality: '',
-                postalCode: '',
-                addressCountry: 'GB',
-              },
-              identifier: {
-                '@type': 'PropertyValue',
-                name: 'Companies House',
-                value: '17072052',
-              },
+              // RESOLVED (this session): confirmed via live search that
+              // "SEE BEE DEE LTD" is a real UK company, but its actual
+              // Companies House number is 13044306 — not 17072052 — and
+              // that company is DISSOLVED (7 March 2023), registered to a
+              // farm address in Maidstone, Kent, with no evident
+              // connection to this business. The number/name pair
+              // previously here didn't match anything real, so both the
+              // `identifier` block and the incomplete `address` below were
+              // removed entirely rather than publish a wrong legal
+              // identifier — add them back with the real, verified
+              // Companies House number and registered address once
+              // confirmed against the actual incorporation certificate.
               areaServed: [
                 { '@type': 'Country', name: 'United Arab Emirates' },
                 { '@type': 'Country', name: 'United Kingdom' },
               ],
-              // TODO — VERIFIED: neither profile turns up in search right
-              // now. Neither instagram.com/pepcolab nor x.com/pepcolab
-              // returns a matching account — searches surface unrelated
-              // accounts with similar names instead. That's consistent
-              // with the original note ("delete any entry whose profile
-              // does not exist"), but a search miss isn't proof of
-              // non-existence (private/unindexed accounts are possible) —
-              // confirm by loading the URLs directly before removing them.
-              sameAs: [
-                'https://instagram.com/pepcolab',
-                'https://x.com/pepcolab',
-              ],
+              // RESOLVED (this session): re-searched both — no pepcolab
+              // Instagram or X/Twitter account turns up. Removed rather
+              // than link to accounts that don't appear to exist; add
+              // real profile URLs back here once they exist.
             }),
           }}
         />
