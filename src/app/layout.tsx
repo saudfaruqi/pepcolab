@@ -16,7 +16,8 @@ const siteUrl = 'https://www.pepcolab.com'
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  // No maximumScale — blocking pinch-zoom is a WCAG 2.1 failure (1.4.4).
+  maximumScale: 5, // Allow zooming, prevents auto-zoom on input focus
+  userScalable: true, // Users can still pinch-zoom manually
   themeColor: '#050505',
   // 'light', not 'dark': the actual UI (Nav, CartDrawer, page content) is a
   // white/light theme — only AgeLocationGate's entry overlay is dark, and
