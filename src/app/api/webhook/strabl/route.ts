@@ -13,8 +13,8 @@
 //   { type, orderUpdate: { orderUuid, ..., failureReason?, meta? }, customerUpdate }
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { createShopifyOrder, markShopifyOrderPaid } from '@/lib/shopifyAdmin'
-import { saveOrderRecord, type OrderRecord } from '@/lib/orderStore'
+import { createShopifyOrder, markShopifyOrderPaid, type AdminLineItemInput } from '@/lib/shopifyAdmin'
+import { saveOrderRecord, getOrderRecord, type OrderRecord } from '@/lib/orderStore'
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
@@ -112,26 +112,12 @@ export async function POST(req: NextRequest) {
   // that was missing before: order_failed used to only log to the server
   // console, so a customer with a failed payment had literally nothing to
   // look up.
-  // Shared by buildOrderRecord (for reorder) and buildShopifyOrderInputs
-  // (for the actual order creation below) — was previously only computed
-  // in the latter, so /track-order had no way to add a past order's items
-  // back to cart, only display them.
-  const extractVariantId = (item: any): string => {
-    let variantId = item.externalVariantId || item.externalProductId || ''
-    if (variantId.includes('gid://')) {
-      const match = variantId.match(/(\d+)$/)
-      if (match) variantId = match[1]
-    }
-    return variantId
-  }
-
   const buildOrderRecord = (status: OrderRecord['status']): OrderRecord => {
     const products = (orderUpdate.products || []).map((item: any) => ({
       title: item.title || 'Product',
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
       variantOptions: item.extra || [],
-      variantId: extractVariantId(item) || undefined,
     }))
     const total = products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
     const firstName = customerUpdate.firstName || ''
@@ -156,13 +142,41 @@ export async function POST(req: NextRequest) {
   // all three now create a real Shopify order (see below), just with
   // different financial_status/tags, so this extraction avoids writing
   // the same address/line-item mapping three times.
+  //
+  // 2026-08-19 fix (part 2): orders from a STRABL Payment Link don't
+  // include externalVariantId/externalProductId, and — separately —
+  // Shopify's line_items always need an explicit `price` now (see
+  // shopifyAdmin.ts for why). So: always send price + title from STRABL's
+  // own data, and only include variant_id when we actually have one.
+  // Without a variant_id, Shopify creates a "custom" line item — not
+  // linked to catalogue/inventory, but the order itself still gets
+  // created automatically instead of needing manual entry every time a
+  // Payment Link order comes in.
   const buildShopifyOrderInputs = () => {
     const shippingAddress = customerUpdate.shipping || {}
 
-    const lineItems = (orderUpdate.products || []).map((item: any) => {
-      const variantId = extractVariantId(item)
-      return { variant_id: variantId, quantity: item.quantity || 1 }
-    })
+    const lineItems: AdminLineItemInput[] = (orderUpdate.products || [])
+      .map((item: any) => {
+        let variantId = item.externalVariantId || item.externalProductId || ''
+        if (variantId.includes('gid://')) {
+          const match = variantId.match(/(\d+)$/)
+          if (match) variantId = match[1]
+        }
+        const price = Number(item.price)
+        const li: AdminLineItemInput = {
+          quantity: item.quantity || 1,
+          price: Number.isFinite(price) ? price.toFixed(2) : '0.00',
+          title: item.title || 'Product',
+        }
+        if (variantId) li.variant_id = variantId
+        return li
+      })
+      // price must be a real positive number — that's the one thing
+      // Shopify genuinely can't create a line item without, catalogue
+      // link or not.
+      .filter((li: AdminLineItemInput) => Number(li.price) > 0 && li.quantity > 0)
+
+    const hasCustomLineItem = lineItems.some((li) => !li.variant_id)
 
     const email = customerUpdate.email || ''
     const phone = customerUpdate.phoneNumber || ''
@@ -176,6 +190,7 @@ export async function POST(req: NextRequest) {
 
     return {
       lineItems,
+      hasCustomLineItem,
       countryCode,
       customerInfo: {
         email,
@@ -191,10 +206,59 @@ export async function POST(req: NextRequest) {
     case 'order_created':
     case 'order_updated': {
       try {
-        const { lineItems, countryCode, customerInfo } = buildShopifyOrderInputs()
+        // Idempotency: order_created and order_updated are genuinely
+        // separate webhook events (different event IDs, not just retries
+        // of one another — confirmed on SOR-QJJJCS, where order_created
+        // failed twice and a distinct order_updated event succeeded
+        // shortly after). Both hit this same code path, so without this
+        // check a successful order_updated following a retried
+        // order_created could create two Shopify orders for one purchase.
+        const existing = await getOrderRecord(orderShortCode)
+        if (existing && (existing.status === 'created' || existing.status === 'updated')) {
+          console.info(`[webhook] Order ${orderShortCode} already synced to Shopify, skipping duplicate creation`)
+          break
+        }
+
+        const { lineItems, hasCustomLineItem, countryCode, customerInfo } = buildShopifyOrderInputs()
 
         if (lineItems.length === 0) {
-          console.warn('[webhook] No line items in STRABL order, skipping')
+          // Now genuinely rare — only when STRABL sent no usable price at
+          // all (not just a missing variant mapping, which is handled
+          // below via a custom line item instead). Payment was already
+          // taken (paymentStatus: 'paid' on these events), so this still
+          // gets the same urgent alert as a Shopify API failure — money
+          // in, no Shopify order out, and nothing here can fix itself.
+          console.error(`[webhook] ⚠️ No usable line items (missing price) for paid order ${orderShortCode}`)
+          const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
+          await saveOrderRecord(record) // still let the customer look it up / get their confirmation email below
+          if (record.email) {
+            await sendOrderConfirmationEmail({
+              to: record.email,
+              orderShortCode: record.orderShortCode,
+              products: record.products,
+              total: record.total,
+              currency: record.currency,
+            })
+          }
+          await sendMailSafe({
+            to: ALERT_EMAIL,
+            subject: `⚠️ Order needs MANUAL Shopify creation — no usable price (${orderShortCode})`,
+            text: `Payment succeeded but STRABL didn't send a usable price for any product on this order, so no line item could be created — not even as a custom item.
+
+STRABL order: ${orderShortCode}
+Customer email: ${customerUpdate.email || '(none)'}
+Customer name: ${[customerUpdate.firstName, customerUpdate.lastName].filter(Boolean).join(' ') || '(none)'}
+Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
+
+Please create this order manually in Shopify and mark it paid. The customer has already been sent their order confirmation email, so they're expecting this order — this alert is about the Shopify-side record, not the customer experience.`,
+          })
+          // Deliberately not marking syncFailed here — this returns a
+          // normal 204 below. A STRABL retry can't invent a price that
+          // was never sent; only a human creating the order in Shopify
+          // can. Returning 500 here would just trigger repeat retries
+          // (and, if this weren't already idempotency-guarded above,
+          // repeat alert emails) for something automatic retrying will
+          // never resolve.
           break
         }
         if (!customerInfo.email) console.warn('[webhook] No customer email found in STRABL order')
@@ -203,8 +267,27 @@ export async function POST(req: NextRequest) {
           lineItems,
           countryCode,
           customerInfo,
-          orderShortCode
+          orderShortCode,
+          hasCustomLineItem ? { extraTags: ['strabl-custom-item'] } : undefined
         )
+
+        if (hasCustomLineItem) {
+          // Not urgent (the order WAS created successfully), but flagged
+          // separately from the critical "money in, no order" alerts above
+          // — a custom line item isn't linked to Shopify inventory/catalog,
+          // so this order won't decrement stock automatically and is worth
+          // a manual glance to match it against the real product.
+          await sendMailSafe({
+            to: ALERT_EMAIL,
+            subject: `ℹ️ Order created with an unmapped product — check inventory (${orderShortCode})`,
+            text: `Order ${orderShortCode} was created successfully in Shopify, but at least one line item had no matching variant (likely a STRABL Payment Link order), so it was added as a custom item instead — not linked to catalogue/inventory.
+
+Shopify order: ${shopifyOrder.name || shopifyOrder.id}
+Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
+
+Worth a quick check that stock/fulfillment for the real product is handled manually for this one, since Shopify won't have decremented it automatically.`,
+          })
+        }
 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
         const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
@@ -306,7 +389,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         if (lineItems.length > 0) {
           await createShopifyOrder(lineItems, countryCode, customerInfo, orderShortCode, {
             financialStatus: 'voided',
-            extraTag: 'strabl-failed',
+            extraTags: ['strabl-failed'],
           })
         }
       } catch (err: any) {
@@ -338,7 +421,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         if (lineItems.length > 0) {
           await createShopifyOrder(lineItems, countryCode, customerInfo, orderShortCode, {
             financialStatus: 'voided',
-            extraTag: 'strabl-abandoned',
+            extraTags: ['strabl-abandoned'],
           })
         }
       } catch (err: any) {
