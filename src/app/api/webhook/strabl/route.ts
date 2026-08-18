@@ -328,6 +328,18 @@ Worth a quick check that stock/fulfillment for the real product is handled manua
         console.error('[webhook] ❌ Failed to create Shopify order:', err.message, err.stack)
         syncFailed = true
 
+        // 2026-08-19 fix: previously nothing was saved to the lookup store
+        // on this path, so /track-order showed the exact same "couldn't
+        // find an order matching that order number and email" message as
+        // a genuine wrong-code/wrong-email mistake — indistinguishable to
+        // the customer from them having gotten something wrong, when
+        // really their order was just still being sorted out on our end
+        // (confirmed on SOR-QJJJCS: real money taken, real confusion when
+        // looked up before the retry succeeded). A 'processing' record
+        // lets the page say something true and reassuring instead.
+        const processingRecord = buildOrderRecord('processing')
+        await saveOrderRecord(processingRecord)
+
         // This is the important one: STRABL has already taken the
         // customer's money at this point, but the Shopify order — the
         // thing that actually gets it packed and shipped — doesn't exist.

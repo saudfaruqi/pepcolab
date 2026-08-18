@@ -22,7 +22,7 @@
 
 import { redis } from '@/lib/redis'
 
-export type OrderStatus = 'created' | 'updated' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
+export type OrderStatus = 'created' | 'updated' | 'processing' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
 
 export interface OrderRecord {
   orderShortCode: string
@@ -36,13 +36,6 @@ export interface OrderRecord {
     price: number
     quantity: number
     variantOptions?: string[]
-    // Bare numeric Shopify variant id (same extraction webhook route already
-    // does for buildShopifyOrderInputs) — added so /track-order can offer a
-    // real "reorder" action that adds the actual variant back to cart,
-    // instead of only being able to display what was ordered. Optional
-    // because orders saved before this field existed won't have it; the
-    // reorder UI falls back to WhatsApp for those.
-    variantId?: string
   }[]
   currency: string
   total: number
