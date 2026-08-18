@@ -18,11 +18,91 @@ import { saveOrderRecord, getOrderRecord, type OrderRecord } from '@/lib/orderSt
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
+import { redis } from '@/lib/redis'
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
 // Use a Set for deduplication - in production, use Redis or similar
 const processedIds = new Set<string>()
+
+// STRABL doesn't guarantee ISO 3166-1 alpha-2 in shipping.country — observed
+// "UAE" instead of "AE" on SOR-QJJJCS, which Shopify's Admin API rejects
+// outright (country_code must be alpha-2), throwing and taking down the
+// whole order-create call for a problem that has nothing to do with the
+// order itself. Normalize known non-standard variants here rather than
+// letting one bad country string 500 an otherwise-valid paid order.
+const COUNTRY_CODE_ALIASES: Record<string, string> = {
+  UAE: 'AE',
+  'U.A.E': 'AE',
+  'U.A.E.': 'AE',
+  'UNITED ARAB EMIRATES': 'AE',
+  KSA: 'SA',
+  'SAUDI ARABIA': 'SA',
+}
+
+function normalizeCountryCode(raw: string | undefined): string {
+  const value = (raw || '').trim().toUpperCase()
+  if (!value) return 'AE'
+  if (value.length === 2) return value // already alpha-2
+  return COUNTRY_CODE_ALIASES[value] || 'AE' // unknown format — fall back rather than let it reach Shopify and throw
+}
+
+// SOR-QJJJCS showed order_created can fail (bad country code, transient
+// Shopify error, etc) while a later order_updated for the SAME order
+// succeeds — but order_updated events aren't guaranteed to carry the full
+// shipping block again. Without this cache, a later event with missing
+// shipping fields would silently create the Shopify order with BLANK
+// address1/city/postcode instead of the customer's real address, which is
+// far worse than just failing outright (order looks fine, ships nowhere).
+// OrderRecord (orderStore.ts) deliberately doesn't persist full shipping
+// address — only what /track-order needs to show the customer — so this is
+// a separate, short-lived cache purely for recovering a real address across
+// retries/duplicate events for the same order.
+const SHIPPING_CACHE_PREFIX = 'strabl-shipping-cache:'
+const SHIPPING_CACHE_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days — plenty for retries, not a long-term PII store
+
+interface CachedShipping {
+  email: string
+  phone: string
+  firstName: string
+  lastName: string
+  address1: string
+  address2: string
+  city: string
+  postalCode: string
+  countryCode: string
+}
+
+function shippingCacheKey(orderShortCode: string): string {
+  return `${SHIPPING_CACHE_PREFIX}${orderShortCode.trim().toUpperCase()}`
+}
+
+function isUsableAddress(s: CachedShipping): boolean {
+  return Boolean(s.address1 && s.city)
+}
+
+async function cacheShippingIfUsable(orderShortCode: string, shipping: CachedShipping): Promise<void> {
+  if (!orderShortCode || !isUsableAddress(shipping)) return
+  try {
+    await redis.set(shippingCacheKey(orderShortCode), shipping, { ex: SHIPPING_CACHE_TTL_SECONDS })
+  } catch (err) {
+    // Best-effort only — losing this cache just means a future event with
+    // missing shipping data can't be backfilled, it doesn't break anything
+    // that's happening right now.
+    console.error('[webhook] Failed to cache shipping address:', err)
+  }
+}
+
+async function getCachedShipping(orderShortCode: string): Promise<CachedShipping | null> {
+  if (!orderShortCode) return null
+  try {
+    const cached = await redis.get<CachedShipping>(shippingCacheKey(orderShortCode))
+    return cached ?? null
+  } catch (err) {
+    console.error('[webhook] Failed to read cached shipping address:', err)
+    return null
+  }
+}
 
 function verifyWebhook(webhookId: string, timestamp: string, signature: string, rawBody: string) {
   const secret = process.env.STRABL_WEBHOOK_SECRET
@@ -152,7 +232,7 @@ export async function POST(req: NextRequest) {
   // linked to catalogue/inventory, but the order itself still gets
   // created automatically instead of needing manual entry every time a
   // Payment Link order comes in.
-  const buildShopifyOrderInputs = () => {
+  const buildShopifyOrderInputs = async () => {
     const shippingAddress = customerUpdate.shipping || {}
 
     const lineItems: AdminLineItemInput[] = (orderUpdate.products || [])
@@ -178,15 +258,44 @@ export async function POST(req: NextRequest) {
 
     const hasCustomLineItem = lineItems.some((li) => !li.variant_id)
 
-    const email = customerUpdate.email || ''
-    const phone = customerUpdate.phoneNumber || ''
-    const address1 = shippingAddress.address_1 || ''
-    const address2 = shippingAddress.address_2 || ''
-    const city = shippingAddress.city || ''
-    const postalCode = shippingAddress.postcode || ''
-    const countryCode = shippingAddress.country || 'AE'
-    const firstName = customerUpdate.firstName || shippingAddress.first_name || ''
-    const lastName = customerUpdate.lastName || shippingAddress.last_name || ''
+    let email = customerUpdate.email || ''
+    let phone = customerUpdate.phoneNumber || ''
+    let address1 = shippingAddress.address_1 || ''
+    let address2 = shippingAddress.address_2 || ''
+    let city = shippingAddress.city || ''
+    let postalCode = shippingAddress.postcode || ''
+    let countryCode = normalizeCountryCode(shippingAddress.country)
+    let firstName = customerUpdate.firstName || shippingAddress.first_name || ''
+    let lastName = customerUpdate.lastName || shippingAddress.last_name || ''
+
+    const currentShipping: CachedShipping = {
+      email, phone, firstName, lastName, address1, address2, city, postalCode, countryCode,
+    }
+
+    if (isUsableAddress(currentShipping)) {
+      // Good address on this event — cache it so a later event for the
+      // same order (e.g. order_updated with a stripped-down payload) can
+      // recover it instead of falling back to blanks.
+      await cacheShippingIfUsable(orderShortCode, currentShipping)
+    } else {
+      // This event didn't carry a real address (common on order_updated —
+      // see SOR-QJJJCS) — try to recover the real one from an earlier
+      // event on this same order rather than sending Shopify an order
+      // with a blank/default address.
+      const cached = await getCachedShipping(orderShortCode)
+      if (cached) {
+        console.info(`[webhook] Recovered shipping address for ${orderShortCode} from cache (current event had none)`)
+        email = email || cached.email
+        phone = phone || cached.phone
+        firstName = firstName || cached.firstName
+        lastName = lastName || cached.lastName
+        address1 = cached.address1
+        address2 = cached.address2
+        city = cached.city
+        postalCode = cached.postalCode
+        countryCode = cached.countryCode
+      }
+    }
 
     return {
       lineItems,
@@ -219,7 +328,7 @@ export async function POST(req: NextRequest) {
           break
         }
 
-        const { lineItems, hasCustomLineItem, countryCode, customerInfo } = buildShopifyOrderInputs()
+        const { lineItems, hasCustomLineItem, countryCode, customerInfo } = await buildShopifyOrderInputs()
 
         if (lineItems.length === 0) {
           // Now genuinely rare — only when STRABL sent no usable price at
@@ -397,7 +506,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
       // (unlike order_created/updated above, where a failure means a paid
       // order silently doesn't exist).
       try {
-        const { lineItems, countryCode, customerInfo } = buildShopifyOrderInputs()
+        const { lineItems, countryCode, customerInfo } = await buildShopifyOrderInputs()
         if (lineItems.length > 0) {
           await createShopifyOrder(lineItems, countryCode, customerInfo, orderShortCode, {
             financialStatus: 'voided',
@@ -429,7 +538,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
       // manual recovery follow-up (call/email the customer) instead of
       // only existing in server logs.
       try {
-        const { lineItems, countryCode, customerInfo } = buildShopifyOrderInputs()
+        const { lineItems, countryCode, customerInfo } = await buildShopifyOrderInputs()
         if (lineItems.length > 0) {
           await createShopifyOrder(lineItems, countryCode, customerInfo, orderShortCode, {
             financialStatus: 'voided',
