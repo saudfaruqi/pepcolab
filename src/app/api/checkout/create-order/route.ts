@@ -25,9 +25,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Complete shipping address is required' }, { status: 400 })
     }
 
-    const lineItems = lines.map((l: { variantId: string; quantity: number }) => ({
+    const lineItems = lines.map((l: { variantId: string; quantity: number; price: number }) => ({
       variant_id: numericVariantId(l.variantId),
       quantity: l.quantity,
+      price: Number(l.price ?? 0).toFixed(2),
     }))
 
     const order = await createShopifyOrder(

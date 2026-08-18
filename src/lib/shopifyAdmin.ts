@@ -16,9 +16,9 @@ function adminHeaders() {
 }
 
 export interface AdminLineItemInput {
-  variant_id?: string // numeric Shopify variant id, NOT the gid — omit entirely for a custom (non-catalog) line item
-  title?: string // required by Shopify when variant_id is omitted; ignored (Shopify uses the variant's own title) when variant_id is present
-  price: string // 2026-08-19 fix: ALWAYS send this explicitly, as a decimal string e.g. "40.00". Previously omitted, relying on Shopify to look the price up from variant_id — when that lookup failed for any reason (unmatched/invalid variant, which happens on STRABL Payment Link orders), Shopify rejected the whole order with a 422 "price must be provided" rather than falling back to anything. We already have the authoritative price from STRABL's payload; no reason to depend on a Shopify-side lookup succeeding.
+  variant_id?: string
+  title?: string
+  price: string   // required
   quantity: number
 }
 
