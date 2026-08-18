@@ -407,3 +407,73 @@ h1, h2, h3, h4, h5 {
     display: none !important;
   }
 }
+
+/* ── IOS INPUT ZOOM FIX ────────────────────────────────────────────── */
+/* iOS Safari automatically zooms inputs with font-size < 16px */
+/* This forces all form elements to be at least 16px on iOS */
+
+/* Target iOS devices specifically */
+@supports (-webkit-touch-callout: none) {
+  /* All form elements get 16px minimum */
+  input,
+  select,
+  textarea,
+  .input,
+  [type="text"],
+  [type="email"],
+  [type="tel"],
+  [type="number"],
+  [type="search"],
+  [type="password"],
+  [type="date"],
+  [type="time"],
+  [type="datetime-local"],
+  [type="month"],
+  [type="week"],
+  [type="url"],
+  [type="color"] {
+    font-size: 16px !important;
+  }
+  
+  /* Quantity stepper inputs */
+  .qty-val,
+  .qty-stepper input {
+    font-size: 16px !important;
+  }
+  
+  /* Search inputs in overlays */
+  .search-box input {
+    font-size: 16px !important;
+  }
+}
+
+/* For all touch devices (including Android) */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea,
+  .input {
+    font-size: 16px !important;
+  }
+}
+
+/* Optional: Use transform scaling to keep visual size small */
+/* Only apply if the 16px font-size looks too large on your design */
+/* Uncomment this section if you want to keep the visual size smaller */
+
+/*
+@supports (-webkit-touch-callout: none) {
+  .input,
+  .qty-val,
+  .search-box input {
+    transform: scale(0.875);
+    transform-origin: left center;
+  }
+  
+  .input:focus,
+  .qty-val:focus,
+  .search-box input:focus {
+    transform: scale(1);
+  }
+}
+*/
