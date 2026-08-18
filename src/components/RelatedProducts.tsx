@@ -28,9 +28,22 @@ function pickRelated(all: any[], currentHandle: string, currentTag?: string, lim
 
   const related = [...sameCategory]
   if (related.length < limit) {
+    // NOTE: this used to be `.sort(() => Math.random() - 0.5)`. Math.random()
+    // runs once during the server render and again during React's client
+    // hydration pass, producing a *different* shuffle each time — so the
+    // "You may also like" order (and sometimes which products appeared)
+    // mismatched between server HTML and the client's first render. That's
+    // what was throwing the React hydration errors (#418/#423/#425) sitewide.
+    // A stable, deterministic order (seeded off the current product's handle
+    // rather than wall-clock randomness) still varies the fallback picks
+    // page-to-page without ever disagreeing with itself between server and
+    // client.
+    const seed = Array.from(currentHandle).reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
     const fillers = pool
       .filter((p) => p.inStock !== false && !related.some((r) => r.handle === p.handle))
-      .sort(() => Math.random() - 0.5)
+      .map((p, i) => ({ p, key: (i * 2654435761 + seed) % 2147483647 }))
+      .sort((a, b) => a.key - b.key)
+      .map(({ p }) => p)
     for (const p of fillers) {
       if (related.length >= limit) break
       related.push(p)
