@@ -979,226 +979,264 @@ export default function PepcoLabPage({
         </section>
       )}
 
-      {/* ── Research Spotlight ── */}
-      {p1 && p2 && (
-        <section style={{
-          background: "#F7F5F1",
-          padding: "clamp(48px, 6vw, 80px) 0",
-          borderBottom: "1px solid rgba(13,13,13,.06)",
+{/* ── Research Spotlight ── */}
+{p1 && p2 && (
+  <section style={{
+    background: "#F7F5F1",
+    padding: "clamp(32px, 6vw, 80px) 0",
+    borderBottom: "1px solid rgba(13,13,13,.06)",
+  }}>
+    <div style={{
+      maxWidth: 1200,
+      margin: "0 auto",
+      padding: "0 clamp(16px, 4vw, 40px)",
+    }}>
+      <div style={{
+        marginBottom: "clamp(24px, 5vw, 48px)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: "6px",
+      }}>
+        <h2 style={{
+          ...TYPOGRAPHY.heading,
+          fontSize: "clamp(22px, 4vw, 40px)",
         }}>
-          <div style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "0 clamp(16px, 4vw, 40px)",
-          }}>
-            <div style={{
-              marginBottom: "clamp(32px, 5vw, 48px)",
+          {p1.shortName} &amp; {p2.shortName}
+        </h2>
+        <p style={{
+          ...TYPOGRAPHY.subheading,
+          fontSize: "clamp(14px, 1.5vw, 18px)",
+        }}>
+          Two of our most widely researched compounds, independently tested and batch-documented.
+        </p>
+      </div>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+        gap: "clamp(16px, 2vw, 24px)",
+        marginBottom: "clamp(32px, 4vw, 48px)",
+      }}>
+        {[p1, p2].map((p) => (
+          <div
+            key={p.id}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              border: "1px solid rgba(13,13,13,0.06)",
+              overflow: "hidden",
+              transition: "border-color 0.2s ease, transform 0.2s ease",
               display: "flex",
               flexDirection: "column",
-              alignItems: "flex-start",
-              gap: "6px",
+              height: "100%",
+              minHeight: "380px",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = "rgba(13,13,13,0.15)";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = "rgba(13,13,13,0.06)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <div style={{
+              background: "#FCFBF8",
+              padding: "clamp(20px, 3vw, 32px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "clamp(120px, 20vh, 180px)",
+              borderBottom: "1px solid rgba(13,13,13,0.04)",
+              position: "relative",
+              flexShrink: 0,
             }}>
-              <h2 style={TYPOGRAPHY.heading}>
-                {p1.shortName} &amp; {p2.shortName}
-              </h2>
-              <p style={TYPOGRAPHY.subheading}>
-                Two of our most widely researched compounds, independently tested and batch-documented.
-              </p>
+              {p.image ? (
+                <img
+                  src={p.image}
+                  alt={p.title}
+                  style={{
+                    height: "clamp(60px, 12vw, 120px)",
+                    width: "auto",
+                    maxWidth: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                <Vial
+                  fromColor={p.color?.vialFrom ?? "#3B82F6"}
+                  toColor={p.color?.vialTo ?? "#8B5CF6"}
+                  mg={p.mg}
+                  size="lg"
+                />
+              )}
+
+              {p.purity && (
+                <div style={{
+                  position: "absolute",
+                  top: "8px",
+                  right: "8px",
+                  background: "rgba(255,255,255,0.95)",
+                  padding: "4px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(13,13,13,0.06)",
+                  ...TYPOGRAPHY.cardMeta,
+                  fontSize: "clamp(9px, 0.8vw, 10px)",
+                  color: "#0D0D0D",
+                  whiteSpace: "nowrap",
+                }}>
+                  {p.purity}% purity
+                </div>
+              )}
             </div>
 
             <div style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "clamp(16px, 2vw, 24px)",
-              marginBottom: "clamp(32px, 4vw, 48px)",
+              padding: "clamp(14px, 2vw, 20px)",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              minHeight: 0,
             }}>
-              {[p1, p2].map((p) => (
-                <div
-                  key={p.id}
+              <div style={{
+                ...TYPOGRAPHY.cardMeta,
+                fontSize: "clamp(10px, 0.8vw, 11px)",
+              }}>
+                {p.category || "Research Compound"}
+              </div>
+
+              <h3 style={{
+                ...TYPOGRAPHY.cardTitle,
+                fontSize: "clamp(16px, 1.5vw, 20px)",
+                margin: "2px 0",
+              }}>
+                {p.shortName}
+              </h3>
+
+              <p style={{
+                ...TYPOGRAPHY.cardDesc,
+                fontSize: "clamp(13px, 1vw, 15px)",
+                flex: "0 1 auto",
+                margin: "2px 0 8px",
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+              }}>
+                {p.description?.slice(0, 100) + (p.description?.length > 100 ? "…" : "") ||
+                  "Independently tested research compound with published COA."}
+              </p>
+
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingTop: "12px",
+                borderTop: "1px solid rgba(13,13,13,0.04)",
+                marginTop: "auto",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}>
+                <span style={{
+                  ...TYPOGRAPHY.price,
+                  fontSize: "clamp(16px, 1.2vw, 20px)",
+                  fontWeight: 600,
+                  flexShrink: 0,
+                }}>
+                  {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
+                </span>
+
+                <button
+                  onClick={() => addToCart(p)}
+                  disabled={!p.inStock}
                   style={{
-                    background: "#ffffff",
-                    borderRadius: "16px",
-                    border: "1px solid rgba(13,13,13,0.06)",
-                    overflow: "hidden",
-                    transition: "border-color 0.2s ease, transform 0.2s ease",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = "rgba(13,13,13,0.15)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = "rgba(13,13,13,0.06)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  <div style={{
-                    background: "#FCFBF8",
-                    padding: "clamp(24px, 3vw, 32px)",
+                    height: "clamp(32px, 3vw, 36px)",
+                    padding: "0 clamp(12px, 1.5vw, 18px)",
+                    borderRadius: "100px",
+                    border: "1px solid rgba(13,13,13,0.08)",
+                    background: p.inStock ? "#0D0D0D" : "rgba(13,13,13,0.04)",
+                    color: p.inStock ? "#fff" : "rgba(13,13,13,0.25)",
+                    ...TYPOGRAPHY.button,
+                    cursor: p.inStock ? "pointer" : "not-allowed",
+                    transition: "background 0.2s ease, border-color 0.2s ease",
+                    whiteSpace: "nowrap",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: "clamp(140px, 20vh, 180px)",
-                    borderBottom: "1px solid rgba(13,13,13,0.04)",
-                    position: "relative",
-                  }}>
-                    {p.image ? (
-                      <img
-                        src={p.image}
-                        alt={p.title}
-                        style={{
-                          height: "clamp(80px, 12vw, 120px)",
-                          width: "auto",
-                          objectFit: "contain",
-                        }}
-                      />
-                    ) : (
-                      <Vial
-                        fromColor={p.color?.vialFrom ?? "#3B82F6"}
-                        toColor={p.color?.vialTo ?? "#8B5CF6"}
-                        mg={p.mg}
-                        size="lg"
-                      />
-                    )}
-
-                    {p.purity && (
-                      <div style={{
-                        position: "absolute",
-                        top: "12px",
-                        right: "12px",
-                        background: "rgba(255,255,255,0.9)",
-                        padding: "4px 10px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(13,13,13,0.06)",
-                        ...TYPOGRAPHY.cardMeta,
-                        fontSize: "10px",
-                        color: "#0D0D0D",
-                      }}>
-                        {p.purity}% purity
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{
-                    padding: "clamp(16px, 2vw, 20px)",
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}>
-                    <div style={TYPOGRAPHY.cardMeta}>
-                      {p.category || "Research Compound"}
-                    </div>
-
-                    <h3 style={TYPOGRAPHY.cardTitle}>
-                      {p.shortName}
-                    </h3>
-
-                    <p style={TYPOGRAPHY.cardDesc}>
-                      {p.description?.slice(0, 100) + (p.description?.length > 100 ? "…" : "") ||
-                        "Independently tested research compound with published COA."}
-                    </p>
-
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingTop: "12px",
-                      borderTop: "1px solid rgba(13,13,13,0.04)",
-                      marginTop: "4px",
-                    }}>
-                      <span style={TYPOGRAPHY.price}>
-                        {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
-                      </span>
-
-                      <button
-                        onClick={() => addToCart(p)}
-                        disabled={!p.inStock}
-                        style={{
-                          height: "36px",
-                          padding: "0 18px",
-                          borderRadius: "100px",
-                          border: "1px solid rgba(13,13,13,0.08)",
-                          background: p.inStock ? "#0D0D0D" : "rgba(13,13,13,0.04)",
-                          color: p.inStock ? "#fff" : "rgba(13,13,13,0.25)",
-                          ...TYPOGRAPHY.button,
-                          cursor: p.inStock ? "pointer" : "not-allowed",
-                          transition: "background 0.2s ease, border-color 0.2s ease",
-                          whiteSpace: "nowrap",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                        onMouseEnter={e => {
-                          if (p.inStock) {
-                            e.currentTarget.style.background = "#2A2A2A";
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (p.inStock) {
-                            e.currentTarget.style.background = "#0D0D0D";
-                          }
-                        }}
-                      >
-                        {p.inStock ? "Add to Cart" : "Out of Stock"}
-                        {p.inStock && (
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                            <polyline points="12 5 19 12 12 19" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "clamp(12px, 2vw, 24px)",
-              paddingTop: "clamp(20px, 3vw, 32px)",
-              borderTop: "1px solid rgba(13,13,13,0.06)",
-            }}>
-              {[
-                [p1.purity ? `${p1.purity}%` : "99%+", "Purity Verified"],
-                ["COA", "Batch Documented"],
-                ["24hr", "Dispatch"],
-              ].map(([value, label]) => (
-                <div key={label}>
-                  <div style={{
-                    fontSize: "clamp(20px, 2.5vw, 28px)",
-                    fontWeight: 600,
-                    letterSpacing: "-0.03em",
-                    color: "#0D0D0D",
-                  }}>
-                    {value}
-                  </div>
-                  <div style={{
-                    ...TYPOGRAPHY.cardMeta,
-                    fontSize: "clamp(9px, 0.8vw, 10px)",
-                    color: "rgba(13,13,13,0.3)",
-                    marginTop: "2px",
-                  }}>
-                    {label}
-                  </div>
-                </div>
-              ))}
+                    gap: "6px",
+                    fontSize: "clamp(11px, 0.9vw, 13px)",
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={e => {
+                    if (p.inStock) {
+                      e.currentTarget.style.background = "#2A2A2A";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (p.inStock) {
+                      e.currentTarget.style.background = "#0D0D0D";
+                    }
+                  }}
+                >
+                  {p.inStock ? "Add to Cart" : "Out of Stock"}
+                  {p.inStock && (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </section>
-      )}
+        ))}
+      </div>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))",
+        gap: "clamp(12px, 2vw, 24px)",
+        paddingTop: "clamp(20px, 3vw, 32px)",
+        borderTop: "1px solid rgba(13,13,13,0.06)",
+      }}>
+        {[
+          [p1.purity ? `${p1.purity}%` : "99%+", "Purity Verified"],
+          ["COA", "Batch Documented"],
+          ["24hr", "Dispatch"],
+        ].map(([value, label]) => (
+          <div key={label} style={{ textAlign: "center" }}>
+            <div style={{
+              fontSize: "clamp(18px, 2.5vw, 28px)",
+              fontWeight: 600,
+              letterSpacing: "-0.03em",
+              color: "#0D0D0D",
+            }}>
+              {value}
+            </div>
+            <div style={{
+              ...TYPOGRAPHY.cardMeta,
+              fontSize: "clamp(9px, 0.8vw, 10px)",
+              color: "rgba(13,13,13,0.3)",
+              marginTop: "2px",
+            }}>
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
 
       {/* ── Research Areas ── */}
       <section style={{ background:"#0A0A0A", padding:"clamp(72px,9vw,120px) 0" }}>
