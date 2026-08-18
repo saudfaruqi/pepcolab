@@ -1029,7 +1029,7 @@ export default function PepcoLabPage({
               display: "flex",
               flexDirection: "column",
               height: "100%",
-              minHeight: "380px",
+              minHeight: "300px",
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = "rgba(13,13,13,0.15)";
