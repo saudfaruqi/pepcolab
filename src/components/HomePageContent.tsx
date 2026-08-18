@@ -1114,20 +1114,6 @@ export default function PepcoLabPage({
                 {p.shortName}
               </h3>
 
-              <p style={{
-                ...TYPOGRAPHY.cardDesc,
-                fontSize: "clamp(13px, 1vw, 15px)",
-                flex: "0 1 auto",
-                margin: "2px 0 8px",
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-              }}>
-                {p.description?.slice(0, 100) + (p.description?.length > 100 ? "…" : "") ||
-                  "Independently tested research compound with published COA."}
-              </p>
-
               <div style={{
                 display: "flex",
                 alignItems: "center",
