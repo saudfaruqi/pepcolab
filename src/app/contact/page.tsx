@@ -82,7 +82,7 @@ export default function ContactPage() {
     <>
       <Nav />
 
-      <main>
+      <main className="overflow-hidden">
         {/* Hero */}
         <section className="border-b border-neutral-200 bg-[#f7f6f3] relative overflow-hidden">
           {/* Subtle background pattern */}
@@ -167,7 +167,7 @@ export default function ContactPage() {
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3 text-sm text-neutral-600">
                     <FileCheck size={16} className="text-emerald-600" />
-                    <span>UK Registered Company #17072052</span>
+                    <span>UK Registered Company</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-neutral-600">
                     <Shield size={16} className="text-emerald-600" />
