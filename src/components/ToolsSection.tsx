@@ -18,7 +18,7 @@ const TOOLS = [
     desc: 'Instantly compute exact dilution volumes for any peptide. Enter your vial size, concentration target, and solvent — get precise measurements.',
     href: '/tools/reconstitution-calculator',
     tag: 'Interactive',
-    color: 'text-blue-600',
+    color: 'text-blue-900',
     bg: 'bg-blue-50',
   },
   {
@@ -60,7 +60,7 @@ export default function ToolsSection() {
               Research tools
             </div>
             <h2 className="font-serif text-[38px] lg:text-[44px] leading-[1.05] tracking-[-1.2px] text-ink mb-3">
-              Built for <em className="text-blue-600">serious</em> researchers.
+              Built for <em className="text-blue-900">serious</em> researchers.
             </h2>
             <p className="text-[15px] text-steel font-light leading-[1.75] max-w-[500px]">
               We built a suite of tools that goes beyond a product catalogue — calculators, batch verification, and a full research library.
@@ -71,7 +71,7 @@ export default function ToolsSection() {
                clickable, went nowhere. */}
             <a
               href="/tools"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white text-[13px] font-medium px-5 py-2.5 rounded-[8px] hover:bg-blue-700 transition-colors btn-press cursor-pointer"
+              className="inline-flex items-center gap-2 bg-blue-900 text-white text-[13px] font-medium px-5 py-2.5 rounded-[8px] hover:bg-blue-700 transition-colors btn-press cursor-pointer"
             >
               Explore all tools <ArrowRight size={14} />
             </a>
@@ -96,7 +96,7 @@ export default function ToolsSection() {
                   </span>
                 </div>
                 <div>
-                  <div className="text-[15px] font-semibold tracking-tight text-ink mb-2 group-hover:text-blue-600 transition-colors">
+                  <div className="text-[15px] font-semibold tracking-tight text-ink mb-2 group-hover:text-blue-900 transition-colors">
                     {tool.name}
                   </div>
                   <p className="text-[13px] text-steel font-light leading-[1.7]">

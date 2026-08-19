@@ -221,7 +221,7 @@ export default function COASection() {
               </div>
               <button
                 onClick={handleVerifySearch}
-                className="text-[12px] font-medium bg-blue-600 text-white px-4 py-2 rounded-[7px] hover:bg-blue-700 transition-colors flex-shrink-0"
+                className="text-[12px] font-medium bg-blue-900 text-white px-4 py-2 rounded-[7px] hover:bg-blue-700 transition-colors flex-shrink-0"
               >
                 Verify
               </button>
