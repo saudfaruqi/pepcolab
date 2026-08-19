@@ -1,6 +1,3 @@
-
-
-
 // src/lib/utils.ts
 
 import { type ClassValue, clsx } from 'clsx'
@@ -43,4 +40,60 @@ export function formatPrice(
 
 export function formatPurity(purity: number): string {
   return `${purity}%`
+}
+
+/**
+ * Strips a leading mention of the product name from a description/blurb.
+ *
+ * Shopify product descriptions are typically written as full sentences that
+ * open with the product's own name (e.g. "BPC-157 5mg is a synthetically
+ * produced peptide…"). That reads fine as body copy, but when the same text
+ * is reused as a one-liner or card blurb sitting directly under an <h1>/<h3>
+ * that already shows the name, it looks like the name is just being
+ * repeated back. This trims that leading repeat (name, optionally followed
+ * by a dash/colon/"is"/"are") so the blurb starts with new information.
+ *
+ * Only strips a match anchored at the very start of the text — never
+ * touches the name if it shows up mid-sentence.
+ */
+export function stripLeadingName(
+  text: string | undefined | null,
+  name: string | undefined | null
+): string {
+  if (!text) return ''
+  let trimmed = text.trim()
+  if (!name) return trimmed
+
+  const escaped = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  if (!escaped) return trimmed
+
+  // Some Shopify descriptions have the name (+ strength) pasted twice in a
+  // row at the very start with no separator — e.g. "Acetic Acid
+  // 0.6%Acetic Acid 0.6% is a dilute…" — a content-entry issue upstream,
+  // not a formatting one. Collapse an immediate back-to-back repeat down
+  // to a single occurrence before doing anything else, so the connector
+  // check below still finds "is"/"are"/a dash right after the name.
+  const dupeRe = new RegExp(
+    `^\\s*(${escaped}\\s*(?:[\\w.%]{1,12})?)\\s*\\1`,
+    'i'
+  )
+  trimmed = trimmed.replace(dupeRe, '$1')
+
+  // After the name, Shopify copy often inserts the variant/strength before
+  // getting to a verb — "Acetic Acid 0.6% is a dilute…", "BPC-157 5mg is a
+  // synthetically…" — so allow one short word-ish token (letters/digits/%/.)
+  // in between. The connector itself ("is"/"are"/a dash/colon) is required:
+  // without one, we can't tell where the name reference actually ends, so
+  // we leave the text untouched rather than risk cutting into real content.
+  const re = new RegExp(
+    `^\\s*${escaped}\\s*(?:[\\w.%]{1,12}\\s*)?(?:[-–—:]\\s*|\\b(?:is|are)\\b\\s*)`,
+    'i'
+  )
+  const stripped = trimmed.replace(re, '')
+
+  if (stripped !== trimmed && stripped.length > 0) {
+    // Re-capitalise whatever now leads the sentence.
+    return stripped.charAt(0).toUpperCase() + stripped.slice(1)
+  }
+  return trimmed
 }

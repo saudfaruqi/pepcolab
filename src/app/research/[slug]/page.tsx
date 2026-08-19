@@ -13,6 +13,7 @@ import RecentlyViewed from '@/components/RecentlyViewed'
 
 import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
+import { stripLeadingName } from '@/lib/utils'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -98,17 +99,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /* HELPERS                                                                     */
 /* -------------------------------------------------------------------------- */
 
-/** ProductVariantView renders `product.oneLiner`, so it's derived here. */
-function getOneLiner(description?: string): string {
+/**
+ * ProductVariantView renders `product.oneLiner`, so it's derived here.
+ * Strips a leading repeat of the product name first — Shopify descriptions
+ * usually open with the name (e.g. "BPC-157 5mg is a…"), and this one-liner
+ * sits directly under the <h1> that already shows it.
+ */
+function getOneLiner(description?: string, name?: string): string {
   if (!description) return ''
-  const sentences = description.split(/(?<=[.!?])\s+/)
+  const body = stripLeadingName(description, name)
+  const sentences = body.split(/(?<=[.!?])\s+/)
   for (const s of sentences) {
     const clean = s.trim()
     if (clean.length < 40) continue
     if (clean.includes(' – ') || clean.includes(' - ')) continue
     return clean.endsWith('.') || clean.endsWith('!') || clean.endsWith('?') ? clean : clean + '.'
   }
-  return description.slice(0, 120).trim() + '…'
+  return body.slice(0, 120).trim() + '…'
 }
 
 /** The research category tag, ignoring market tags. */
@@ -210,7 +217,7 @@ export default async function ProductPage({ params }: Props) {
     slug: shopifyProduct.handle,
     name: shopifyProduct.title,
     shortName: shopifyProduct.title,
-    oneLiner: getOneLiner(shopifyProduct.description),
+    oneLiner: getOneLiner(shopifyProduct.description, shopifyProduct.title),
     category: categoryTag(shopifyProduct.tags) || '',
     categorySlug: categoryTag(shopifyProduct.tags) || '',
     badge: undefined as undefined,

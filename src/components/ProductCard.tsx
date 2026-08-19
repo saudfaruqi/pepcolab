@@ -5,7 +5,7 @@ import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
 import WishlistButton from '@/components/WishlistButton'
 import { useCart } from '@/lib/cartContext'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, stripLeadingName } from '@/lib/utils'
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
 import type { Product } from '@/app/data'
 
@@ -287,7 +287,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}>
-          {p.description}
+          {stripLeadingName(p.description, p.name)}
         </p>
 
         {/* Footer */}
