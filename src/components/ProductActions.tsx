@@ -9,6 +9,7 @@ import { getProductByHandle } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
 import { isWhatsAppConfigured, whatsAppProductLink } from '@/lib/whatsapp'
+import NotifyMeForm from '@/components/NotifyMeForm'
 import type { Product } from '@/app/data'
 
 interface Props {
@@ -31,6 +32,7 @@ const CERT_TAB_INDEX = TABS.indexOf('Certificate')
 export default function ProductActions({ product: initialProduct, selectedVariantId, onSelectVariant }: Props) {
   const [added,     setAdded]     = useState(false)
   const [activeTab, setActiveTab] = useState(0)
+  const [quantity,  setQuantity]  = useState(1)
   const { addItem } = useCart()
   const { country, ready } = useCountry()
 
@@ -91,6 +93,13 @@ export default function ProductActions({ product: initialProduct, selectedVarian
     if (el) el.scrollTop = 0
   }, [activeTab])
 
+  // Quantity shouldn't carry over when switching strength/format — a
+  // leftover "x3" on a variant someone only glanced at is more likely to
+  // cause an accidental bulk order than to be intentional.
+  useEffect(() => {
+    setQuantity(1)
+  }, [selectedVariantId])
+
   // RETA (Retatrutide) — hardcoded exception: sold via a direct payment
   // link instead of the normal STRABL cart flow. See lib/restrictedCheckout.ts.
   const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
@@ -103,13 +112,21 @@ export default function ProductActions({ product: initialProduct, selectedVarian
   const handleAdd = async () => {
     if (paymentLinkOnly || !selectedVariant.availableForSale || added) return
     setAdded(true)
-    await addItem(
-      selectedVariant.id || `gid://shopify/ProductVariant/${p.id}`,
-      p.name,
-      selectedVariant.title,
-      selectedVariant.price,
-      p.slug
-    )
+    // cartContext.addItem always adds exactly 1 unit, incrementing the
+    // existing line if the variant's already in the cart — looping N times
+    // reuses that proven logic (and its error handling/optimistic update)
+    // rather than adding a second "add with quantity" code path in the cart
+    // context for what's a rare bulk-add action.
+    for (let i = 0; i < quantity; i++) {
+      await addItem(
+        selectedVariant.id || `gid://shopify/ProductVariant/${p.id}`,
+        p.name,
+        selectedVariant.title,
+        selectedVariant.price,
+        p.slug
+      )
+    }
+    setQuantity(1)
     setTimeout(() => setAdded(false), 2200)
   }
 
@@ -369,6 +386,48 @@ export default function ProductActions({ product: initialProduct, selectedVarian
         )}
       </div>
 
+      {/* Quantity — only shown once the variant is actually purchasable
+          through the normal cart flow. RETA's payment-link-only route
+          doesn't have a concept of cart quantity, so it's hidden there. */}
+      {!paymentLinkOnly && selectedVariant.availableForSale && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#AAB3C8', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+            Qty
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #DDE3F0', borderRadius: 10, overflow: 'hidden' }}>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={quantity <= 1}
+              aria-label="Decrease quantity"
+              style={{
+                width: 34, height: 34, border: 'none', background: '#fff',
+                fontSize: 16, fontWeight: 600, color: quantity <= 1 ? '#DDE3F0' : '#0D0F14',
+                cursor: quantity <= 1 ? 'default' : 'pointer',
+              }}
+            >
+              −
+            </button>
+            <span style={{ width: 36, textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#0D0F14' }}>
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+              disabled={quantity >= 10}
+              aria-label="Increase quantity"
+              style={{
+                width: 34, height: 34, border: 'none', background: '#fff',
+                fontSize: 16, fontWeight: 600, color: quantity >= 10 ? '#DDE3F0' : '#0D0F14',
+                cursor: quantity >= 10 ? 'default' : 'pointer',
+              }}
+            >
+              +
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CTAs */}
       <div style={{ display: 'flex', gap: 10, marginBottom: whatsAppEnabled ? 12 : 24, flexWrap: 'wrap' }}>
         {paymentLinkOnly ? (
@@ -413,7 +472,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           >
             {added
               ? <><CheckCircle size={16} /> Added to cart</>
-              : <><ShoppingCart size={16} />{selectedVariant.availableForSale ? 'Add to Cart' : 'Out of Stock'}</>
+              : <><ShoppingCart size={16} />{selectedVariant.availableForSale ? `Add to Cart${quantity > 1 ? ` (${quantity})` : ''}` : 'Out of Stock'}</>
             }
           </button>
         )}
@@ -431,6 +490,13 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           COA
         </button>
       </div>
+
+      {/* Back-in-stock capture — replaces the disabled cart button as the
+          primary action once a variant is unavailable, so an out-of-stock
+          page still converts (an email address today) instead of dead-ending. */}
+      {!paymentLinkOnly && !selectedVariant.availableForSale && (
+        <NotifyMeForm productSlug={p.slug} productName={`${p.name} (${selectedVariant.title})`} />
+      )}
 
       {/* WhatsApp ordering — available alongside cart/payment-link checkout,
           not just as a RETA fallback. Renders nothing if no number is

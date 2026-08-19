@@ -4,6 +4,27 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* ── Global focus-visible outline ──────────────────────────────────────
+   Most of this codebase styles buttons/links/inputs with inline `style`
+   objects rather than classNames (ProductActions, ProductCard,
+   WishlistButton, ShareButton, etc.), which means none of them can define
+   their own :focus-visible state inline — CSS pseudo-classes don't exist
+   in the style attribute. Rather than hand-adding a focus ring to every
+   one of those components individually, one global rule here covers all
+   of them (and everything else site-wide) in one place. Uses
+   :focus-visible specifically (not :focus) so mouse/touch clicks don't
+   show a ring — only actual keyboard navigation does. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #1A56DB;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 :root {
   /* ── Blue/White/Gray/Black palette ── */
   --ink:          #0D0F14;

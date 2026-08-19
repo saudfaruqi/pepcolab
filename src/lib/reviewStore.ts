@@ -12,7 +12,7 @@
 // New reviews start 'pending' and need manual approval (via the emailed
 // approve/reject links from the submit route) before they're publicly
 // visible — a basic spam/abuse gate given there's no admin login system.
-import { randomUUID } from 'crypto'
+import { randomBytes, randomUUID } from 'crypto'
 import { redis } from '@/lib/redis'
 
 export interface Review {
@@ -26,11 +26,22 @@ export interface Review {
   verified: boolean // true only when tied to a real, matching order — see submit/route.ts
   status: 'pending' | 'approved' | 'rejected'
   createdAt: string
+  // Per-review, single-use moderation credential — see api/reviews/moderate.
+  // Deliberately NOT the same value as the admin-facing REVIEW_MODERATION_TOKEN
+  // env var: that env var gates whether moderation emails get sent at all,
+  // this is the actual per-click authorization, scoped to exactly one review
+  // and dead the moment its status leaves 'pending' (approved/rejected).
+  // That means a leaked/forwarded/logged moderation link only ever exposes
+  // one review, once — not standing access to moderate anything forever.
+  moderationToken: string
+  moderationTokenExpiresAt: number // epoch ms
 }
 
 const reviewKey = (id: string) => `review:${id}`
 const PENDING_SET = 'reviews:pending' // sorted set, score = submitted-at
 const APPROVED_SET = 'reviews:approved' // sorted set, score = approved-at
+
+const MODERATION_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000 // 14 days
 
 export async function createReview(
   input: Pick<
@@ -43,6 +54,8 @@ export async function createReview(
     id: randomUUID(),
     status: 'pending',
     createdAt: new Date().toISOString(),
+    moderationToken: randomBytes(24).toString('hex'),
+    moderationTokenExpiresAt: Date.now() + MODERATION_TOKEN_TTL_MS,
   }
   await redis.set(reviewKey(review.id), review)
   await redis.zadd(PENDING_SET, { score: Date.now(), member: review.id })
@@ -57,6 +70,26 @@ export async function getReview(id: string): Promise<Review | null> {
     console.error('[reviewStore] Failed to read review:', err)
     return null
   }
+}
+
+/**
+ * Validates a moderation link before acting on it. Returns the review only
+ * if: the token matches exactly, it hasn't expired, AND the review is still
+ * 'pending' — that last check is what makes the token effectively
+ * single-use, since approve/reject moves status away from 'pending' and any
+ * replay of the same link (forwarded, re-clicked, scraped from a log) is
+ * rejected without needing a separate "used" flag.
+ */
+export async function verifyModerationAccess(id: string, token: string): Promise<Review | null> {
+  if (!id || !token) return null
+  const review = await getReview(id)
+  if (!review) return null
+  if (review.status !== 'pending') return null
+  if (Date.now() > review.moderationTokenExpiresAt) return null
+  // Constant-time-ish comparison isn't critical here (token is 24 random
+  // bytes, not a low-entropy PIN), but a plain === is fine at this length.
+  if (review.moderationToken !== token) return null
+  return review
 }
 
 export async function approveReview(id: string): Promise<void> {

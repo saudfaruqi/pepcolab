@@ -1,9 +1,21 @@
 // app/api/contact/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import { sendMail } from '@/lib/mailer'
+import { isRateLimited, getClientIp } from '@/lib/rateLimit'
+
+const MAX_SUBMISSIONS = 5
+const WINDOW_MS = 60 * 60 * 1000 // 1 hour
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    if (isRateLimited('contact', ip, MAX_SUBMISSIONS, WINDOW_MS)) {
+      return NextResponse.json(
+        { success: false, message: 'Too many messages sent. Please try again later, or email hello@pepcolab.com directly.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { name, email, company, subject, message } = body
 
@@ -326,12 +338,15 @@ Best regards,
 PepcoLab Team
     `
 
-    // ─── EMAIL CONFIGURATION FROM ENV ───
-    const smtpUser = process.env.SMTP_USER
-    const smtpPass = process.env.SMTP_PASS
-    const smtpFrom = process.env.SMTP_FROM
-
-    if (!smtpUser || !smtpPass || !smtpFrom) {
+    // ─── SEND VIA SHARED MAILER (src/lib/mailer.ts) ───
+    // Previously this route built its own nodemailer transporter with an
+    // identical GoDaddy SMTP config duplicated from here — lib/mailer.ts
+    // was in fact extracted FROM this file for orderEmails.ts/newsletter,
+    // but this route itself never got switched over to use it. Doing that
+    // now removes the second copy of the SMTP config (one place to update
+    // credentials/host, not two that can drift) and gets this route the
+    // same error handling as everywhere else.
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.SMTP_FROM) {
       console.error('[Contact API] Missing SMTP configuration')
       return NextResponse.json(
         {
@@ -342,29 +357,8 @@ PepcoLab Team
       )
     }
 
-    // ─── WORKING SMTP CONFIGURATION (GoDaddy Out SSL 465) ───
-    const transporter = nodemailer.createTransport({
-      host: 'smtpout.secureserver.net',
-      port: 465,
-      secure: true,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 30000,
-      socketTimeout: 30000,
-    })
-
-    // Verify connection
-    await transporter.verify()
-    console.log('[Contact API] SMTP connection verified')
-
-    // Send admin email
-    await transporter.sendMail({
-      from: `"PepcoLab" <${smtpFrom}>`,
+    // Admin email
+    await sendMail({
       to: 'hello@pepcolab.com',
       replyTo: email,
       subject: `Website Contact: ${subject}`,
@@ -372,9 +366,8 @@ PepcoLab Team
     })
     console.log('[Contact API] Admin email sent')
 
-    // Send user confirmation
-    await transporter.sendMail({
-      from: `"PepcoLab" <${smtpFrom}>`,
+    // User confirmation
+    await sendMail({
       to: email,
       subject: `✅ We've Received Your Message - PepcoLab`,
       text: userEmailText,

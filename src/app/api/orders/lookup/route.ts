@@ -9,41 +9,15 @@
 // valid order codes or confirm which email an order belongs to.
 import { NextRequest, NextResponse } from 'next/server'
 import { getOrderRecord } from '@/lib/orderStore'
+import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
-// Best-effort in-memory rate limit — same pattern/caveat as the webhook
-// route's processedIds dedup: fine for a single instance, resets on
-// redeploy, not a substitute for real rate limiting at the edge if this
-// ever gets abused. Good enough to stop casual brute-forcing of 6-char
-// STRABL codes.
-const attempts = new Map<string, { count: number; resetAt: number }>()
 const MAX_ATTEMPTS = 10
 const WINDOW_MS = 10 * 60 * 1000
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now()
-  const entry = attempts.get(ip)
-
-  if (!entry || now > entry.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS })
-    return false
-  }
-
-  entry.count += 1
-  if (entry.count > MAX_ATTEMPTS) return true
-
-  if (attempts.size > 5000) {
-    for (const [key, val] of attempts) {
-      if (now > val.resetAt) attempts.delete(key)
-    }
-  }
-
-  return false
-}
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
 
-  if (isRateLimited(ip)) {
+  if (isRateLimited('order-lookup', ip, MAX_ATTEMPTS, WINDOW_MS)) {
     return NextResponse.json(
       { error: 'Too many attempts. Please try again in a few minutes.' },
       { status: 429 }

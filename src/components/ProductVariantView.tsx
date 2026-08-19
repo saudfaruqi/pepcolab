@@ -5,8 +5,10 @@ import { useMemo, useState } from 'react'
 import { ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
+import MarketGuard from '@/components/MarketGuard'
 import WishlistButton from '@/components/WishlistButton'
 import ShareButton from '@/components/ShareButton'
+import { useRecordRecentlyViewed } from '@/lib/recentlyViewedContext'
 
 interface Props {
   // Loosely typed to match the rest of the codebase's pragmatic handling of
@@ -50,6 +52,21 @@ export default function ProductVariantView({ product }: Props) {
     selectedVariant?.image?.alt ||
     images[0]?.alt ||
     `${product.title ?? product.name} research vial`
+
+  // Records this page in the Recently Viewed rail (see
+  // lib/recentlyViewedContext.tsx). Keyed off product.slug/handle so a
+  // repeat visit moves it back to the front instead of duplicating it.
+  useRecordRecentlyViewed({
+    slug: product.slug ?? product.handle,
+    name: product.title ?? product.name,
+    mg: product.mg,
+    price: selectedVariant?.price ?? product.price,
+    oldPrice: product.oldPrice,
+    currencyCode: (product as any).currencyCode ?? selectedVariant?.currencyCode,
+    image: activeImageUrl,
+    imageAlt: activeImageAlt,
+    category: product.category,
+  })
 
   function handleSelectVariant(variantId: string) {
     setSelectedVariantId(variantId)
@@ -228,11 +245,17 @@ export default function ProductVariantView({ product }: Props) {
 
         <div style={{ height: 1, background: '#f0f0f0', margin: '18px 0' }} />
 
-        <ProductActions
-          product={product}
-          selectedVariantId={selectedVariantId}
-          onSelectVariant={handleSelectVariant}
-        />
+        {/* Dormant while UK_CATALOGUE_LIVE is false (currently every
+            product ships to both markets) — wired up now so it's not
+            forgotten when per-market catalogues actually launch. See
+            components/MarketGuard.tsx. */}
+        <MarketGuard tags={product.tags ?? []}>
+          <ProductActions
+            product={product}
+            selectedVariantId={selectedVariantId}
+            onSelectVariant={handleSelectVariant}
+          />
+        </MarketGuard>
       </div>
     </div>
   )

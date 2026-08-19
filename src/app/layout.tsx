@@ -8,6 +8,7 @@ import { CartProvider } from '@/lib/cartContext'
 import CartDrawer from '@/components/CartDrawer'
 import { CountryProvider } from '@/lib/countryContext'
 import { WishlistProvider } from '@/lib/wishlistContext'
+import { RecentlyViewedProvider } from '@/lib/recentlyViewedContext'
 import AgeLocationGate from '@/components/AgeLocationGate'
 import FloatingCalculator from '@/components/FloatingCalculator'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
@@ -208,12 +209,14 @@ export default async function RootLayout({
         <CountryProvider initialCountry={initialCountry}>
           <AgeLocationGate />
           <WishlistProvider>
-            <CartProvider>
-              {children}
-              <CartDrawer />
-              <FloatingCalculator />
-              <FloatingWhatsApp />
-            </CartProvider>
+            <RecentlyViewedProvider>
+              <CartProvider>
+                {children}
+                <CartDrawer />
+                <FloatingCalculator />
+                <FloatingWhatsApp />
+              </CartProvider>
+            </RecentlyViewedProvider>
           </WishlistProvider>
         </CountryProvider>
       </body>

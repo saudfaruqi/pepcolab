@@ -3,10 +3,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getOrderRecord } from '@/lib/orderStore'
 import { createReview } from '@/lib/reviewStore'
 import { sendMailSafe } from '@/lib/mailer'
+import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
 const ADMIN_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
-const MODERATION_TOKEN = process.env.REVIEW_MODERATION_TOKEN
+// Gates whether moderation is wired up at all (whether to send the email).
+// The actual per-click authorization is a single-use token minted per
+// review in reviewStore.createReview() — see verifyModerationAccess().
+const MODERATION_ENABLED = Boolean(process.env.REVIEW_MODERATION_TOKEN)
 const SITE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com'
+
+const MAX_SUBMISSIONS = 5
+const WINDOW_MS = 60 * 60 * 1000 // 1 hour
 
 // Turns "Ahmed Farouqi" into "Ahmed F." — enough to feel personal without
 // publishing a customer's full name.
@@ -18,6 +25,14 @@ function toDisplayName(fullName: string | undefined): string {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req)
+  if (isRateLimited('review-submit', ip, MAX_SUBMISSIONS, WINDOW_MS)) {
+    return NextResponse.json(
+      { error: 'Too many reviews submitted. Please try again later.' },
+      { status: 429 }
+    )
+  }
+
   let body: any
   try {
     body = await req.json()
@@ -84,9 +99,9 @@ export async function POST(req: NextRequest) {
     verified,
   })
 
-  if (MODERATION_TOKEN) {
-    const approveUrl = `${SITE_URL}/api/reviews/moderate?id=${review.id}&token=${MODERATION_TOKEN}&action=approve`
-    const rejectUrl = `${SITE_URL}/api/reviews/moderate?id=${review.id}&token=${MODERATION_TOKEN}&action=reject`
+  if (MODERATION_ENABLED) {
+    const approveUrl = `${SITE_URL}/api/reviews/moderate?id=${review.id}&token=${review.moderationToken}&action=approve`
+    const rejectUrl = `${SITE_URL}/api/reviews/moderate?id=${review.id}&token=${review.moderationToken}&action=reject`
     await sendMailSafe({
       to: ADMIN_EMAIL,
       subject: `📝 New ${verified ? 'verified' : 'unverified'} review pending approval — ${rating}★${orderShortCode ? ` (${orderShortCode})` : ''}`,
@@ -99,8 +114,11 @@ Name shown publicly: ${review.authorName}
 
 "${text}"
 
-Approve (goes live immediately): ${approveUrl}
-Reject: ${rejectUrl}`,
+Review this (opens a confirmation page — nothing is actioned until you click a button there):
+Approve: ${approveUrl}
+Reject: ${rejectUrl}
+
+This link is single-use and expires in 14 days.`,
     })
   } else {
     console.warn('[reviews] REVIEW_MODERATION_TOKEN not set — moderation email not sent, review stuck pending until you add it and re-approve manually via Redis')
