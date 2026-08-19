@@ -618,6 +618,47 @@ export default function PepcoLabPage({
         </div>
       </section>
 
+
+      {/* ── Why Pepco ── */}
+      <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
+        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
+          <FadeUp style={{ gap:40, marginBottom:64, alignItems:"end" }}>
+            <div>
+              <div style={TYPOGRAPHY.label}>Why Researchers Choose Pepco</div>
+              <h2 style={TYPOGRAPHY.heading}>Standards you<br />can verify.</h2>
+            </div>
+            <p style={{ 
+              fontSize: "clamp(14px, 1.2vw, 18px)", 
+              lineHeight: 1.9, 
+              color: "rgba(13,13,13,.55)", 
+              maxWidth: 500, 
+              alignSelf:"end",
+              fontWeight: 400,
+            }}>
+              Every batch independently tested, documented, and handled under strict quality-control. No vague claims — just transparent, verifiable data.
+            </p>
+          </FadeUp>
+
+          <FadeUp delay={0.1}>
+            <div className="diff-grid">
+              {[
+                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Freedom Diagnostics. COA downloadable per batch." },
+                { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch." },
+                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception." },
+                { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom." },
+              ].map((d) => (
+                <div key={d.n} style={{ background:"#fff", padding:"36px 32px", position:"relative" }}>
+                  <div style={{ ...TYPOGRAPHY.cardMeta, fontSize: "10px", color: "rgba(13,13,13,.25)", marginBottom: 28 }}>{d.n}</div>
+                  <h3 style={{ ...TYPOGRAPHY.cardTitle, fontSize: "clamp(18px, 1.5vw, 22px)", marginBottom: 12 }}>{d.title}</h3>
+                  <p style={TYPOGRAPHY.cardDesc}>{d.desc}</p>
+                </div>
+              ))}
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
+
       {/* ── Research Stacks ── */}
       <section style={{
         background: "#0A0A0A",
@@ -870,44 +911,6 @@ export default function PepcoLabPage({
         </div>
       </section>
 
-      {/* ── Why Pepco ── */}
-      <section style={{ background: "#F7F5F1", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
-          <FadeUp style={{ gap:40, marginBottom:64, alignItems:"end" }}>
-            <div>
-              <div style={TYPOGRAPHY.label}>Why Researchers Choose Pepco</div>
-              <h2 style={TYPOGRAPHY.heading}>Standards you<br />can verify.</h2>
-            </div>
-            <p style={{ 
-              fontSize: "clamp(14px, 1.2vw, 18px)", 
-              lineHeight: 1.9, 
-              color: "rgba(13,13,13,.55)", 
-              maxWidth: 500, 
-              alignSelf:"end",
-              fontWeight: 400,
-            }}>
-              Every batch independently tested, documented, and handled under strict quality-control. No vague claims — just transparent, verifiable data.
-            </p>
-          </FadeUp>
-
-          <FadeUp delay={0.1}>
-            <div className="diff-grid">
-              {[
-                { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Freedom Diagnostics. COA downloadable per batch." },
-                { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch." },
-                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception." },
-                { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom." },
-              ].map((d) => (
-                <div key={d.n} style={{ background:"#fff", padding:"36px 32px", position:"relative" }}>
-                  <div style={{ ...TYPOGRAPHY.cardMeta, fontSize: "10px", color: "rgba(13,13,13,.25)", marginBottom: 28 }}>{d.n}</div>
-                  <h3 style={{ ...TYPOGRAPHY.cardTitle, fontSize: "clamp(18px, 1.5vw, 22px)", marginBottom: 12 }}>{d.title}</h3>
-                  <p style={TYPOGRAPHY.cardDesc}>{d.desc}</p>
-                </div>
-              ))}
-            </div>
-          </FadeUp>
-        </div>
-      </section>
 
       {/* ── Reviews ── */}
       {!reviewsLoaded ? null : realReviews.length === 0 ? (
