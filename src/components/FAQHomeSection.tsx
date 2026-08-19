@@ -41,6 +41,7 @@ export default function FAQHomeSection() {
     <section className="py-16 lg:py-22 border-b border-[var(--border)] bg-white">
       <div className="max-w-3xl mx-auto px-6 lg:px-10">
         <div className="text-center mb-10">
+          <p className="section-label mb-2">Common questions</p>
           <h2
             className="text-[clamp(26px,3.5vw,42px)] font-bold tracking-tight text-[var(--ink)]"
             style={{ fontFamily: 'var(--font-display)' }}
