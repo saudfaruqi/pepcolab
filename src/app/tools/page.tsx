@@ -57,7 +57,13 @@ export default function ToolsPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <ReconstitutionCalculator />
             <DoseCalculator />
-            <BatchVerifier />
+            {/* NEW: id target so /tools#batch-verifier (used by the
+               homepage ToolsSection card) actually scrolls to this widget
+               instead of just landing at the top of the hub page.
+               scroll-mt-24 offsets for the fixed Nav. */}
+            <div id="batch-verifier" className="scroll-mt-24">
+              <BatchVerifier />
+            </div>
             <PurityCalculator />
           </div>
         </section>

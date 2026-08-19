@@ -1,12 +1,24 @@
 'use client'
 import { useRef, useEffect } from 'react'
-import { Camera, Cpu, CheckCircle, Truck, ArrowRight, Upload } from 'lucide-react'
+import { Search, FlaskConical, PackageCheck, Truck, ArrowRight } from 'lucide-react'
 
+// FIX: this section previously described a "Prescription Upload Flow" —
+// "Take Photo", "PharmCheck", "Licensed pharmacist reviews & approves" —
+// none of which exists on this storefront and all of which contradicts the
+// research-use-only positioning stated on /about, /terms, every product
+// page, and the corrected copy in FeaturesSection.tsx. There is no
+// prescription upload anywhere in the app (grep confirms it), so this was
+// either leftover copy from a different, unrelated template or a stale
+// draft — either way, publishing it as-is would have been a real
+// regulatory exposure the moment anyone compared the homepage to the small
+// print. Replaced with the process that actually happens on this site:
+// browse a published-COA catalogue, order, cold-chain dispatch, batch
+// verification on delivery.
 const STEPS = [
-  { icon: Camera,      num: '01', label: 'Take Photo',    desc: 'Snap or upload your prescription clearly' },
-  { icon: Cpu,         num: '02', label: 'We Read',      desc: 'We extracts & verifies all details'   },
-  { icon: CheckCircle, num: '03', label: 'PharmCheck',    desc: 'Licensed pharmacist reviews & approves'   },
-  { icon: Truck,       num: '04', label: 'Fast Delivery', desc: 'Dispatched same day, cold-chain tracked'  },
+  { icon: Search,        num: '01', label: 'Browse & Verify',   desc: 'Check independent HPLC purity data and the published COA before you order' },
+  { icon: FlaskConical,  num: '02', label: 'Order Securely',    desc: 'Checkout via our PCI-compliant payment processor, no account required'      },
+  { icon: PackageCheck,  num: '03', label: 'Cold-Chain Pack',   desc: 'Temperature-controlled packaging, dispatched same working day'               },
+  { icon: Truck,         num: '04', label: 'Tracked Delivery',  desc: 'Door-to-door tracking across the UK and UAE'                                  },
 ]
 
 export default function ProcessSection() {
@@ -50,16 +62,16 @@ export default function ProcessSection() {
         {/* Header row */}
         <div ref={headRef} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--blue-soft)] mb-2">Prescription Upload Flow</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--blue-soft)] mb-2">How Ordering Works</p>
             <h2
               className="text-[clamp(26px,3.5vw,42px)] font-bold tracking-tight leading-tight"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              From prescription to<br />
-              delivery in 4 steps.
+              From catalogue to<br />
+              your door in 4 steps.
             </h2>
             <p className="mt-3 text-[13.5px] text-[rgba(255,255,255,0.6)] max-w-md leading-relaxed">
-              Upload your prescription in a few taps, let our licensed pharmacists and verify it, and receive your medication at your door.
+              Every batch is independently tested and published before it's listed — no prescriptions, no gatekeeping, just verifiable data.
             </p>
           </div>
           <a
@@ -67,8 +79,8 @@ export default function ProcessSection() {
             className="btn self-start lg:self-center py-3.5 px-7 text-[13.5px] font-semibold"
             style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1.5px solid rgba(255,255,255,0.25)' }}
           >
-            <Upload size={15} />
-            Upload Prescription
+            Browse Catalogue
+            <ArrowRight size={15} />
           </a>
         </div>
 

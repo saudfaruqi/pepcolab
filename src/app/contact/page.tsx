@@ -1,7 +1,8 @@
 // app/contact/page.tsx (or wherever your contact page is)
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import {
@@ -13,9 +14,36 @@ import {
   Clock,
   Shield,
   FileCheck,
+  Building2,
 } from 'lucide-react'
 
+// FIX/NEW: the subject field was a single freeform text box with no way to
+// route institutional/bulk buyers differently, and no way to deep-link into
+// it (e.g. from a homepage "Order for your lab" CTA). Quick-select chips
+// prefill the subject; ?subject=... in the URL does the same server-side-free
+// via useSearchParams, which is why this now needs the same
+// Suspense-wrapped pattern already used in app/certificates/page.tsx and
+// app/products/page.tsx.
+const QUICK_SUBJECTS = [
+  'General Inquiry',
+  'Product Question',
+  'Institutional / Bulk Order',
+  'Partnership',
+  'Order Support',
+]
+
 export default function ContactPage() {
+  return (
+    <Suspense fallback={null}>
+      <ContactPageContent />
+    </Suspense>
+  )
+}
+
+function ContactPageContent() {
+  const searchParams = useSearchParams()
+  const prefillSubject = searchParams.get('subject') ?? ''
+
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -24,9 +52,11 @@ export default function ContactPage() {
     name: '',
     email: '',
     company: '',
-    subject: '',
+    subject: prefillSubject,
     message: '',
   })
+
+  const isInstitutional = form.subject === 'Institutional / Bulk Order'
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -244,13 +274,14 @@ export default function ContactPage() {
 
                 <div>
                   <label className="text-sm font-medium text-neutral-700 block mb-1.5">
-                    Company (optional)
+                    Company {isInstitutional ? <span className="text-red-500">*</span> : '(optional)'}
                   </label>
                   <input
+                    required={isInstitutional}
                     name="company"
                     value={form.company}
                     onChange={handleChange}
-                    placeholder="Your company name"
+                    placeholder="Your company or institution name"
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
                     style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
@@ -260,6 +291,22 @@ export default function ContactPage() {
                   <label className="text-sm font-medium text-neutral-700 block mb-1.5">
                     Subject <span className="text-red-500">*</span>
                   </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {QUICK_SUBJECTS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, subject: s }))}
+                        className={`text-[12.5px] font-medium px-3 py-1.5 rounded-full border transition ${
+                          form.subject === s
+                            ? 'bg-neutral-900 text-white border-neutral-900'
+                            : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                   <input
                     required
                     name="subject"
@@ -269,6 +316,12 @@ export default function ContactPage() {
                     className="w-full border bg-white border-neutral-200 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition placeholder:text-neutral-400 text-neutral-900"
                     style={{ fontSize: '16px' }} /* Fix iOS zoom */
                   />
+                  {isInstitutional && (
+                    <p className="mt-2 flex items-center gap-1.5 text-[12.5px] text-neutral-500">
+                      <Building2 size={13} className="flex-shrink-0" />
+                      Include your typical order volume and institution type — it helps us route this to the right person.
+                    </p>
+                  )}
                 </div>
 
                 <div>

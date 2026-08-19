@@ -16,6 +16,13 @@ import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink }
 
 import { useCountry } from '@/lib/countryContext'
 import BestSellersSection from "./BestSellersSection";
+// FIX: these four were fully built, on-brand, and correctly wired to real
+// routes internally — but never imported anywhere, so none of them were
+// ever visible on the live site. Wiring them in now.
+import FeaturesSection from "./FeaturesSection";
+import ProcessSection from "./ProcessSection";
+import ToolsSection from "./ToolsSection";
+import FAQHomeSection from "./FAQHomeSection";
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
@@ -579,6 +586,37 @@ export default function PepcoLabPage({
 
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
+
+      {/* ── Why choose us / how ordering works ── */}
+      <FeaturesSection />
+      <ProcessSection />
+
+      {/* ── Institutional / bulk buyer CTA ── */}
+      {/* NEW: no path anywhere on the site for a lab or company placing a
+         larger recurring order — every visitor was funneled into the same
+         single-order retail flow. This links into the quick-select on
+         /contact added alongside it, so the subject arrives pre-filled. */}
+      <section style={{ background: "var(--ink, #0D0D0D)", padding: "clamp(28px,4vw,40px) 0" }}>
+        <div style={{
+          maxWidth: 1200, margin: "0 auto", padding: "0 clamp(16px,4vw,40px)",
+          display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16,
+        }}>
+          <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, margin: 0 }}>
+            Ordering for a lab, university, or company?{" "}
+            <span style={{ color: "rgba(255,255,255,0.45)" }}>Get in touch about bulk quantities.</span>
+          </p>
+          <Link
+            href="/contact?subject=Institutional%20%2F%20Bulk%20Order"
+            style={{
+              flexShrink: 0, fontSize: 13, fontWeight: 600, color: "#0D0D0D",
+              background: "#fff", padding: "10px 20px", borderRadius: 999,
+              textDecoration: "none",
+            }}
+          >
+            Order for your lab →
+          </Link>
+        </div>
+      </section>
 
       {/* ── Research Stacks ── */}
       <section style={{
@@ -1365,6 +1403,12 @@ export default function PepcoLabPage({
           </div>
         </div>
       </section>
+
+      {/* ── Research tools ── */}
+      <ToolsSection />
+
+      {/* ── FAQ ── */}
+      <FAQHomeSection />
 
       {/* ── Newsletter ── */}
       <section style={{ background: "#FAFAF8", padding: "clamp(48px,6vw,100px) 0" }}>

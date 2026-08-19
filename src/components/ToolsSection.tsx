@@ -1,52 +1,52 @@
 'use client'
-'use client'
-import { ArrowRight, Calculator, Search, Bot, GitCompare, BookOpen, FlaskConical } from 'lucide-react'
+import { ArrowRight, Calculator, FileSearch, BookOpen, FlaskConical } from 'lucide-react'
 
+// FIX: three of the five cards here linked to routes that don't exist
+// (/tools/calculator, /tools/batch-verifier, /tools/compare,
+// /tools/dosage-reference — none of them present under app/tools). Only
+// the dedicated reconstitution-calculator route and /research were real.
+// The batch verifier, dose calculator, and purity calculator are all real
+// tools, but they live as widgets on the /tools hub page
+// (components/ToolWidgets.tsx), not on their own URLs — so those cards
+// now point there instead of 404ing. The unbuilt "Peptide Comparator" and
+// standalone "Dosage Reference" cards are removed rather than left as
+// dead links; add them back once those pages actually exist.
 const TOOLS = [
   {
     icon: Calculator,
     name: 'Reconstitution Calculator',
     desc: 'Instantly compute exact dilution volumes for any peptide. Enter your vial size, concentration target, and solvent — get precise measurements.',
-    href: '/tools/calculator',
+    href: '/tools/reconstitution-calculator',
     tag: 'Interactive',
     color: 'text-blue-600',
     bg: 'bg-blue-50',
   },
   {
-    icon: Search,
+    icon: FileSearch,
     name: 'Batch Verifier',
-    desc: 'Look up any PepcoLab lot number and retrieve the full Certificate of Analysis, HPLC trace, and mass spectrometry report instantly.',
-    href: '/tools/batch-verifier',
+    desc: 'Look up any PepcoLab lot number and retrieve the full Certificate of Analysis and HPLC purity data instantly.',
+    href: '/tools#batch-verifier',
     tag: 'Live data',
     color: 'text-green-600',
     bg: 'bg-green-50',
   },
   {
-    icon: GitCompare,
-    name: 'Peptide Comparator',
-    desc: 'Side-by-side comparison across sequence, purity data, pricing, and published research citations. Pick the right peptide for your study.',
-    href: '/tools/compare',
-    tag: 'Research tool',
-    color: 'text-rose-600',
-    bg: 'bg-rose-50',
+    icon: FlaskConical,
+    name: 'Dose & Purity Calculators',
+    desc: 'Additional reference calculators for common peptide parameters, alongside the full reconstitution tool.',
+    href: '/tools',
+    tag: 'Reference',
+    color: 'text-orange-600',
+    bg: 'bg-orange-50',
   },
   {
     icon: BookOpen,
     name: 'Research Hub',
-    desc: 'Curated guides, storage protocols, reconstitution methods, and links to published peer-reviewed studies for each peptide in our catalogue.',
+    desc: 'Curated guides, storage protocols, reconstitution methods, and links to published research for each peptide in our catalogue.',
     href: '/research',
     tag: 'Education',
     color: 'text-amber-600',
     bg: 'bg-amber-50',
-  },
-  {
-    icon: FlaskConical,
-    name: 'Dosage Reference',
-    desc: 'Research-use reference tables for common peptide parameters. Compiled from published preclinical studies. Not medical advice.',
-    href: '/tools/dosage-reference',
-    tag: 'Reference',
-    color: 'text-orange-600',
-    bg: 'bg-orange-50',
   },
 ]
 
@@ -67,13 +67,18 @@ export default function ToolsSection() {
             </p>
           </div>
           <div className="flex-shrink-0">
-            <div className="inline-flex items-center gap-2 bg-blue-600 text-white text-[13px] font-medium px-5 py-2.5 rounded-[8px] hover:bg-blue-700 transition-colors btn-press cursor-pointer">
+            {/* FIX: was a non-interactive <div> styled as a button — looked
+               clickable, went nowhere. */}
+            <a
+              href="/tools"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white text-[13px] font-medium px-5 py-2.5 rounded-[8px] hover:bg-blue-700 transition-colors btn-press cursor-pointer"
+            >
               Explore all tools <ArrowRight size={14} />
-            </div>
+            </a>
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {TOOLS.map((tool) => {
             const Icon = tool.icon
             return (
