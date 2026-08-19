@@ -28,7 +28,18 @@ export default function ShareButton({ title, text, url, variant = 'icon', size =
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  const shareUrl = url ?? (typeof window !== 'undefined' ? window.location.href : '')
+  // Reading window.location during render (rather than after mount) is
+  // exactly the pattern that causes React hydration mismatches (#418/#425):
+  // the server has no `window` so it'd render one value, then the client's
+  // very first render — which is what hydration diffs against — already
+  // has `window` and would compute a different one. Starting from the
+  // passed-in `url` (or empty) and only filling in the real location after
+  // mount keeps the first client render identical to the server's.
+  const [resolvedUrl, setResolvedUrl] = useState(url ?? '')
+  useEffect(() => {
+    if (!url) setResolvedUrl(window.location.href)
+  }, [url])
+  const shareUrl = resolvedUrl
 
   useEffect(() => {
     if (!open) return
