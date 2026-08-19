@@ -2,18 +2,6 @@
 import { useRef, useEffect } from 'react'
 import { Search, FlaskConical, PackageCheck, Truck, ArrowRight } from 'lucide-react'
 
-// FIX: this section previously described a "Prescription Upload Flow" —
-// "Take Photo", "PharmCheck", "Licensed pharmacist reviews & approves" —
-// none of which exists on this storefront and all of which contradicts the
-// research-use-only positioning stated on /about, /terms, every product
-// page, and the corrected copy in FeaturesSection.tsx. There is no
-// prescription upload anywhere in the app (grep confirms it), so this was
-// either leftover copy from a different, unrelated template or a stale
-// draft — either way, publishing it as-is would have been a real
-// regulatory exposure the moment anyone compared the homepage to the small
-// print. Replaced with the process that actually happens on this site:
-// browse a published-COA catalogue, order, cold-chain dispatch, batch
-// verification on delivery.
 const STEPS = [
   { icon: Search,        num: '01', label: 'Browse & Verify',   desc: 'Check independent HPLC purity data and the published COA before you order' },
   { icon: FlaskConical,  num: '02', label: 'Order Securely',    desc: 'Checkout via our PCI-compliant payment processor, no account required'      },
@@ -47,8 +35,7 @@ export default function ProcessSection() {
   }, [])
 
   return (
-    <section className="py-16 lg:py-22 border-b border-[var(--border)] bg-[var(--blue-deep)] text-white overflow-hidden relative">
-      {/* Subtle grid bg */}
+    <section className="py-16 lg:py-22 border-b border-[var(--border)] bg-[var(--ink)] text-white overflow-hidden relative">
       <div
         className="absolute inset-0 pointer-events-none opacity-10"
         style={{
@@ -59,10 +46,9 @@ export default function ProcessSection() {
 
       <div className="max-w-7xl mx-auto px-6 lg:px-10 relative z-10">
 
-        {/* Header row */}
         <div ref={headRef} className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--blue-soft)] mb-2">How Ordering Works</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[rgba(255,255,255,0.5)] mb-2">How Ordering Works</p>
             <h2
               className="text-[clamp(26px,3.5vw,42px)] font-bold tracking-tight leading-tight"
               style={{ fontFamily: 'var(--font-display)' }}
@@ -84,7 +70,6 @@ export default function ProcessSection() {
           </a>
         </div>
 
-        {/* Steps */}
         <div ref={bodyRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.12)] rounded-2xl overflow-hidden">
           {STEPS.map((step, idx) => {
             const Icon = step.icon
@@ -94,8 +79,8 @@ export default function ProcessSection() {
                 className="flex flex-col gap-4 p-7 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-11 h-11 rounded-xl bg-[var(--blue)] flex items-center justify-center">
-                    <Icon size={18} className="text-white" strokeWidth={1.7} />
+                  <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center">
+                    <Icon size={18} className="text-[var(--ink)]" strokeWidth={1.7} />
                   </div>
                   <span className="text-[12px] font-mono text-[rgba(255,255,255,0.3)]">{step.num}</span>
                 </div>

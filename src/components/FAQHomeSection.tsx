@@ -3,14 +3,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ArrowRight } from 'lucide-react'
 
-// New: the homepage previously sent every objection ("is this legal to
-// buy", "how is it shipped", "what happens if customs holds it") straight
-// to a bounce, because none of that was answered until a visitor found
-// their own way to /faq. This is the same content as app/faq/page.tsx,
-// trimmed to the five questions that most affect purchase decisions,
-// answered right where the doubt shows up. Full list stays linked out
-// rather than duplicated, so the two never drift out of sync in wording —
-// if you edit an answer, update it in app/faq/page.tsx and mirror it here.
 const HOME_FAQS = [
   {
     q: 'What does "research use only" mean?',
@@ -81,7 +73,7 @@ export default function FAQHomeSection() {
         <div className="text-center">
           <Link
             href="/faq"
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--blue)] hover:gap-2.5 transition-all"
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)] hover:gap-2.5 transition-all"
           >
             See the full FAQ <ArrowRight size={14} />
           </Link>
