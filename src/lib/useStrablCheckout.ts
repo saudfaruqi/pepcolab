@@ -104,7 +104,7 @@ export function useStrablCheckout() {
           // @ts-ignore
           if (!window.StrablCheckout) {
             setSdkError(
-              'Payment couldn\u2019t load — this is usually an ad blocker or privacy extension blocking STRABL. Disable it and refresh, or use "Order via WhatsApp instead" below to complete your order right away.'
+              'Payment system failed to load. Please refresh and try again, or contact support if the problem persists.'
             )
           }
         }
