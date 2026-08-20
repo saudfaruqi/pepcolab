@@ -30,18 +30,21 @@ export interface OrderRecord {
   status: OrderStatus
   failureReason?: string
   email: string
+  phone?: string
   customerName?: string
   products: {
     title: string
     price: number
     quantity: number
     variantOptions?: string[]
+    variantId?: string // Shopify Storefront GID, when STRABL gave us one — needed to rebuild a real Storefront cart for abandoned-cart restore links. Absent for Payment Link orders.
   }[]
   currency: string
   total: number
   createdAt: string // ISO timestamp of the underlying order, not this record
   updatedAt: string // ISO timestamp this record was last written
   reviewRequestSentAt?: string // set once the post-delivery review-request email has gone out — prevents re-sending on every cron run
+  recoveryEmailStage?: 0 | 1 | 2 // abandoned-cart recovery: 0 = none sent, 1 = first reminder sent, 2 = final reminder sent
 }
 
 const KEY_PREFIX = 'order-lookup:'
@@ -51,6 +54,12 @@ const RECORD_TTL_SECONDS = 60 * 60 * 24 * 365 // 1 year — orders shouldn't van
 // ago" without scanning every key — Redis has no native "list all keys
 // matching prefix, sorted by field" operation.
 const COMPLETED_INDEX_KEY = 'order-lookup:completed-index'
+// Same idea, for abandoned checkouts — lets the abandoned-cart recovery
+// cron ask "which checkouts went abandoned N hours ago" without scanning.
+// A record's status can change later (customer comes back and pays) —
+// callers must still check record.status themselves when reading these
+// back, this index just narrows down which keys to look at.
+const ABANDONED_INDEX_KEY = 'order-lookup:abandoned-index'
 
 function keyFor(orderShortCode: string): string {
   return `${KEY_PREFIX}${orderShortCode.trim().toUpperCase()}`
@@ -65,6 +74,12 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
     await redis.set(keyFor(record.orderShortCode), record, { ex: RECORD_TTL_SECONDS })
     if (record.status === 'created' || record.status === 'updated') {
       await redis.zadd(COMPLETED_INDEX_KEY, {
+        score: new Date(record.createdAt).getTime() || Date.now(),
+        member: record.orderShortCode.trim().toUpperCase(),
+      })
+    }
+    if (record.status === 'abandoned') {
+      await redis.zadd(ABANDONED_INDEX_KEY, {
         score: new Date(record.createdAt).getTime() || Date.now(),
         member: record.orderShortCode.trim().toUpperCase(),
       })
@@ -97,6 +112,23 @@ export async function getCompletedOrdersInWindow(startMs: number, endMs: number)
     return records.filter((r): r is OrderRecord => r !== null)
   } catch (err) {
     console.error('[orderStore] Failed to query completed orders in window:', err)
+    return []
+  }
+}
+
+// Abandoned checkouts with createdAt between [startMs, endMs] — used by the
+// abandoned-cart recovery cron. Callers must re-check record.status: a
+// short code stays in this index forever once abandoned even if the
+// customer later comes back and pays, since the index is just "was ever
+// abandoned in this window," not "is currently abandoned."
+export async function getAbandonedOrdersInWindow(startMs: number, endMs: number): Promise<OrderRecord[]> {
+  try {
+    const codes = (await redis.zrange(ABANDONED_INDEX_KEY, startMs, endMs, { byScore: true })) as string[]
+    if (codes.length === 0) return []
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return records.filter((r): r is OrderRecord => r !== null)
+  } catch (err) {
+    console.error('[orderStore] Failed to query abandoned orders in window:', err)
     return []
   }
 }

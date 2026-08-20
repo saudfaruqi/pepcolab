@@ -1,7 +1,8 @@
 // src/app/cart/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -11,6 +12,7 @@ import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { formatPrice } from '@/lib/utils'
 import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag, MessageCircle } from 'lucide-react'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
+import { chargeNotice, displayedTotalToAed } from '@/lib/pricing'
 
 interface AppliedDiscount {
   code: string
@@ -20,12 +22,63 @@ interface AppliedDiscount {
 }
 
 export default function CartPage() {
+  // useSearchParams (used below for the ?restore= abandoned-cart link)
+  // requires a Suspense boundary in the App Router, or Next.js errors at
+  // build time trying to statically render this page.
+  return (
+    <Suspense fallback={null}>
+      <CartPageInner />
+    </Suspense>
+  )
+}
+
+function CartPageInner() {
   const {
     lines, subtotal, totalQuantity, currencyCode,
-    loading, error, removeItem, updateQty, clearError,
+    loading, error, removeItem, updateQty, clearError, restoreItems,
   } = useCart()
   const { country: detectedCountry, currency: detectedCurrency } = useCountry()
   const { sdkReady, sdkError, checkingOut, handleCheckout, clearSdkError } = useStrablCheckout()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // ── Abandoned-cart restore ────────────────────────────────────────────────
+  // The recovery email's "Complete Your Order" button links here with
+  // ?restore=<orderShortCode>. On load, fetch that checkout's saved line
+  // items and add them back to whatever cart already exists client-side —
+  // covers the common case where localStorage already lost the cart
+  // (different device, cleared browser, or the 24hr-later email) instead
+  // of relying on local state still being there.
+  const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'done' | 'partial' | 'empty' | 'error'>('idle')
+
+  useEffect(() => {
+    const code = searchParams.get('restore')
+    if (!code) return
+
+    setRestoreStatus('loading')
+    fetch(`/api/cart/restore/${encodeURIComponent(code)}`)
+      .then((res) => res.json())
+      .then(async (data: { items: { variantId: string; quantity: number }[]; skipped?: number }) => {
+        if (!data.items || data.items.length === 0) {
+          setRestoreStatus('empty')
+          return
+        }
+        const restoredCount = await restoreItems(data.items)
+        setRestoreStatus(restoredCount < data.items.length + (data.skipped || 0) ? 'partial' : 'done')
+      })
+      .catch((err) => {
+        console.error('[Cart] restore fetch failed:', err)
+        setRestoreStatus('error')
+      })
+      .finally(() => {
+        // Strip ?restore= so a refresh doesn't re-add the same items again.
+        router.replace('/cart')
+      })
+    // Intentionally runs once on mount only — restoreItems/router are stable
+    // enough for this one-shot case, and re-running on every dep change
+    // would risk re-adding items after the query param is already stripped.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Same reasoning as CartDrawer: currencyCode is the source of truth once
   // the cart has loaded, since Shopify recalculates price AND currency
@@ -95,6 +148,32 @@ export default function CartPage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Your Cart</h1>
         </div>
+
+        {restoreStatus === 'loading' && (
+          <div className="bg-blue-50 border border-blue-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-blue-700">
+            Restoring your saved cart…
+          </div>
+        )}
+        {restoreStatus === 'done' && (
+          <div className="bg-emerald-50 border border-emerald-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-emerald-700">
+            Welcome back — we've restored your saved cart.
+          </div>
+        )}
+        {restoreStatus === 'partial' && (
+          <div className="bg-amber-50 border border-amber-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-amber-700">
+            We've restored what we could — one or more items from your saved cart are no longer available and need to be re-added manually.
+          </div>
+        )}
+        {restoreStatus === 'empty' && (
+          <div className="bg-amber-50 border border-amber-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-amber-700">
+            That saved cart link has expired. Feel free to re-add your items below.
+          </div>
+        )}
+        {restoreStatus === 'error' && (
+          <div className="bg-amber-50 border border-amber-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-amber-700">
+            We couldn't restore your saved cart automatically — please re-add your items below, or message us on WhatsApp and we'll sort it out.
+          </div>
+        )}
 
         {(error || sdkError) && (
           <div className="bg-red-50 border border-red-200/50 rounded-xl px-5 py-3 mb-6 flex items-center justify-between gap-3">
@@ -220,9 +299,9 @@ export default function CartPage() {
                 <span>Items ({totalQuantity})</span>
                 <span>{formatPrice(subtotal, displayCurrency)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-400 mb-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-4">
                 <span>Shipping</span>
-                <span>Calculated at checkout</span>
+                <span className="text-emerald-600 font-medium">Free</span>
               </div>
 
               {/* Discount code */}
@@ -276,6 +355,13 @@ export default function CartPage() {
                   {formatPrice(total, displayCurrency)}
                 </strong>
               </div>
+
+              {chargeNotice(displayedTotalToAed(total, detectedCountry), detectedCountry) && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-2 mb-1 mt-3 leading-relaxed">
+                  {chargeNotice(displayedTotalToAed(total, detectedCountry), detectedCountry)}
+                </p>
+              )}
+
               <button
                 onClick={() => handleCheckout(lines, displayCurrency, detectedCountry, appliedDiscount)}
                 disabled={checkingOut || loading || !sdkReady}

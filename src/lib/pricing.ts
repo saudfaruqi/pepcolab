@@ -143,3 +143,13 @@ export function chargeNotice(
   const aed = `AED ${Math.round(amountAed).toLocaleString('en-AE')}`
   return `Approximate. Charged in dirhams as ${aed}. Your bank sets the final exchange rate and may add a fee.`
 }
+
+/**
+ * Converts a displayed total back into the AED amount that will actually be
+ * charged, for feeding straight into chargeNotice() at the point of payment.
+ * AE is a no-op (displayed and charged amounts are already the same).
+ */
+export function displayedTotalToAed(displayedTotal: number, country?: string | null): number {
+  if (normaliseMarket(country) !== 'GB') return displayedTotal
+  return GBP_PER_AED > 0 ? displayedTotal / GBP_PER_AED : displayedTotal
+}

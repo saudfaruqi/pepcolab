@@ -166,6 +166,7 @@ interface CartCtx extends CartState {
   checkout: () => Promise<void> // Now just navigates to checkout page
   clearError: () => void
   getCartLines: () => CartLine[] // Helper to get lines for checkout
+  restoreItems: (items: { variantId: string; quantity: number }[]) => Promise<number> // Bulk-adds variants (abandoned-cart restore links); returns how many lines actually landed
 }
 
 const CartContext = createContext<CartCtx | null>(null)
@@ -369,6 +370,49 @@ export function CartProvider({ children }: { children: ReactNode }) {
     window.location.href = '/checkout'
   }, [state.lines, state.currencyCode])
 
+  // ── restoreItems ──────────────────────────────────────────────────────────
+  // Bulk-add for abandoned-cart restore links (see /cart's ?restore= param
+  // handling). Distinct from addItem because: (a) it needs real quantities,
+  // not a fixed +1, and (b) it's fine for the whole batch to fail loudly
+  // together rather than doing per-item optimistic updates — this only
+  // runs once, right after a fresh page load, so there's no existing cart
+  // state to protect the way addItem protects against a bad click mid-browse.
+
+  const restoreItems = useCallback(async (items: { variantId: string; quantity: number }[]): Promise<number> => {
+    if (items.length === 0) return 0
+    dispatch({ type: 'SET_LOADING', loading: true })
+    dispatch({ type: 'SET_ERROR', error: null })
+
+    let restored = 0
+    try {
+      const cartId = await ensureCart()
+      let cart: ShopifyCart | null = null
+      for (const item of items) {
+        try {
+          cart = await shopifyAddToCart(cartId, item.variantId, item.quantity)
+          restored++
+        } catch (err) {
+          // One bad/deleted variant (product since removed or out of
+          // stock) shouldn't block the rest of the restore.
+          console.error('[Cart] restoreItems: failed to add', item.variantId, err)
+        }
+      }
+      if (cart) {
+        const { lines, total, qty, currencyCode } = applyCart(cart, country)
+        dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode })
+        safeSet(CART_LINES_KEY, JSON.stringify(lines))
+        safeSet(CART_CURRENCY_KEY, currencyCode)
+        dispatch({ type: 'SET_OPEN', open: true })
+      }
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', error: 'Could not restore your saved cart. Please try again.' })
+      console.error('[Cart] restoreItems:', err)
+    } finally {
+      dispatch({ type: 'SET_LOADING', loading: false })
+    }
+    return restored
+  }, [ensureCart, country])
+
   // ── Helper to get cart lines ─────────────────────────────────────────────
 
   const getCartLines = useCallback(() => state.lines, [state.lines])
@@ -384,6 +428,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       checkout,
       clearError: () => dispatch({ type: 'SET_ERROR', error: null }),
       getCartLines,
+      restoreItems,
     }}>
       {children}
     </CartContext.Provider>

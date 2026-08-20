@@ -94,17 +94,21 @@ export function useStrablCheckout() {
         if (tryInit()) stop()
       }, 250)
 
+      // 4s, not 20s: an ad blocker or blocked third-party frame means
+      // window.StrablCheckout will simply never appear, so waiting longer
+      // just leaves the customer staring at a spinning "Loading payment…"
+      // button with no way to know it's already failed.
       deadline = setTimeout(() => {
         stop()
         if (!cancelled) {
           // @ts-ignore
           if (!window.StrablCheckout) {
             setSdkError(
-              'Payment system could not be loaded. Disable any ad blocker and refresh, or contact us to complete your order.'
+              'Payment couldn\u2019t load — this is usually an ad blocker or privacy extension blocking STRABL. Disable it and refresh, or use "Order via WhatsApp instead" below to complete your order right away.'
             )
           }
         }
-      }, 20000)
+      }, 4000)
     }
 
     return () => {
@@ -182,15 +186,28 @@ export function useStrablCheckout() {
       if (appliedDiscount && appliedDiscount.discountAmount > 0) {
         const rawSubtotal = strablLineItems.reduce((sum, li) => sum + li.price * li.quantity, 0)
         if (rawSubtotal > 0) {
-          let remaining = Math.min(appliedDiscount.discountAmount, rawSubtotal)
+          // Price floor: the checkout payload later drops any line with
+          // price <= 0 (see the .filter() above), so a rounding-driven zero
+          // here doesn't just show a $0 line — it silently removes the item
+          // from the order the customer thinks they're paying for. Keep
+          // every line at least MIN_LINE_PRICE and cap the total discount
+          // actually applied so it never eats a line down to nothing.
+          const MIN_LINE_PRICE = 0.5
+          const maxDiscountable = strablLineItems.reduce(
+            (sum, li) => sum + Math.max(0, li.price - MIN_LINE_PRICE) * li.quantity,
+            0
+          )
+          let remaining = Math.min(appliedDiscount.discountAmount, rawSubtotal, maxDiscountable)
           strablLineItems = strablLineItems.map((li, idx) => {
             const lineTotal = li.price * li.quantity
+            const lineFloor = MIN_LINE_PRICE * li.quantity
+            const lineCapacity = Math.max(0, lineTotal - lineFloor)
             const isLast = idx === strablLineItems.length - 1
             const share = isLast
-              ? remaining
-              : Math.min(remaining, Math.round((lineTotal / rawSubtotal) * appliedDiscount.discountAmount * 100) / 100)
+              ? Math.min(remaining, lineCapacity)
+              : Math.min(remaining, lineCapacity, Math.round((lineTotal / rawSubtotal) * appliedDiscount.discountAmount * 100) / 100)
             remaining = Math.max(0, remaining - share)
-            const newLineTotal = Math.max(0, lineTotal - share)
+            const newLineTotal = Math.max(lineFloor, lineTotal - share)
             return { ...li, price: Math.round((newLineTotal / li.quantity) * 100) / 100 }
           })
         }

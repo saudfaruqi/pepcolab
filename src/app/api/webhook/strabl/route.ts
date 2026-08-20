@@ -47,6 +47,23 @@ function normalizeCountryCode(raw: string | undefined): string {
   return COUNTRY_CODE_ALIASES[value] || 'AE' // unknown format — fall back rather than let it reach Shopify and throw
 }
 
+// Resolves STRABL's externalVariantId/externalProductId into a Shopify
+// Storefront API variant GID ("gid://shopify/ProductVariant/123..."), for
+// anything that needs to add this exact variant back into a Storefront
+// cart (i.e. abandoned-cart restore links). Separate from the numeric-ID
+// truncation buildShopifyOrderInputs does for the Admin API below — that
+// path wants a bare number, this one wants the full Storefront GID.
+// Returns null when there's nothing usable — Payment Link orders often
+// don't carry this field at all, and a bare Product GID isn't safe to
+// guess a variant from.
+function resolveVariantGid(item: any): string | null {
+  const raw = item.externalVariantId || item.externalProductId || ''
+  if (!raw) return null
+  if (raw.startsWith('gid://shopify/ProductVariant/')) return raw
+  if (/^\d+$/.test(raw)) return `gid://shopify/ProductVariant/${raw}`
+  return null
+}
+
 // SOR-QJJJCS showed order_created can fail (bad country code, transient
 // Shopify error, etc) while a later order_updated for the SAME order
 // succeeds — but order_updated events aren't guaranteed to carry the full
@@ -253,6 +270,7 @@ export async function POST(req: NextRequest) {
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
       variantOptions: item.extra || [],
+      variantId: resolveVariantGid(item) || undefined,
     }))
     const total = products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
     const firstName = customerUpdate.firstName || ''
@@ -264,6 +282,7 @@ export async function POST(req: NextRequest) {
       status,
       failureReason: orderUpdate.failureReason || undefined,
       email: (customerUpdate.email || '').toLowerCase().trim(),
+      phone: (customerUpdate.phoneNumber || '').trim() || undefined,
       customerName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
       products,
       currency: 'AED', // STRABL webhook payloads observed so far are AED-only per merchant config

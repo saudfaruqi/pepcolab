@@ -11,8 +11,7 @@ import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { formatPrice } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
-
-const FREE_SHIPPING_THRESHOLD = 0
+import { chargeNotice, displayedTotalToAed } from '@/lib/pricing'
 
 export default function CartDrawer() {
   const {
@@ -37,8 +36,6 @@ export default function CartDrawer() {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [closeCart])
 
-  const progress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)
-  const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0)
   // currencyCode comes from the cart itself — Shopify's cartBuyerIdentityUpdate
   // recalculates every line item's price AND currency together when the
   // country changes, so it's the only value that's guaranteed to match what
@@ -104,27 +101,10 @@ export default function CartDrawer() {
             </div>
           </div>
 
-          {/* Free shipping progress */}
+          {/* Shipping is free on every order — no threshold, nothing to unlock */}
           {totalQuantity > 0 && (
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                <span>
-                  {progress >= 0
-                    ? '✓ Free shipping unlocked'
-                    : `${formatPrice(remaining, displayCurrency)} away from free shipping`}
-                </span>
-                <span className="text-white/30">{Math.round(progress)}%</span>
-              </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-400 ${
-                    progress >= 100
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-                      : 'bg-white/40'
-                  }`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+            <div className="mt-4 flex items-center gap-1.5 text-xs text-emerald-400/90 font-semibold">
+              ✓ Free shipping on every order
             </div>
           )}
         </div>
@@ -257,8 +237,8 @@ export default function CartDrawer() {
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Subtotal
                 </div>
-                <div className="text-[10px] text-gray-400">
-                  Shipping calculated at checkout
+                <div className="text-[10px] text-emerald-600 font-medium">
+                  Free shipping included
                 </div>
               </div>
               <strong className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -266,6 +246,11 @@ export default function CartDrawer() {
               </strong>
             </div>
 
+            {chargeNotice(displayedTotalToAed(subtotal, detectedCountry), detectedCountry) && (
+              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-2 mb-4 leading-relaxed">
+                {chargeNotice(displayedTotalToAed(subtotal, detectedCountry), detectedCountry)}
+              </p>
+            )}
 
             {/* Checkout button */}
             <button

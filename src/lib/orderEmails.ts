@@ -135,6 +135,75 @@ export async function sendReviewRequestEmail(params: {
   })
 }
 
+export async function sendAbandonedCartEmail(params: {
+  to: string
+  orderShortCode: string
+  products: { title: string; price: number; quantity: number }[]
+  total: number
+  currency: string
+  stage: 1 | 2
+}) {
+  const cartUrl = `${SITE_URL}/cart?restore=${encodeURIComponent(params.orderShortCode)}`
+  const isFinal = params.stage === 2
+
+  // WhatsApp CTA reuses the same ordering number as the rest of the site
+  // (see lib/whatsapp.ts) — built directly here rather than importing
+  // whatsAppCartLink, since that helper expects the client-side CartLine
+  // type and this runs server-side off the stored order record instead.
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || ''
+  const itemsText = params.products.map((p) => `${p.title} x${p.quantity}`).join(', ')
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        `Hi PepcoLab, I'd like to complete my order — ${itemsText} (${params.currency} ${params.total.toFixed(2)}), order ref ${params.orderShortCode}.`
+      )}`
+    : null
+
+  const headline = isFinal ? 'Still thinking it over?' : "You left something behind."
+  const subcopy = isFinal
+    ? "Your cart's still saved. This is the last reminder we'll send about it — happy to help if anything's holding you up."
+    : "Your items are still in your cart, ready whenever you are."
+
+  const html = emailShell(`
+    <h1 style="font-size:22px; font-weight:700; letter-spacing:-.02em; color:${BLACK}; margin:0 0 8px;">${headline}</h1>
+    <p style="font-size:14px; line-height:1.6; color:rgba(13,13,13,.6); margin:0 0 24px;">${subcopy}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+      ${productRows(params.products, params.currency)}
+      <tr>
+        <td style="padding:14px 0 0; font-size:14px; font-weight:700; color:${BLACK};">Total</td>
+        <td style="padding:14px 0 0; font-size:14px; font-weight:700; color:${BLACK}; text-align:right;">${params.currency} ${params.total.toFixed(2)}</td>
+      </tr>
+    </table>
+    <a href="${cartUrl}" style="display:block; text-align:center; background:${BLACK}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px; border-radius:999px; margin-top:28px; margin-bottom:${whatsappUrl ? '12px' : '0'};">
+      Complete Your Order
+    </a>
+    ${
+      whatsappUrl
+        ? `<a href="${whatsappUrl}" style="display:block; text-align:center; color:${GREEN}; font-size:13px; font-weight:600; text-decoration:none; padding:6px;">
+      Or finish it over WhatsApp
+    </a>`
+        : ''
+    }
+    <p style="font-size:11px; color:rgba(13,13,13,.35); text-align:center; margin:16px 0 0;">
+      Order ref ${params.orderShortCode}
+    </p>
+  `)
+
+  const text =
+    `${headline}\n\n${subcopy}\n\n` +
+    params.products.map((p) => `${p.title} x${p.quantity} — ${params.currency} ${(p.price * p.quantity).toFixed(2)}`).join('\n') +
+    `\n\nTotal: ${params.currency} ${params.total.toFixed(2)}\n\n` +
+    `Complete your order: ${cartUrl}` +
+    (whatsappUrl ? `\nOr on WhatsApp: ${whatsappUrl}` : '') +
+    `\n\nOrder ref ${params.orderShortCode}`
+
+  await sendMailSafe({
+    to: params.to,
+    subject: isFinal ? `Last chance — your cart is waiting (${params.orderShortCode})` : `You left something in your cart`,
+    text,
+    html,
+  })
+}
+
 export async function sendPaymentFailedEmail(params: {
   to: string
   orderShortCode: string
