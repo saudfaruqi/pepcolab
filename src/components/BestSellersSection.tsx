@@ -19,6 +19,8 @@ import { formatPrice } from '@/lib/utils'
  */
 const FEATURED_HANDLES = [
   'GLP-uae',
+  'Retatrutide-uae',
+  'retatrutide-uae',
   'klow-uae',
   'wolverine-stack-uae',
   'glow-uae',
