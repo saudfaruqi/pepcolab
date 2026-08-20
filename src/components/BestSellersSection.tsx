@@ -18,7 +18,7 @@ import { formatPrice } from '@/lib/utils'
  * out of stock or being renamed degrades gracefully.
  */
 const FEATURED_HANDLES = [
-  'glp-uae',
+  'GLP-uae',
   'klow-uae',
   'wolverine-stack-uae',
   'glow-uae',
@@ -28,7 +28,7 @@ const FEATURED_HANDLES = [
 /** Short editorial line per product. Kept factual — format and composition,
  *  not effects. These sit on the most-viewed section of the site. */
 const FEATURED_COPY: Record<string, string> = {
-  'glp-uae': 'GLP-1/GIP/glucagon triple agonist, single-vial format.',
+  'GLP-uae': 'GLP-1/GIP/glucagon triple agonist, single-vial format.',
   'klow-uae': 'The flagship blend. Five peptides, one vial, published COA.',
   'wolverine-stack-uae': 'Repair blend in pen or vial. Two formats, one batch record.',
   'glow-uae': 'Three-peptide preparation, cold-chain dispatched.',

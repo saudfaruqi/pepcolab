@@ -13,7 +13,7 @@
 // "link coming soon" state rather than a dead/broken link.
 // ---------------------------------------------------------------------------
 
-const RETA_SLUGS = ['glp-uae']
+const RETA_SLUGS = ['GLP-uae']
 
 export function isPaymentLinkOnlyProduct(slug?: string | null): boolean {
   if (!slug) return false
