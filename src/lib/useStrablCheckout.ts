@@ -92,7 +92,7 @@ export function useStrablCheckout() {
     if (!tryInit()) {
       interval = setInterval(() => {
         if (tryInit()) stop()
-      }, 250)
+      }, 2000)
 
       // 4s, not 20s: an ad blocker or blocked third-party frame means
       // window.StrablCheckout will simply never appear, so waiting longer
