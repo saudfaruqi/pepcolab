@@ -8,7 +8,7 @@ import { COA_BATCHES } from '@/app/coaData'
 // product that doesn't exist in the catalogue, with an invented lot number
 // (PEP-2412-07) and invented stats (847 certs / 100% / 0 failed). Now
 // sourced from real Freedom Diagnostics COAs (see coaData.ts). Defaults
-// the terminal preview to Retatrutide 30mg — real, clean data, no
+// the terminal preview to GLP 30mg — real, clean data, no
 // spreadsheet artifacts — rather than a fabricated product. (There's no
 // 60mg batch published yet; 30mg is the highest strength on file.)
 const DEFAULT_BATCH =

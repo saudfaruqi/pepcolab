@@ -7,7 +7,7 @@ import { useState } from 'react'
 // marked "not stocked") — every UK order is presumably fulfilled from the
 // UAE. Confirm actual UK dispatch/transit time with Mohammed before this
 // goes live, or the claim may not be accurate. Also removed "GLP-2 (Tera)
-// now in stock" — no such product exists in the catalogue (Retatrutide,
+// now in stock" — no such product exists in the catalogue (GLP,
 // the closest match, isn't stocked as "GLP-2" and wasn't in-stock either).
 const ITEMS = [
   '✦ Free shipping on all orders',

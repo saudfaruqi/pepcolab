@@ -1,7 +1,7 @@
 // src/lib/restrictedCheckout.ts
 //
-// RETA (Retatrutide) — hardcoded exception ─────────────────────────────────
-// Retatrutide can't go through the normal STRABL cart/checkout flow, so it
+// RETA (GLP) — hardcoded exception ─────────────────────────────────
+// GLP can't go through the normal STRABL cart/checkout flow, so it
 // is sold via a direct payment link instead. This is deliberately
 // hardcoded to this one product rather than driven by a Shopify tag/
 // metafield (that was a discussed alternative — hardcoding was chosen).
@@ -13,7 +13,7 @@
 // "link coming soon" state rather than a dead/broken link.
 // ---------------------------------------------------------------------------
 
-const RETA_SLUGS = ['retatrutide-uae']
+const RETA_SLUGS = ['glp-uae']
 
 export function isPaymentLinkOnlyProduct(slug?: string | null): boolean {
   if (!slug) return false

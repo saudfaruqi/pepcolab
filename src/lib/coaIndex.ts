@@ -53,7 +53,7 @@ interface CoaMatcher {
 // variant selected, so mg is often empty there. For a product that only
 // has ONE published batch, requiring an mg match is pure false-negative
 // risk — match on name alone. For a product with MULTIPLE published
-// strengths (Retatrutide: 20mg + 30mg), keep the mg gate: without a
+// strengths (GLP: 20mg + 30mg), keep the mg gate: without a
 // selected variant there's no way to know which batch is right, and
 // showing the wrong one's certificate is worse than "pending upload".
 // If you publish a second strength for any of the name-only matchers
@@ -74,12 +74,12 @@ const MATCHERS: CoaMatcher[] = [
   { accession: '2605180341',
     test: (n) => has(n, 'ss-31') || has(n, 'ss31') }, // only 50mg published
   { accession: '2605110026',
-    test: (n, mg) => has(n, 'retatrutide') && mgIs(mg, 30) }, // ambiguous without mg — 30mg batch
+    test: (n, mg) => has(n, 'glp') && mgIs(mg, 30) }, // ambiguous without mg — 30mg batch
   { accession: '2605110025',
-    test: (n, mg) => has(n, 'retatrutide') && mgIs(mg, 20) }, // ambiguous without mg — 20mg batch
+    test: (n, mg) => has(n, 'glp') && mgIs(mg, 20) }, // ambiguous without mg — 20mg batch
 ]
 
-// `name` should be the product's title (e.g. "Retatrutide") and `mg` its
+// `name` should be the product's title (e.g. "GLP") and `mg` its
 // strength/variant title (e.g. "30mg") — pass selectedVariant.title where
 // a strength picker exists so switching strength re-resolves the batch.
 //

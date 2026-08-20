@@ -29,7 +29,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
   // hovering just keeps showing the primary image as before.
   const hoverImage: string | undefined = (p as any).images?.[1]?.url
 
-  // RETA (Retatrutide) — hardcoded exception: sold via a direct payment
+  // RETA (GLP) — hardcoded exception: sold via a direct payment
   // link, not the normal cart. See lib/restrictedCheckout.ts.
   const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
   const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(p.mg) : null

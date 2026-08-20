@@ -100,7 +100,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
     setQuantity(1)
   }, [selectedVariantId])
 
-  // RETA (Retatrutide) — hardcoded exception: sold via a direct payment
+  // RETA (GLP) — hardcoded exception: sold via a direct payment
   // link instead of the normal STRABL cart flow. See lib/restrictedCheckout.ts.
   const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
   const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(selectedVariant.title) : null
