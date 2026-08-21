@@ -1,7 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
-import { cookies } from 'next/headers'
 import './globals.css'
 
 import { CartProvider } from '@/lib/cartContext'
@@ -132,12 +131,47 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const initialCountry = (await cookies()).get('pepcolab_country')?.value
+  // FIX (Aug 2026): this used to do
+  //   const initialCountry = (await cookies()).get('pepcolab_country')?.value
+  // and pass it down to CountryProvider so it could start "ready" on the
+  // very first render — see countryContext.tsx's own comment on why that
+  // mattered (it's what let page.tsx server-render product data at all).
+  //
+  // The problem: `cookies()` is a Next.js "Dynamic API" — calling it
+  // ANYWHERE in the layout chain opts the entire route tree under it into
+  // dynamic (per-request) rendering, which is exactly the 1.5s-TTFB,
+  // never-edge-cached problem page.tsx's own header comment describes
+  // fixing. That fix was real for page.tsx in isolation, but this file
+  // was silently cancelling it out — the homepage (and everything else
+  // under this layout) was almost certainly still rendering dynamically
+  // on every request despite `export const revalidate = 300`.
+  //
+  // Since RootLayout is itself a Server Component that can't safely read
+  // a per-visitor cookie without forcing dynamic rendering, initialCountry
+  // is no longer resolved here at all. CountryProvider falls back to its
+  // existing client-side chain instead (see countryContext.tsx): checked,
+  // in order, are localStorage (an explicit prior choice), the
+  // `pepcolab_country` cookie via `document.cookie` (fast, synchronous,
+  // no network — set by middleware.ts on every request, and still fully
+  // intact, just no longer read server-side here), and only as a last
+  // resort `/api/country`. For a returning or already-geo-tagged visitor
+  // this resolves within the same tick after mount; for a genuinely new
+  // visitor with no cookie yet, there's a brief flash before it resolves —
+  // the same tradeoff this page's own product-pricing already accepts
+  // (see page.tsx's header comment: "GB visitors see dirhams for a few
+  // hundred milliseconds before the client swaps them").
+  //
+  // If you want to eliminate that flash entirely while KEEPING static
+  // rendering, the real fix is Next.js Partial Prerendering (PPR): a
+  // static shell with just the country-dependent bits in a Suspense
+  // boundary that reads cookies(). That needs `experimental.ppr` enabled
+  // and a compatible Next.js version — worth checking your next.config
+  // before taking it on, since it wasn't included in this file set.
 
   return (
     <html lang="en-AE" suppressHydrationWarning>
@@ -225,7 +259,7 @@ export default async function RootLayout({
           strategy="lazyOnload"
         />
 
-        <CountryProvider initialCountry={initialCountry}>
+        <CountryProvider>
           <AgeLocationGate />
           <WishlistProvider>
             <RecentlyViewedProvider>

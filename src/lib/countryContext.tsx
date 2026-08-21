@@ -21,6 +21,20 @@ function normaliseCountry(input: string | null | undefined): SupportedCountry {
     : 'AE'
 }
 
+// FIX (Aug 2026): reads the SAME `pepcolab_country` cookie middleware.ts
+// already sets on every request — it's just no longer read server-side in
+// layout.tsx (see that file's comment for why: cookies() there forced the
+// whole app to render dynamically). middleware.ts's cookie is not
+// httpOnly, so `document.cookie` can read it here, synchronously, with no
+// network round-trip. This is what keeps the fallback path below fast for
+// the common case (anyone middleware has already geo-tagged) instead of
+// always waiting on `/api/country`.
+function readCountryCookie(): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(/(?:^|;\s*)pepcolab_country=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 interface CountryCtx {
   country: SupportedCountry
   currency: string
@@ -41,19 +55,22 @@ export function CountryProvider({
 }: {
   children: ReactNode
   /**
-   * Country resolved server-side by middleware (from the `pepcolab_country`
-   * cookie, which middleware sets from `x-vercel-ip-country`/geo on every
-   * request — see middleware.ts). When present, this lets the provider
-   * start in its final state on the very first render instead of always
-   * beginning at `country: 'AE', ready: false` and waiting on a client-side
-   * `/api/country` round-trip.
+   * Optional country resolved server-side, if a caller has one available
+   * (e.g. a route that's already dynamic for other reasons and can safely
+   * call cookies() itself). When present, this lets the provider start in
+   * its final state on the very first render instead of waiting on the
+   * client-side fallback chain below.
    *
-   * This is what actually unblocks server-rendering the homepage: previously
-   * nothing consumed the homepage/store's product data could safely render
-   * on the server, because `ready` was guaranteed false until an effect ran
-   * in the browser — so the whole page tree was pushed behind
-   * `dynamic(..., { ssr: false })`. With a known-good initial value, the
-   * product fetch in HomePageContent.tsx can now run server-side too.
+   * FIX (Aug 2026): RootLayout (app/layout.tsx) used to always supply this
+   * from cookies() — removed there because reading cookies() anywhere in
+   * the layout chain forces the ENTIRE app to render dynamically, which
+   * was silently defeating page.tsx's static-rendering fix. This prop
+   * still exists for any route that wants to opt into dynamic rendering
+   * deliberately and pass a real value, but nothing currently does. The
+   * default path is the client-side fallback in the effect below:
+   * localStorage (explicit prior choice) → the `pepcolab_country` cookie
+   * via document.cookie (fast, no network, still set by middleware.ts on
+   * every request) → `/api/country` as a last resort.
    */
   initialCountry?: string
 }) {
@@ -77,8 +94,8 @@ export function CountryProvider({
       return
     }
 
-    // Fallback path — only reached if middleware's cookie wasn't present for
-    // some reason (e.g. an environment where middleware.ts isn't running).
+    // Fallback path — reached whenever no initialCountry was supplied
+    // server-side (the normal case now — see the prop doc above).
     const stored = localStorage.getItem(COUNTRY_KEY)
     if (stored && SUPPORTED_COUNTRIES.includes(stored as SupportedCountry)) {
       setCountryState(stored as SupportedCountry)
@@ -86,6 +103,21 @@ export function CountryProvider({
       return
     }
 
+    // No explicit prior choice — try middleware's geo-detected cookie
+    // before falling all the way back to a network round-trip. This is
+    // the fast path for anyone who's hit the site before (or even just
+    // this session): synchronous, no request, resolves in the same tick.
+    const cookieCountry = readCountryCookie()
+    if (cookieCountry && SUPPORTED_COUNTRIES.includes(cookieCountry as SupportedCountry)) {
+      setCountryState(cookieCountry as SupportedCountry)
+      localStorage.setItem(COUNTRY_KEY, cookieCountry)
+      setReady(true)
+      return
+    }
+
+    // Last resort — no cookie either (e.g. middleware didn't run, or this
+    // is genuinely the visitor's first-ever request before it could set
+    // one). Only this path pays for a network round-trip.
     fetch('/api/country')
       .then(r => r.json())
       .then(({ country: detected }) => {

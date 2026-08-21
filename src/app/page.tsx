@@ -21,6 +21,15 @@
 // IMPORTANT: this only works if layout.tsx ALSO stops calling cookies().
 // A cookies() call anywhere in the layout chain forces every route under it
 // to render dynamically, and this file's change alone will do nothing.
+// FIX (Aug 2026): layout.tsx WAS still calling cookies() (added later for
+// the country/pricing work) — silently cancelling this out ever since.
+// Removed there; see that file's comment and countryContext.tsx's updated
+// client-side fallback chain for how CountryProvider still resolves the
+// country without it. This page should now actually be statically
+// rendered and edge-cached as intended — worth confirming with a real
+// TTFB check (response headers should show cache-control allowing caching
+// and x-vercel-cache: HIT on repeat requests) rather than trusting the
+// comment alone.
 // CountryProvider already falls back to localStorage then /api/country when
 // `initialCountry` is absent.
 //
