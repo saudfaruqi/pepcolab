@@ -1,6 +1,3 @@
-
-
-
 // data.ts
 export interface Product {
   id: string
@@ -89,6 +86,23 @@ export const CATEGORIES: Category[] = [
 // These aren't in your price list, so I can't map them to a real handle —
 // I've left them as TODOs below with a real in-catalogue product as a
 // placeholder suggestion. Swap in whatever you actually want to bundle.
+//
+// FIX (Aug 2026): b2 referenced 'ghk-cu-uae', which isn't a real handle —
+// your indexed catalogue only has 'ahk-cu-uae' (AHK-Cu, a different
+// tripeptide from the more common GHK-Cu). Because BundlesSection's
+// bundleProducts() silently drops any slug that doesn't match a live
+// product, this was quietly turning a 2-product bundle into a 1-product
+// bundle sold at the 2-product discount price. Swapped to the real slug —
+// double check with Mohammed/Shopify whether AHK-Cu was actually the
+// intended compound for this bundle, or whether GHK-Cu needs adding to
+// the catalogue instead.
+//
+// UNVERIFIED — b3 ('semax-uae', 'selank-uae'): I don't have access to your
+// live Shopify catalogue from here, so I can't confirm these two slugs
+// exist. If they don't, BundlesSection.tsx's new completeness guard (see
+// that file) will now hide this card automatically instead of selling it
+// wrong — but please verify the real handles in Shopify admin and fix here
+// rather than relying on the guard long-term.
 export const BUNDLES = [
   {
     id: 'b1', name: 'Recovery Stack',
@@ -100,8 +114,8 @@ export const BUNDLES = [
   },
   {
     id: 'b2', name: 'Longevity Protocol',
-    desc: 'Epithalon 20mg + GHK-Cu 100mg',
-    products: ['epithalon-uae', 'ghk-cu-uae'],
+    desc: 'Epithalon 20mg + AHK-Cu 100mg',
+    products: ['epithalon-uae', 'ahk-cu-uae'], // ← was 'ghk-cu-uae' (not a real handle)
     price: 99.99, save: 4.99,
     accent: '#7C3AED',
     bg: '#F4F1FE',
@@ -109,7 +123,7 @@ export const BUNDLES = [
   {
     id: 'b3', name: 'Cognitive Edge',
     desc: 'Semax 10mg + Selank 10mg',
-    products: ['semax-uae', 'selank-uae'],
+    products: ['semax-uae', 'selank-uae'], // ← UNVERIFIED, see note above
     price: 104.99, save: 8.99,
     accent: '#BE185D',
     bg: '#FDF0F8',
@@ -155,4 +169,3 @@ export const REVIEWS = [
     rating: 5,
   },
 ]
-

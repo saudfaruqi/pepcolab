@@ -1,8 +1,5 @@
-
-
 // app/bundles/page.tsx
 
-'use client'
 'use client'
 import AnnouncementBar from '@/components/AnnouncementBar'
 import Nav from '@/components/Nav'

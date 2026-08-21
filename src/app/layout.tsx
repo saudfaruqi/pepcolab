@@ -203,9 +203,15 @@ export default async function RootLayout({
               priceRange: 'AED 40 – AED 930',
               paymentAccepted: ['Credit Card', 'Apple Pay', 'Google Pay'],
               currenciesAccepted: 'AED, GBP',
+              // FIX (Aug 2026): was 'GB' here while middleware.ts's
+              // DEFAULT_COUNTRY and countryContext.tsx's explicit "AE, the
+              // primary market" comment both treat AE as primary — this
+              // schema was the one place silently disagreeing. If UK is
+              // actually meant to be primary instead, change it back here
+              // AND in those two files together so all three stay in sync.
               address: {
                 '@type': 'PostalAddress',
-                addressCountry: 'GB',
+                addressCountry: 'AE',
               },
               areaServed: ['United Arab Emirates', 'United Kingdom'],
             }),

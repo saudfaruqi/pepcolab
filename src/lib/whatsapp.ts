@@ -18,6 +18,23 @@ export function isWhatsAppConfigured(): boolean {
   return WHATSAPP_NUMBER.trim().length > 0
 }
 
+// FIX (Aug 2026): every consumer (FloatingWhatsApp, product page, cart)
+// already degrades gracefully when the number is unset — buttons just
+// render nothing instead of a broken wa.me/undefined link. That's the
+// right runtime behavior, but it also means a missing
+// NEXT_PUBLIC_WHATSAPP_NUMBER in production is completely silent: no
+// error, no broken-looking UI, just buttons that never appear. This
+// module-load warning (dev only, and only server/build-time — it won't
+// spam browser consoles) is the one place that actually surfaces it.
+// Confirm NEXT_PUBLIC_WHATSAPP_NUMBER is set in Vercel prod, not just
+// .env.local, since this is easy to miss at deploy time.
+if (process.env.NODE_ENV !== 'production' && typeof window === 'undefined' && !isWhatsAppConfigured()) {
+  console.warn(
+    '[whatsapp] NEXT_PUBLIC_WHATSAPP_NUMBER is not set — all WhatsApp CTAs will render as nothing (not an error, just invisible). ' +
+    'Set it in .env.local for dev and in Vercel env vars for prod, full international format, digits only (e.g. "9715XXXXXXXX").'
+  )
+}
+
 function buildLink(message: string): string {
   const text = encodeURIComponent(message)
   // wa.me works whether or not the visitor has WhatsApp installed (falls

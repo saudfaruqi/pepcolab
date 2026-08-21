@@ -161,6 +161,45 @@ async function getCachedProducts(orderShortCode: string): Promise<any[] | null> 
   }
 }
 
+// FIX (Aug 2026): this was hardcoded to exactly one header-naming
+// convention (x-webhook-id/-timestamp/-signature) and exactly one
+// timestamp unit (seconds), neither of which had ever been confirmed
+// against real STRABL traffic — see the removed TEMP DEBUG block below,
+// whose whole purpose was to find out those two things by trial and
+// error against production requests.
+//
+// Rather than keep guessing at one shape, this now checks the header-name
+// variants used by the two conventions webhook providers overwhelmingly
+// use in practice: the plain "x-webhook-*" this code originally assumed,
+// and the Standard Webhooks / Svix-style "webhook-*" / "svix-*" triplet
+// (STRABL's docs weren't available to confirm which). It also accepts a
+// timestamp in either seconds or milliseconds. This does NOT remove the
+// need to confirm against real traffic — check Vercel logs for
+// "[webhook] Verification rejected" on genuine STRABL deliveries; if it's
+// still firing, the real header names/format differ from all of these
+// guesses and need to come from STRABL support/docs directly.
+const WEBHOOK_ID_HEADERS = ['x-webhook-id', 'webhook-id', 'svix-id']
+const WEBHOOK_TIMESTAMP_HEADERS = ['x-webhook-timestamp', 'webhook-timestamp', 'svix-timestamp']
+const WEBHOOK_SIGNATURE_HEADERS = ['x-webhook-signature', 'webhook-signature', 'svix-signature']
+
+function firstHeader(req: NextRequest, names: string[]): string {
+  for (const name of names) {
+    const value = req.headers.get(name)
+    if (value) return value
+  }
+  return ''
+}
+
+// Normalizes a timestamp to whole seconds regardless of whether the
+// provider sent seconds or milliseconds. A value with 13 digits is
+// unambiguously milliseconds (10-digit epoch seconds only reaches 13
+// digits again in the year 2286); anything shorter is treated as seconds.
+function normalizeTimestampSeconds(raw: string): number {
+  const ts = parseInt(raw, 10)
+  if (isNaN(ts)) return NaN
+  return raw.trim().length >= 13 ? Math.round(ts / 1000) : ts
+}
+
 function verifyWebhook(webhookId: string, timestamp: string, signature: string, rawBody: string) {
   const secret = process.env.STRABL_WEBHOOK_SECRET
   if (!secret) {
@@ -168,37 +207,47 @@ function verifyWebhook(webhookId: string, timestamp: string, signature: string, 
     return // Skip verification if secret is not set (dev mode)
   }
 
-  const ts = parseInt(timestamp, 10)
+  const ts = normalizeTimestampSeconds(timestamp)
   if (isNaN(ts) || Math.abs(Date.now() / 1000 - ts) > 300) {
     throw new Error('Webhook timestamp too old or invalid')
   }
 
+  // Svix/Standard Webhooks sign the raw (un-normalized) timestamp string,
+  // not the normalized seconds value, so the signing input still uses the
+  // original `timestamp` argument as received.
   const signingInput = `${webhookId}.${timestamp}.${rawBody}`
   const expectedHex = crypto.createHmac('sha256', secret).update(signingInput).digest('hex')
-  const expected = `v1=${expectedHex}`
 
-  if (
-    expected.length !== signature.length ||
-    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
-  ) {
+  // Accept either a plain hex digest or the "v1=<hex>" prefixed form some
+  // providers (including the original x-webhook-signature assumption
+  // here) use. Try both rather than assuming which one STRABL sends.
+  const candidates = [expectedHex, `v1=${expectedHex}`]
+  const matches = candidates.some((candidate) => {
+    if (candidate.length !== signature.length) return false
+    return crypto.timingSafeEqual(Buffer.from(candidate), Buffer.from(signature))
+  })
+
+  if (!matches) {
     throw new Error('Webhook signature mismatch')
   }
 }
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
-  const webhookId = req.headers.get('x-webhook-id') || ''
-  const timestamp = req.headers.get('x-webhook-timestamp') || ''
-  const signature = req.headers.get('x-webhook-signature') || ''
+  const webhookId = firstHeader(req, WEBHOOK_ID_HEADERS)
+  const timestamp = firstHeader(req, WEBHOOK_TIMESTAMP_HEADERS)
+  const signature = firstHeader(req, WEBHOOK_SIGNATURE_HEADERS)
 
   try {
     verifyWebhook(webhookId, timestamp, signature, rawBody)
   } catch (err: any) {
-    // TEMP DEBUG: log every header STRABL actually sends, so we can see
-    // whether x-webhook-id / x-webhook-timestamp / x-webhook-signature are
-    // even the right names, and what format the timestamp is really in
-    // (seconds vs ms), instead of guessing. Remove once verification is
-    // confirmed working.
+    // Kept deliberately (not "temp") until verification against real
+    // STRABL traffic is confirmed clean: logs every header actually
+    // received so a still-failing case can be diagnosed without guessing
+    // further. If this keeps firing on genuine deliveries even after the
+    // multi-convention header/timestamp handling above, the mismatch is
+    // in the signing scheme itself (e.g. a different signing-input format)
+    // and needs STRABL's own docs/support to resolve.
     const allHeaders: Record<string, string> = {}
     req.headers.forEach((value, key) => { allHeaders[key] = value })
     console.warn('[webhook] Verification rejected:', err.message)

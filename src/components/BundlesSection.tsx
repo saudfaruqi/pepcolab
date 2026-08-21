@@ -130,6 +130,32 @@ export default function BundlesSection() {
       .filter((p): p is Product => p !== undefined)
   }
 
+  // GUARD (Aug 2026 fix): bundleProducts() above silently drops any slug in
+  // data.ts's BUNDLES that doesn't match a live product — which previously
+  // let a bundle like "Longevity Protocol" render and sell as if it only
+  // had one item, still charged at the full 2-item discount price (see
+  // data.ts for the ghk-cu-uae/ahk-cu-uae incident this fixes). A bundle is
+  // only "complete" once every product loads. Skip while products are still
+  // loading (products.length === 0) so bundles don't flash as broken on
+  // first paint — this only fires once the live product list is in and a
+  // configured slug genuinely doesn't match anything in it.
+  function isBundleComplete(bundle: typeof BUNDLES[number], prods: Product[]): boolean {
+    if (products.length === 0) return true // still loading — don't judge yet
+    return prods.length === bundle.products.length
+  }
+
+  const loggedIncompleteBundles = useRef<Set<string>>(new Set())
+  function warnIfIncomplete(bundle: typeof BUNDLES[number], prods: Product[]) {
+    if (isBundleComplete(bundle, prods)) return
+    if (loggedIncompleteBundles.current.has(bundle.id)) return
+    loggedIncompleteBundles.current.add(bundle.id)
+    const missing = bundle.products.filter((slug) => !prods.some((p) => p.slug === slug))
+    console.error(
+      `[bundles] "${bundle.name}" (${bundle.id}) is missing product(s) in the live catalogue: ${missing.join(', ')}. ` +
+      `Hiding this bundle from display rather than selling it incomplete. Fix the slug(s) in app/data.ts.`
+    )
+  }
+
   function priceBundle(bundle: typeof BUNDLES[number], prods: Product[]) {
     // Bundle price/save in data.ts are static, AED-denominated numbers
     // frozen at config time — every other price on the site (ProductActions,
@@ -160,6 +186,11 @@ export default function BundlesSection() {
   // firing them all at once, which would race against each other's
   // optimistic-state updates.
   async function handleAddBundle(bundle: typeof BUNDLES[number], prods: Product[]) {
+    // Refuse to add an incomplete bundle to cart — see isBundleComplete()
+    // above. Without this, a bad slug in data.ts meant the customer could
+    // still click "Add Bundle" and get charged the full multi-item
+    // discount price for fewer items than promised.
+    if (!isBundleComplete(bundle, prods)) return
     if (prods.length === 0 || addingId) return
     setAddingId(bundle.id)
     try {
@@ -185,8 +216,11 @@ export default function BundlesSection() {
   }
 
   const openBundle = BUNDLES.find(b => b.id === openBundleId)
-  const openProds = openBundle ? bundleProducts(openBundle) : []
-  const openPricing = openBundle ? priceBundle(openBundle, openProds) : null
+  const openProdsRaw = openBundle ? bundleProducts(openBundle) : []
+  // Same guard as the grid above — never show/sell an incomplete bundle in
+  // the detail modal either.
+  const openProds = openBundle && isBundleComplete(openBundle, openProdsRaw) ? openProdsRaw : []
+  const openPricing = openBundle && openProds.length > 0 ? priceBundle(openBundle, openProds) : null
 
   return (
     <section className="py-16 lg:py-20 border-b border-[var(--border)] bg-[var(--paper)]">
@@ -204,6 +238,8 @@ export default function BundlesSection() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {BUNDLES.map((bundle, idx) => {
             const prods = bundleProducts(bundle)
+            warnIfIncomplete(bundle, prods)
+            if (!isBundleComplete(bundle, prods)) return null // see isBundleComplete() above
             const { currencyCode, displayDiscounted, displaySave } = priceBundle(bundle, prods)
             const isAdding = addingId === bundle.id
             const isAdded = addedId === bundle.id

@@ -13,11 +13,25 @@
 // "link coming soon" state rather than a dead/broken link.
 // ---------------------------------------------------------------------------
 
-const RETA_SLUGS = ['GLP-uae', 'Retatrutide-uae', 'retatrutide-uae']
+// FIX (Aug 2026): 'GLP-uae' and 'Retatrutide-uae' (capital R) were dead
+// weight — Shopify handles are lowercase, so neither could ever match a
+// real slug; only 'retatrutide-uae' was actually doing anything. Reduced
+// to the one real slug, and the comparison below is now case-insensitive
+// so a future casing slip here doesn't silently disable RETA's payment-
+// link routing the way those two entries always would have.
+// NOTE: 'reta-cagri-uae' (the Retatrutide + Cagrilintide combo) is a
+// separate real product in your catalogue and isn't referenced anywhere
+// as needing the same payment-link treatment as plain Retatrutide — it
+// currently goes through the normal STRABL cart. Worth a quick sanity
+// check with whoever set up the original RETA exception on whether that
+// combo product has the same underlying reason (GLP can't go through
+// STRABL) and was just missed, or whether it's genuinely fine as-is.
+const RETA_SLUGS = ['retatrutide-uae']
 
 export function isPaymentLinkOnlyProduct(slug?: string | null): boolean {
   if (!slug) return false
-  return RETA_SLUGS.includes(slug)
+  const normalized = slug.trim().toLowerCase()
+  return RETA_SLUGS.includes(normalized)
 }
 
 // One payment link per strength/variant, since RETA's variants (10mg,
