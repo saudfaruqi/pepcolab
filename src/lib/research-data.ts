@@ -472,7 +472,87 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  {
+    id: 'melanotan-ii',
+    title: 'Melanotan II: Melanocortin Receptor Pharmacology and Research History',
+    date: 'Aug 2026',
+    dateISO: '2026-08-19',
+    metaDescription: 'Melanotan II\u2019s origins at the University of Arizona, its non-selective MC1R\u2013MC5R activity, and what the published early-phase human studies actually found.',
+    tag: 'Aesthetic',
+    readTime: '7 min',
+    excerpt:
+      'How a 1980s photoprotection research programme at the University of Arizona produced one of the most-studied non-selective melanocortin agonists — and eventually led, via a more selective descendant, to an FDA-approved drug.',
+    image: 'aesthetic',
+    content: [
+      {
+        type: 'intro',
+        text: 'Melanotan II (MT-II) is a synthetic, non-selective melanocortin receptor agonist first developed at the University of Arizona in the late 1980s as a stabilized cyclic analog of alpha-melanocyte-stimulating hormone (α-MSH). Unlike the receptor-selective compounds that followed it, MT-II activates MC1R, MC3R, MC4R, and MC5R simultaneously — the property that made it a foundational research tool for mapping the melanocortin system, and also the reason its own clinical development was eventually set aside in favor of more selective successors.',
+      },
+      {
+        type: 'heading',
+        text: 'Origins and Structure',
+      },
+      {
+        type: 'paragraph',
+        text: 'MT-II traces back to a 1980 paper by Sawyer, Sanfilippo, Hruby, and Hadley describing [Nle4,D-Phe7]-α-MSH, a linear analog roughly 26 times more potent than native α-MSH in early receptor assays. Researchers at Arizona subsequently cyclized this sequence with a lactam bridge — the structure typically written as Ac-Nle4-Asp5-His6-D-Phe7-Arg8-Trp9-Lys10-NH2 — producing a compound substantially more resistant to enzymatic degradation than its linear precursor, with a longer receptor residence time. The original research rationale was chemopreventive: could controlled, UV-independent induction of melanogenesis reduce the population burden of sun-induced skin cancer?',
+      },
+      {
+        type: 'heading',
+        text: 'Mechanism of Action: Why "Non-Selective" Matters',
+      },
+      {
+        type: 'paragraph',
+        text: 'The melanocortin system comprises five receptor subtypes (MC1R–MC5R) with distinct tissue distributions and functions. MT-II binds four of them with meaningful affinity:',
+      },
+      {
+        type: 'list',
+        items: [
+          'MC1R — expressed on melanocytes; activation drives eumelanin synthesis, the pathway underlying MT-II\u2019s pigmentary research applications.',
+          'MC3R and MC4R — expressed centrally; implicated in energy homeostasis and, separately, in autonomic pathways linked to sexual arousal.',
+          'MC5R — peripheral, exocrine-associated; comparatively less characterized in the MT-II literature.',
+          'MC2R — notably not meaningfully engaged, distinguishing MT-II\u2019s profile from ACTH-driven adrenal pathways.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'This breadth is precisely what made MT-II useful as an early pharmacological tool for probing the melanocortin system before selective agonists existed — and precisely what limits its interpretability as a model for any single receptor pathway in isolation.',
+      },
+      {
+        type: 'heading',
+        text: 'What Did the Early Human Studies Find?',
+      },
+      {
+        type: 'paragraph',
+        text: 'A 1996 pilot Phase I study by Dorr and colleagues, published in Life Sciences, administered subcutaneous MT-II to three healthy male volunteers at the University of Arizona, starting at 0.01 mg/kg and escalating every other weekday over two weeks. Two of the three subjects developed increased facial, upper-body, and buttock pigmentation. The 0.03 mg/kg dose produced Grade II somnolence and fatigue in one subject, and researchers documented spontaneous erections lasting one to five hours accompanied by a stretching-and-yawning complex — an off-target finding that would go on to define a second, entirely separate branch of melanocortin research.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That second branch was formalized in a 1998 double-blind, placebo-controlled crossover study by Wessells and colleagues in the Journal of Urology, which tested MT-II in men with psychogenic erectile dysfunction and reported a 75% response rate — comparable to apomorphine, an active comparator used in that era of research. The "stretching-yawning syndrome" observed alongside these central effects has since been documented across multiple mammalian species tested with melanocortin agonists, including rabbits, cats, rats, mice, and monkeys — a cross-species consistency that researchers have used as supporting evidence for a conserved central mechanism.',
+      },
+      {
+        type: 'callout',
+        text: 'MT-II\u2019s non-selectivity is both its historical value and its central limitation. Because it engages multiple receptor subtypes at once, the compound cannot cleanly isolate any single melanocortin pathway — which is exactly why later research moved toward selective analogs. MT-II itself never progressed through a full registration pathway to approval for any indication; the studies referenced above are early-phase, small-cohort investigations, not evidence of safety or efficacy for any human use. This article describes published research findings only and does not constitute guidance for human use.',
+      },
+      {
+        type: 'heading',
+        text: 'From MT-II to an Approved Drug: The Bremelanotide Story',
+      },
+      {
+        type: 'paragraph',
+        text: 'The central MC4R activity documented in the Wessells study informed the development of a more receptor-selective descendant, PT-141 (bremelanotide), by Palatin Technologies. Unlike MT-II, bremelanotide was carried through full clinical development and received FDA approval in 2019, marketed as Vyleesi, for hypoactive sexual desire disorder. This lineage — a non-selective research tool giving rise to a selective, approved therapeutic — is a useful case study in structure-activity relationship research: MT-II\u2019s broad receptor profile helped identify which pathway mattered, and later chemistry narrowed in on it.',
+      },
+      {
+        type: 'heading',
+        text: 'Why Researchers Still Use Non-Selective Agonists Like MT-II',
+      },
+      {
+        type: 'paragraph',
+        text: 'Despite the existence of newer, more selective compounds, non-selective agonists remain useful as comparator tools — establishing an upper bound of melanocortin pathway activation against which selective agonists can be benchmarked, and supporting receptor-mapping work where the research question is the system as a whole rather than one subtype. As with any pharmacological tool compound, interpretation depends on controlling for the fact that observed effects may reflect contributions from multiple receptors rather than one.',
+      },
+    ],
+  },
 ]
+
 
 // FIX: counts (18, 24, 12, 15 in the original) were hardcoded placeholders
 // that never matched the real 6-article catalogue above — a visitor
@@ -483,6 +563,7 @@ export const TAG_COLOR: Record<string, string> = {
   Metabolic: '#f97316',
   Cognitive: '#8b5cf6',
   Longevity: '#3b82f6',
+  Aesthetic: '#ec4899',
   Guide: '#64748b',
 }
 
@@ -497,6 +578,7 @@ export const tagColors: Record<string, { bg: string; text: string }> = {
   Metabolic: { bg: '#ffedd5', text: '#c2410c' },
   Cognitive: { bg: '#ede9fe', text: '#7c3aed' },
   Longevity: { bg: '#dbeafe', text: '#1d4ed8' },
+  Aesthetic: { bg: '#fce7f3', text: '#be185d' },
   Guide: { bg: '#f1f5f9', text: '#475569' },
 }
 

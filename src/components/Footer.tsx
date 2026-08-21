@@ -374,7 +374,7 @@ export default function Footer() {
           wanted — don't recreate them by hand. */}
       <div className="footer-inner">
         <div className="footer-payments">
-          <span className="footer-payments-label">Secure payments powered by STRBL</span>
+          <span className="footer-payments-label">Secure payments powered by STRABL</span>
           <div className="footer-payments-row">
             {['Visa', 'Mastercard', 'American Express'].map(brand => (
               <span key={brand} className="footer-payment-chip">{brand}</span>

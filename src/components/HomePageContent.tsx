@@ -1519,28 +1519,28 @@ export default function PepcoLabPage({
                 </div>
               </div>
 
-              <div style={{ borderTop: "1px solid rgba(255,255,255,.07)", padding: "14px 28px", display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ 
-                  fontSize: "clamp(10px, 0.8vw, 11px)", 
-                  color: "rgba(255,255,255,.25)",
-                  fontWeight: 400,
-                }}>
-                  Trusted by 2,400+ researchers across the UK.
+              <div style={{ borderTop: "1px solid rgba(255,255,255,.07)", padding: "14px 28px", display: "flex", gap: 16, flexWrap: "wrap", justifyContent: isMobile ? "center" : "flex-end", alignItems: "center" }}>
+                {/* FIX 2026-08-19: dropped "Trusted by 2,400+ researchers across
+                    the UK" — same category of issue as the fabricated review
+                    marquee fixed earlier (unverifiable specific claim), and
+                    directly what the growth playbook flags: no unsubstantiated
+                    trust claim ships. The three badges below are real and stay,
+                    now shown on all screen sizes since they're the only content
+                    left in this bar (previously mobile-hidden alongside the
+                    researcher-count text, which would have left this bar
+                    empty on mobile after removing that text). */}
+                <div style={{ display: "flex", gap: 18 }}>
+                  {["Independent Testing", "Published COAs", "Cold-Chain Fulfilment"].map(item => (
+                    <span key={item} style={{ 
+                      ...TYPOGRAPHY.labelLight,
+                      fontSize: "9px",
+                      color: "rgba(255,255,255,.2)",
+                      letterSpacing: ".08em",
+                    }}>
+                      {item}
+                    </span>
+                  ))}
                 </div>
-                {!isMobile && (
-                  <div style={{ display: "flex", gap: 18 }}>
-                    {["Independent Testing", "Published COAs", "Cold-Chain Fulfilment"].map(item => (
-                      <span key={item} style={{ 
-                        ...TYPOGRAPHY.labelLight,
-                        fontSize: "9px",
-                        color: "rgba(255,255,255,.2)",
-                        letterSpacing: ".08em",
-                      }}>
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </FadeUp>
