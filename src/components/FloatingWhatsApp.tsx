@@ -65,13 +65,13 @@ export default function FloatingWhatsApp() {
           font-weight: 700;
           letter-spacing: -.01em;
           cursor: pointer;
-          box-shadow: 0 8px 28px rgba(37,211,102,.35);
+          box-shadow: 0 4px 14px rgba(37,211,102,.35);
           opacity: 0;
           transform: translateY(12px) scale(.96);
           transition: opacity .35s ease, transform .35s ease, box-shadow .25s ease;
         }
         .fw-fab.fw-in { opacity: 1; transform: translateY(0) scale(1); }
-        .fw-fab:hover { box-shadow: 0 12px 34px rgba(37,211,102,.45); }
+        .fw-fab:hover { box-shadow: 0 8px 20px rgba(37,211,102,.45); }
         .fw-fab:focus-visible { outline: 2px solid #0d0d0d; outline-offset: 3px; }
 
         @media (max-width: 640px) {
