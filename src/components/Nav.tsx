@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useCart } from '@/lib/cartContext'
 import { useWishlist } from '@/lib/wishlistContext'
 import { getProducts } from '@/lib/shopify'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, productHref } from '@/lib/utils'
 import { useCountry } from '@/lib/countryContext'
 
 type Product = {
@@ -718,7 +718,7 @@ export default function Nav() {
             {searchResults.length > 0 ? (
               <div style={{ paddingBottom: 6 }}>
                 {searchResults.map(p => (
-                  <a key={p.id} href={`/products/${p.slug}`} className="search-result-item" onClick={() => setSearchOpen(false)}>
+                  <a key={p.id} href={productHref(p.slug)} className="search-result-item" onClick={() => setSearchOpen(false)}>
                     <div style={{ width: 38, height: 38, borderRadius: 9, background: p.color?.bg ?? '#f0ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: p.color?.accent ?? '#0d0d0d', flexShrink: 0 }}>
                       {p.name.slice(0, 3).toUpperCase()}
                     </div>

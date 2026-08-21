@@ -43,6 +43,36 @@ export function formatPurity(purity: number): string {
 }
 
 /**
+ * SEO FIX (Aug 2026 audit): every Shopify product handle is hardcoded
+ * "{name}-uae" (see app/data.ts), which was leaking straight into indexed
+ * URLs and <link rel="canonical"> for BOTH the UK and UAE markets — the
+ * "UK market architecturally unreachable" finding in the growth-playbook
+ * audit. Renaming the Shopify handles themselves is a bigger, separate job
+ * (handle also flows through cart/checkout/order-emails/STRABL webhook —
+ * see lib/orderEmails.ts, lib/useStrablCheckout.ts, app/api/checkout/**),
+ * so as an interim, low-risk fix: every NEW/indexed link on the site points
+ * to the neutral slug via productHref(), and middleware.ts 301-redirects
+ * any request that still lands on the old "-uae" URL to it. Cart/checkout/
+ * order-confirmation code paths are untouched and keep using the real
+ * Shopify handle directly — those aren't indexed and shouldn't change until
+ * the handle rename itself happens.
+ */
+export function toNeutralSlug(handleOrSlug: string): string {
+  return handleOrSlug.replace(/-uae$/i, '')
+}
+
+/** Neutral slug -> the real Shopify handle to query the Storefront API with. */
+export function toShopifyHandle(neutralSlug: string): string {
+  return neutralSlug.endsWith('-uae') ? neutralSlug : `${neutralSlug}-uae`
+}
+
+/** Use for every indexable/clickable product link. Do NOT use for cart,
+ * checkout, order-confirmation or webhook code — those keep the real handle. */
+export function productHref(handleOrSlug: string): string {
+  return `/products/${toNeutralSlug(handleOrSlug)}`
+}
+
+/**
  * Strips a leading mention of the product name from a description/blurb.
  *
  * Shopify product descriptions are typically written as full sentences that

@@ -5,7 +5,7 @@ import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
 import WishlistButton from '@/components/WishlistButton'
 import { useCart } from '@/lib/cartContext'
-import { formatPrice, stripLeadingName } from '@/lib/utils'
+import { formatPrice, stripLeadingName, productHref } from '@/lib/utils'
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
 import type { Product } from '@/app/data'
 
@@ -77,7 +77,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
       }}
     >
       {/* ── Image / Vial area ── */}
-      <Link href={`/products/${p.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+      <Link href={productHref(p.slug)} style={{ display: 'block', textDecoration: 'none' }}>
         <div
           style={{
             position: 'relative',
@@ -264,7 +264,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
         </div>
 
         {/* Name */}
-        <Link href={`/products/${p.slug}`} style={{ textDecoration: 'none' }}>
+        <Link href={productHref(p.slug)} style={{ textDecoration: 'none' }}>
           <h3 style={{
             fontSize: 'clamp(16px, 3.5vw, 22px)',
             lineHeight: 1.1,

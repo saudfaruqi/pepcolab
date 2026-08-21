@@ -3,7 +3,7 @@
 
 import { useMemo, useRef } from 'react'
 import Link from 'next/link'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, productHref } from '@/lib/utils'
 
 /**
  * Curated best-sellers rail. Replaces the old "Verified compounds / Published
@@ -137,7 +137,7 @@ export default function BestSellersSection({
               featured.map((p: any, i: number) => (
                 <Link
                   key={p.shopifyId || p.id}
-                  href={`/products/${p.handle}`}
+                  href={productHref(p.handle)}
                   className="bs-card"
                   style={{
                     display: 'flex',

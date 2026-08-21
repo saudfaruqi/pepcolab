@@ -92,7 +92,7 @@ export function useStrablCheckout() {
     if (!tryInit()) {
       interval = setInterval(() => {
         if (tryInit()) stop()
-      }, 2000)
+      }, 250)
 
       // 4s, not 20s: an ad blocker or blocked third-party frame means
       // window.StrablCheckout will simply never appear, so waiting longer
@@ -104,7 +104,7 @@ export function useStrablCheckout() {
           // @ts-ignore
           if (!window.StrablCheckout) {
             setSdkError(
-              'Payment system failed to load. Please refresh and try again, or contact support if the problem persists.'
+              'Payment couldn\u2019t load — this is usually an ad blocker or privacy extension blocking STRABL. Disable it and refresh, or use "Order via WhatsApp instead" below to complete your order right away.'
             )
           }
         }

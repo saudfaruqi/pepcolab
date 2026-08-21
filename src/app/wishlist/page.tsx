@@ -9,7 +9,7 @@ import { useWishlist, type WishlistItem } from '@/lib/wishlistContext'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { getProductByHandle } from '@/lib/shopify'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, productHref } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppWishlistLink } from '@/lib/whatsapp'
 import { Heart, ShoppingCart, Trash2, ArrowRight, MessageCircle, CheckCircle } from 'lucide-react'
 
@@ -175,7 +175,7 @@ export default function WishlistPage() {
                   className="bg-white rounded-xl p-4 border border-gray-100/80 shadow-sm hover:shadow-md transition-shadow flex gap-4"
                 >
                   <Link
-                    href={`/products/${item.slug}`}
+                    href={productHref(item.slug)}
                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-blue-50/50 border border-blue-100/30 flex items-center justify-center flex-shrink-0 overflow-hidden"
                   >
                     {item.image ? (
@@ -190,7 +190,7 @@ export default function WishlistPage() {
                       <div className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-1">
                         {item.category || 'Research Compound'}
                       </div>
-                      <Link href={`/products/${item.slug}`} className="font-semibold text-gray-900 text-sm sm:text-base leading-tight hover:underline">
+                      <Link href={productHref(item.slug)} className="font-semibold text-gray-900 text-sm sm:text-base leading-tight hover:underline">
                         {item.name}
                       </Link>
                       <div className="text-xs text-gray-400">{item.mg}</div>

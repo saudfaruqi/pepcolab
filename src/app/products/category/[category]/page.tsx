@@ -29,6 +29,7 @@ import Footer from '@/components/Footer'
 import ProductCard from '@/components/ProductCard'
 import { getProducts } from '@/lib/shopify'
 import { CATEGORIES } from '@/app/data'
+import { productHref } from '@/lib/utils'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -129,7 +130,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // root layout's template already appends "| PepcoLab" once.
     title: content.title.replace(' | PepcoLab', ''),
     description: content.description,
-    alternates: { canonical: `/products/category/${params.category}` },
+    alternates: {
+      canonical: `/products/category/${params.category}`,
+      languages: {
+        'en-GB': `/products/category/${params.category}`,
+        'en-AE': `/products/category/${params.category}`,
+        'x-default': `/products/category/${params.category}`,
+      },
+    },
     openGraph: {
       title: content.title,
       description: content.description,
@@ -200,7 +208,7 @@ export default async function CategoryPage({ params }: Props) {
       itemListElement: products.slice(0, 40).map((p: any, i: number) => ({
         '@type': 'ListItem',
         position: i + 1,
-        url: `${SITE_URL}/products/${p.slug ?? p.handle}`,
+        url: `${SITE_URL}${productHref(p.slug ?? p.handle)}`,
         name: p.name ?? p.title,
       })),
     },

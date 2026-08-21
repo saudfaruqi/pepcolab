@@ -2,6 +2,11 @@
 import type { MetadataRoute } from 'next'
 import { getProducts } from '@/lib/shopify'
 import { CATEGORIES } from '@/app/data'
+import { GUIDES } from '@/lib/guides-data'
+import { ARTICLES } from '@/lib/research-data'
+import { LEGAL_NOTES } from '@/lib/legal-data'
+import { COMPARISONS } from '@/lib/comparisons-data'
+import { toNeutralSlug } from '@/lib/utils'
 
 const BASE_URL = 'https://www.pepcolab.com'
 
@@ -25,6 +30,15 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/bundles',      changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/research',     changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/guides',       changeFrequency: 'weekly',  priority: 0.8 },
+  // New Phase 1 content — see growth-playbook §04. High-intent,
+  // zero-competition clusters, so given priority just under the hub pages.
+  { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
+  { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
+  { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },
+  { path: '/aesthetic',    changeFrequency: 'weekly',  priority: 0.75 },
+  { path: '/recovery',     changeFrequency: 'weekly',  priority: 0.75 },
+  { path: '/cognitive',    changeFrequency: 'weekly',  priority: 0.75 },
+  { path: '/metabolic',    changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/tools',        changeFrequency: 'monthly', priority: 0.6 },
   { path: '/about',        changeFrequency: 'monthly', priority: 0.6 },
   { path: '/faq',          changeFrequency: 'monthly', priority: 0.6 },
@@ -69,7 +83,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     productEntries = products
       .filter((p) => p.handle)
       .map((p) => ({
-        url: `${BASE_URL}/products/${p.handle}`,
+        // SEO FIX: canonical is now the neutral (no "-uae") slug — see
+        // toNeutralSlug() in lib/utils.ts. The sitemap must only ever list
+        // the canonical URL, never the legacy one middleware.ts redirects.
+        url: `${BASE_URL}/products/${toNeutralSlug(p.handle)}`,
         // Real per-product timestamp from Shopify rather than `now`.
         // Stamping every product with the current time on each hourly
         // regeneration tells Google "everything changed, every hour", which
@@ -84,5 +101,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] Shopify product fetch failed:', err)
   }
 
-  return [...staticEntries, ...productEntries]
+  // SEO FIX (Aug 2026 audit): "15 quality articles published but
+  // orphaned — none in sitemap." Both routes have real per-article
+  // metadata/schema already (see app/guides/[slug]/page.tsx and
+  // app/research/[slug]/page.tsx) — they just never appeared here, so
+  // Google had no path to discover them beyond an unlinked crawl.
+  const guideEntries: MetadataRoute.Sitemap = GUIDES.map((g) => ({
+    url: `${BASE_URL}/guides/${g.id}`,
+    lastModified: g.publishedISO ? new Date(g.publishedISO) : now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.65,
+  }))
+
+  const researchEntries: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
+    url: `${BASE_URL}/research/${a.id}`,
+    lastModified: a.dateISO ? new Date(a.dateISO) : now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.65,
+  }))
+
+  const legalEntries: MetadataRoute.Sitemap = LEGAL_NOTES.map((n) => ({
+    url: `${BASE_URL}/legal/${n.slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
+
+  const comparisonEntries: MetadataRoute.Sitemap = COMPARISONS.map((c) => ({
+    url: `${BASE_URL}/compare/${c.slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.65,
+  }))
+
+  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries]
 }

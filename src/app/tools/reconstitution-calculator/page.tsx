@@ -21,7 +21,14 @@ export const metadata: Metadata = {
   title: 'Peptide Reconstitution Calculator',
   description:
     'Free peptide reconstitution calculator. Enter vial mass and target concentration to get the required diluent volume in mL and µL, with the underlying formula shown.',
-  alternates: { canonical: '/tools/reconstitution-calculator' },
+  alternates: {
+    canonical: '/tools/reconstitution-calculator',
+    languages: {
+      'en-GB': '/tools/reconstitution-calculator',
+      'en-AE': '/tools/reconstitution-calculator',
+      'x-default': '/tools/reconstitution-calculator',
+    },
+  },
   openGraph: {
     title: 'Peptide Reconstitution Calculator | PepcoLab',
     description:
@@ -43,12 +50,61 @@ const jsonLd = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'GBP' },
 }
 
+// GEO/SEO FIX (growth-playbook §04 dev checklist: "Structured data... HowTo
+// (reconstitution)"). This didn't exist anywhere on the site — the calculator
+// had a WebApplication entry but nothing describing the underlying process,
+// which is exactly the kind of extractable, step-based content GEO answer
+// engines lift directly (see §05, "Answer-first content structure").
+const howToJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to Reconstitute a Lyophilised Peptide',
+  description:
+    'The general process for reconstituting a lyophilised peptide vial with diluent to a target concentration for laboratory research use.',
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Confirm the vial mass and target concentration',
+      text: 'Check the vial label or Certificate of Analysis for the peptide mass in mg, and decide the target concentration in mg/mL for the research protocol.',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Calculate the required diluent volume',
+      text: 'Diluent volume (mL) = vial mass (mg) ÷ target concentration (mg/mL). The calculator above performs this automatically.',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Bring diluent and vial to room temperature',
+      text: 'Cold diluent added directly to a cold lyophilised vial increases the risk of incomplete or uneven dissolution.',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Add diluent slowly, down the vial wall',
+      text: 'Insert the needle at an angle and let the diluent run down the inside wall of the vial rather than injecting it directly onto the lyophilised powder, to avoid disrupting the peptide structure.',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Swirl gently — do not shake',
+      text: 'Gently swirl the vial to dissolve the powder. Shaking introduces excess agitation that can denature the peptide.',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Store reconstituted peptide appropriately',
+      text: 'Refrigerate the reconstituted vial and use within the compound-specific discard window — see our storage guide.',
+    },
+  ],
+}
+
 export default function ReconstitutionCalculatorPage() {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
 
       <Nav />

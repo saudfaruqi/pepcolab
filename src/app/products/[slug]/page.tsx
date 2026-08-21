@@ -12,7 +12,8 @@ import ProductReviews from '@/components/ProductReviews'
 
 import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
-import { stripLeadingName } from '@/lib/utils'
+import { stripLeadingName, toNeutralSlug, toShopifyHandle, productHref } from '@/lib/utils'
+import { relatedContentForProduct } from '@/lib/contentLinks'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -44,8 +45,14 @@ export const revalidate = 60
 export async function generateStaticParams() {
   // No country argument -> unfiltered, so BOTH catalogues get enumerated.
   // Keep this cap in sync with sitemap.ts.
+  //
+  // SEO FIX: emit the NEUTRAL slug (no "-uae") as the param Next.js
+  // pre-renders — that's what becomes the real, indexed, canonical URL.
+  // The legacy "{handle}" path (still "-uae"-suffixed) is no longer
+  // statically built; middleware.ts 301-redirects it here instead. See
+  // toNeutralSlug() in lib/utils.ts for the full rationale.
   const products = await getProducts(250)
-  return products.map((product) => ({ slug: product.handle }))
+  return products.map((product) => ({ slug: toNeutralSlug(product.handle) }))
 }
 
 /* -------------------------------------------------------------------------- */
@@ -55,13 +62,14 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Generated without a market so Googlebot always gets a full, indexable
   // page regardless of which catalogue the product belongs to.
-  const product = await getProductByHandle(params.slug)
+  // params.slug is the NEUTRAL slug; resolve it to the real Shopify handle.
+  const product = await getProductByHandle(toShopifyHandle(params.slug))
 
   if (!product) {
     return { title: 'Product not found', robots: { index: false, follow: false } }
   }
 
-  const canonical = `/products/${product.handle}`
+  const canonical = productHref(product.handle)
 
   // Factual and compound-focused. No effects, benefits, outcomes or
   // indications — the meta description is the most screenshotted surface on
@@ -77,7 +85,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${product.title} | Research Grade, COA Published`,
     description,
-    alternates: { canonical },
+    // SEO FIX: sitewide hreflang was missing entirely (audit finding —
+    // "no hreflang tags sitewide despite dual-market intent"). There's one
+    // URL per product serving both the UK and UAE catalogue (currency
+    // switches client-side, see lib/pricing.ts), so this is a genuine
+    // same-URL, dual-region page — the correct hreflang pattern here is
+    // self-referencing annotations for both locales plus x-default, not a
+    // second URL. If/when the catalogue splits into real /uk and /ae
+    // paths, replace this with distinct URLs per language entry instead.
+    alternates: {
+      canonical,
+      languages: {
+        'en-GB': canonical,
+        'en-AE': canonical,
+        'x-default': canonical,
+      },
+    },
     openGraph: {
       title: `${product.title} | PepcoLab`,
       description,
@@ -142,7 +165,7 @@ function pickRelated(all: any[], current: any, limit = 4) {
 }
 
 function buildJsonLd(product: any) {
-  const url = `${SITE_URL}/products/${product.handle}`
+  const url = `${SITE_URL}${productHref(product.handle)}`
 
   const productLd: Record<string, any> = {
     '@context': 'https://schema.org',
@@ -196,12 +219,9 @@ export default async function ProductPage({ params }: Props) {
   // Both calls run in parallel — the related list shouldn't add a serial
   // round-trip to the page's render time.
   const [shopifyProduct, allProducts] = await Promise.all([
-    getProductByHandle(params.slug, 'AE'),
+    getProductByHandle(toShopifyHandle(params.slug), 'AE'),
     getProducts(40, 'AE').catch(() => [] as any[]),
   ])
-
-  console.log('TITLE:', JSON.stringify(shopifyProduct?.title))
-  console.log('DESC:', JSON.stringify(shopifyProduct?.description))
 
   // Real 404 (renders src/app/not-found.tsx) rather than a 200 with a
   // "not found" message, which Google indexes as a thin duplicate page.
@@ -232,6 +252,12 @@ export default async function ProductPage({ params }: Props) {
   const jsonLd = buildJsonLd(shopifyProduct)
   const related = pickRelated(allProducts, shopifyProduct, 4)
   const relatedCategory = categoryTag(shopifyProduct.tags)
+  // SEO FIX: product pages had zero links into /guides or /research (audit
+  // finding — 15 articles "orphaned... zero internal links either way").
+  // This is the product -> content half of that fix; see
+  // relatedContentForProduct() in lib/contentLinks.ts. The content -> product
+  // half lives in app/guides/[slug]/page.tsx and app/research/[slug]/page.tsx.
+  const relatedContent = relatedContentForProduct(shopifyProduct.title, categoryTag(shopifyProduct.tags))
 
   return (
     <>
@@ -336,6 +362,34 @@ export default async function ProductPage({ params }: Props) {
               <div className="pp-related-grid">
                 {related.map((p: any) => (
                   <ProductCard key={p.shopifyId || p.id} product={p} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Research & Guides — internal linking into the previously-orphaned
+            content hub. Kept short and skippable; it's a discovery path for
+            crawlers and researchers, not a hard sell. */}
+        {relatedContent.length > 0 && (
+          <section style={{ borderTop: '1px solid #f0f0f0', padding: '40px 0 56px' }}>
+            <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 14 }}>
+                Research & Guides
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                {relatedContent.map((c) => (
+                  <Link
+                    key={c.href}
+                    href={c.href}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      fontSize: 13, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none',
+                      border: '1px solid #e5e7eb', borderRadius: 999, padding: '9px 16px',
+                    }}
+                  >
+                    {c.label} <ChevronRight size={13} />
+                  </Link>
                 ))}
               </div>
             </div>

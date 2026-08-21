@@ -1,0 +1,83 @@
+// src/app/aesthetic/page.tsx
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
+import { ChevronRight } from 'lucide-react'
+
+const SITE_URL = 'https://www.pepcolab.com'
+
+export const metadata: Metadata = {
+  title: 'Aesthetic Research Peptides — UK & UAE',
+  description:
+    'An overview of the peptide compounds most studied in skin, collagen, and dermal-research literature — mechanism, research literature, and where to find batch-tested stock.',
+  alternates: {
+    canonical: '/aesthetic',
+    languages: { 'en-GB': '/aesthetic', 'en-AE': '/aesthetic', 'x-default': '/aesthetic' },
+  },
+  openGraph: {
+    title: 'Aesthetic Research Peptides | PepcoLab',
+    description: 'The compounds most studied in skin and dermal-research literature, and how to evaluate a supplier.',
+    url: `${SITE_URL}/aesthetic`,
+    type: 'website',
+  },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Aesthetic Research Peptides',
+  url: `${SITE_URL}/aesthetic`,
+}
+
+export default function AestheticHubPage() {
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <Nav />
+      <main style={{ background: '#fff', minHeight: '100vh' }}>
+        <section style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px 24px' }}>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(28px,4vw,42px)', lineHeight: 1.15, letterSpacing: '-.03em', marginBottom: 16, color: '#0d0d0d' }}>
+            Aesthetic Research Peptides
+          </h1>
+          <p style={{ fontSize: 16.5, lineHeight: 1.7, color: 'rgba(13,13,13,.65)', maxWidth: 680 }}>
+            Skin and dermal-research literature covers a specific set of mechanisms — extracellular matrix remodelling and collagen-signalling chief among them. The compounds below are the ones most discussed in that research, supplied strictly for laboratory research use, not for cosmetic or human application.
+          </p>
+        </section>
+
+        <section style={{ maxWidth: 820, margin: '0 auto', padding: '8px 24px 40px' }}>
+          <div style={{ display: 'grid', gap: 14 }}>
+            <div style={cardStyle}>
+              <h2 style={cardTitleStyle}>GHK-Cu</h2>
+              <p style={cardTextStyle}>A naturally occurring copper-dependent tripeptide, widely studied for its proposed role in extracellular matrix remodelling and dermal-research models.</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Link href="/legal/ghk-cu" style={pillStyle}>Legal status <ChevronRight size={13} /></Link>
+                <Link href="/compare/ghk-cu-vs-matrixyl" style={pillStyle}>Compare vs Matrixyl <ChevronRight size={13} /></Link>
+                <Link href="/products/ghk-cu" style={pillStyle}>Shop GHK-Cu <ChevronRight size={13} /></Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style={{ maxWidth: 820, margin: '0 auto', padding: '0 24px 64px' }}>
+          <Link href="/products/category/anti-ageing" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700,
+            color: '#0d0d0d', textDecoration: 'none', borderBottom: '2px solid #0d0d0d', paddingBottom: 2,
+          }}>
+            Browse all Anti-Ageing research peptides <ChevronRight size={15} />
+          </Link>
+        </section>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+const cardStyle = { background: '#f7f5f1', borderRadius: 14, padding: '22px 24px' }
+const cardTitleStyle = { fontFamily: 'Georgia, serif', fontSize: 19, marginBottom: 8, color: '#0d0d0d' }
+const cardTextStyle = { fontSize: 14.5, lineHeight: 1.6, color: 'rgba(13,13,13,.65)', marginBottom: 14 }
+const pillStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  fontSize: 13, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none',
+  border: '1px solid #e5e7eb', borderRadius: 999, padding: '8px 14px', background: '#fff',
+} as const

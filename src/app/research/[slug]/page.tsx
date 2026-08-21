@@ -1,178 +1,87 @@
-// src/app/products/[slug]/page.tsx
+// src/app/research/[slug]/page.tsx
+//
+// CRITICAL FIX (Aug 2026 audit): this file was a leftover copy-paste of
+// app/products/[slug]/page.tsx — it imported getProductByHandle and tried
+// to resolve params.slug (e.g. "bpc-157") as a Shopify product HANDLE
+// (real handles are "bpc-157-uae"). Every "Read more" link out of
+// /research (which points to `/research/${article.id}`) was 404ing.
+//
+// Rebuilt to do what the filename says: render an individual research
+// article from lib/research-data.ts, mirroring the working pattern already
+// used by app/guides/[slug]/page.tsx (Article + BreadcrumbList JSON-LD,
+// full body in server-rendered HTML, related-content internal links).
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import ProductVariantView from '@/components/ProductVariantView'
-import ProductCard from '@/components/ProductCard'
-import ProductReviews from '@/components/ProductReviews'
-import RecentlyViewed from '@/components/RecentlyViewed'
-
-import { ChevronRight } from 'lucide-react'
-import { getProducts, getProductByHandle } from '@/lib/shopify'
-import { stripLeadingName } from '@/lib/utils'
+import ContentBlocks from '@/components/ContentBlocks'
+import { ARTICLES, getArticleBySlug, tagColors } from '@/lib/research-data'
+import { relatedProductsForResearchArticle } from '@/lib/contentLinks'
+import { Clock, ArrowLeft, ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
-
-/** Catalogue plumbing, not research categories — never used for matching. */
-const MARKET_TAGS = new Set(['uae', 'uk'])
 
 interface Props {
   params: { slug: string }
 }
 
-/**
- * CURRENCY & MARKET
- * -----------------
- * Built with AED prices. ProductActions re-fetches with the visitor's country
- * once useCountry() resolves and normaliseProduct() converts at that point, so
- * the page stays statically rendered — no cookie read on the server.
- *
- * Market gating is client-side for the same reason. While UK_CATALOGUE_LIVE is
- * false (pricing.ts) every product is sold in both markets and MarketGuard is
- * inert. Once it's true, a visitor who lands on a product from the other
- * catalogue gets a notice instead of a buy button.
- *
- * Deliberately NOT a server-side cookie read + notFound(): that would make
- * every product page dynamic, and it would 404 the page for Googlebot, which
- * crawls from US IPs with no market cookie. See isInMarket() in pricing.ts.
- */
-export const revalidate = 60
-
-export async function generateStaticParams() {
-  // No country argument -> unfiltered, so BOTH catalogues get enumerated.
-  // Keep this cap in sync with sitemap.ts.
-  const products = await getProducts(250)
-  return products.map((product) => ({ slug: product.handle }))
+export function generateStaticParams() {
+  return ARTICLES.map((a) => ({ slug: a.id }))
 }
 
-/* -------------------------------------------------------------------------- */
-/* METADATA                                                                    */
-/* -------------------------------------------------------------------------- */
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // Generated without a market so Googlebot always gets a full, indexable
-  // page regardless of which catalogue the product belongs to.
-  const product = await getProductByHandle(params.slug)
-
-  if (!product) {
-    return { title: 'Product not found', robots: { index: false, follow: false } }
+export function generateMetadata({ params }: Props): Metadata {
+  const article = getArticleBySlug(params.slug)
+  if (!article) {
+    return { title: 'Article not found', robots: { index: false, follow: false } }
   }
 
-  const canonical = `/products/${product.handle}`
-
-  // Factual and compound-focused. No effects, benefits, outcomes or
-  // indications — the meta description is the most screenshotted surface on
-  // the site and the easiest thing for a regulator to quote back.
-  const description =
-    `${product.title} — research-grade compound with published certificate of analysis` +
-    (product.purity ? `, ${product.purity}% HPLC-verified purity` : '') +
-    (product.lot ? `, batch ${product.lot}` : '') +
-    '. Cold-chain dispatch. For in-vitro research use only.'
-
-  const ogImage = product.images?.[0]?.url
+  const canonical = `/research/${article.id}`
 
   return {
-    title: `${product.title} | Research Grade, COA Published`,
-    description,
-    alternates: { canonical },
+    title: article.title,
+    description: article.metaDescription,
+    // Same-URL dual-market rationale as app/products/[slug]/page.tsx —
+    // see the comment there for why self-referencing hreflang, not a
+    // second URL, is the correct fix while there's one catalogue/content
+    // set shared across both markets.
+    alternates: {
+      canonical,
+      languages: { 'en-GB': canonical, 'en-AE': canonical, 'x-default': canonical },
+    },
     openGraph: {
-      title: `${product.title} | PepcoLab`,
-      description,
+      title: `${article.title} | PepcoLab`,
+      description: article.metaDescription,
       url: `${SITE_URL}${canonical}`,
-      type: 'website',
-      images: ogImage ? [{ url: ogImage, alt: product.title }] : undefined,
+      type: 'article',
+      publishedTime: article.dateISO,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${product.title} | PepcoLab`,
-      description,
-      images: ogImage ? [ogImage] : undefined,
+      title: `${article.title} | PepcoLab`,
+      description: article.metaDescription,
     },
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* HELPERS                                                                     */
-/* -------------------------------------------------------------------------- */
+function buildJsonLd(article: NonNullable<ReturnType<typeof getArticleBySlug>>) {
+  const url = `${SITE_URL}/research/${article.id}`
 
-/**
- * ProductVariantView renders `product.oneLiner`, so it's derived here.
- * Strips a leading repeat of the product name first — Shopify descriptions
- * usually open with the name (e.g. "BPC-157 5mg is a…"), and this one-liner
- * sits directly under the <h1> that already shows it.
- */
-function getOneLiner(description?: string, name?: string): string {
-  if (!description) return ''
-  const body = stripLeadingName(description, name)
-  const sentences = body.split(/(?<=[.!?])\s+/)
-  for (const s of sentences) {
-    const clean = s.trim()
-    if (clean.length < 40) continue
-    if (clean.includes(' – ') || clean.includes(' - ')) continue
-    return clean.endsWith('.') || clean.endsWith('!') || clean.endsWith('?') ? clean : clean + '.'
-  }
-  return body.slice(0, 120).trim() + '…'
-}
-
-/** The research category tag, ignoring market tags. */
-function categoryTag(tags: string[] = []): string | undefined {
-  return tags.map((t) => t.toLowerCase()).find((t) => !MARKET_TAGS.has(t))
-}
-
-/**
- * Related products: same research category first, then anything else to fill
- * the row. The top-up matters — several categories (immune, accessories) have
- * only 2-3 products, so a category-only match would render a lonely single
- * card or an empty section on those pages.
- */
-function pickRelated(all: any[], current: any, limit = 4) {
-  const cat = categoryTag(current.tags)
-  const pool = all.filter((p) => p.handle !== current.handle)
-
-  const sameCategory = cat
-    ? pool.filter((p) => (p.tags ?? []).map((t: string) => t.toLowerCase()).includes(cat))
-    : []
-
-  const rest = pool.filter((p) => !sameCategory.includes(p))
-
-  return [...sameCategory, ...rest].slice(0, limit)
-}
-
-function buildJsonLd(product: any) {
-  const url = `${SITE_URL}/products/${product.handle}`
-
-  const productLd: Record<string, any> = {
+  const articleLd = {
     '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.title,
-    description: product.description,
-    sku: product.lot ?? product.handle,
-    url,
-    image: product.images?.map((i: any) => i.url).filter(Boolean) ?? [],
-    brand: { '@type': 'Brand', name: 'PepcoLab' },
-    // Deliberately NO aggregateRating / review. Marking up invented reviews is
-    // a Google structured-data policy violation and, in the UK, a banned
-    // practice under the DMCC Act 2024.
-  }
-
-  // Structured data always advertises the CHARGED currency (AED), never the
-  // GBP display conversion — Google surfaces this price in search results and
-  // it has to match what the customer is actually billed.
-  if (product.price != null) {
-    productLd.offers = {
-      '@type': 'Offer',
-      url,
-      priceCurrency: product.currencyCode ?? 'AED',
-      price: String(product.price),
-      availability: product.inStock === false
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock',
-      seller: { '@type': 'Organization', name: 'PepcoLab' },
-    }
+    '@type': 'Article',
+    headline: article.title,
+    description: article.metaDescription,
+    datePublished: article.dateISO,
+    dateModified: article.dateISO,
+    author: { '@type': 'Organization', name: 'PepcoLab' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'PepcoLab',
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/pepcologo.png` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   }
 
   const breadcrumbLd = {
@@ -180,266 +89,137 @@ function buildJsonLd(product: any) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: 'Products', item: `${SITE_URL}/products` },
-      { '@type': 'ListItem', position: 3, name: product.title, item: url },
+      { '@type': 'ListItem', position: 2, name: 'Research Hub', item: `${SITE_URL}/research` },
+      { '@type': 'ListItem', position: 3, name: article.title, item: url },
     ],
   }
 
-  return [productLd, breadcrumbLd]
+  return [articleLd, breadcrumbLd]
 }
 
-/* -------------------------------------------------------------------------- */
-/* PAGE                                                                        */
-/* -------------------------------------------------------------------------- */
+export default function ResearchArticlePage({ params }: Props) {
+  const article = getArticleBySlug(params.slug)
+  if (!article) notFound()
 
-export default async function ProductPage({ params }: Props) {
-  // Built in AED. ProductActions swaps in the visitor's currency client-side.
-  // Both calls run in parallel — the related list shouldn't add a serial
-  // round-trip to the page's render time.
-  const [shopifyProduct, allProducts] = await Promise.all([
-    getProductByHandle(params.slug, 'AE'),
-    getProducts(40, 'AE').catch(() => [] as any[]),
-  ])
+  const tagColor = tagColors[article.tag] || { bg: '#f5f5f5', color: '#444' }
+  const jsonLd = buildJsonLd(article)
+  const relatedProducts = relatedProductsForResearchArticle(article.id)
 
-  // Real 404 (renders src/app/not-found.tsx) rather than a 200 with a
-  // "not found" message, which Google indexes as a thin duplicate page.
-  if (!shopifyProduct) {
-    notFound()
-  }
-
-  // ProductVariantView owns the whole two-column layout and passes
-  // selectedVariantId / onSelectVariant down to ProductActions, so the format
-  // picker can drive the main image. It reads `oneLiner` off the product, so
-  // that gets derived here on the server.
-  const product = {
-    ...shopifyProduct,
-    id: shopifyProduct.shopifyId,
-    slug: shopifyProduct.handle,
-    name: shopifyProduct.title,
-    shortName: shopifyProduct.title,
-    oneLiner: getOneLiner(shopifyProduct.description, shopifyProduct.title),
-    category: categoryTag(shopifyProduct.tags) || '',
-    categorySlug: categoryTag(shopifyProduct.tags) || '',
-    badge: undefined as undefined,
-    color: {
-      bg: '#f5f7fb', accent: '#2563eb', pill: '#dbeafe', pillText: '#1d4ed8',
-      purityBar: '#2563eb', btn: '#2563eb', vialFrom: '#2563eb', vialTo: '#7c3aed',
-    },
-  }
-
-  const jsonLd = buildJsonLd(shopifyProduct)
-  const related = pickRelated(allProducts, shopifyProduct, 4)
-  const relatedCategory = categoryTag(shopifyProduct.tags)
+  // Same-tag articles first, then anything else, capped at 3 — same
+  // topic-clustering pattern as app/guides/[slug]/page.tsx.
+  const related = [
+    ...ARTICLES.filter((a) => a.id !== article.id && a.tag === article.tag),
+    ...ARTICLES.filter((a) => a.id !== article.id && a.tag !== article.tag),
+  ].slice(0, 3)
 
   return (
     <>
       {jsonLd.map((block, i) => (
-        <script
-          key={i}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }}
-        />
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }} />
       ))}
 
       <Nav />
 
-      <main style={{ background: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
-
-        {/* Breadcrumb */}
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px 16px 0' }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: '#9ca3af' }}>
-            <a href="/" style={{ color: '#9ca3af', textDecoration: 'none' }}>Home</a>
-            <ChevronRight size={12} />
-            <a href="/products" style={{ color: '#9ca3af', textDecoration: 'none' }}>Products</a>
-            <ChevronRight size={12} />
-            <span style={{ color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
-              {shopifyProduct.title}
-            </span>
-          </div>
+      <main style={{ background: '#fff', minHeight: '100vh' }}>
+        <div style={{ borderBottom: '1px solid rgba(13,13,13,.07)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Link href="/research" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'rgba(13,13,13,.55)', textDecoration: 'none' }}>
+            <ArrowLeft size={15} /> Research Hub
+          </Link>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(13,13,13,.35)' }}>
+            Research
+          </span>
         </div>
 
-        <ProductVariantView product={product} />
+        <section style={{ maxWidth: 800, margin: '0 auto', padding: '56px 24px 40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
+              padding: '4px 10px', borderRadius: 999, background: tagColor.bg, color: tagColor.text,
+            }}>
+              {article.tag}
+            </span>
+            <span style={{ fontSize: 12, color: 'rgba(13,13,13,.4)', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Clock size={12} /> {article.readTime} read
+            </span>
+            <span style={{ fontSize: 12, color: 'rgba(13,13,13,.35)' }}>{article.date}</span>
+          </div>
 
-        {/* Open to anyone — not gated behind proof of purchase. Verified
-            badge only appears when the submitted order actually checks out
-            server-side (see ProductReviews.tsx / submit/route.ts). */}
-        <ProductReviews productSlug={shopifyProduct.handle} productTitle={shopifyProduct.title} />
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(26px,3.5vw,38px)', lineHeight: 1.2, letterSpacing: '-.03em', marginBottom: 16, color: '#0d0d0d' }}>
+            {article.title}
+          </h1>
 
-        {/* ── Related products ──────────────────────────────────────────────
-            Server-rendered from the same catalogue fetch, so these are real
-            internal links in the HTML rather than client-injected ones. That
-            matters for SEO: product pages otherwise link only up to
-            /products, leaving the deep catalogue thinly connected. */}
-        {related.length > 0 && (
-          <section
-            style={{
-              borderTop: '1px solid #f0f0f0',
-              background: '#fafafa',
-              padding: '48px 0 72px',
-            }}
-          >
-            <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-end',
-                  gap: 16,
-                  flexWrap: 'wrap',
-                  marginBottom: 24,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: '.16em',
-                      textTransform: 'uppercase',
-                      color: '#9ca3af',
-                      marginBottom: 8,
-                    }}
-                  >
-                    You may also need
-                  </div>
-                  <h2
-                    style={{
-                      fontSize: 'clamp(22px, 3vw, 32px)',
-                      fontWeight: 800,
-                      letterSpacing: '-0.03em',
-                      color: '#0d0d0d',
-                      lineHeight: 1.1,
-                      margin: 0,
-                    }}
-                  >
-                    Related compounds
-                  </h2>
-                </div>
+          <p style={{ fontSize: 16, lineHeight: 1.65, color: 'rgba(13,13,13,.55)', maxWidth: 620 }}>
+            {article.excerpt}
+          </p>
+        </section>
 
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ borderTop: '1px solid rgba(13,13,13,.08)', marginBottom: 48 }} />
+        </div>
+
+        <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 40px' }}>
+          <ContentBlocks content={article.content} />
+        </section>
+
+        {/* Shop related compounds — the content -> product half of the
+            internal-link fix; product -> content half is in
+            app/products/[slug]/page.tsx via relatedContentForProduct(). */}
+        {relatedProducts.length > 0 && (
+          <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 48px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {relatedProducts.map((p) => (
                 <Link
-                  href={relatedCategory ? `/products/category/${relatedCategory}` : '/products'}
+                  key={p.href}
+                  href={p.href}
                   style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#0d0d0d',
-                    textDecoration: 'none',
-                    borderBottom: '1px solid rgba(13,13,13,.2)',
-                    paddingBottom: 2,
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 13, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none',
+                    border: '1px solid #e5e7eb', borderRadius: 999, padding: '9px 16px',
                   }}
                 >
-                  View all →
+                  {p.label} <ChevronRight size={13} />
                 </Link>
-              </div>
-
-              <div className="pp-related-grid">
-                {related.map((p: any) => (
-                  <ProductCard key={p.shopifyId || p.id} product={p} />
-                ))}
-              </div>
+              ))}
             </div>
           </section>
         )}
 
-        {/* Recently viewed — client-only (reads localStorage), so it can't
-            be server-rendered; RecentlyViewed itself returns null until
-            hydrated and until there's actually something to show. */}
-        <RecentlyViewed excludeSlug={shopifyProduct.handle} />
-
-        {/* Layout classes used by ProductVariantView live here so the grid
-            stays with the route rather than being duplicated per component. */}
-        <style>{`
-          *, *::before, *::after { box-sizing: border-box; }
-
-          .pp-outer {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px 16px 80px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-          }
-
-          .pp-image-col { width: 100%; min-width: 0; }
-
-          /* Square image container — padding-top trick for a reliable square
-             on all devices. */
-          .pp-image-box {
-            position: relative;
-            width: 100%;
-            padding-top: 100%;
-            border-radius: 18px;
-            overflow: hidden;
-            border: 1px solid #f0f0f0;
-            background: #fafafa;
-          }
-
-          .pp-main-img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 20px;
-          }
-
-          .pp-info-col { width: 100%; min-width: 0; }
-
-          .pp-trust-desktop { display: none; }
-
-          .pp-trust-mobile {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-            margin-bottom: 4px;
-          }
-
-          /* Matches .products-grid on the homepage so cards line up the same
-             way across the site. */
-          .pp-related-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-          }
-
-          @media (min-width: 900px) {
-            .pp-outer {
-              grid-template-columns: 1fr 1fr;
-              gap: 60px;
-              align-items: start;
-              padding: 28px 32px 100px;
-            }
-
-            .pp-image-col { position: sticky; top: 80px; }
-
-            .pp-trust-desktop {
-              display: flex;
-              flex-direction: column;
-              gap: 11px;
-              margin-top: 22px;
-            }
-
-            .pp-trust-mobile { display: none; }
-
-            .pp-related-grid {
-              grid-template-columns: repeat(4, minmax(0, 1fr));
-              gap: 20px;
-            }
-          }
-
-          /* Shopify HTML description */
-          .shopify-desc { font-size: 13px; line-height: 1.85; color: #626A85; }
-          .shopify-desc p { margin-bottom: 1em; }
-          .shopify-desc strong { font-weight: 700; color: #0D0F14; }
-          .shopify-desc h2 { font-size: 14px; font-weight: 700; color: #0D0F14; margin: 1.2em 0 0.4em; }
-          .shopify-desc h3 { font-size: 13px; font-weight: 700; color: #0D0F14; margin: 1em 0 0.4em; }
-          .shopify-desc ul, .shopify-desc ol { padding-left: 1.3em; margin-bottom: 1em; }
-          .shopify-desc li { margin-bottom: 0.3em; }
-          .shopify-desc table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12px; border: 1px solid #E5EAF5; border-radius: 10px; overflow: hidden; }
-          .shopify-desc th { text-align: left; padding: 9px 12px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #AAB3C8; background: #F8F9FC; border-bottom: 1px solid #E5EAF5; }
-          .shopify-desc td { padding: 9px 12px; color: #626A85; border-bottom: 1px solid #F3F5FB; vertical-align: top; line-height: 1.6; }
-          .shopify-desc td:first-child { font-weight: 600; color: #0D0F14; width: 36%; }
-          .shopify-desc tr:last-child td { border-bottom: none; }
-        `}</style>
+        {related.length > 0 && (
+          <section style={{ background: '#f7f5f1', padding: '48px 24px 72px' }}>
+            <div style={{ maxWidth: 800, margin: '0 auto' }}>
+              <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(13,13,13,.45)', marginBottom: 20 }}>
+                Related Research
+              </h2>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {related.map((a) => {
+                  const rc = tagColors[a.tag] || { bg: '#f5f5f5', color: '#444' }
+                  return (
+                    <Link
+                      key={a.id}
+                      href={`/research/${a.id}`}
+                      style={{
+                        background: '#fff', border: '1px solid rgba(13,13,13,.08)', borderRadius: 12,
+                        padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        textDecoration: 'none', color: 'inherit', gap: 12,
+                      }}
+                    >
+                      <div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
+                          padding: '2px 8px', borderRadius: 999, background: rc.bg, color: rc.text, marginBottom: 8, display: 'inline-block',
+                        }}>
+                          {a.tag}
+                        </span>
+                        <div style={{ fontFamily: 'Georgia, serif', fontSize: 15.5, color: '#0d0d0d' }}>{a.title}</div>
+                      </div>
+                      <ChevronRight size={16} style={{ color: 'rgba(13,13,13,.3)', flexShrink: 0 }} />
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer />

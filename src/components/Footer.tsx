@@ -17,6 +17,8 @@ const LINKS = {
     { label: 'Research Hub',   href: '/research'      },
     { label: 'COA Library',    href: '/certificates'  },
     { label: 'Guides',         href: '/guides'        },
+    { label: 'Comparisons',    href: '/compare'       },
+    { label: 'Legal & Compliance', href: '/legal'     },
     { label: 'Tools',          href: '/tools'         },
   ],
   Company: [

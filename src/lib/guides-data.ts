@@ -816,6 +816,122 @@ export const GUIDES: Guide[] = [
       },
     ],
   },
+  {
+    id: 'net-peptide-content',
+    title: 'Net Peptide Content Explained: Why Purity % Isn\u2019t the Whole Picture',
+    category: 'Documentation',
+    readTime: '6 min',
+    excerpt: 'HPLC purity and net peptide content answer different questions — and mixing them up leads to under- or over-estimated stock concentrations.',
+    publishedAt: 'August 3, 2025',
+    publishedISO: '2025-08-03',
+    metaDescription: 'What net peptide content (NPC) means, how it differs from HPLC purity, and why it matters for accurate stock concentration calculations.',
+    content: [
+      {
+        type: 'intro',
+        text: 'A vial listing 99% HPLC purity is not necessarily 99% peptide by weight. Purity and net peptide content (NPC) measure different things, and conflating them is one of the more common — and consequential — mistakes in interpreting a Certificate of Analysis.',
+      },
+      {
+        type: 'heading',
+        text: 'What HPLC Purity Actually Measures',
+      },
+      {
+        type: 'paragraph',
+        text: 'HPLC (high-performance liquid chromatography) purity describes the proportion of peptide-related material in a sample that corresponds to the target sequence, relative to other peptide-related impurities (truncated sequences, deletion products, oxidised variants). It says nothing about how much of the vial\u2019s total mass is peptide at all.',
+      },
+      {
+        type: 'heading',
+        text: 'What Net Peptide Content Measures',
+      },
+      {
+        type: 'paragraph',
+        text: 'Lyophilised peptide powder is rarely 100% peptide by mass. Counter-ions from the synthesis and purification process (commonly acetate or trifluoroacetate salts), residual moisture, and other non-peptide material make up the remainder. Net peptide content is the percentage of the total vial mass that is actually peptide — determined by amino acid analysis, elemental analysis, or mass balance, not by HPLC.',
+      },
+      {
+        type: 'callout',
+        text: 'A peptide can show 99% HPLC purity and still have an NPC of 75–85% — meaning roughly 15–25% of the vial\u2019s weighed mass is salts and moisture, not peptide.',
+      },
+      {
+        type: 'heading',
+        text: 'Why This Matters for Stock Concentrations',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you weigh out 1 mg of lyophilised material and reconstitute assuming 100% NPC, your actual stock concentration will be lower than intended — proportionally, by the gap between the assumed and true NPC. For experiments sensitive to absolute concentration (dose-response curves, binding assays with defined Kd targets), this gap can meaningfully shift results.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Effective peptide mass = vial mass × (NPC% / 100)',
+          'Example: 5 mg vial at 82% NPC contains 4.1 mg of actual peptide',
+          'HPLC purity and NPC should both appear on a complete COA — one without the other is an incomplete picture',
+        ],
+      },
+      {
+        type: 'heading',
+        text: 'Reading Both Figures on a COA',
+      },
+      {
+        type: 'paragraph',
+        text: 'A rigorous Certificate of Analysis reports HPLC purity (sequence-level quality) and net peptide content (mass-level composition) as separate figures, typically from separate analytical methods. If a COA lists only "99% pure" with no NPC or amino acid analysis figure, that is a gap worth asking the supplier about directly before treating the nominal vial weight as the true peptide mass in a calculation.',
+      },
+    ],
+  },
+  {
+    id: 'bacteriostatic-water-vs-sterile-water',
+    title: 'Bacteriostatic Water vs. Sterile Water for Peptide Reconstitution',
+    category: 'Lab Basics',
+    readTime: '5 min',
+    excerpt: 'The two most common reconstitution diluents solve different problems — mixing them up affects both sterility and multi-use stability.',
+    publishedAt: 'August 5, 2025',
+    publishedISO: '2025-08-05',
+    metaDescription: 'The difference between bacteriostatic water and sterile (non-bacteriostatic) water for peptide reconstitution, and which applies to which use case.',
+    content: [
+      {
+        type: 'intro',
+        text: 'Both are water for injection-grade diluents used to reconstitute lyophilised peptides, and both are sterile at time of packaging. The difference is what happens after the vial is first opened — and that difference changes how a reconstituted solution should be stored and used.',
+      },
+      {
+        type: 'heading',
+        text: 'Sterile Water',
+      },
+      {
+        type: 'paragraph',
+        text: 'Sterile water contains no preservative. It is sterile when the vial is sealed, but once opened it offers no protection against microbial growth from repeated needle entries or ambient exposure. It is the appropriate choice for single-use preparations that will be consumed in one sitting, or for applications where a preservative could interfere with a downstream assay.',
+      },
+      {
+        type: 'heading',
+        text: 'Bacteriostatic Water',
+      },
+      {
+        type: 'paragraph',
+        text: 'Bacteriostatic water contains 0.9% benzyl alcohol as a preservative, which inhibits (but does not eliminate) bacterial growth across repeated vial entries. This makes it the standard choice for reconstituting a vial that will be drawn from multiple times over days or weeks, since it reduces contamination risk introduced by successive needle punctures.',
+      },
+      {
+        type: 'callout',
+        text: 'Benzyl alcohol is a preservative, not a sterilant — bacteriostatic water inhibits regrowth between uses, it does not sterilise a vial that has already been contaminated by poor technique.',
+      },
+      {
+        type: 'heading',
+        text: 'Which One for Which Preparation',
+      },
+      {
+        type: 'list',
+        items: [
+          'Single-use, same-day preparation: sterile water is sufficient',
+          'Multi-draw vial used across several sessions: bacteriostatic water reduces contamination risk between draws',
+          'Benzyl alcohol-sensitive assays or very small research subjects: sterile water avoids introducing the preservative as a confound',
+        ],
+      },
+      {
+        type: 'heading',
+        text: 'A Note on Peptide Compatibility',
+      },
+      {
+        type: 'paragraph',
+        text: 'A small number of peptides are reported to interact with benzyl alcohol or show reduced stability in its presence. When in doubt for a specific compound, sterile water paired with strict single-use aliquoting (see our reconstitution guide) removes the question entirely, at the cost of needing to prepare fresh aliquots more often.',
+      },
+    ],
+  },
 ]
 
 export const CATEGORIES = ['All', 'Lab Basics', 'Storage', 'Calculations', 'Pharmacology', 'Documentation', 'Legality & Compliance', 'Buying Guide']

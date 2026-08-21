@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 
 import { getProducts } from '@/lib/shopify'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, productHref } from '@/lib/utils'
 import Vial from '@/components/Vial'
 import { useCountry } from '@/lib/countryContext'
 
@@ -183,7 +183,7 @@ export default function ProductSpotlight() {
               </div>
 
               <Link
-                href={`/products/${featured.slug}`}
+                href={productHref(featured.slug)}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

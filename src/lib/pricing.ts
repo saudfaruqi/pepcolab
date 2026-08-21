@@ -47,11 +47,21 @@ export const MARKET_TAG: Record<Market, string> = {
 // tag disappears for UK visitors — that's the point, but it's abrupt, so
 // tag first and flip second.
 //
+// STATUS (Aug 21, 2026): set back to FALSE — confirmed with the team that
+// the UK market hasn't launched yet (going live in a few days) and no
+// products are tagged `uk` in Shopify yet. This was live as TRUE with an
+// empty `uk` tag set, which meant any UK visitor hitting the site right now
+// got a blank product catalogue. Until UK launch: leave this false so UK
+// visitors see the full one-catalogue storefront (GBP display pricing,
+// AED actually charged) instead of an empty shop. On launch day: tag every
+// UK-sellable product `uk` in Shopify FIRST, confirm with a staging check
+// that `tag:uk` returns the expected set, THEN flip this to true.
+//
 // Deliberately a constant rather than "filter, and fall back to everything if
 // the result is empty". That kind of auto-detection means tagging a single
 // product `uk` silently strips the UK storefront down to one item with no
 // deploy and no warning. An explicit switch fails predictably.
-export const UK_CATALOGUE_LIVE = true
+export const UK_CATALOGUE_LIVE = false
 
 /**
  * Fixed display rate — deliberately NOT a live FX feed.

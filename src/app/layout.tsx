@@ -44,8 +44,21 @@ export const metadata: Metadata = {
   publisher: 'PepcoLab',
   category: 'Scientific Research',
 
+  // SEO FIX (Aug 2026 audit): "no hreflang tags sitewide despite
+  // dual-market intent." There's one URL per page serving both the UK and
+  // UAE markets (currency swaps client-side — see lib/pricing.ts), so this
+  // is a genuine same-URL, dual-region site, not a site with separate
+  // per-market URLs. Self-referencing hreflang for both locales + a
+  // x-default is the correct annotation for that shape; per-page overrides
+  // (products, guides, research) set the same pattern with their own
+  // canonical in generateMetadata().
   alternates: {
     canonical: '/',
+    languages: {
+      'en-GB': '/',
+      'en-AE': '/',
+      'x-default': '/',
+    },
   },
 
   robots: {

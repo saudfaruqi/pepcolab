@@ -2,7 +2,7 @@
 'use client'
 import Link from 'next/link'
 import { useRecentlyViewed } from '@/lib/recentlyViewedContext'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, productHref } from '@/lib/utils'
 
 interface Props {
   // Exclude the product currently being viewed — seeing the page you're
@@ -38,7 +38,7 @@ export default function RecentlyViewed({ excludeSlug }: Props) {
           {visible.map((item) => (
             <Link
               key={item.slug}
-              href={`/products/${item.slug}`}
+              href={productHref(item.slug)}
               style={{
                 flex: '0 0 auto', width: 168, textDecoration: 'none', color: 'inherit',
                 scrollSnapAlign: 'start',

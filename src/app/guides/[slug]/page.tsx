@@ -14,6 +14,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ContentBlocks from '@/components/ContentBlocks'
 import { GUIDES, CATEGORY_COLORS, getGuideBySlug } from '@/lib/guides-data'
+import { relatedProductsForGuideCategory } from '@/lib/contentLinks'
 import { Clock, ArrowLeft, ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -37,7 +38,11 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title: guide.title,
     description: guide.metaDescription,
-    alternates: { canonical },
+    // Same-URL dual-market rationale as app/layout.tsx / app/products/[slug]/page.tsx.
+    alternates: {
+      canonical,
+      languages: { 'en-GB': canonical, 'en-AE': canonical, 'x-default': canonical },
+    },
     openGraph: {
       title: `${guide.title} | PepcoLab`,
       description: guide.metaDescription,
@@ -91,6 +96,7 @@ export default function GuideDetailPage({ params }: Props) {
 
   const cat = CATEGORY_COLORS[guide.category] || { bg: '#f5f5f5', color: '#444' }
   const jsonLd = buildJsonLd(guide)
+  const relatedProducts = relatedProductsForGuideCategory(guide.category)
 
   // Same-category guides first, then anything else, capped at 3 — keeps
   // every guide internally linked to its neighbours (topic clustering).
@@ -159,6 +165,28 @@ export default function GuideDetailPage({ params }: Props) {
             </p>
           )}
         </section>
+
+        {/* Shop related compounds — content -> product half of the
+            internal-link fix; see lib/contentLinks.ts. */}
+        {relatedProducts.length > 0 && (
+          <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 48px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {relatedProducts.map((p) => (
+                <Link
+                  key={p.href}
+                  href={p.href}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 13, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none',
+                    border: '1px solid #e5e7eb', borderRadius: 999, padding: '9px 16px',
+                  }}
+                >
+                  {p.label} <ChevronRight size={13} />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Related guides — internal linking / topic cluster */}
         {related.length > 0 && (

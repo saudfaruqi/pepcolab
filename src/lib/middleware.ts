@@ -17,7 +17,23 @@ const SUPPORTED_COUNTRIES = new Set(['AE', 'GB'])
 // countryContext.tsx together if you settle on GB instead.
 const DEFAULT_COUNTRY = 'AE'
 
+// SEO FIX (Aug 2026 audit): product URLs were all indexed as
+// "/products/{name}-uae" regardless of market — see toNeutralSlug() in
+// lib/utils.ts for the full rationale. Any crawler/bookmark/backlink still
+// hitting the old "-uae" URL gets a real 301 to the clean canonical one,
+// so link equity consolidates onto a single indexed URL per product instead
+// of splitting across two.
+const LEGACY_PRODUCT_UAE_RE = /^\/products\/([^/]+)-uae\/?$/i
+
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const legacyMatch = pathname.match(LEGACY_PRODUCT_UAE_RE)
+  if (legacyMatch) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/products/${legacyMatch[1]}`
+    return NextResponse.redirect(url, 301)
+  }
+
   // `request.geo` was Vercel Edge-specific and has been removed in newer
   // Next.js versions (deprecated in 13.4, gone in 15) — the header is the
   // stable source on Vercel. Keeping `geo` as a defensive fallback in case
