@@ -15,6 +15,13 @@ interface ApiReview {
 interface Props {
   productSlug: string
   productTitle: string
+  // SEO/GEO FIX: passed down from the server component (page.tsx) so
+  // approved review text is present in the initial server-rendered HTML —
+  // previously this component only ever had reviews via a client-side
+  // useEffect fetch, so Googlebot/AI crawlers reading the raw response saw
+  // "Loading reviews…" and nothing else. Optional so this component still
+  // works standalone if ever used somewhere without a server fetch.
+  initialReviews?: ApiReview[]
 }
 
 /**
@@ -26,8 +33,8 @@ interface Props {
  * review as verified — that's the fake-review misrepresentation the DMCC
  * Act 2024 targets, not the mere presence of an unverified opinion.
  */
-export default function ProductReviews({ productSlug, productTitle }: Props) {
-  const [reviews, setReviews] = useState<ApiReview[] | null>(null)
+export default function ProductReviews({ productSlug, productTitle, initialReviews }: Props) {
+  const [reviews, setReviews] = useState<ApiReview[] | null>(initialReviews ?? null)
   const [showForm, setShowForm] = useState(false)
   const [haveOrder, setHaveOrder] = useState(false)
 
@@ -40,7 +47,12 @@ export default function ProductReviews({ productSlug, productTitle }: Props) {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // If the server already supplied reviews, skip the redundant fetch on
+  // mount — refetching would just re-request the same data a moment after
+  // hydration for no benefit. Still fetches when no initialReviews prop was
+  // passed at all, so the component keeps working standalone.
   useEffect(() => {
+    if (initialReviews) return
     let cancelled = false
     fetch(`/api/reviews?slug=${encodeURIComponent(productSlug)}&limit=20`)
       .then((r) => r.json())
@@ -53,7 +65,7 @@ export default function ProductReviews({ productSlug, productTitle }: Props) {
     return () => {
       cancelled = true
     }
-  }, [productSlug])
+  }, [productSlug, initialReviews])
 
   const canSubmit =
     rating > 0 &&

@@ -14,6 +14,7 @@ import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 import { stripLeadingName, toNeutralSlug, toShopifyHandle, productHref } from '@/lib/utils'
 import { relatedContentForProduct } from '@/lib/contentLinks'
+import { getApprovedReviews, type Review } from '@/lib/reviewStore'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -164,7 +165,7 @@ function pickRelated(all: any[], current: any, limit = 4) {
   return [...sameCategory, ...rest].slice(0, limit)
 }
 
-function buildJsonLd(product: any) {
+function buildJsonLd(product: any, reviews: Review[] = []) {
   const url = `${SITE_URL}${productHref(product.handle)}`
 
   const productLd: Record<string, any> = {
@@ -176,9 +177,36 @@ function buildJsonLd(product: any) {
     url,
     image: product.images?.map((i: any) => i.url).filter(Boolean) ?? [],
     brand: { '@type': 'Brand', name: 'PepcoLab' },
-    // Deliberately NO aggregateRating / review. Marking up invented reviews is
-    // a Google structured-data policy violation and, in the UK, a banned
-    // practice under the DMCC Act 2024.
+  }
+
+  // SEO FIX (growth-playbook §08: "AggregateRating/Review once real reviews
+  // exist"). This was deliberately withheld while the only reviews on the
+  // site were the hardcoded, fabricated arrays in data.ts/HomePageContent —
+  // marking those up would have been a Google structured-data policy
+  // violation and a DMCC Act 2024 fake-reviews breach. That's no longer the
+  // situation: `reviews` here comes exclusively from reviewStore's approved
+  // set, which requires manual moderation and ties `verified` to a real,
+  // matching order (see reviewStore.ts header comment). Only mark up once at
+  // least one real approved review exists for this product — an
+  // aggregateRating with reviewCount 0 is itself a schema violation.
+  if (reviews.length > 0) {
+    const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    productLd.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: Number(avg.toFixed(1)),
+      reviewCount: reviews.length,
+      bestRating: 5,
+      worstRating: 1,
+    }
+    // Cap at 10 in the schema itself — plenty for rich-result eligibility
+    // without ballooning page weight as review volume grows.
+    productLd.review = reviews.slice(0, 10).map((r) => ({
+      '@type': 'Review',
+      reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+      author: { '@type': 'Person', name: r.authorName },
+      reviewBody: r.text,
+      datePublished: r.createdAt,
+    }))
   }
 
   // Structured data always advertises the CHARGED currency (AED), never the
@@ -229,6 +257,16 @@ export default async function ProductPage({ params }: Props) {
     notFound()
   }
 
+  // SEO/GEO FIX: reviews used to be fetched entirely client-side in
+  // ProductReviews.tsx ('use client' + useEffect), which meant real review
+  // text never appeared in the HTML Googlebot/AI crawlers see on first
+  // load — a JS-only content block, exactly what growth-playbook §05/§08
+  // says to avoid ("Answer-first content blocks rendered in server HTML,
+  // not JS-only, so crawlers read them"). Fetched here instead so it can
+  // both seed the Review/AggregateRating schema above and hydrate
+  // ProductReviews with real markup already in the response.
+  const approvedReviews = await getApprovedReviews(20, shopifyProduct.handle).catch(() => [] as Review[])
+
   // ProductVariantView owns the whole two-column layout and passes
   // selectedVariantId / onSelectVariant down to ProductActions, so the format
   // picker can drive the main image. It reads `oneLiner` off the product, so
@@ -249,7 +287,7 @@ export default async function ProductPage({ params }: Props) {
     },
   }
 
-  const jsonLd = buildJsonLd(shopifyProduct)
+  const jsonLd = buildJsonLd(shopifyProduct, approvedReviews)
   const related = pickRelated(allProducts, shopifyProduct, 4)
   const relatedCategory = categoryTag(shopifyProduct.tags)
   // SEO FIX: product pages had zero links into /guides or /research (audit
@@ -291,7 +329,19 @@ export default async function ProductPage({ params }: Props) {
         {/* Open to anyone — not gated behind proof of purchase. Verified
             badge only appears when the submitted order actually checks out
             server-side (see ProductReviews.tsx / submit/route.ts). */}
-        <ProductReviews productSlug={shopifyProduct.handle} productTitle={shopifyProduct.title} />
+        <ProductReviews
+          productSlug={shopifyProduct.handle}
+          productTitle={shopifyProduct.title}
+          initialReviews={approvedReviews.map((r) => ({
+            id: r.id,
+            productTitle: r.productTitle,
+            authorName: r.authorName,
+            rating: r.rating,
+            text: r.text,
+            verified: r.verified,
+            createdAt: r.createdAt,
+          }))}
+        />
 
         {/* ── Related products ──────────────────────────────────────────────
             Server-rendered from the same catalogue fetch, so these are real
