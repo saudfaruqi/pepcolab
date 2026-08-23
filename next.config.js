@@ -6,6 +6,11 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cdn.shopify.com' },
+      // Hero/lifestyle imagery on /products (IMGS.hero, IMGS.lab) is served
+      // from Unsplash, not Shopify — next/image throws at request time for
+      // any remote host not explicitly allow-listed here, so this has to be
+      // added before those two images can move off raw <img>.
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
     // Serve AVIF/WebP where the browser supports it. Product photos are the
     // heaviest thing on your collection page, and this is a direct LCP win —
@@ -34,18 +39,27 @@ const nextConfig = {
   // 301s pass the accumulated ranking signal to the live URLs instead of
   // discarding it. Check Search Console → Indexing → Pages for any other
   // legacy slugs still indexed and add them here.
+  //
+  // SEO FIX: these destinations were pointing at the "-uae" slugs
+  // (/products/semax-uae etc.), which middleware.ts now 301s onward to the
+  // neutral canonical slug (toNeutralSlug() in lib/utils.ts). That made
+  // every one of these a redirect CHAIN — 301 -> 301 -> final page — which
+  // both wastes crawl budget and, per Google's own guidance, dilutes/delays
+  // how much of the accumulated ranking signal actually reaches the final
+  // URL. Pointing straight at the neutral slug collapses each of these back
+  // to a single hop.
   // ---------------------------------------------------------------------
   async redirects() {
     return [
       // Confirmed indexed and ranking — highest priority
-      { source: '/products/semax-2mg', destination: '/products/semax-uae', permanent: true },
-      { source: '/products/ghk-cu-5mg', destination: '/products/ghk-cu-uae', permanent: true },
+      { source: '/products/semax-2mg', destination: '/products/semax', permanent: true },
+      { source: '/products/ghk-cu-5mg', destination: '/products/ghk-cu', permanent: true },
 
       // Old slugs from the previous catalogue that map to a live product
-      { source: '/products/bpc-157-5mg', destination: '/products/bpc-157-uae', permanent: true },
-      { source: '/products/selank-5mg', destination: '/products/selank-uae', permanent: true },
-      { source: '/products/epithalon-5mg', destination: '/products/epithalon-uae', permanent: true },
-      { source: '/products/ipamorelin-2mg', destination: '/products/ipamorelin-uae', permanent: true },
+      { source: '/products/bpc-157-5mg', destination: '/products/bpc-157', permanent: true },
+      { source: '/products/selank-5mg', destination: '/products/selank', permanent: true },
+      { source: '/products/epithalon-5mg', destination: '/products/epithalon', permanent: true },
+      { source: '/products/ipamorelin-2mg', destination: '/products/ipamorelin', permanent: true },
 
       // Discontinued lines with no direct equivalent — send to the catalogue
       // rather than 404. TB-500 is no longer stocked; glp-1-tera has no

@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -176,10 +177,10 @@ export default function WishlistPage() {
                 >
                   <Link
                     href={productHref(item.slug)}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-blue-50/50 border border-blue-100/30 flex items-center justify-center flex-shrink-0 overflow-hidden"
+                    className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-blue-50/50 border border-blue-100/30 flex items-center justify-center flex-shrink-0 overflow-hidden"
                   >
                     {item.image ? (
-                      <img src={item.image} alt={item.imageAlt ?? item.name} className="w-full h-full object-contain p-2" />
+                      <Image src={item.image} alt={item.imageAlt ?? item.name} fill sizes="96px" className="object-contain p-2" />
                     ) : (
                       <div className="w-6 h-6 rounded bg-blue-100/30" />
                     )}

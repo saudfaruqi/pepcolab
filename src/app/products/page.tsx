@@ -1,10 +1,9 @@
-
-
 // app/products/page.tsx
 
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { cookies } from 'next/headers'
+import Image from 'next/image'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ProductsSection from '@/components/ProductsSection'
@@ -311,7 +310,13 @@ export default async function ProductsPage() {
 
         {/* ── Hero ── */}
         <section className="pp-hero">
-          <img className="pp-hero-bg" src={IMGS.hero} alt="" />
+          {/* SEO/CWV FIX: this is the single largest image on the page and
+              sits at the very top of the viewport — almost certainly the
+              LCP element for /products. `.pp-hero` (below) is already the
+              position:relative box `fill` needs. next.config.js now
+              allow-lists images.unsplash.com so this can load through
+              Next's optimizer (AVIF/WebP) instead of the raw source. */}
+          <Image className="pp-hero-bg" src={IMGS.hero} alt="" fill sizes="100vw" priority />
           <div className="pp-hero-grad" />
           <div className="pp-hero-content">
             <div style={{ maxWidth: 700 }}>
@@ -384,7 +389,7 @@ export default async function ProductsPage() {
 
             {/* Image */}
             <div className="pp-standards-img">
-              <img src={IMGS.lab} alt="Laboratory research environment" />
+              <Image src={IMGS.lab} alt="Laboratory research environment" fill sizes="(max-width: 860px) 100vw, 50vw" />
             </div>
 
           </div>

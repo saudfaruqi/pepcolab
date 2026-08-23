@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useCart } from '@/lib/cartContext'
 import { useWishlist } from '@/lib/wishlistContext'
@@ -762,7 +763,7 @@ export default function Nav() {
       <div className={`mobile-menu${mobileOpen ? ' open' : ''}`}>
         <div className="mob-header">
           <a href="/" className="mob-logo" onClick={() => setMobileOpen(false)}>
-            <img src="/pepcologo.png" className='h-10 w-auto' alt="" />
+            <Image src="/pepcologo.png" className="h-10 w-auto" alt="" width={160} height={40} />
           </a>
           <button className="nav-icon-btn" onClick={() => setMobileOpen(false)}><CloseIcon /></button>
         </div>
@@ -847,7 +848,11 @@ export default function Nav() {
 
           {/* Logo */}
           <a href="/" className="nav-logo">
-            <img src="/pepcologo.png" alt="PepcoLab" />
+            {/* This is the LCP element on nearly every page — priority
+                skips lazy-loading and gets it into the initial preload
+                scan, instead of only starting to fetch once React
+                hydrates and the lazy-load IntersectionObserver fires. */}
+            <Image src="/pepcologo.png" alt="PepcoLab" width={160} height={40} priority />
           </a>
 
           {/* Desktop links */}

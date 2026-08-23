@@ -2,6 +2,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import { ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
@@ -82,10 +83,21 @@ export default function ProductVariantView({ product }: Props) {
         {/* Square image box */}
         <div className="pp-image-box">
           {activeImageUrl ? (
-            <img
+            // SEO/CWV FIX: this is the largest above-the-fold image on
+            // every product page, so it's very likely the LCP element —
+            // `priority` skips lazy-loading and gets it into the initial
+            // preload scan instead of waiting on hydration. `.pp-image-box`
+            // (page.tsx) is already the position:relative/aspect-ratio box
+            // `fill` needs; `.pp-main-img` already has the absolute-fill +
+            // object-fit rules next/image's fill mode expects, so the
+            // className carries over unchanged.
+            <Image
               key={activeImageUrl}
               src={activeImageUrl}
               alt={activeImageAlt}
+              fill
+              sizes="(max-width: 900px) 100vw, 50vw"
+              priority
               className="pp-main-img"
             />
           ) : (
@@ -130,12 +142,15 @@ export default function ProductVariantView({ product }: Props) {
                     width: 56, height: 56, flexShrink: 0, borderRadius: 8, overflow: 'hidden',
                     border: isActive ? '2px solid #2563eb' : '1px solid #e5e7eb',
                     background: '#fafafa', padding: 0, cursor: 'pointer',
+                    position: 'relative',
                   }}
                 >
-                  <img
+                  <Image
                     src={img.url}
                     alt={img.alt || `${product.title ?? product.name} view ${i + 1}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3 }}
+                    fill
+                    sizes="56px"
+                    style={{ objectFit: 'contain', padding: 3 }}
                   />
                 </button>
               )

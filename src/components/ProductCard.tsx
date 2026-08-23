@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
@@ -111,17 +112,23 @@ export default function ProductCard({ product: p, featured = false }: Props) {
 
           {p.image ? (
             <>
-              <img
+              {/* SEO/CWV FIX: raw <img> -> next/image. `fill` fits this
+                  exactly — the parent above is already `position: relative`
+                  with a fixed aspect-ratio box, which is the one precondition
+                  fill requires. Gets automatic AVIF/WebP (see next.config.js)
+                  and real lazy-loading instead of the loading="lazy"
+                  attribute, which Next's own optimizer handles more
+                  reliably than the bare HTML attribute did. */}
+              <Image
                 src={p.image}
                 alt={p.imageAlt ?? p.name}
+                fill
+                sizes="(max-width: 700px) 50vw, 25vw"
                 loading={featured ? 'eager' : 'lazy'}
-                decoding="async"
+                priority={featured}
                 style={{
-                  width: '100%',
-                  height: '100%',
                   objectFit: 'contain',
                   padding: '12px',
-                  display: 'block',
                   transform: hovered ? 'scale(1.04)' : 'scale(1)',
                   // Primary image fades OUT on hover (only when a second
                   // image actually exists — otherwise it should just stay
@@ -131,25 +138,21 @@ export default function ProductCard({ product: p, featured = false }: Props) {
                 }}
               />
               {hoverImage && (
-                <img
+                <Image
                   src={hoverImage}
                   alt=""
                   aria-hidden="true"
+                  fill
+                  sizes="(max-width: 700px) 50vw, 25vw"
                   loading="lazy"
-                  decoding="async"
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
                     objectFit: 'contain',
                     padding: '12px',
-                    display: 'block',
                     transform: hovered ? 'scale(1.04)' : 'scale(1)',
                     // Second image fades IN on hover — the two together
-                    // are the actual crossfade; the browser only pays the
-                    // request cost once it's lazy-loaded near view, and
-                    // decoding="async" keeps that off the main thread.
+                    // are the actual crossfade; Next's own loader handles
+                    // the deferred fetch instead of the loading="lazy"
+                    // attribute doing it.
                     opacity: hovered ? 1 : 0,
                     transition: 'transform .55s cubic-bezier(.22,1,.36,1), opacity .3s ease',
                     pointerEvents: 'none',

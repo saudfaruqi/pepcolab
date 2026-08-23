@@ -2,6 +2,7 @@
 import { ArrowRight, X, ShoppingCart, CheckCircle, Plus, CreditCard } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 import React from 'react'
+import Image from 'next/image'
 import { BUNDLES } from '@/app/data'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
@@ -43,13 +44,16 @@ function BundleImageCollage({
             padding: 14,
             borderRight: i < slots.length - 1 ? '1px solid rgba(13,13,13,.06)' : 'none',
             minWidth: 0,
+            position: 'relative',
           }}
         >
           {p?.image ? (
-            <img
+            <Image
               src={p.image}
               alt={p.name}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              fill
+              sizes="25vw"
+              style={{ objectFit: 'contain', padding: 14 }}
             />
           ) : (
             <Vial mg={p?.mg ?? ''} size="lg" fromColor={bundle.accent} toColor={bundle.accent} />
@@ -402,9 +406,10 @@ export default function BundlesSection() {
                       width: 44, height: 44, borderRadius: 10, background: '#f7f5f1',
                       flexShrink: 0, overflow: 'hidden', display: 'flex',
                       alignItems: 'center', justifyContent: 'center',
+                      position: 'relative',
                     }}>
                       {p.image
-                        ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ? <Image src={p.image} alt={p.name} fill sizes="44px" style={{ objectFit: 'contain' }} />
                         : <div style={{ width: 20, height: 20, borderRadius: '50%', background: p.color?.vialFrom ?? '#3b82f6' }} />
                       }
                     </div>
