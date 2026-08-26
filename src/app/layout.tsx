@@ -14,6 +14,14 @@ import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 
 const siteUrl = 'https://www.pepcolab.com'
 
+// Google tag (gtag.js) container ID — was previously pasted as raw
+// <script> tags inside the `metadata` object below, which is invalid:
+// `metadata` is a plain object for Next's Metadata API, not JSX, so those
+// tags either failed the build or were silently dropped — either way the
+// tag never actually loaded. It's now wired up properly via next/script
+// in the <body>, see bottom of RootLayout.
+const GTAG_ID = 'GT-PJ5SP6Z8'
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -254,6 +262,25 @@ export default function RootLayout({
       </head>
 
       <body suppressHydrationWarning>
+        {/* Google tag (gtag.js) — moved here from the invalid spot inside
+            `metadata` (see GTAG_ID comment at top of file). Loaded with
+            next/script's afterInteractive strategy: runs after the page
+            becomes interactive so it doesn't block hydration or compete
+            with the checkout SDK below, but still fires early enough to
+            catch most pageview/engagement events. */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GTAG_ID}');
+          `}
+        </Script>
+
         <Script
           src="https://unpkg.com/@strabl-engineering/checkout-sdk@1.0.2/dist/index.global.js"
           strategy="lazyOnload"
