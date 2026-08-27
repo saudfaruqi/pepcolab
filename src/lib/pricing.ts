@@ -1,165 +1,95 @@
 // src/lib/pricing.ts
 //
-// WHY THIS EXISTS
-// ---------------
-// Shopify Markets multi-currency is unavailable on this store: the payment
-// gateway (Strabl) only supports a single currency, so `marketUpdate` rejects
-// a GBP base currency on the UK market and Storefront `@inContext(country: GB)`
-// returns AED presentment prices regardless.
+// MARKET FIX (Aug 2026): PepcoLab is UAE-only for now. This file used to
+// carry a full second market (GB/GBP display pricing, a UK catalogue-tag
+// switch, FX conversion, a bank-charge disclosure notice) alongside AE.
+// None of that was actually live — countryContext.tsx and middleware.ts
+// now only ever resolve visitors to 'AE', so every GB-specific branch here
+// was dead code kept "just in case." Stripped down to AE-only.
 //
-// Consequence: **AED is the only real price.** The cart, the checkout and the
-// card charge are all AED. GBP is a display conversion so UK visitors read a
-// familiar number — it is NOT what gets charged, and the customer's own bank
-// applies its FX spread on top (typically 2-3%). That has to be disclosed
-// wherever a converted price appears. See `chargeNotice()`.
-//
-// Conversion happens at exactly two places, both data boundaries:
-//   1. normaliseProduct()  in src/lib/shopify.ts    — product prices
-//   2. applyCart()         in src/lib/cartContext.tsx — cart lines + subtotal
-// Everything downstream keeps calling formatPrice(amount, currencyCode) and
-// works unchanged. Do NOT convert again inside components or you'll double-apply.
+// Every exported function below KEEPS its original signature (still takes
+// an optional `country`/`market` param) purely so the ~10 call sites across
+// cartContext.tsx, shopify.ts, CartDrawer.tsx, cart/page.tsx and
+// MarketGuard.tsx don't all need touching — they simply always resolve to
+// the AE behaviour now. If a second market is ever added back, this file
+// (plus countryContext.tsx and middleware.ts's SUPPORTED_COUNTRIES) is
+// where that comes back in.
 
-export type Market = 'AE' | 'GB'
+export type Market = 'AE'
 
 export const MARKET_CURRENCY: Record<Market, string> = {
   AE: 'AED',
-  GB: 'GBP',
 }
 
-/** Product tag that assigns a product to a market. */
+/** Product tag that assigns a product to a market. Single-market now — kept
+ *  for MarketGuard.tsx's tag-check signature, effectively unused. */
 export const MARKET_TAG: Record<Market, string> = {
   AE: 'uae',
-  GB: 'uk',
 }
 
-// ─── UK CATALOGUE SWITCH ────────────────────────────────────────────────────
-//
-// FALSE  = one catalogue. Every product is shown in both markets; only the
-//          displayed currency differs. This is correct while every product in
-//          Shopify is tagged `uae` and nothing is tagged `uk` — filtering by
-//          `tag:uk` today returns an empty storefront for UK visitors.
-//
-// TRUE   = per-market catalogues. AE visitors see `tag:uae`, GB visitors see
-//          `tag:uk`. A product carrying BOTH tags appears in both.
-//
-// Flip this to true only once every product you intend to sell in the UK is
-// tagged `uk` in Shopify. The moment it's true, any product without the `uk`
-// tag disappears for UK visitors — that's the point, but it's abrupt, so
-// tag first and flip second.
-//
-// STATUS (Aug 21, 2026): set back to FALSE — confirmed with the team that
-// the UK market hasn't launched yet (going live in a few days) and no
-// products are tagged `uk` in Shopify yet. This was live as TRUE with an
-// empty `uk` tag set, which meant any UK visitor hitting the site right now
-// got a blank product catalogue. Until UK launch: leave this false so UK
-// visitors see the full one-catalogue storefront (GBP display pricing,
-// AED actually charged) instead of an empty shop. On launch day: tag every
-// UK-sellable product `uk` in Shopify FIRST, confirm with a staging check
-// that `tag:uk` returns the expected set, THEN flip this to true.
-//
-// Deliberately a constant rather than "filter, and fall back to everything if
-// the result is empty". That kind of auto-detection means tagging a single
-// product `uk` silently strips the UK storefront down to one item with no
-// deploy and no warning. An explicit switch fails predictably.
+// Always false now that there's only one market — kept (rather than
+// deleted outright) because MarketGuard.tsx, shopify.ts and
+// ProductVariantView.tsx all still branch on it. A single-market site has
+// nothing to guard, so this permanently short-circuits that gating logic.
 export const UK_CATALOGUE_LIVE = false
 
-/**
- * Fixed display rate — deliberately NOT a live FX feed.
- *
- * A live rate means shelf prices move several times a day, a customer who saw
- * £41 yesterday sees £43 today, and any GBP figure in an ad or an email is
- * wrong within a week. Set this manually, review monthly, and keep a margin
- * buffer so a rate move doesn't eat the AED you actually collect.
- *
- * Last reviewed: <SET DATE ON EACH UPDATE>
- */
-export const GBP_PER_AED = 0.21
-
-export function normaliseMarket(country?: string | null): Market {
-  return country === 'GB' ? 'GB' : 'AE'
+export function normaliseMarket(_country?: string | null): Market {
+  return 'AE'
 }
 
-/** Currency code a market should be shown prices in. */
-export function currencyFor(country?: string | null): string {
-  return MARKET_CURRENCY[normaliseMarket(country)]
-}
-
-/** Round to a price that looks chosen rather than converted. */
-function tidyGbp(value: number): number {
-  if (value < 20) return Math.round(value * 2) / 2 // nearest 0.50
-  if (value < 100) return Math.round(value)         // nearest £1
-  return Math.round(value / 5) * 5                  // nearest £5
+/** Currency code a market should be shown prices in. Always AED now. */
+export function currencyFor(_country?: string | null): string {
+  return MARKET_CURRENCY.AE
 }
 
 /**
  * Convert an AED amount into the market's display currency.
- * AE is a no-op — AED is the native currency of every Shopify price.
+ * Always a no-op now — AED is the only currency this store shows or charges.
  */
-export function convertFromAed(amountAed: number, country?: string | null): number {
-  if (normaliseMarket(country) === 'AE') return amountAed
-  return tidyGbp(amountAed * GBP_PER_AED)
+export function convertFromAed(amountAed: number, _country?: string | null): number {
+  return amountAed
 }
 
 /**
  * Storefront search filter for a market, or undefined for no filtering.
- *
- * Returns undefined when UK_CATALOGUE_LIVE is false, or when country is
- * unknown. Unknown-country callers are sitemap.ts and generateStaticParams,
- * which must always see BOTH catalogues so every product stays pre-rendered
- * and indexable — Googlebot crawls from US IPs with no market cookie.
+ * Always undefined now (single catalogue, single market).
  */
-export function marketQuery(country?: string | null): string | undefined {
-  if (!UK_CATALOGUE_LIVE) return undefined
-  if (country !== 'AE' && country !== 'GB') return undefined
-  return `tag:${MARKET_TAG[country]}`
+export function marketQuery(_country?: string | null): string | undefined {
+  return undefined
 }
 
 /**
- * Whether a product is sold in a given market. Used to guard direct URL hits
- * on a product that belongs to the other catalogue.
- *
- * Returns TRUE when filtering is off or the country is unknown — same
- * crawler reasoning as marketQuery().
+ * Whether a product is sold in a given market. Always true now — there's
+ * only one market, so nothing is ever "not stocked for your region."
  */
-export function isInMarket(tags: string[] = [], country?: string | null): boolean {
-  if (!UK_CATALOGUE_LIVE) return true
-  if (country !== 'AE' && country !== 'GB') return true
-  return tags.map((t) => t.toLowerCase()).includes(MARKET_TAG[country])
+export function isInMarket(_tags: string[] = [], _country?: string | null): boolean {
+  return true
 }
 
 /** Convenience for optional values (compareAtPrice, oldPrice). */
 export function convertOptional(
   amountAed: number | undefined | null,
-  country?: string | null
+  _country?: string | null
 ): number | undefined {
   if (amountAed == null) return undefined
-  return convertFromAed(amountAed, country)
+  return amountAed
 }
 
 /**
- * Disclosure copy. Render wherever a converted price appears — product page,
- * cart drawer and checkout at minimum. UK consumer law requires the price
- * actually payable to be clear before purchase; an approximate conversion is
- * fine, an undisclosed one is not.
- *
- * `amountAed` is the ORIGINAL dirham figure, so the customer can see exactly
- * what their statement will show.
+ * Disclosure copy for a converted/approximate price. Always null now —
+ * there's no conversion happening, so there's nothing to disclose.
  */
 export function chargeNotice(
-  amountAed: number,
-  country?: string | null
+  _amountAed: number,
+  _country?: string | null
 ): string | null {
-  if (normaliseMarket(country) === 'AE') return null
-  const aed = `AED ${Math.round(amountAed).toLocaleString('en-AE')}`
-  return `Approximate. Charged in dirhams as ${aed}. Your bank sets the final exchange rate and may add a fee.`
+  return null
 }
 
 /**
  * Converts a displayed total back into the AED amount that will actually be
- * charged, for feeding straight into chargeNotice() at the point of payment.
- * AE is a no-op (displayed and charged amounts are already the same).
+ * charged. Always a no-op now (displayed and charged amounts are the same).
  */
-export function displayedTotalToAed(displayedTotal: number, country?: string | null): number {
-  if (normaliseMarket(country) !== 'GB') return displayedTotal
-  return GBP_PER_AED > 0 ? displayedTotal / GBP_PER_AED : displayedTotal
+export function displayedTotalToAed(displayedTotal: number, _country?: string | null): number {
+  return displayedTotal
 }

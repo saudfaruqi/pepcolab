@@ -14,14 +14,6 @@ import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 
 const siteUrl = 'https://www.pepcolab.com'
 
-// Google tag (gtag.js) container ID — was previously pasted as raw
-// <script> tags inside the `metadata` object below, which is invalid:
-// `metadata` is a plain object for Next's Metadata API, not JSX, so those
-// tags either failed the build or were silently dropped — either way the
-// tag never actually loaded. It's now wired up properly via next/script
-// in the <body>, see bottom of RootLayout.
-const GTAG_ID = 'GT-PJ5SP6Z8'
-
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -36,12 +28,12 @@ export const metadata: Metadata = {
 
   title: {
     default:
-      'PepcoLab | Research-Grade Peptides & Laboratory Compounds — UAE & UK',
+      'PepcoLab | Research-Grade Peptides & Laboratory Compounds — UAE',
     template: '%s | PepcoLab',
   },
 
   description:
-    'Research-grade peptides and laboratory compounds with published batch certificates of analysis and cold-chain dispatch across the UAE and UK. Supplied for in-vitro research use only.',
+    'Research-grade peptides and laboratory compounds with published batch certificates of analysis and cold-chain dispatch across the UAE. Supplied for in-vitro research use only.',
 
   applicationName: 'PepcoLab',
   referrer: 'origin-when-cross-origin',
@@ -51,18 +43,18 @@ export const metadata: Metadata = {
   publisher: 'PepcoLab',
   category: 'Scientific Research',
 
-  // SEO FIX (Aug 2026 audit): "no hreflang tags sitewide despite
-  // dual-market intent." There's one URL per page serving both the UK and
-  // UAE markets (currency swaps client-side — see lib/pricing.ts), so this
-  // is a genuine same-URL, dual-region site, not a site with separate
-  // per-market URLs. Self-referencing hreflang for both locales + a
-  // x-default is the correct annotation for that shape; per-page overrides
-  // (products, guides, research) set the same pattern with their own
-  // canonical in generateMetadata().
+  // MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — the UK was never
+  // actually a live, fulfilled market despite the dual-market hreflang/
+  // schema/currency scaffolding that had been built out across the site
+  // (see countryContext.tsx, Nav.tsx's currency switcher, and the
+  // structured-data block below, all trimmed to AE-only alongside this).
+  // A single en-AE self-reference + x-default is the correct annotation
+  // for a single-market site; per-page overrides (products, guides,
+  // research) that previously mirrored this en-GB/en-AE pattern in their
+  // own generateMetadata() should be updated the same way.
   alternates: {
     canonical: '/',
     languages: {
-      'en-GB': '/',
       'en-AE': '/',
       'x-default': '/',
     },
@@ -101,11 +93,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Published batch certificates of analysis and cold-chain dispatch across the UAE and UK. Research use only.',
+      'Published batch certificates of analysis and cold-chain dispatch across the UAE. Research use only.',
     url: siteUrl,
     siteName: 'PepcoLab',
     locale: 'en_AE',
-    alternateLocale: ['en_GB'],
     type: 'website',
     images: [
       {
@@ -169,10 +160,10 @@ export default function RootLayout({
   // intact, just no longer read server-side here), and only as a last
   // resort `/api/country`. For a returning or already-geo-tagged visitor
   // this resolves within the same tick after mount; for a genuinely new
-  // visitor with no cookie yet, there's a brief flash before it resolves —
-  // the same tradeoff this page's own product-pricing already accepts
-  // (see page.tsx's header comment: "GB visitors see dirhams for a few
-  // hundred milliseconds before the client swaps them").
+  // visitor with no cookie yet, there's a brief flash before it resolves.
+  // Low-stakes now that there's a single market/currency (AED) — this
+  // flash used to matter more when it could show the wrong currency
+  // briefly; now it's just the "ready" gate settling.
   //
   // If you want to eliminate that flash entirely while KEEPING static
   // rendering, the real fix is Next.js Partial Prerendering (PPR): a
@@ -213,7 +204,6 @@ export default function RootLayout({
               email: 'hello@pepcolab.com',
               areaServed: [
                 { '@type': 'Country', name: 'United Arab Emirates' },
-                { '@type': 'Country', name: 'United Kingdom' },
               ],
             }),
           }}
@@ -228,7 +218,7 @@ export default function RootLayout({
               '@type': 'WebSite',
               name: 'PepcoLab',
               url: siteUrl,
-              inLanguage: ['en-AE', 'en-GB'],
+              inLanguage: ['en-AE'],
             }),
           }}
         />
@@ -244,43 +234,24 @@ export default function RootLayout({
               url: siteUrl,
               priceRange: 'AED 40 – AED 930',
               paymentAccepted: ['Credit Card', 'Apple Pay', 'Google Pay'],
-              currenciesAccepted: 'AED, GBP',
-              // FIX (Aug 2026): was 'GB' here while middleware.ts's
-              // DEFAULT_COUNTRY and countryContext.tsx's explicit "AE, the
-              // primary market" comment both treat AE as primary — this
-              // schema was the one place silently disagreeing. If UK is
-              // actually meant to be primary instead, change it back here
-              // AND in those two files together so all three stay in sync.
+              // MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — see
+              // the note on `alternates` above. Dropped GBP/UK from every
+              // spot in this file that previously declared them (this
+              // schema, the two above it, and the metadata/openGraph
+              // blocks up top) so structured data stops telling Google
+              // this ships to a market it doesn't currently serve.
+              currenciesAccepted: 'AED',
               address: {
                 '@type': 'PostalAddress',
                 addressCountry: 'AE',
               },
-              areaServed: ['United Arab Emirates', 'United Kingdom'],
+              areaServed: ['United Arab Emirates'],
             }),
           }}
         />
       </head>
 
       <body suppressHydrationWarning>
-        {/* Google tag (gtag.js) — moved here from the invalid spot inside
-            `metadata` (see GTAG_ID comment at top of file). Loaded with
-            next/script's afterInteractive strategy: runs after the page
-            becomes interactive so it doesn't block hydration or compete
-            with the checkout SDK below, but still fires early enough to
-            catch most pageview/engagement events. */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="gtag-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GTAG_ID}');
-          `}
-        </Script>
-
         <Script
           src="https://unpkg.com/@strabl-engineering/checkout-sdk@1.0.2/dist/index.global.js"
           strategy="lazyOnload"

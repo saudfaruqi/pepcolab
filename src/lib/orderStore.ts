@@ -22,12 +22,28 @@
 
 import { redis } from '@/lib/redis'
 
-export type OrderStatus = 'created' | 'updated' | 'processing' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
+// BUG FIX (Aug 2026): added 'awaiting_payment_mark'. Previously, when
+// createShopifyOrder() succeeded but the follow-up markShopifyOrderPaid()
+// call threw (see shopifyAdmin.ts fix — this failed on essentially every
+// order), the webhook handler's catch block saved status 'processing' with
+// no record of the Shopify order that had, in fact, already been created.
+// A STRABL retry would then see no 'created'/'updated' record, assume
+// nothing existed yet, and call createShopifyOrder() again — a real
+// duplicate order in Shopify, every retry, for as long as mark-paid kept
+// failing. 'awaiting_payment_mark' + shopifyOrderId below closes that gap:
+// once the Shopify order exists, that fact is saved BEFORE attempting to
+// mark it paid, so a retry can find and reuse it instead of creating a
+// second one.
+export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
 
 export interface OrderRecord {
   orderShortCode: string
   orderUuid: string
   status: OrderStatus
+  // Set as soon as createShopifyOrder() succeeds, before the mark-paid
+  // attempt — see the OrderStatus comment above for why this ordering
+  // matters. Lets a retry skip re-creating the Shopify order.
+  shopifyOrderId?: string
   failureReason?: string
   email: string
   phone?: string

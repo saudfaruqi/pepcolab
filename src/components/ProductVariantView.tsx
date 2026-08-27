@@ -260,10 +260,10 @@ export default function ProductVariantView({ product }: Props) {
 
         <div style={{ height: 1, background: '#f0f0f0', margin: '18px 0' }} />
 
-        {/* Dormant while UK_CATALOGUE_LIVE is false (currently every
-            product ships to both markets) — wired up now so it's not
-            forgotten when per-market catalogues actually launch. See
-            components/MarketGuard.tsx. */}
+        {/* MarketGuard is a pass-through now — single market, nothing to
+            guard. Left wrapped here (rather than removed) so re-adding a
+            second market later only means updating MarketGuard/pricing.ts,
+            not re-wiring every product page. See components/MarketGuard.tsx. */}
         <MarketGuard tags={product.tags ?? []}>
           <ProductActions
             product={product}

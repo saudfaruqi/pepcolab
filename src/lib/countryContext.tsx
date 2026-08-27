@@ -4,15 +4,18 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 
 const COUNTRY_KEY = 'pepcolab_country'
 
-// PepcoLab only operates in these two markets. Any visitor detected as
-// something else (or where detection fails) falls back to AE, the
-// primary market — never a third currency we don't actually support.
-const SUPPORTED_COUNTRIES = ['AE', 'GB'] as const
+// MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — GB removed. This
+// was previously ['AE', 'GB'], with a currency switcher, GBP pricing, and
+// UK checkout all live in the UI despite the UK not actually being a
+// fulfilled market. Any visitor detected as anything other than AE (or
+// where detection fails) now falls back to AE — the only market this
+// actually supports — rather than being offered a currency/checkout path
+// that doesn't work.
+const SUPPORTED_COUNTRIES = ['AE'] as const
 type SupportedCountry = (typeof SUPPORTED_COUNTRIES)[number]
 
 const COUNTRY_CURRENCY: Record<SupportedCountry, string> = {
   AE: 'AED',
-  GB: 'GBP',
 }
 
 function normaliseCountry(input: string | null | undefined): SupportedCountry {

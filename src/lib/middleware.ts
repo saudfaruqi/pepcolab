@@ -2,19 +2,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// PepcoLab only operates in these two markets — same whitelist
-// countryContext.tsx enforces client-side. Without clamping here too, a
-// visitor from anywhere else (any Vercel-detected country code) would flow
-// a raw, unsupported country straight into Shopify's @inContext query.
-const SUPPORTED_COUNTRIES = new Set(['AE', 'GB'])
+// MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — same whitelist
+// countryContext.tsx enforces client-side, trimmed the same way there.
+// Without clamping here too, a visitor from anywhere else (any
+// Vercel-detected country code) would flow a raw, unsupported country
+// straight into Shopify's @inContext query.
+const SUPPORTED_COUNTRIES = new Set(['AE'])
 
-// Matches the "AE, the primary market" comment already in countryContext.tsx.
-// NOTE: this conflicts with layout.tsx's structured data, which only ever
-// declares GBP/en_GB/GB — worth deciding deliberately which market is
-// actually primary (or whether both need first-class treatment, given the
-// stated goal of ranking in UAE *and* UK) rather than leaving the two files
-// disagreeing silently. Change here + the two spots noted in
-// countryContext.tsx together if you settle on GB instead.
 const DEFAULT_COUNTRY = 'AE'
 
 // SEO FIX (Aug 2026 audit): product URLs were all indexed as
@@ -25,6 +19,21 @@ const DEFAULT_COUNTRY = 'AE'
 // of splitting across two.
 const LEGACY_PRODUCT_UAE_RE = /^\/products\/([^/]+)-uae\/?$/i
 
+// SEO FIX (Aug 2026 audit): GSC flagged /products/glp-1-tera-5mg as a hard
+// 404 — a discontinued/renamed SKU with no current product at that slug
+// (confirmed against the live CATEGORIES/product export: nothing named
+// "glp-1-tera" exists any more). A bare 404 throws away whatever link
+// equity and search visibility that URL had built up; a 301 to the nearest
+// still-live, topically-relevant page consolidates it instead. GLP-1-class
+// compounds map to the "metabolic" category, so that's the target here.
+//
+// Add future discontinued/renamed product slugs to this map rather than
+// letting them 404 — key is the neutral (no "-uae") slug, value is the
+// path to redirect to.
+const DISCONTINUED_PRODUCT_REDIRECTS: Record<string, string> = {
+  'glp-1-tera-5mg': '/products/category/metabolic',
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const legacyMatch = pathname.match(LEGACY_PRODUCT_UAE_RE)
@@ -32,6 +41,16 @@ export function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = `/products/${legacyMatch[1]}`
     return NextResponse.redirect(url, 301)
+  }
+
+  const discontinuedMatch = pathname.match(/^\/products\/([^/]+)\/?$/i)
+  if (discontinuedMatch) {
+    const target = DISCONTINUED_PRODUCT_REDIRECTS[discontinuedMatch[1].toLowerCase()]
+    if (target) {
+      const url = request.nextUrl.clone()
+      url.pathname = target
+      return NextResponse.redirect(url, 301)
+    }
   }
 
   // `request.geo` was Vercel Edge-specific and has been removed in newer

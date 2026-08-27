@@ -109,12 +109,31 @@ export async function fetchShopifyOrder(orderId: string) {
 }
 
 export async function markShopifyOrderPaid(orderId: string, strablOrderUuid: string) {
+  // BUG FIX (Aug 2026): this previously sent kind: 'capture'. A 'capture'
+  // transaction is Shopify's second half of a two-step Shopify-native
+  // authorize→capture flow, and REQUIRES a parent_id pointing at an
+  // existing 'authorization' transaction already on the order. But
+  // createShopifyOrder() never creates one — the order is created with
+  // financial_status: 'pending' and no transactions block at all — so
+  // there was never a parent to capture against. Every single call here
+  // failed with "422 Unable to find parent transaction", which is why
+  // STRABL orders have been sitting as "Payment pending / Unfulfilled" in
+  // Shopify regardless of order — this wasn't specific to the 4 orders
+  // that triggered the alert, it's every order that has gone through this
+  // path.
+  //
+  // 'sale' is the correct transaction kind for money that was ALREADY
+  // taken by an external gateway (STRABL, in this case) — it records a
+  // complete one-step payment with no Shopify-native authorization
+  // required beforehand, which is exactly this situation. No parent_id
+  // needed. Omitting `amount` defaults to the order's full total, which is
+  // correct here since STRABL only ever charges the full order amount.
   const res = await fetch(adminUrl(`orders/${orderId}/transactions.json`), {
     method: 'POST',
     headers: adminHeaders(),
     body: JSON.stringify({
       transaction: {
-        kind: 'capture',
+        kind: 'sale',
         status: 'success',
         gateway: 'STRABL',
         message: `Paid via STRABL. Order UUID: ${strablOrderUuid}`,

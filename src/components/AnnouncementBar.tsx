@@ -2,24 +2,22 @@
 import { X } from 'lucide-react'
 import { useState } from 'react'
 
-// NOTE: "Next day UK delivery" below is what was requested, but the current
-// inventory export shows 0 units on hand at every UK location row (all
-// marked "not stocked") — every UK order is presumably fulfilled from the
-// UAE. Confirm actual UK dispatch/transit time with Mohammed before this
-// goes live, or the claim may not be accurate. Also removed "GLP-2 (Tera)
-// now in stock" — no such product exists in the catalogue (GLP,
-// the closest match, isn't stocked as "GLP-2" and wasn't in-stock either).
+// MARKET FIX (Aug 2026): removed "Next day delivery available in the UK" —
+// PepcoLab is UAE-only right now (see countryContext.tsx/middleware.ts),
+// so this was an active false-advertising claim on every page, not just a
+// stale one. The prior comment here already flagged the UK delivery timing
+// itself as unconfirmed even under the old dual-market plan; moot now that
+// there's no UK fulfilment to advertise at all. Also still doesn't include
+// "GLP-2 (Tera) now in stock" — no such product exists in the catalogue.
 const ITEMS = [
   '✦ Free shipping on all orders',
-  '✦ Next day delivery available in the UK',
-  '✦ Cold-chain verified packaging on every order',
   '✦ Same-day dispatch on orders before 2 pm',
+  '✦ Cold-chain verified packaging on every order',
   '✦ Freedom Diagnostics–verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',
   '✦ Free shipping on all orders',
-  '✦ Next day delivery available in the UK',
-  '✦ Cold-chain verified packaging on every order',
   '✦ Same-day dispatch on orders before 2 pm',
+  '✦ Cold-chain verified packaging on every order',
   '✦ Freedom Diagnostics–verified COA for every batch',
   '✦ Research grade — ≥98% purity guaranteed',
 ]

@@ -54,35 +54,26 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 export default function Nav() {
   const { totalQuantity, openCart } = useCart()
   const { count: wishlistCount } = useWishlist()
-  const { country, currency, setCountry, ready } = useCountry()
+  const { country, currency, ready } = useCountry()
   const pathname = usePathname()
 
   const [mobileOpen,     setMobileOpen]     = useState(false)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
   const [searchOpen,     setSearchOpen]     = useState(false)
   const [activeDrop,     setActiveDrop]     = useState<string | null>(null)
-  const [currencyOpen,   setCurrencyOpen]   = useState(false)
   const [searchQuery,    setSearchQuery]    = useState('')
   const [scrolled,       setScrolled]       = useState(false)
   const [products,       setProducts]       = useState<Product[]>([])
 
-  // Manual override for visitors whose IP-detected country/currency is
-  // wrong or unreliable (VPNs, corporate proxies, etc). useCountry()
-  // already exposes setCountry — this just gives it a UI.
-  const COUNTRY_OPTIONS: { code: string; label: string; currency: string }[] = [
-    { code: 'AE', label: 'UAE',            currency: 'AED' },
-    { code: 'GB', label: 'United Kingdom', currency: 'GBP' },
-  ]
+  // MARKET FIX (Aug 2026): PepcoLab is UAE-only for now (see
+  // countryContext.tsx) — this switcher used to let visitors pick between
+  // UAE/AED and United Kingdom/GBP. With only one supported market, a
+  // switcher offering a single option is pointless UI, so it's removed
+  // below in favour of a plain "AED" label. Re-add an options array like
+  // this alongside a real dropdown if a second market comes back.
 
   const searchRef      = useRef<HTMLInputElement>(null)
   const dropTimer      = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Separate timer for the currency dropdown — it previously opened/closed
-  // on raw onMouseEnter/onMouseLeave with no debounce and no hover
-  // handlers on the dropdown panel itself, so crossing the small visual
-  // gap between the trigger and the panel (top: calc(100% + 6px) on
-  // .nav-drop) closed it before you could reach the options. Mirrors
-  // dropTimer's 130ms debounce below.
-  const currencyTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!ready) return  // ← wait for detection
@@ -131,21 +122,6 @@ export default function Nav() {
 
   const openDrop  = (l: string) => { if (dropTimer.current) clearTimeout(dropTimer.current); setActiveDrop(l) }
   const closeDrop = ()          => { dropTimer.current = setTimeout(() => setActiveDrop(null), 130) }
-
-  // Same debounce pattern as openDrop/closeDrop above, applied to the
-  // currency switcher so hovering across the trigger→panel gap doesn't
-  // slam it shut. openCurrency also cancels any pending close, so
-  // re-entering (either the trigger or the panel) before the 130ms
-  // timeout fires keeps it open.
-  const openCurrency  = () => { if (currencyTimer.current) clearTimeout(currencyTimer.current); setCurrencyOpen(true) }
-  const closeCurrency = () => { currencyTimer.current = setTimeout(() => setCurrencyOpen(false), 130) }
-  // Click toggle for touch/keyboard users — also clears any pending close
-  // so a click right after a hover-triggered close-timer doesn't get
-  // silently undone by that stale timeout finishing a moment later.
-  const toggleCurrency = () => {
-    if (currencyTimer.current) clearTimeout(currencyTimer.current)
-    setCurrencyOpen(o => !o)
-  }
 
   const categoryCounts = products.reduce<Record<string, number>>((acc, p) => {
     const c = p.category.toLowerCase(); acc[c] = (acc[c] ?? 0) + 1; return acc
@@ -773,24 +749,9 @@ export default function Nav() {
           <span>Search peptides…</span>
         </button>
 
-        {/* Currency / region switcher — mobile */}
-        <div style={{ margin: '0 16px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {COUNTRY_OPTIONS.map(opt => (
-            <button
-              key={opt.code}
-              onClick={() => setCountry(opt.code)}
-              style={{
-                padding: '7px 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
-                border: opt.code === country ? '1.5px solid #0d0d0d' : '1px solid rgba(13,13,13,.12)',
-                background: opt.code === country ? '#0d0d0d' : '#fff',
-                color: opt.code === country ? '#fff' : '#0d0d0d',
-                cursor: 'pointer',
-              }}
-            >
-              {opt.currency}
-            </button>
-          ))}
-        </div>
+        {/* MARKET FIX (Aug 2026): mobile currency/region switcher removed —
+            see the desktop nav-actions block above for the same change and
+            why. Single market (AE/AED) now, nothing to switch between. */}
 
         <div className="mob-links">
           {NAV_LINKS.map(link => {
@@ -897,35 +858,16 @@ export default function Nav() {
 
           {/* Actions */}
           <div className="nav-actions">
-            {/* Currency / region switcher */}
-            <div className="nav-link-wrap"
-              onMouseEnter={openCurrency}
-              onMouseLeave={closeCurrency}
+            {/* MARKET FIX (Aug 2026): was an interactive currency/region
+                switcher (AED/UAE vs GBP/UK). Single-market now, so this is
+                a static label instead of a dropdown with one option in it. */}
+            <span
+              className="nav-search-btn"
+              style={{ minWidth: 0, cursor: 'default' }}
+              aria-label="Currency: AED"
             >
-              <button className="nav-search-btn" onClick={toggleCurrency} style={{ minWidth: 0 }}>
-                <span>{ready ? currency : '···'}</span>
-                <ChevronDown open={currencyOpen} />
-              </button>
-              {currencyOpen && (
-                <div className="nav-drop"
-                  style={{ right: 0, left: 'auto', minWidth: 180 }}
-                  onMouseEnter={openCurrency}
-                  onMouseLeave={closeCurrency}
-                >
-                  {COUNTRY_OPTIONS.map(opt => (
-                    <button
-                      key={opt.code}
-                      onClick={() => { setCountry(opt.code); setCurrencyOpen(false) }}
-                      className="nav-drop-item"
-                      style={{ width: '100%', border: 'none', background: opt.code === country ? '#f4f3f0' : 'none', textAlign: 'left' }}
-                    >
-                      <span className="nav-drop-item-label">{opt.label}</span>
-                      <span className="nav-drop-item-sub">{opt.currency}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+              <span>{ready ? currency : '···'}</span>
+            </span>
 
             {/* Search */}
             <button className="nav-search-btn" onClick={() => setSearchOpen(true)}>

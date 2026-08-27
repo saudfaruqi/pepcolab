@@ -5,7 +5,6 @@ import { ShoppingCart, Download, CheckCircle, ShieldCheck, FileText, ExternalLin
 import { resolveLocalCoa } from '@/lib/coaIndex'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
-import { getProductByHandle } from '@/lib/shopify'
 import { formatPrice } from '@/lib/utils'
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
 import { isWhatsAppConfigured, whatsAppProductLink } from '@/lib/whatsapp'
@@ -34,27 +33,9 @@ export default function ProductActions({ product: initialProduct, selectedVarian
   const [activeTab, setActiveTab] = useState(0)
   const [quantity,  setQuantity]  = useState(1)
   const { addItem } = useCart()
-  const { country, ready } = useCountry()
+  const { ready } = useCountry()
 
-  // The page is statically built for AE. Once we know the visitor is
-  // actually GB, re-fetch this product's live GB pricing/variants and
-  // swap it in. Falls back silently to the AE-built data on any error.
-  const [liveProduct, setLiveProduct] = useState<Product>(initialProduct)
-
-  useEffect(() => {
-    if (!ready || country === 'AE') return // AE data is already correct
-    let cancelled = false
-    getProductByHandle(initialProduct.slug, country)
-      .then((fresh) => {
-        if (!cancelled && fresh) setLiveProduct(fresh as unknown as Product)
-      })
-      .catch(() => {
-        // Keep showing the AE-built data — never leave the UI blank.
-      })
-    return () => { cancelled = true }
-  }, [ready, country, initialProduct.slug])
-
-  const p = liveProduct
+  const p = initialProduct
 
   // Currency code embedded by normaliseProduct; fall back to "AED"
   const currencyCode: string = (p as any).currencyCode ?? 'AED'
@@ -73,11 +54,11 @@ export default function ProductActions({ product: initialProduct, selectedVarian
     }
   }, [p, selectedVariantId, currencyCode])
 
-  // Re-sync the selected variant whenever live country-swapped data lands
-  // (AE → GB) — only if the current selection no longer exists on the new
-  // variant list. Shopify variant IDs are stable across markets, so this
-  // avoids resetting (and re-triggering ProductVariantView's image sync)
-  // on every currency refresh when the same variant is still valid.
+  // Re-syncs the selected variant if it's ever missing from p.variants
+  // (e.g. a stale variant id from a previous render of this product).
+  // Left in place even though `p` is now static — cheap safety net, no
+  // longer tied to a country-driven data swap now that there's only one
+  // market (see the removed live-refetch effect above).
   useEffect(() => {
     const stillValid = p.variants?.some((v) => v.id === selectedVariantId)
     if (!stillValid) {

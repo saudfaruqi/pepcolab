@@ -313,7 +313,7 @@ export async function POST(req: NextRequest) {
   // that was missing before: order_failed used to only log to the server
   // console, so a customer with a failed payment had literally nothing to
   // look up.
-  const buildOrderRecord = (status: OrderRecord['status']): OrderRecord => {
+  const buildOrderRecord = (status: OrderRecord['status'], shopifyOrderId?: string): OrderRecord => {
     const products = resolvedProducts.map((item: any) => ({
       title: item.title || 'Product',
       price: Number(item.price) || 0,
@@ -329,6 +329,7 @@ export async function POST(req: NextRequest) {
       orderShortCode,
       orderUuid: orderUuid || '',
       status,
+      shopifyOrderId,
       failureReason: orderUpdate.failureReason || undefined,
       email: (customerUpdate.email || '').toLowerCase().trim(),
       phone: (customerUpdate.phoneNumber || '').trim() || undefined,
@@ -437,6 +438,11 @@ export async function POST(req: NextRequest) {
   switch (type) {
     case 'order_created':
     case 'order_updated': {
+      // Declared outside the try block (rather than as a `const` inside
+      // it, as before) so the catch block below can see whether a Shopify
+      // order was actually created before markShopifyOrderPaid failed —
+      // see the catch block for why that matters.
+      let shopifyOrder: { id: string; name?: string } | null = null
       try {
         // Idempotency: order_created and order_updated are genuinely
         // separate webhook events (different event IDs, not just retries
@@ -451,9 +457,28 @@ export async function POST(req: NextRequest) {
           break
         }
 
-        const { lineItems, hasCustomLineItem, countryCode, customerInfo } = await buildShopifyOrderInputs()
+        // BUG FIX (Aug 2026): this is the other half of the
+        // 'awaiting_payment_mark' fix (see orderStore.ts) — if a PRIOR
+        // attempt on this same order got as far as creating the Shopify
+        // order but then failed to mark it paid, that Shopify order
+        // already exists. Skip straight to retrying markShopifyOrderPaid
+        // on it instead of falling through to createShopifyOrder again,
+        // which is what was producing a fresh duplicate order on every
+        // single STRABL retry.
+        shopifyOrder =
+          existing?.status === 'awaiting_payment_mark' && existing.shopifyOrderId
+            ? { id: existing.shopifyOrderId }
+            : null
 
-        if (lineItems.length === 0) {
+        if (shopifyOrder) {
+          console.info(`[webhook] Order ${orderShortCode} already has Shopify order ${shopifyOrder.id}, retrying mark-paid only`)
+        }
+
+        const { lineItems, hasCustomLineItem, countryCode, customerInfo } = shopifyOrder
+          ? { lineItems: [], hasCustomLineItem: false, countryCode: '', customerInfo: {} as any }
+          : await buildShopifyOrderInputs()
+
+        if (!shopifyOrder && lineItems.length === 0) {
           // Now genuinely rare — only when STRABL sent no usable price at
           // all (not just a missing variant mapping, which is handled
           // below via a custom line item instead). Payment was already
@@ -493,15 +518,27 @@ Please create this order manually in Shopify and mark it paid. The customer has 
           // never resolve.
           break
         }
-        if (!customerInfo.email) console.warn('[webhook] No customer email found in STRABL order')
+        if (!shopifyOrder && !customerInfo.email) console.warn('[webhook] No customer email found in STRABL order')
 
-        const shopifyOrder = await createShopifyOrder(
-          lineItems,
-          countryCode,
-          customerInfo,
-          orderShortCode,
-          hasCustomLineItem ? { extraTags: ['strabl-custom-item'] } : undefined
-        )
+        if (!shopifyOrder) {
+          shopifyOrder = await createShopifyOrder(
+            lineItems,
+            countryCode,
+            customerInfo,
+            orderShortCode,
+            hasCustomLineItem ? { extraTags: ['strabl-custom-item'] } : undefined
+          )
+
+          // BUG FIX (Aug 2026): save this the moment the Shopify order
+          // exists — BEFORE attempting markShopifyOrderPaid below, which is
+          // the step that was failing on essentially every order (see
+          // shopifyAdmin.ts). If that call throws, the catch block at the
+          // bottom of this case no longer loses track of the order that
+          // was already created; a retry will find it via
+          // 'awaiting_payment_mark' above and skip straight to retrying
+          // mark-paid instead of calling createShopifyOrder again.
+          await saveOrderRecord(buildOrderRecord('awaiting_payment_mark', shopifyOrder.id))
+        }
 
         if (hasCustomLineItem) {
           // Not urgent (the order WAS created successfully), but flagged
@@ -522,7 +559,7 @@ Worth a quick check that stock/fulfillment for the real product is handled manua
         }
 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
-        const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
+        const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated', shopifyOrder.id)
         await saveOrderRecord(record)
 
         // This is the actual fix for "how does the customer find their
@@ -567,9 +604,23 @@ Worth a quick check that stock/fulfillment for the real product is handled manua
         // the customer from them having gotten something wrong, when
         // really their order was just still being sorted out on our end
         // (confirmed on SOR-QJJJCS: real money taken, real confusion when
-        // looked up before the retry succeeded). A 'processing' record
-        // lets the page say something true and reassuring instead.
-        const processingRecord = buildOrderRecord('processing')
+        // looked up before the retry succeeded). A 'processing'/
+        // 'awaiting_payment_mark' record lets the page say something true
+        // and reassuring instead.
+        //
+        // BUG FIX (Aug 2026): this used to unconditionally save 'processing'
+        // here, with no shopifyOrderId — even when createShopifyOrder had
+        // already succeeded and only the later markShopifyOrderPaid call
+        // was what threw. That silently discarded the "a Shopify order for
+        // this already exists" fact, so the next STRABL retry saw no
+        // 'awaiting_payment_mark' record and called createShopifyOrder
+        // again — the duplicate-order bug. If shopifyOrder is set here, a
+        // Shopify order genuinely exists, so preserve that as
+        // 'awaiting_payment_mark' (with its id) instead of downgrading to
+        // plain 'processing'.
+        const processingRecord = shopifyOrder
+          ? buildOrderRecord('awaiting_payment_mark', shopifyOrder.id)
+          : buildOrderRecord('processing')
         await saveOrderRecord(processingRecord)
 
         // This is the important one: STRABL has already taken the
