@@ -307,6 +307,60 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // BUG FIX (Aug 2026): resolve customer info (email/phone/name/address)
+  // ONCE per request, same recovery pattern as resolvedProducts above.
+  // Previously this recovery only happened inside buildShopifyOrderInputs()
+  // — which built and cached a full recovered customer record for the
+  // Shopify order itself — but buildOrderRecord() (which writes the
+  // /track-order lookup record) read customerUpdate.email/.firstName/etc
+  // directly, completely bypassing that recovery. Any event with a sparse
+  // payload (e.g. an order_updated retry with no customerUpdate at all —
+  // exactly what SOR-CHFSPS's stored record shows: email: "" even though
+  // the shipping cache for the same order has the real email) got saved
+  // to the lookup record with a blank email. A customer could never find
+  // that order on /track-order even after the underlying payment/shipping
+  // data had already been correctly recovered elsewhere for the actual
+  // Shopify order.
+  //
+  // Resolving this once, up front, and having both buildOrderRecord and
+  // buildShopifyOrderInputs read from the same resolved value closes that
+  // gap and removes the duplicated recovery logic that used to live only
+  // inside buildShopifyOrderInputs.
+  const currentShipping: CachedShipping = {
+    email: customerUpdate.email || '',
+    phone: customerUpdate.phoneNumber || '',
+    firstName: customerUpdate.firstName || (customerUpdate.shipping || {}).first_name || '',
+    lastName: customerUpdate.lastName || (customerUpdate.shipping || {}).last_name || '',
+    address1: (customerUpdate.shipping || {}).address_1 || '',
+    address2: (customerUpdate.shipping || {}).address_2 || '',
+    city: (customerUpdate.shipping || {}).city || '',
+    postalCode: (customerUpdate.shipping || {}).postcode || '',
+    countryCode: normalizeCountryCode((customerUpdate.shipping || {}).country),
+  }
+
+  let resolvedCustomer: CachedShipping = currentShipping
+  if (isUsableAddress(currentShipping)) {
+    // Good address+contact info on this event — cache it so a later,
+    // sparser event for the same order can recover it.
+    await cacheShippingIfUsable(orderShortCode, currentShipping)
+  } else {
+    const cached = await getCachedShipping(orderShortCode)
+    if (cached) {
+      console.info(`[webhook] Recovered customer/shipping info for ${orderShortCode} from cache (current event had none)`)
+      resolvedCustomer = {
+        email: currentShipping.email || cached.email,
+        phone: currentShipping.phone || cached.phone,
+        firstName: currentShipping.firstName || cached.firstName,
+        lastName: currentShipping.lastName || cached.lastName,
+        address1: cached.address1,
+        address2: cached.address2,
+        city: cached.city,
+        postalCode: cached.postalCode,
+        countryCode: cached.countryCode,
+      }
+    }
+  }
+
   // Builds the /track-order lookup record from whatever this event gave us.
   // Called for every event type below (including failures) so a customer
   // can look up an order regardless of how it ended — this is the piece
@@ -322,8 +376,6 @@ export async function POST(req: NextRequest) {
       variantId: resolveVariantGid(item) || undefined,
     }))
     const total = products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
-    const firstName = customerUpdate.firstName || ''
-    const lastName = customerUpdate.lastName || ''
 
     return {
       orderShortCode,
@@ -331,9 +383,13 @@ export async function POST(req: NextRequest) {
       status,
       shopifyOrderId,
       failureReason: orderUpdate.failureReason || undefined,
-      email: (customerUpdate.email || '').toLowerCase().trim(),
-      phone: (customerUpdate.phoneNumber || '').trim() || undefined,
-      customerName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
+      // BUG FIX (Aug 2026): now sourced from resolvedCustomer (recovered
+      // from cache when this event's own payload was sparse) instead of
+      // raw customerUpdate — see the comment above resolvedCustomer.
+      email: resolvedCustomer.email.toLowerCase().trim(),
+      phone: resolvedCustomer.phone.trim() || undefined,
+      customerName:
+        [resolvedCustomer.firstName, resolvedCustomer.lastName].filter(Boolean).join(' ') || undefined,
       products,
       currency: 'AED', // STRABL webhook payloads observed so far are AED-only per merchant config
       total,
@@ -356,8 +412,16 @@ export async function POST(req: NextRequest) {
   // linked to catalogue/inventory, but the order itself still gets
   // created automatically instead of needing manual entry every time a
   // Payment Link order comes in.
+  //
+  // BUG FIX (Aug 2026): this used to redo the exact same cache/recovery
+  // logic that now lives in the resolvedCustomer block above (near-
+  // identical code, computed twice, and the two copies were exactly what
+  // let buildOrderRecord and the actual Shopify order end up with
+  // different customer data for the same event). Now just reads
+  // resolvedCustomer directly — single source of truth.
   const buildShopifyOrderInputs = async () => {
-    const shippingAddress = customerUpdate.shipping || {}
+    const { email, phone, firstName, lastName, address1, address2, city, postalCode, countryCode } =
+      resolvedCustomer
 
     const lineItems: AdminLineItemInput[] = resolvedProducts
       .map((item: any) => {
@@ -382,45 +446,6 @@ export async function POST(req: NextRequest) {
 
     const hasCustomLineItem = lineItems.some((li) => !li.variant_id)
 
-    let email = customerUpdate.email || ''
-    let phone = customerUpdate.phoneNumber || ''
-    let address1 = shippingAddress.address_1 || ''
-    let address2 = shippingAddress.address_2 || ''
-    let city = shippingAddress.city || ''
-    let postalCode = shippingAddress.postcode || ''
-    let countryCode = normalizeCountryCode(shippingAddress.country)
-    let firstName = customerUpdate.firstName || shippingAddress.first_name || ''
-    let lastName = customerUpdate.lastName || shippingAddress.last_name || ''
-
-    const currentShipping: CachedShipping = {
-      email, phone, firstName, lastName, address1, address2, city, postalCode, countryCode,
-    }
-
-    if (isUsableAddress(currentShipping)) {
-      // Good address on this event — cache it so a later event for the
-      // same order (e.g. order_updated with a stripped-down payload) can
-      // recover it instead of falling back to blanks.
-      await cacheShippingIfUsable(orderShortCode, currentShipping)
-    } else {
-      // This event didn't carry a real address (common on order_updated —
-      // see SOR-QJJJCS) — try to recover the real one from an earlier
-      // event on this same order rather than sending Shopify an order
-      // with a blank/default address.
-      const cached = await getCachedShipping(orderShortCode)
-      if (cached) {
-        console.info(`[webhook] Recovered shipping address for ${orderShortCode} from cache (current event had none)`)
-        email = email || cached.email
-        phone = phone || cached.phone
-        firstName = firstName || cached.firstName
-        lastName = lastName || cached.lastName
-        address1 = cached.address1
-        address2 = cached.address2
-        city = cached.city
-        postalCode = cached.postalCode
-        countryCode = cached.countryCode
-      }
-    }
-
     return {
       lineItems,
       hasCustomLineItem,
@@ -434,6 +459,7 @@ export async function POST(req: NextRequest) {
       },
     }
   }
+
 
   switch (type) {
     case 'order_created':
@@ -503,8 +529,8 @@ export async function POST(req: NextRequest) {
             text: `Payment succeeded but STRABL didn't send a usable price for any product on this order, so no line item could be created — not even as a custom item.
 
 STRABL order: ${orderShortCode}
-Customer email: ${customerUpdate.email || '(none)'}
-Customer name: ${[customerUpdate.firstName, customerUpdate.lastName].filter(Boolean).join(' ') || '(none)'}
+Customer email: ${resolvedCustomer.email || '(none)'}
+Customer name: ${[resolvedCustomer.firstName, resolvedCustomer.lastName].filter(Boolean).join(' ') || '(none)'}
 Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
 
 Please create this order manually in Shopify and mark it paid. The customer has already been sent their order confirmation email, so they're expecting this order — this alert is about the Shopify-side record, not the customer experience.`,
@@ -551,11 +577,11 @@ Please create this order manually in Shopify and mark it paid. The customer has 
             subject: `ℹ️ Order created with an unmapped product — check inventory (${orderShortCode})`,
             text: `Order ${orderShortCode} was created successfully in Shopify, but at least one line item had no matching variant (likely a STRABL Payment Link order), so it was added as a custom item instead — not linked to catalogue/inventory.
 
-Shopify order: ${shopifyOrder.name || shopifyOrder.id}
-Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
+            Shopify order: ${shopifyOrder.name || shopifyOrder.id}
+            Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
 
-Worth a quick check that stock/fulfillment for the real product is handled manually for this one, since Shopify won't have decremented it automatically.`,
-          })
+            Worth a quick check that stock/fulfillment for the real product is handled manually for this one, since Shopify won't have decremented it automatically.`,
+                      })
         }
 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
@@ -635,8 +661,8 @@ Worth a quick check that stock/fulfillment for the real product is handled manua
 
 STRABL order: ${orderShortCode || '(no short code)'}
 STRABL order UUID: ${orderUuid || '(none)'}
-Customer email: ${customerUpdate.email || '(none)'}
-Customer name: ${[customerUpdate.firstName, customerUpdate.lastName].filter(Boolean).join(' ') || '(none)'}
+Customer email: ${resolvedCustomer.email || '(none)'}
+Customer name: ${[resolvedCustomer.firstName, resolvedCustomer.lastName].filter(Boolean).join(' ') || '(none)'}
 Products: ${JSON.stringify(orderUpdate.products || [], null, 2)}
 
 Error: ${err.message}

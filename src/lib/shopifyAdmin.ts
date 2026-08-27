@@ -93,7 +93,7 @@ export async function createShopifyOrder(
   }
 
   const data = await res.json()
-  return data.order
+  return data.order as { id: string; name?: string }
 }
 
 export async function fetchShopifyOrder(orderId: string) {
