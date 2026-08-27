@@ -13,6 +13,7 @@
 // approve/reject links from the submit route) before they're publicly
 // visible — a basic spam/abuse gate given there's no admin login system.
 import { randomBytes, randomUUID } from 'crypto'
+import { unstable_cache, revalidateTag } from 'next/cache'
 import { redis } from '@/lib/redis'
 
 export interface Review {
@@ -40,6 +41,7 @@ export interface Review {
 const reviewKey = (id: string) => `review:${id}`
 const PENDING_SET = 'reviews:pending' // sorted set, score = submitted-at
 const APPROVED_SET = 'reviews:approved' // sorted set, score = approved-at
+const REVIEWS_CACHE_TAG = 'reviews:approved:cache' // next/cache tag, see getApprovedReviews below
 
 const MODERATION_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000 // 14 days
 
@@ -99,6 +101,9 @@ export async function approveReview(id: string): Promise<void> {
   await redis.set(reviewKey(id), review)
   await redis.zrem(PENDING_SET, id)
   await redis.zadd(APPROVED_SET, { score: Date.now(), member: id })
+  // Without this, a newly-approved review wouldn't show up on the product
+  // page until getApprovedReviewsCached's own 60s window happened to elapse.
+  revalidateTag(REVIEWS_CACHE_TAG)
 }
 
 export async function rejectReview(id: string): Promise<void> {
@@ -109,22 +114,51 @@ export async function rejectReview(id: string): Promise<void> {
   await redis.zrem(PENDING_SET, id)
 }
 
-export async function getApprovedReviews(limit = 20, productSlug?: string): Promise<Review[]> {
-  try {
-    // Most recently approved first. When filtering by product we pull a
-    // larger window before slicing, since the set isn't per-product indexed
-    // and review volume per product is expected to stay small.
-    const pullCount = productSlug ? Math.max(limit * 10, 200) : limit
-    const ids = (await redis.zrange(APPROVED_SET, 0, pullCount - 1, { rev: true })) as string[]
-    if (ids.length === 0) return []
-    const reviews = await Promise.all(ids.map((id) => getReview(id)))
-    let result = reviews.filter((r): r is Review => r !== null)
-    if (productSlug) {
-      result = result.filter((r) => r.productSlug === productSlug)
+/**
+ * Why this is wrapped in unstable_cache
+ * --------------------------------------
+ * @upstash/redis makes its REST calls via `fetch(..., { cache: 'no-store' })`
+ * internally, with no way to override that per call. Calling it directly
+ * from a statically-generated/ISR route — like /products/[slug], which sets
+ * `revalidate = 60` — trips Next's DYNAMIC_SERVER_USAGE bailout during
+ * `next build` (and on every background ISR regen after). That error was
+ * being swallowed by the try/catch below, so the build "succeeded" but every
+ * product page baked in an empty reviews array permanently: ProductReviews
+ * skips its own client-side fetch whenever it's handed a non-null
+ * initialReviews prop, even an empty one, so reviews never appeared without
+ * a hard refresh path that bypassed the static HTML.
+ *
+ * unstable_cache runs its callback inside Next's own cache scope, decoupled
+ * from whichever page happened to call it — so a no-store fetch inside it no
+ * longer counts as dynamic usage against that page's render. Results are
+ * cached for 60s (matching the page's own `revalidate`) and invalidated
+ * immediately on approval via revalidateTag, instead of waiting out the
+ * window.
+ */
+const getApprovedReviewsCached = unstable_cache(
+  async (limit: number, productSlug?: string): Promise<Review[]> => {
+    try {
+      // Most recently approved first. When filtering by product we pull a
+      // larger window before slicing, since the set isn't per-product indexed
+      // and review volume per product is expected to stay small.
+      const pullCount = productSlug ? Math.max(limit * 10, 200) : limit
+      const ids = (await redis.zrange(APPROVED_SET, 0, pullCount - 1, { rev: true })) as string[]
+      if (ids.length === 0) return []
+      const reviews = await Promise.all(ids.map((id) => getReview(id)))
+      let result = reviews.filter((r): r is Review => r !== null)
+      if (productSlug) {
+        result = result.filter((r) => r.productSlug === productSlug)
+      }
+      return result.slice(0, limit)
+    } catch (err) {
+      console.error('[reviewStore] Failed to list approved reviews:', err)
+      return []
     }
-    return result.slice(0, limit)
-  } catch (err) {
-    console.error('[reviewStore] Failed to list approved reviews:', err)
-    return []
-  }
+  },
+  ['reviews:approved'],
+  { revalidate: 60, tags: [REVIEWS_CACHE_TAG] }
+)
+
+export async function getApprovedReviews(limit = 20, productSlug?: string): Promise<Review[]> {
+  return getApprovedReviewsCached(limit, productSlug)
 }
