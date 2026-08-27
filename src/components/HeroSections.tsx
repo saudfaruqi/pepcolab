@@ -2,17 +2,16 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { useCountry } from '@/lib/countryContext'
 
 export default function HeroCinematic() {
-  // FIX: the dispatch stat below hardcoded "UK Dispatch" regardless of who
-  // was looking at it — inconsistent with the footer, which already reads
-  // "Cold-Chain Dispatch" market-neutrally, and a bad first impression for
-  // a UAE visitor on a site that otherwise treats UAE as a first-class
-  // market (see AgeLocationGate, countryContext.tsx). Now reads the same
-  // resolved country every other component on the page already uses.
-  const { country } = useCountry()
-  const dispatchLabel = country === 'GB' ? 'UK Dispatch' : 'UAE Dispatch'
+  // FIX (superseded): this previously branched on `useCountry()` to show
+  // "UK Dispatch" vs "UAE Dispatch". That's no longer meaningful —
+  // lib/countryContext.tsx was separately cut down to UAE-only ("PepcoLab
+  // is UAE-only for now — GB removed"), so `country` is now the literal
+  // type 'AE' and can never be 'GB'; the comparison was dead code and
+  // failed the build (`This comparison appears to be unintentional...`).
+  // Hardcoding the one market countryContext.tsx actually supports.
+  const dispatchLabel = 'UAE Dispatch'
 
   useEffect(() => {
     ;(async () => {
