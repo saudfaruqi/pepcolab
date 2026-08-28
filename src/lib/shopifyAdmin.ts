@@ -128,6 +128,15 @@ export async function markShopifyOrderPaid(orderId: string, strablOrderUuid: str
   // required beforehand, which is exactly this situation. No parent_id
   // needed. Omitting `amount` defaults to the order's full total, which is
   // correct here since STRABL only ever charges the full order amount.
+  //
+  // BUG FIX 2 (Aug 2026): switching to kind:'sale' alone still 422'd with
+  // {"errors":{"kind":["sale is not a valid transaction"]}} (seen on
+  // SOR-MVFIBK). This is a known, undocumented Shopify REST quirk: a
+  // transaction with kind 'sale' or 'capture' created via the API (as
+  // opposed to one Shopify's own checkout generated) is rejected unless
+  // `source: 'external'` is also set. Shopify never documents this in the
+  // transaction resource reference — confirmed only by other developers
+  // hitting the identical error message.
   const res = await fetch(adminUrl(`orders/${orderId}/transactions.json`), {
     method: 'POST',
     headers: adminHeaders(),
@@ -136,6 +145,7 @@ export async function markShopifyOrderPaid(orderId: string, strablOrderUuid: str
         kind: 'sale',
         status: 'success',
         gateway: 'STRABL',
+        source: 'external',
         message: `Paid via STRABL. Order UUID: ${strablOrderUuid}`,
       },
     }),
