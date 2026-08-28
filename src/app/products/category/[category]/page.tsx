@@ -10,7 +10,7 @@
 //
 // Each category now has its own crawlable URL, unique <title>/description,
 // a unique H1 and intro paragraph (keyword-targeted at "<category> peptides
-// UK/UAE" search intent — not stuffed, just specific and honest), and
+// UAE" search intent — not stuffed, just specific and honest), and
 // CollectionPage + ItemList structured data. sitemap.ts should list these
 // once this ships — see the note added there.
 //
@@ -41,7 +41,7 @@ interface Props {
  * Per-category SEO copy. `title`/`description` feed generateMetadata;
  * `h1`/`intro` render on the page itself. Keep `intro` to 2–3 sentences —
  * long enough to carry keyword variants naturally (compound examples,
- * "UK & UAE", "research use"), short enough that it reads as genuinely
+ * "UAE", "research use"), short enough that it reads as genuinely
  * useful context rather than a keyword dump above the fold.
  */
 const CATEGORY_CONTENT: Record<
@@ -49,66 +49,66 @@ const CATEGORY_CONTENT: Record<
   { title: string; description: string; h1: string; intro: string; examples: string }
 > = {
   metabolic: {
-    title: 'Metabolic Peptides for Sale — Research Grade | UK & UAE',
+    title: 'Metabolic Peptides for Sale — Research Grade | UAE',
     description:
-      'Metabolic research peptides for laboratory use, shipped across the UK and UAE. GLP-1 class and related compounds, each batch supplied with a published Certificate of Analysis.',
+      'Metabolic research peptides for laboratory use, shipped across the UAE. GLP-1 class and related compounds, each batch supplied with a published Certificate of Analysis.',
     h1: 'Metabolic Research Peptides',
     intro:
-      'Metabolic-pathway compounds for laboratory research, including GLP-1 class peptides, sourced and HPLC-tested for identity and purity before dispatch to the UK and UAE. Every lot ships with its Certificate of Analysis, searchable in our public COA library.',
+      'Metabolic-pathway compounds for laboratory research, including GLP-1 class peptides, sourced and HPLC-tested for identity and purity before dispatch to the UAE. Every lot ships with its Certificate of Analysis, searchable in our public COA library.',
     examples: 'GLP-1 class compounds, metabolic-pathway research peptides',
   },
   hormonal: {
-    title: 'Hormonal Peptides for Sale — Research Grade | UK & UAE',
+    title: 'Hormonal Peptides for Sale — Research Grade | UAE',
     description:
-      'Hormonal and growth-factor research peptides for laboratory use, shipped across the UK and UAE. Purity and identity confirmed by third-party HPLC testing, COA published per batch.',
+      'Hormonal and growth-factor research peptides for laboratory use, shipped across the UAE. Purity and identity confirmed by third-party HPLC testing, COA published per batch.',
     h1: 'Hormonal Research Peptides',
     intro:
-      'Growth-hormone and hormonal-pathway peptides for laboratory research, tested by Freedom Diagnostics for identity and HPLC purity before release. Available for research use across the UK and UAE, with a downloadable Certificate of Analysis for every batch.',
+      'Growth-hormone and hormonal-pathway peptides for laboratory research, tested by Freedom Diagnostics for identity and HPLC purity before release. Available for research use across the UAE, with a downloadable Certificate of Analysis for every batch.',
     examples: 'growth hormone secretagogues, hormonal-pathway research peptides',
   },
   cognitive: {
-    title: 'Cognitive Peptides for Sale — Research Grade | UK & UAE',
+    title: 'Cognitive Peptides for Sale — Research Grade | UAE',
     description:
-      'Nootropic and cognitive-pathway research peptides for laboratory use, shipped across the UK and UAE. Third-party HPLC-verified purity, published Certificate of Analysis per batch.',
+      'Nootropic and cognitive-pathway research peptides for laboratory use, shipped across the UAE. Third-party HPLC-verified purity, published Certificate of Analysis per batch.',
     h1: 'Cognitive Research Peptides',
     intro:
-      'Nootropic and neuro-pathway peptides supplied for laboratory research across the UK and UAE, each batch HPLC-tested for identity and purity with the certificate published, not just asserted.',
+      'Nootropic and neuro-pathway peptides supplied for laboratory research across the UAE, each batch HPLC-tested for identity and purity with the certificate published, not just asserted.',
     examples: 'nootropic peptides, neuro-pathway research compounds',
   },
   recovery: {
-    title: 'Recovery Peptides for Sale — Research Grade | UK & UAE',
+    title: 'Recovery Peptides for Sale — Research Grade | UAE',
     description:
-      'Recovery and tissue-repair research peptides for laboratory use, shipped across the UK and UAE. Independently tested purity, COA published for every lot.',
+      'Recovery and tissue-repair research peptides for laboratory use, shipped across the UAE. Independently tested purity, COA published for every lot.',
     h1: 'Recovery Research Peptides',
     intro:
-      'Peptides used in tissue-repair and recovery-pathway research, including BPC-157 and related compounds, tested for identity and HPLC purity ahead of dispatch to the UK and UAE.',
+      'Peptides used in tissue-repair and recovery-pathway research, including BPC-157 and related compounds, tested for identity and HPLC purity ahead of dispatch to the UAE.',
     examples: 'BPC-157, tissue-repair research peptides',
   },
   'anti-ageing': {
-    title: 'Anti-Ageing Peptides for Sale — Research Grade | UK & UAE',
+    title: 'Anti-Ageing Peptides for Sale — Research Grade | UAE',
     description:
-      'Longevity and anti-ageing research peptides for laboratory use, shipped across the UK and UAE. HPLC-verified purity with a published Certificate of Analysis per batch.',
+      'Longevity and anti-ageing research peptides for laboratory use, shipped across the UAE. HPLC-verified purity with a published Certificate of Analysis per batch.',
     h1: 'Anti-Ageing Research Peptides',
     intro:
-      'Longevity-pathway peptides, including Epithalon and GHK-Cu, supplied for laboratory research in the UK and UAE. Purity and identity are HPLC-confirmed and published per batch, not marketing copy.',
+      'Longevity-pathway peptides, including Epithalon and GHK-Cu, supplied for laboratory research in the UAE. Purity and identity are HPLC-confirmed and published per batch, not marketing copy.',
     examples: 'Epithalon, GHK-Cu, longevity-pathway research peptides',
   },
   accessories: {
-    title: 'Peptide Research Accessories — Vials, Pins & Supplies | UK & UAE',
+    title: 'Peptide Research Accessories — Vials, Pins & Supplies | UAE',
     description:
-      'Bacteriostatic water, syringes, and reconstitution supplies for peptide research, shipped across the UK and UAE.',
+      'Bacteriostatic water, syringes, and reconstitution supplies for peptide research, shipped across the UAE.',
     h1: 'Research Accessories & Supplies',
     intro:
-      'Bacteriostatic water, sterile syringes, and the reconstitution supplies used alongside our research peptides — shipped across the UK and UAE. Pair with the reconstitution calculator in our research tools for lot-specific dilution figures.',
+      'Bacteriostatic water, sterile syringes, and the reconstitution supplies used alongside our research peptides — shipped across the UAE. Pair with the reconstitution calculator in our research tools for lot-specific dilution figures.',
     examples: 'bacteriostatic water, syringes, reconstitution supplies',
   },
   immune: {
-    title: 'Immune Peptides for Sale — Research Grade | UK & UAE',
+    title: 'Immune Peptides for Sale — Research Grade | UAE',
     description:
-      'Immune-pathway research peptides for laboratory use, shipped across the UK and UAE. Third-party HPLC-tested, Certificate of Analysis published per batch.',
+      'Immune-pathway research peptides for laboratory use, shipped across the UAE. Third-party HPLC-tested, Certificate of Analysis published per batch.',
     h1: 'Immune Research Peptides',
     intro:
-      'Immune-pathway peptides supplied for laboratory research across the UK and UAE, tested by Freedom Diagnostics for identity and HPLC purity with the certificate published for the specific lot you receive.',
+      'Immune-pathway peptides supplied for laboratory research across the UAE, tested by Freedom Diagnostics for identity and HPLC purity with the certificate published for the specific lot you receive.',
     examples: 'immune-pathway research peptides',
   },
 }
@@ -322,7 +322,7 @@ export default async function CategoryPage({ params }: Props) {
             <Link href="/products">Products</Link><span>/</span>
             <span style={{ color: 'rgba(255,255,255,.7)' }}>{catMeta.label}</span>
           </nav>
-          <div className="cp-eyebrow">Research Peptides · UK &amp; UAE</div>
+          <div className="cp-eyebrow">Research Peptides · UAE</div>
           <h1 className="cp-h1">{content.h1}</h1>
           <p className="cp-intro">{content.intro}</p>
         </div>

@@ -24,26 +24,38 @@ import {
   Building2,
 } from 'lucide-react'
 
+import { CATEGORIES } from '@/app/data'
+
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'About PepcoLab — Research-Grade Peptide Supplier, UK & UAE',
+  title: 'About PepcoLab — Research-Grade Peptide Supplier, UAE',
   description:
-    'PepcoLab is a UK-registered research peptide and laboratory compound supplier serving the UK and UAE, built around published batch documentation and independent third-party testing.',
+    'PepcoLab is a UK-registered research peptide and laboratory compound supplier serving the UAE, built around published batch documentation and independent third-party testing.',
   alternates: { canonical: '/about' },
   openGraph: {
     title: 'About PepcoLab',
     description:
-      'A UK-registered research peptide supplier built around published batch documentation and independent third-party testing, serving the UK and UAE.',
+      'A UK-registered research peptide supplier built around published batch documentation and independent third-party testing, serving the UAE.',
     url: `${SITE_URL}/about`,
     type: 'website',
   },
 }
 
+// FIX (Aug 2026): this used to hardcode '78+' Verified Compounds and '2'
+// Markets Served — UK & UAE, both stale. '78+' was a SKU/variant count
+// mislabelled as "compounds" (CATEGORIES below, the same constant the
+// product-category pages and sitemap treat as authoritative, puts the
+// real distinct-product count at 38); the "2 Markets" claim was simply
+// false — PepcoLab is UAE-only (see MarketGuard.tsx / countryContext.tsx).
+// Deriving the compound count from CATEGORIES means this can't drift out
+// of sync again the way it did before.
+const VERIFIED_COMPOUND_COUNT = CATEGORIES.find((c) => c.slug === 'all')?.count ?? 0
+
 const STATS = [
-  { value: '78+', label: 'Verified Compounds' },
+  { value: `${VERIFIED_COMPOUND_COUNT}+`, label: 'Verified Compounds' },
   { value: '100%', label: 'Batch COA Coverage' },
-  { value: '2', label: 'Markets Served — UK & UAE' },
+  { value: '1', label: 'Market Served — UAE' },
   { value: '24h', label: 'Cold-Chain Dispatch Target' },
 ]
 
@@ -76,7 +88,7 @@ const QUALITY_STEPS = [
   { title: 'Batch-level traceability', text: 'Every product carries a lot number linking it to its specific test result — not a single COA reused across every unit ever sold.' },
   { title: 'Structured COA documentation', text: 'Certificates follow a consistent format (compound, lot, test date, purity, testing lab) so they can be read and cross-checked quickly.' },
   { title: 'Cold-chain storage and handling', text: 'Temperature-controlled packaging on dispatch, reflecting how peptides actually degrade in transit — not just at rest in a warehouse.' },
-  { title: 'Standardised reporting', text: 'The same documentation standard applies whether an order ships to London or Dubai — the UAE catalogue isn\'t held to a lighter standard than the UK one.' },
+  { title: 'Standardised reporting', text: 'The same documentation standard applies to every order — no batch is held to a lighter standard than another.' },
 ]
 
 export default function AboutPage() {
@@ -89,8 +101,18 @@ export default function AboutPage() {
       name: 'PepcoLab',
       legalName: 'SEE BEE DEE LIMITED',
       url: SITE_URL,
+      // TODO: 'value' is blank — emitting a PropertyValue with an empty
+      // value is invalid/incomplete structured data. Fill in the real
+      // Companies House registration number here, or remove this
+      // identifier entirely until it's available. Not fabricating a
+      // number to fill the gap.
       identifier: { '@type': 'PropertyValue', name: 'Companies House', value: '' },
-      areaServed: ['United Kingdom', 'United Arab Emirates'],
+      // FIX (Aug 2026): was ['United Kingdom', 'United Arab Emirates'] —
+      // false. areaServed must match where the business actually fulfils
+      // orders, and PepcoLab is UAE-only right now (SEE BEE DEE LIMITED
+      // being UK-registered is a company-registration fact, not a served
+      // market).
+      areaServed: ['United Arab Emirates'],
     },
   }
 
@@ -120,7 +142,7 @@ export default function AboutPage() {
 
               <p className="text-[17px] leading-8 text-neutral-600 max-w-2xl">
                 PepcoLab is a UK-registered supplier of research-grade peptides and laboratory
-                compounds, serving researchers in the United Kingdom and United Arab Emirates.
+                compounds, serving researchers in the United Arab Emirates.
                 We supply strictly for laboratory and in-vitro research use — every product is
                 documented with a batch-specific Certificate of Analysis, and every claim we make
                 about a compound is one we can point to a test result for.
@@ -164,7 +186,7 @@ export default function AboutPage() {
               <p>
                 The research peptide sector has a documentation problem. Purity claims are cheap to
                 print on a product page and expensive for a buyer to verify independently — and across
-                the UK and UAE markets, it's common to see the same generic "99% pure, HPLC verified"
+                the UAE market, it's common to see the same generic "99% pure, HPLC verified"
                 line repeated across dozens of near-identical storefronts with no batch data behind it.
               </p>
 
@@ -184,15 +206,12 @@ export default function AboutPage() {
 
               <p>
                 Our compounds are manufactured and sourced from Denver, Colorado, USA, then batch-tested
-                by Freedom Diagnostics before being released for dispatch to the UK and UAE — the same supply
-                chain and documentation standard regardless of which market an order ships to.
+                by Freedom Diagnostics before being released for dispatch across the UAE.
               </p>
 
               <p>
-                We serve both the UK and UAE from that same standard. Pricing and currency adapt to
-                where you're ordering from (GBP for UK researchers, AED for UAE researchers), but the
-                testing and documentation requirement behind every product does not change between
-                markets.
+                We serve the UAE from that same standard, with AED pricing throughout — the testing
+                and documentation requirement behind every product doesn't change from batch to batch.
               </p>
             </div>
           </div>
@@ -284,7 +303,7 @@ export default function AboutPage() {
               <h3 className="text-xl font-semibold mb-3 text-neutral-950">Who We Serve</h3>
               <p className="text-neutral-600 leading-7">
                 Independent researchers, laboratory technicians, and research organisations in the
-                UK and UAE who need documented, batch-traceable compounds for in-vitro and laboratory
+                UAE who need documented, batch-traceable compounds for in-vitro and laboratory
                 study. We do not offer guidance on human or veterinary administration, and our product
                 pages are written accordingly.
               </p>
@@ -296,8 +315,8 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3 text-neutral-950">Cold-Chain Logistics</h3>
               <p className="text-neutral-600 leading-7">
-                Temperature-controlled packaging on every order, with next-day tracked dispatch across
-                the UK and fast dispatch across the UAE. See our{' '}
+                Temperature-controlled packaging on every order, with fast tracked dispatch across
+                the UAE. See our{' '}
                 <Link href="/shipping" className="underline decoration-neutral-300 hover:decoration-neutral-600">
                   shipping page
                 </Link>{' '}
@@ -311,7 +330,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3 text-neutral-950">Registration</h3>
               <p className="text-neutral-600 leading-7">
-                PepcoLab is operated by SEE BEE DEE LIMITED, a company registered in the UK
+                PepcoLab is operated by SEE BEE DEE LIMITED, a company registered in the UK.
                 Read our{' '}
                 <Link href="/terms" className="underline decoration-neutral-300 hover:decoration-neutral-600">
                   terms

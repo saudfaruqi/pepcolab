@@ -111,12 +111,14 @@ export default function HeroCinematic() {
               voice isn't lost, and moved the actual keyword-bearing copy
               into the H1 itself.
 
-              FIX: added explicit "UK & UAE" — the stated ranking goal is
-              #1 for "peptides in UAE and UK", and neither the kicker nor
-              the H1 previously said either market by name anywhere above
-              the fold. The 24h/UK-only stat further down was the only
-              geographic signal on the whole first screen, and it excluded
-              UAE entirely (see the dispatchLabel fix above).
+              FIX (Aug 2026): reverted the "UK & UAE" claim added here
+              earlier. PepcoLab is UAE-only now (see MarketGuard.tsx,
+              countryContext.tsx, pricing.ts) — this line was still
+              advertising a UK market that isn't actually served, which is
+              exactly the kind of unsubstantiated claim the growth playbook
+              flags elsewhere (fabricated stats, false reviews). Ranking for
+              "peptides in UAE" is still the goal; it just no longer also
+              claims a market we don't fulfil orders in.
             */}
             <div
               className="hero-fade"
@@ -129,7 +131,7 @@ export default function HeroCinematic() {
                 marginBottom: 14,
               }}
             >
-              Research Without Compromise · UK &amp; UAE
+              Research Without Compromise · UAE
             </div>
 
             <h1
@@ -164,8 +166,7 @@ export default function HeroCinematic() {
               Premium research compounds manufactured to exceptional
               standards and verified through independent laboratory testing.
               Transparent batch data, pharmaceutical-grade quality, and
-              temperature-controlled fulfilment — shipped across the UK
-              and UAE.
+              temperature-controlled fulfilment — shipped across the UAE.
             </p>
 
             {/* CTA Buttons */}
