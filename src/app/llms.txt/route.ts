@@ -13,7 +13,7 @@ const BASE_URL = 'https://www.pepcolab.com'
 
 const BODY = `# PepcoLab
 
-> Research-grade peptides and laboratory compounds with published, independently-verified batch Certificates of Analysis (COA) and cold-chain dispatch across the United Arab Emirates. Supplied strictly for in-vitro laboratory research use — not for human or veterinary use, consumption, or household purposes.
+> Research-grade peptides and laboratory compounds with published, independently-verified batch Certificates of Analysis (COA) and cold-chain dispatch across the United Kingdom and United Arab Emirates. Supplied strictly for in-vitro laboratory research use — not for human or veterinary use, consumption, or household purposes.
 
 ## Markets
 - United Kingdom (GBP display pricing)

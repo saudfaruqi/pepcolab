@@ -8,7 +8,7 @@ import { ChevronRight } from 'lucide-react'
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'Cognitive Research Peptides — UAE',
+  title: 'Cognitive Research Peptides — UK & UAE',
   description:
     'An overview of the peptide compounds most studied in cognitive and neurological research — mechanism, research literature, and where to find batch-tested stock.',
   alternates: {
@@ -41,7 +41,7 @@ export default function CognitiveHubPage() {
             Cognitive Research Peptides
           </h1>
           <p style={{ fontSize: 16.5, lineHeight: 1.7, color: 'rgba(13,13,13,.65)', maxWidth: 680 }}>
-            Neuropeptide research spans stress-response and neuroplasticity pathways among others. The compounds below are the ones most discussed in that literature — both originally developed in Russia and licensed there as prescription medicines, though unlicensed in the UAE — supplied strictly for laboratory research use.
+            Neuropeptide research spans stress-response and neuroplasticity pathways among others. The compounds below are the ones most discussed in that literature — both originally developed in Russia and licensed there as prescription medicines, though unlicensed in the UK/UAE — supplied strictly for laboratory research use.
           </p>
         </section>
 
@@ -49,7 +49,7 @@ export default function CognitiveHubPage() {
           <div style={{ display: 'grid', gap: 14 }}>
             <div style={cardStyle}>
               <h2 style={cardTitleStyle}>Semax</h2>
-              <p style={cardTextStyle}>An ACTH(4-10) analogue studied in neuroprotection and cognitive-function research; licensed as a prescription medicine in Russia, unlicensed in the UAE.</p>
+              <p style={cardTextStyle}>An ACTH(4-10) analogue studied in neuroprotection and cognitive-function research; licensed as a prescription medicine in Russia, unlicensed in the UK/UAE.</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Link href="/research/semax" style={pillStyle}>Research profile <ChevronRight size={13} /></Link>
                 <Link href="/legal/semax" style={pillStyle}>Legal status <ChevronRight size={13} /></Link>

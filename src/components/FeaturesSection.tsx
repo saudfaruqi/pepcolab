@@ -15,7 +15,7 @@ import { Truck, ShieldCheck, BadgeCheck, CreditCard } from 'lucide-react'
 const FEATURES = [
   {
     icon: Truck,
-    title: 'Cold-Chain Dispatch — UAE',
+    title: 'Cold-Chain Dispatch — UK & UAE',
     desc: 'Temperature-controlled packaging on every order, tracked door-to-door across both markets.',
     color: '#EBF2FF',
     accent: '#1A56DB',
