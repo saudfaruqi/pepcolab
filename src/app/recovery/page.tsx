@@ -8,7 +8,7 @@ import { ChevronRight } from 'lucide-react'
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'Recovery Research Peptides — UK & UAE',
+  title: 'Recovery Research Peptides — UAE',
   description:
     'An overview of the peptide compounds most studied in musculoskeletal and tissue-repair research — mechanism, research literature, and where to find batch-tested stock.',
   alternates: {

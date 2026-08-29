@@ -16,7 +16,7 @@ import { ChevronRight } from 'lucide-react'
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'Longevity Research Peptides — UK & UAE',
+  title: 'Longevity Research Peptides — UAE',
   description:
     'An overview of the peptide compounds most studied in longevity and cellular-ageing research — mechanism, research literature, and where to find batch-tested stock.',
   alternates: {
@@ -57,7 +57,7 @@ export default function LongevityHubPage() {
           <div style={{ display: 'grid', gap: 14 }}>
             <div style={cardStyle}>
               <h2 style={cardTitleStyle}>Epithalon</h2>
-              <p style={cardTextStyle}>Studied in connection with telomerase activity and circadian regulation. See the full research profile and current UK/UAE legal status.</p>
+              <p style={cardTextStyle}>Studied in connection with telomerase activity and circadian regulation. See the full research profile and current UAE legal status.</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Link href="/research/epithalon" style={pillStyle}>Research profile <ChevronRight size={13} /></Link>
                 <Link href="/legal/epithalon" style={pillStyle}>Legal status <ChevronRight size={13} /></Link>
