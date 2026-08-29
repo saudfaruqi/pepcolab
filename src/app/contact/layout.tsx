@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Contact Us',
   description:
-    'Get in touch with PepcoLab for order support, batch and Certificate of Analysis queries, or general questions about our research peptide catalogue in the UK and UAE.',
+    'Get in touch with PepcoLab for order support, batch and Certificate of Analysis queries, or general questions about our research peptide catalogue in the UAE.',
   alternates: { canonical: '/contact' },
   openGraph: {
     title: 'Contact Us | PepcoLab',

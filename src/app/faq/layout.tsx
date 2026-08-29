@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions',
   description:
-    'Answers to common questions about ordering, shipping, storage, batch testing and Certificates of Analysis for PepcoLab research peptides in the UK and UAE.',
+    'Answers to common questions about ordering, shipping, storage, batch testing and Certificates of Analysis for PepcoLab research peptides in the UAE.',
   alternates: { canonical: '/faq' },
   openGraph: {
     title: 'Frequently Asked Questions | PepcoLab',

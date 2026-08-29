@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'How PepcoLab collects, uses and protects customer data, including order, payment and delivery information, for UK and UAE customers.',
+    'How PepcoLab collects, uses and protects customer data, including order, payment and delivery information, for UAE customers.',
   alternates: { canonical: '/privacy' },
   robots: { index: true, follow: true },
   openGraph: {

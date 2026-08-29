@@ -16,7 +16,7 @@ import { ChevronRight } from 'lucide-react'
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'Metabolic Research Peptides — UK & UAE',
+  title: 'Metabolic Research Peptides — UAE',
   description:
     'An overview of the GLP-1-class and related compounds most studied in metabolic-pathway research — mechanism, research literature, and where to find batch-tested stock.',
   alternates: {

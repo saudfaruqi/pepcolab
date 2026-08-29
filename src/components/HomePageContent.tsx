@@ -644,8 +644,8 @@ export default function PepcoLabPage({
               {[
                 { n:"01", title:"HPLC-Verified",  desc:"Every compound tested by Freedom Diagnostics. COA downloadable per batch." },
                 { n:"02", title:"COA Published",   desc:"Download the certificate of analysis for every product, every batch." },
-                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every UK order, without exception." },
-                { n:"04", title:"Next-Day UK",     desc:"Order by 3pm for next-day tracked delivery across the United Kingdom." },
+                { n:"03", title:"Cold-Chain",      desc:"Temperature-controlled packaging on every order, without exception." },
+                { n:"04", title:"Fast UAE Dispatch", desc:"Order by 3pm for fast tracked delivery across the UAE." },
               ].map((d) => (
                 <div key={d.n} style={{ background:"#fff", padding:"36px 32px", position:"relative" }}>
                   <div style={{ ...TYPOGRAPHY.cardMeta, fontSize: "10px", color: "rgba(13,13,13,.25)", marginBottom: 28 }}>{d.n}</div>

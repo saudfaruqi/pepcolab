@@ -8,7 +8,7 @@ import { ChevronRight } from 'lucide-react'
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'Aesthetic Research Peptides — UK & UAE',
+  title: 'Aesthetic Research Peptides — UAE',
   description:
     'An overview of the peptide compounds most studied in skin, collagen, and dermal-research literature — mechanism, research literature, and where to find batch-tested stock.',
   alternates: {
