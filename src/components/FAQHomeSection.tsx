@@ -14,7 +14,7 @@ const HOME_FAQS = [
   },
   {
     q: 'How are orders shipped, and how fast?',
-    a: 'Orders are dispatched in temperature-controlled, insulated packaging using tracked courier services. Orders placed before the daily cut-off are processed the same working day, across both the UK and UAE.',
+    a: 'Orders are dispatched in temperature-controlled, insulated packaging using tracked courier services. Orders placed before the daily cut-off are processed the same working day, across the UAE.',
   },
   {
     q: 'What is your return policy?',
