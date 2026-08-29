@@ -6,7 +6,7 @@ const STEPS = [
   { icon: Search,        num: '01', label: 'Browse & Verify',   desc: 'Check independent HPLC purity data and the published COA before you order' },
   { icon: FlaskConical,  num: '02', label: 'Order Securely',    desc: 'Checkout via our PCI-compliant payment processor, no account required'      },
   { icon: PackageCheck,  num: '03', label: 'Cold-Chain Pack',   desc: 'Temperature-controlled packaging, dispatched same working day'               },
-  { icon: Truck,         num: '04', label: 'Tracked Delivery',  desc: 'Door-to-door tracking across the UAE'                                  },
+  { icon: Truck,         num: '04', label: 'Tracked Delivery',  desc: 'Door-to-door tracking across the UK and UAE'                                  },
 ]
 
 export default function ProcessSection() {

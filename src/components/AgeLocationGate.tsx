@@ -2,18 +2,15 @@
 // src/components/AgeLocationGate.tsx
 //
 // Full-site entry gate: confirms the visitor is 21+ and captures their
-// market before they can browse. Mounted once in layout.tsx, inside
-// CountryProvider, so a market selection here also sets the site's live
-// currency/country context — no separate state to keep in sync.
+// market (UAE / UK) before they can browse. Mounted once in layout.tsx,
+// inside CountryProvider, so a UAE/UK selection here also sets the site's
+// live currency/country context — no separate state to keep in sync.
 //
-// FIX (Aug 2026): PepcoLab is UAE-only (see countryContext.tsx /
-// MarketGuard.tsx) — this previously offered 'United Kingdom' as a
-// selectable market alongside UAE. A UK visitor would confirm that
-// choice, have it silently normalised back to AE by countryContext's
-// normaliseCountry() (since 'GB' isn't in SUPPORTED_COUNTRIES), and never
-// be told their stated location wasn't actually being used. Now only UAE
-// or "somewhere else" are offered — matching what the site can actually
-// fulfil.
+// Per business decision: PepcoLab only operates in the UAE and UK. A
+// visitor who selects neither is allowed to continue browsing (not
+// blocked), but their choice does not set a shipping country — the site
+// falls back to its existing AE default, same as undetected/failed
+// geolocation already does in countryContext.tsx.
 import { useEffect, useRef, useState } from 'react'
 import { useCountry } from '@/lib/countryContext'
 
@@ -26,7 +23,7 @@ const GATE_TTL_MS = 1000 * 60 * 60 * 24 * 180
 
 interface GateRecord {
   ageConfirmed: true
-  market: 'AE' | 'OTHER'
+  market: 'AE' | 'GB' | 'OTHER'
   ts: number
 }
 
@@ -36,7 +33,7 @@ export default function AgeLocationGate() {
   const [mounted, setMounted]   = useState(false)   // avoids SSR/client mismatch
   const [open, setOpen]         = useState(false)
   const [ageOk, setAgeOk]       = useState(false)
-  const [market, setMarket]     = useState<'AE' | 'OTHER' | null>(null)
+  const [market, setMarket]     = useState<'AE' | 'GB' | 'OTHER' | null>(null)
   const [blocked, setBlocked]   = useState(false)    // visitor said they're under 21
 
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -102,7 +99,7 @@ export default function AgeLocationGate() {
   function handleContinue() {
     if (!ageOk || !market) return
 
-    if (market === 'AE') {
+    if (market === 'AE' || market === 'GB') {
       setCountry(market)
     }
     // market === 'OTHER' → deliberately does not call setCountry(); site
@@ -206,6 +203,7 @@ export default function AgeLocationGate() {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {([
                   { code: 'AE', label: 'United Arab Emirates' },
+                  { code: 'GB', label: 'United Kingdom' },
                   { code: 'OTHER', label: 'Somewhere else' },
                 ] as const).map(opt => (
                   <button
