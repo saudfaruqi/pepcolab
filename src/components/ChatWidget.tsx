@@ -10,7 +10,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   MessageSquare, 
   X, 
@@ -18,7 +18,11 @@ import {
   ArrowUpRight, 
   ChevronLeft,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  ThumbsUp,
+  ThumbsDown,
+  Search,
+  Tag
 } from 'lucide-react'
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { CHAT_NODES, START_NODE_ID, routeFreeText, type ChatOption } from '@/lib/chatFlow'
@@ -32,6 +36,7 @@ interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   isDisclaimer?: boolean
+  isGreeting?: boolean
 }
 
 // Small delay between bot bubbles so a multi-message node doesn't dump
@@ -43,8 +48,135 @@ function uid() {
   return Math.random().toString(36).slice(2, 10)
 }
 
+// ── Context-Aware Greeting ───────────────────────────────────────────────
+function getContextAwareGreeting(pathname: string): string {
+  if (pathname.includes('/products')) {
+    return "Looking for a specific research compound? I can help you find the right product for your study."
+  }
+  if (pathname.includes('/certificates')) {
+    return "Need help finding a Certificate of Analysis? Search by lot number or product code and I'll point you to the right COA."
+  }
+  if (pathname.includes('/checkout')) {
+    return "Have questions about your order? I can help with shipping, tracking, or any last-minute questions before you complete your purchase."
+  }
+  if (pathname.includes('/bundles')) {
+    return "Researching compound stacks? I can help you find the right bundle combination for your study objectives."
+  }
+  if (pathname.includes('/research') || pathname.includes('/guides')) {
+    return "Exploring research protocols and guides? I can point you to relevant resources for your area of study."
+  }
+  if (pathname.includes('/tools')) {
+    return "Looking for research tools? I can help you use our reconstitution calculator, batch verifier, or other lab tools."
+  }
+  if (pathname.includes('/wishlist')) {
+    return "Saving compounds for later? I can help you compare products or find additional research materials."
+  }
+  if (pathname.includes('/contact')) {
+    return "Want to get in touch with our research team? I can help connect you with the right specialist."
+  }
+  return "Hi, I'm the PepcoLab research assistant. Ask me about our research peptides, COAs, shipping, or bundles."
+}
+
+// ── Research Focus Tags ──────────────────────────────────────────────────
+const RESEARCH_FOCUS_TAGS = [
+  { label: 'Metabolic', slug: 'metabolic' },
+  { label: 'Cognitive', slug: 'cognitive' },
+  { label: 'Recovery', slug: 'recovery' },
+  { label: 'Anti-Ageing', slug: 'anti-ageing' },
+  { label: 'Hormonal', slug: 'hormonal' },
+  { label: 'Immune', slug: 'immune' },
+]
+
+// ── Quick Search Mapping ─────────────────────────────────────────────────
+// Maps chat queries to product category or COA routes
+function handleQuickSearch(text: string, router: any): boolean {
+  const normalized = text.toLowerCase().trim()
+  
+  // Check for COA/verification requests
+  const coaMatch = normalized.match(/(?:coa|certificate|verify|batch|lot)\s*(?:for\s*)?(?:lot\s*)?([a-z0-9-]+)/i)
+  if (coaMatch && coaMatch[1]) {
+    router.push(`/certificates?lot=${encodeURIComponent(coaMatch[1])}`)
+    return true
+  }
+  
+  // Check for product category requests
+  const categoryMap: Record<string, string> = {
+    'metabolic': '/products/category/metabolic',
+    'metabolism': '/products/category/metabolic',
+    'weight': '/products/category/metabolic',
+    'glp': '/products/category/metabolic',
+    'cognitive': '/products/category/cognitive',
+    'brain': '/products/category/cognitive',
+    'recovery': '/products/category/recovery',
+    'healing': '/products/category/recovery',
+    'anti-ageing': '/products/category/anti-ageing',
+    'antiaging': '/products/category/anti-ageing',
+    'hormonal': '/products/category/hormonal',
+    'hormone': '/products/category/hormonal',
+    'immune': '/products/category/immune',
+    'immunity': '/products/category/immune',
+  }
+  
+  for (const [key, path] of Object.entries(categoryMap)) {
+    if (normalized.includes(key)) {
+      router.push(path)
+      return true
+    }
+  }
+  
+  // Check for specific product requests
+  if (normalized.includes('show me') || normalized.includes('find')) {
+    const productMatch = normalized.match(/(?:show me|find|browse|view|see)\s+(?:the\s+)?(?:products?|compounds?)\s+for\s+([a-z-]+)/i)
+    if (productMatch && productMatch[1]) {
+      const term = productMatch[1].toLowerCase()
+      for (const [key, path] of Object.entries(categoryMap)) {
+        if (term.includes(key)) {
+          router.push(path)
+          return true
+        }
+      }
+      router.push(`/products?q=${encodeURIComponent(term)}`)
+      return true
+    }
+  }
+  
+  // Check for general product search
+  if (normalized.includes('search for') || normalized.includes('find')) {
+    const searchMatch = normalized.match(/(?:search for|find)\s+([a-z0-9-]+)/i)
+    if (searchMatch && searchMatch[1]) {
+      router.push(`/products?q=${encodeURIComponent(searchMatch[1])}`)
+      return true
+    }
+  }
+  
+  return false
+}
+
+// ── Lot Number Detection ──────────────────────────────────────────────────
+function detectLotNumber(text: string): string | null {
+  const normalized = text.trim()
+  
+  // Common lot number patterns
+  const patterns = [
+    /^bc\d{1,3}$/i,           // BC10, BC20, BC30
+    /^[a-z]+\s*cap$/i,        // grey cap, red cap
+    /^\d{10}$/,                // 10-digit accession numbers
+    /^pep-\d{4}-\d{2}$/i,     // PEP-2412-07 format
+    /^[a-z]{2}\d{2,4}$/i,     // General batch codes
+  ]
+  
+  for (const pattern of patterns) {
+    if (pattern.test(normalized)) {
+      return normalized
+    }
+  }
+  
+  return null
+}
+
 export default function ChatWidget() {
   const pathname = usePathname()
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -53,19 +185,23 @@ export default function ChatWidget() {
   const [input, setInput] = useState('')
   const [botTyping, setBotTyping] = useState(false)
   const [initialized, setInitialized] = useState(false)
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackMessageId, setFeedbackMessageId] = useState<string | null>(null)
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'helpful' | 'unhelpful' | null>>({})
+  const [showTags, setShowTags] = useState(true)
 
   const [showHandoff, setShowHandoff] = useState(false)
   const [contact, setContact] = useState({ name: '', email: '', phone: '' })
   const [handoffSent, setHandoffSent] = useState(false)
   const [handoffSending, setHandoffSending] = useState(false)
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   // Track if transcript has been sent already (per session)
   const transcriptSentRef = useRef(false)
   // Track if user has had meaningful interaction (more than just opening chat)
-  const hasMeaningfulInteraction = useRef(false)
-  // Track if user explicitly requested human help
   const explicitHandoffRequested = useRef(false)
+  // Track if user has sent a message or clicked an option
+  const userHasInteracted = useRef(false)
   
   const bodyRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -84,7 +220,6 @@ export default function ChatWidget() {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 250)
-      setShowDisclaimer(true)
     }
   }, [open])
 
@@ -119,6 +254,8 @@ export default function ChatWidget() {
     setCurrentNodeId(node.id)
     setCurrentOptions([])
     setBotTyping(true)
+    // Hide tags when conversation progresses
+    setShowTags(false)
 
     const bubbles = Array.isArray(node.message) ? node.message : [node.message]
 
@@ -140,6 +277,13 @@ export default function ChatWidget() {
           if (isLast) {
             setBotTyping(false)
             setCurrentOptions(node.options)
+            // Show feedback only after user has interacted and for non-greeting messages
+            if (userHasInteracted.current && !msg.isGreeting) {
+              setTimeout(() => {
+                setFeedbackMessageId(msg.id)
+                setShowFeedback(true)
+              }, 1500)
+            }
           }
         },
         (i + 1) * BOT_MESSAGE_DELAY_MS
@@ -158,31 +302,31 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!open || initialized) return
     setInitialized(true)
-    playNode(START_NODE_ID)
-  }, [open, initialized, playNode])
+    
+    // Context-aware greeting
+    const greeting = getContextAwareGreeting(pathname || '')
+    
+    // Show context-aware greeting as the first message
+    setMessages([{ id: uid(), role: 'assistant', content: greeting, isGreeting: true }])
+    
+    // Then play the main node - this will add the welcome message and options
+    setTimeout(() => {
+      playNode(START_NODE_ID)
+    }, BOT_MESSAGE_DELAY_MS)
+  }, [open, initialized, playNode, pathname])
 
-  // Send transcript only when there's meaningful interaction and either:
-  // 1. User explicitly requested human help (clicked "Talk to a human")
-  // 2. User completed the handoff form
-  // 3. User has had a real conversation (at least 3 messages exchanged)
+  // Send transcript only when there's meaningful interaction
   const shouldSendTranscript = useCallback(() => {
-    // Don't send if already sent
     if (transcriptSentRef.current) return false
     
-    // Get real messages (excluding greeting)
     const realMessages = messages.filter((m) => 
-      m.id !== 'greeting' && 
+      !m.isGreeting && 
       m.role === 'user' &&
-      m.content.length > 5 // Ignore very short messages
+      m.content.length > 5
     )
     
-    // Send if user explicitly requested human help
     if (explicitHandoffRequested.current) return true
-    
-    // Send if user has had a meaningful conversation (at least 2 substantive messages)
     if (realMessages.length >= 2) return true
-    
-    // Send if handoff form was submitted
     if (handoffSent) return true
     
     return false
@@ -193,7 +337,6 @@ export default function ChatWidget() {
       if (transcriptSentRef.current) return
       if (messages.length === 0) return
       
-      // Check if we should send based on interaction
       if (!shouldSendTranscript()) {
         console.log('[Chat] Transcript not sent - insufficient interaction')
         return
@@ -201,7 +344,6 @@ export default function ChatWidget() {
       
       transcriptSentRef.current = true
       
-      // Best-effort, fire-and-forget — never block the UI on this.
       fetch('/api/chat/transcript', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -210,10 +352,11 @@ export default function ChatWidget() {
           contact,
           reason,
           pageUrl: typeof window !== 'undefined' ? window.location.href : '',
+          feedback: feedbackGiven,
         }),
       }).catch(() => {})
     },
-    [messages, contact, shouldSendTranscript]
+    [messages, contact, shouldSendTranscript, feedbackGiven]
   )
 
   // Send transcript when handoff is completed
@@ -227,6 +370,8 @@ export default function ChatWidget() {
     if (botTyping) return
 
     setMessages((prev) => [...prev, { id: uid(), role: 'user', content: option.label }])
+    userHasInteracted.current = true
+    setShowTags(false)
 
     if (option.href && typeof window !== 'undefined') {
       window.open(option.href, '_blank', 'noopener,noreferrer')
@@ -242,8 +387,6 @@ export default function ChatWidget() {
       return
     }
 
-    // href-only option (e.g. a category link) — stay on the same node,
-    // just re-show its options so the visitor can pick something else.
     setCurrentOptions(CHAT_NODES[currentNodeId]?.options ?? [])
   }
 
@@ -251,11 +394,76 @@ export default function ChatWidget() {
     const text = (overrideText ?? input).trim()
     if (!text || botTyping) return
 
+    userHasInteracted.current = true
+    setShowTags(false)
+
+    // ── Quick Search from Chat ──
+    const searchHandled = handleQuickSearch(text, router)
+    if (searchHandled) {
+      setMessages((prev) => [...prev, { id: uid(), role: 'user', content: text }])
+      setInput('')
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { 
+          id: uid(), 
+          role: 'assistant', 
+          content: "Taking you to the results page..." 
+        }])
+      }, 300)
+      return
+    }
+
+    // ── Lot Number Detection ──
+    const lotNumber = detectLotNumber(text)
+    if (lotNumber) {
+      setMessages((prev) => [...prev, { id: uid(), role: 'user', content: text }])
+      setInput('')
+      
+      const encodedLot = encodeURIComponent(lotNumber)
+      router.push(`/certificates?lot=${encodedLot}`)
+      
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { 
+          id: uid(), 
+          role: 'assistant', 
+          content: `Looking up lot "${lotNumber}" in our Certificate of Analysis library...` 
+        }])
+      }, 300)
+      return
+    }
+
     setMessages((prev) => [...prev, { id: uid(), role: 'user', content: text }])
     setInput('')
 
     const nodeId = routeFreeText(text)
     setTimeout(() => playNode(nodeId), BOT_MESSAGE_DELAY_MS)
+  }
+
+  // ── Feedback Mechanism ──
+  function handleFeedback(messageId: string, isHelpful: boolean) {
+    setFeedbackGiven(prev => ({
+      ...prev,
+      [messageId]: isHelpful ? 'helpful' : 'unhelpful'
+    }))
+    
+    const thankYou = isHelpful 
+      ? "Thanks for the feedback. I'm glad I could help."
+      : "Thanks for the feedback. I'll work on improving my responses."
+    
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage && !lastMessage.content.includes('Thanks for the feedback')) {
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { 
+          id: uid(), 
+          role: 'assistant', 
+          content: thankYou 
+        }])
+        setShowFeedback(false)
+      }, 500)
+    } else {
+      setShowFeedback(false)
+    }
+    
+    console.log('[Chat] Feedback:', { messageId, isHelpful })
   }
 
   async function handleWhatsAppHandoff() {
@@ -282,6 +490,9 @@ export default function ChatWidget() {
   }
 
   if (HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))) return null
+
+  // Check if we should show tags - only when chat first opens and no interaction yet
+  const shouldShowTags = showTags && !userHasInteracted.current && messages.length <= 5 && !botTyping
 
   return (
     <>
@@ -331,14 +542,32 @@ export default function ChatWidget() {
           </div>
 
           <div ref={bodyRef} className="cw-body">
-            {/* Persistent research-use-only disclaimer banner at top of chat */}
-            {showDisclaimer && messages.length <= 2 && (
-              <div className="cw-disclaimer-banner">
-                <div className="cw-disclaimer-icon">
-                  <AlertCircle size={14} />
+            {/* Research Focus Tags - shown when chat first opens and user hasn't interacted yet */}
+            {shouldShowTags && (
+              <div className="cw-tags-section">
+                <div className="cw-tags-label">
+                  <Tag size={12} />
+                  <span>Research Focus</span>
                 </div>
-                <div className="cw-disclaimer-text">
-                  <strong>Research Use Only</strong> — All products are for in-vitro laboratory research, not for human or veterinary use.
+                <div className="cw-tags-grid">
+                  {RESEARCH_FOCUS_TAGS.map((tag) => (
+                    <button
+                      key={tag.slug}
+                      className="cw-tag-chip"
+                      onClick={() => {
+                        setMessages((prev) => [...prev, { 
+                          id: uid(), 
+                          role: 'user', 
+                          content: `Show me ${tag.label} compounds` 
+                        }])
+                        userHasInteracted.current = true
+                        setShowTags(false)
+                        router.push(`/products/category/${tag.slug}`)
+                      }}
+                    >
+                      {tag.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -347,7 +576,7 @@ export default function ChatWidget() {
               <div key={m.id} className={`cw-msg-row ${m.role === 'user' ? 'cw-row-user' : 'cw-row-bot'}`}>
                 <div className={`cw-bubble ${m.role === 'user' ? 'cw-bubble-user' : 'cw-bubble-bot'} ${m.isDisclaimer ? 'cw-bubble-disclaimer' : ''}`}>
                   {m.isDisclaimer && (
-                    <span className="cw-disclaimer-tag">⚠️ Research Use Only</span>
+                    <span className="cw-disclaimer-tag">Research Use Only</span>
                   )}
                   <div className="cw-message-content">{m.content}</div>
                 </div>
@@ -361,6 +590,29 @@ export default function ChatWidget() {
                   <span />
                   <span />
                 </div>
+              </div>
+            )}
+
+            {/* Feedback mechanism - only shown after user interaction */}
+            {showFeedback && feedbackMessageId && !botTyping && userHasInteracted.current && (
+              <div className="cw-feedback">
+                <span className="cw-feedback-label">Was this helpful?</span>
+                <button
+                  className={`cw-feedback-btn ${feedbackGiven[feedbackMessageId] === 'helpful' ? 'cw-feedback-active' : ''}`}
+                  onClick={() => handleFeedback(feedbackMessageId, true)}
+                  aria-label="Helpful"
+                  disabled={!!feedbackGiven[feedbackMessageId]}
+                >
+                  <ThumbsUp size={14} />
+                </button>
+                <button
+                  className={`cw-feedback-btn ${feedbackGiven[feedbackMessageId] === 'unhelpful' ? 'cw-feedback-active' : ''}`}
+                  onClick={() => handleFeedback(feedbackMessageId, false)}
+                  aria-label="Not helpful"
+                  disabled={!!feedbackGiven[feedbackMessageId]}
+                >
+                  <ThumbsDown size={14} />
+                </button>
               </div>
             )}
 
@@ -414,16 +666,22 @@ export default function ChatWidget() {
                     Email our team
                   </button>
                 </div>
-                {handoffSent && <div className="cw-handoff-confirm">✓ Sent — our team has your conversation.</div>}
+                {handoffSent && <div className="cw-handoff-confirm">Sent — our team has your conversation.</div>}
               </div>
             )}
           </div>
 
           <div className="cw-footer">
             <div className="cw-footer-top">
-              <button type="button" className="cw-human-link" onClick={() => setShowHandoff((v) => !v)}>
-                👨‍🔬 Talk to a research specialist →
-              </button>
+              <div className="cw-footer-left">
+                <button type="button" className="cw-human-link" onClick={() => setShowHandoff((v) => !v)}>
+                  Talk to a research specialist →
+                </button>
+                <span className="cw-quick-search-hint">
+                  <Search size={10} />
+                  <span>Try "Show me metabolic compounds" or "COA for BC10"</span>
+                </span>
+              </div>
               <button 
                 type="button" 
                 className="cw-disclaimer-toggle"
@@ -643,28 +901,84 @@ export default function ChatWidget() {
             gap: 10px;
             background: #F7F8FA;
           }
-          .cw-disclaimer-banner {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            background: #FFF8E1;
-            border: 1px solid #FFE082;
-            border-radius: 10px;
-            padding: 10px 14px;
+          .cw-tags-section {
             margin-bottom: 6px;
-            font-size: 11.5px;
-            line-height: 1.5;
-            color: #6D4C00;
           }
-          .cw-disclaimer-icon {
-            flex-shrink: 0;
-            margin-top: 1px;
-            color: #FF8F00;
-          }
-          .cw-disclaimer-text strong {
-            display: block;
+          .cw-tags-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
             font-weight: 700;
-            margin-bottom: 1px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(13,15,20,.4);
+            margin-bottom: 8px;
+          }
+          .cw-tags-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+          .cw-tag-chip {
+            padding: 6px 12px;
+            border-radius: 100px;
+            border: 1px solid rgba(26,86,219,.2);
+            background: #EBF2FF;
+            color: #1240B0;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+          }
+          .cw-tag-chip:hover {
+            background: #D4E4FF;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(26,86,219,.15);
+          }
+          .cw-tag-chip:active {
+            transform: scale(0.97);
+          }
+          .cw-feedback {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(13,15,20,.04);
+            border-radius: 100px;
+            align-self: flex-start;
+            margin-top: 2px;
+          }
+          .cw-feedback-label {
+            font-size: 11px;
+            color: rgba(13,15,20,.5);
+            font-weight: 500;
+          }
+          .cw-feedback-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: rgba(13,15,20,.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+          }
+          .cw-feedback-btn:hover:not(:disabled) {
+            background: rgba(13,15,20,.08);
+            color: #0D0F14;
+          }
+          .cw-feedback-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+          }
+          .cw-feedback-active {
+            color: #1A56DB !important;
+            background: rgba(26,86,219,.1) !important;
           }
           .cw-bubble-disclaimer {
             background: #FFF8E1 !important;
@@ -754,6 +1068,14 @@ export default function ChatWidget() {
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+          .cw-footer-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
           }
           .cw-human-link {
             background: none; border: none; color: #1A56DB; font-size: 11.5px; font-weight: 700;
@@ -761,6 +1083,24 @@ export default function ChatWidget() {
             transition: opacity 0.15s ease;
           }
           .cw-human-link:hover { opacity: 0.7; }
+          .cw-quick-search-hint {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            color: rgba(13,15,20,.35);
+            padding: 2px 8px;
+            border: 1px dashed rgba(13,15,20,.12);
+            border-radius: 100px;
+          }
+          .cw-quick-search-hint span {
+            white-space: nowrap;
+          }
+          @media (max-width: 480px) {
+            .cw-quick-search-hint span {
+              display: none;
+            }
+          }
           .cw-disclaimer-toggle {
             display: flex;
             align-items: center;
@@ -814,7 +1154,7 @@ export default function ChatWidget() {
           @media (prefers-reduced-motion: reduce) {
             .cw-fab { transition: none; opacity: 1; transform: none; }
             .cw-panel { animation: none; }
-            .cw-chip, .cw-send { transition: none; transform: none !important; }
+            .cw-chip, .cw-send, .cw-tag-chip { transition: none; transform: none !important; }
           }
           @media print { .cw-fab, .cw-panel { display: none !important; } }
         `
