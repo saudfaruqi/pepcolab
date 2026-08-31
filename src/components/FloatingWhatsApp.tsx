@@ -56,7 +56,7 @@ export default function FloatingWhatsApp() {
           align-items: center;
           gap: 8px;
           height: 48px;
-          padding: 0 18px 0 16px;
+          padding: 0 16px 0 16px;
           border-radius: 999px;
           background: #25D366;
           color: #fff;
@@ -76,9 +76,9 @@ export default function FloatingWhatsApp() {
 
         @media (max-width: 640px) {
           .fw-fab {
-            left: 16px;
-            width: 52px;
-            height: 52px;
+            left: 10px;
+            width: 48px;
+            height: 48px;
             padding: 0;
             justify-content: center;
           }

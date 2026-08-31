@@ -83,3 +83,26 @@ export function whatsAppWishlistLink(items: WishlistItem[]): string {
 
   return buildLink(message)
 }
+
+// ChatWidget → WhatsApp handoff. Same "list + ask" pattern as the cart/
+// wishlist links above: the visitor's own WhatsApp app opens with a
+// condensed, pre-filled summary addressed to PepcoLab's number, so a human
+// picks up the conversation with real context instead of starting cold.
+// Kept short (WhatsApp's wa.me text param has practical length limits in
+// some clients) — this is a handoff summary, not the full transcript; the
+// full transcript goes to the team by email via /api/chat/transcript.
+export function whatsAppChatHandoffLink(summary: string, contactName?: string): string {
+  const greeting = contactName ? `Hi PepcoLab, I'm ${contactName}.` : 'Hi PepcoLab,'
+  const message = `${greeting} I was chatting with your website assistant and would like to continue here.\n\n${summary}`
+  return buildLink(message.slice(0, 900))
+}
+
+// Referral program → WhatsApp share. Deliberately NOT using buildLink()
+// above — that always addresses PepcoLab's own number, which is right for
+// "customer contacts us" CTAs but wrong here: a referrer sharing their code
+// needs to message THEIR friends, not us. Omitting the number from wa.me
+// opens WhatsApp's own contact picker instead.
+export function whatsAppReferralShareLink(referralUrl: string, discountPercent: number): string {
+  const message = `Hey! I've been ordering research peptides from PepcoLab — here's ${discountPercent}% off your first order with my link: ${referralUrl}`
+  return `https://wa.me/?text=${encodeURIComponent(message)}`
+}

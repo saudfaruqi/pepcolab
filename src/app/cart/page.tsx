@@ -98,6 +98,27 @@ function CartPageInner() {
   const [discountApplying, setDiscountApplying] = useState(false)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null)
+  const [referralPrefill, setReferralPrefill] = useState<string | null>(null)
+
+  // Referrals: ReferralWidget stashes an incoming ?ref= code in localStorage
+  // (see components/ReferralWidget.tsx) when a visitor lands via a friend's
+  // link. If they haven't already typed a code by the time they reach the
+  // cart, pre-fill it here so the discount isn't left on the table — the
+  // referral code IS a regular discount code under the hood (see
+  // lib/referralStore.ts), so this needs no changes to applyDiscount().
+  useEffect(() => {
+    if (discountCode || appliedDiscount) return
+    try {
+      const stored = localStorage.getItem('pepcolab_referral')
+      if (stored) {
+        setDiscountCode(stored)
+        setReferralPrefill(stored)
+      }
+    } catch {
+      // localStorage can throw in private/incognito contexts — non-critical
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const applyDiscount = async () => {
     const code = discountCode.trim()
@@ -343,6 +364,9 @@ function CartPageInner() {
                   </div>
                   {discountError && (
                     <p className="text-xs text-red-600 mt-1.5">{discountError}</p>
+                  )}
+                  {referralPrefill && discountCode === referralPrefill && !discountError && (
+                    <p className="text-xs text-gray-500 mt-1.5">Referral code applied from your link — hit Apply to use it.</p>
                   )}
                 </div>
               )}

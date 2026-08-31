@@ -11,6 +11,7 @@ import { RecentlyViewedProvider } from '@/lib/recentlyViewedContext'
 import AgeLocationGate from '@/components/AgeLocationGate'
 import FloatingCalculator from '@/components/FloatingCalculator'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
+import ChatWidget from '@/components/ChatWidget'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -266,6 +267,7 @@ export default function RootLayout({
                 <CartDrawer />
                 <FloatingCalculator />
                 <FloatingWhatsApp />
+                <ChatWidget />
               </CartProvider>
             </RecentlyViewedProvider>
           </WishlistProvider>

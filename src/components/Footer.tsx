@@ -23,6 +23,7 @@ const LINKS = {
   ],
   Company: [
     { label: 'About Us',  href: '/about'    },
+    { label: 'Refer & Earn', href: '/referrals' },
     { label: 'Contact',   href: '/contact'  },
     { label: 'Track Order', href: '/track-order' },
     { label: 'Shipping',  href: '/shipping' },

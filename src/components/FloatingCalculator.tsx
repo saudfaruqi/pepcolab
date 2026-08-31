@@ -148,7 +148,7 @@ export default function FloatingCalculator() {
         <span
           style={{
             position: 'absolute',
-            right: 12,
+            left: 12,
             top: '50%',
             transform: 'translateY(-50%)',
             fontSize: 12,
@@ -275,7 +275,7 @@ export default function FloatingCalculator() {
       <style>{`
         .fc-fab {
           position: fixed;
-          right: 20px;
+          left: 20px;
           /* --fc-offset lets a page with its own sticky bar (e.g. a mobile
              add-to-cart bar) push the button up without editing this file:
              set --fc-offset on :root or a page wrapper. */
@@ -285,7 +285,7 @@ export default function FloatingCalculator() {
           align-items: center;
           gap: 8px;
           height: 48px;
-          padding: 0 18px 0 16px;
+          padding: 0 14px 0 14px;
           border: none;
           border-radius: 999px;
           background: #0d0d0d;
@@ -305,7 +305,7 @@ export default function FloatingCalculator() {
 
         .fc-panel {
           position: fixed;
-          right: 20px;
+          left: 20px;
           bottom: calc(84px + env(safe-area-inset-bottom) + var(--fc-offset, 0px));
           width: 340px;
           max-height: calc(100vh - 140px);
@@ -331,7 +331,7 @@ export default function FloatingCalculator() {
           /* Icon-only circle on phones — a pill with a label eats real screen
              width and overlaps content on narrow viewports. */
           .fc-fab {
-            right: 16px;
+            left: 16px;
             width: 52px;
             height: 52px;
             padding: 0;
@@ -342,7 +342,7 @@ export default function FloatingCalculator() {
           /* Bottom sheet rather than a floating card: a 340px panel anchored
              to a corner is unusable one-handed. */
           .fc-panel {
-            right: 0;
+            left: 0;
             left: 0;
             bottom: 0;
             width: auto;

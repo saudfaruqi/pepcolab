@@ -65,22 +65,15 @@ export default function Nav() {
   const [scrolled,       setScrolled]       = useState(false)
   const [products,       setProducts]       = useState<Product[]>([])
 
-  // MARKET FIX (Aug 2026): PepcoLab is UAE-only for now (see
-  // countryContext.tsx) — this switcher used to let visitors pick between
-  // UAE/AED and United Kingdom/GBP. With only one supported market, a
-  // switcher offering a single option is pointless UI, so it's removed
-  // below in favour of a plain "AED" label. Re-add an options array like
-  // this alongside a real dropdown if a second market comes back.
-
   const searchRef      = useRef<HTMLInputElement>(null)
   const dropTimer      = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!ready) return  // ← wait for detection
+    if (!ready) return
     getProducts(40, country).then(raw =>
       setProducts(raw.map(p => ({ ...p, id: p.shopifyId, slug: p.handle, name: p.title, category: p.tags[0] ?? '' })))
     )
-  }, [country, ready]) 
+  }, [country, ready])
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 8)
@@ -112,8 +105,6 @@ export default function Nav() {
     return () => window.removeEventListener('resize', fn)
   }, [])
 
-  // Route changes (including clicks on mobile sub-links) should close the
-  // mobile panel/dropdowns rather than leaving them open behind the new page.
   useEffect(() => {
     setMobileOpen(false)
     setMobileExpanded(null)
@@ -134,30 +125,16 @@ export default function Nav() {
       ).slice(0, 6)
     : []
 
-  // Matches the actual tags used across the 34 published products:
-  // metabolic, recovery, cognitive, hormonal, anti-ageing, immune, accessories.
-  // (Previously missing anti-ageing/immune/accessories — dropdown counts
-  // didn't sum to "All Compounds" because 3 whole categories were absent.)
   const CATEGORY_LABELS: Record<string, string> = {
     metabolic: 'Metabolic', recovery: 'Recovery', cognitive: 'Cognitive', hormonal: 'Hormonal',
     'anti-ageing': 'Anti-Ageing', immune: 'Immune', accessories: 'Accessories',
   }
 
-  // Every href into the catalogue carries #catalogue so the browser scrolls
-  // straight to the product grid on landing — previously these linked to
-  // bare "/products?cat=slug", which dropped the visitor at the top of the
-  // page (above the hero) and left them to scroll down manually to see any
-  // filtered results. The grid section in app/products/page.tsx already has
-  // id="catalogue"; this just points at it.
   const NAV_LINKS = [
     {
       label: 'Products', href: '/products#catalogue', hasDrop: true,
       items: [
         { label: 'All Compounds',   href: '/products#catalogue',  sub: products.length > 0 ? `${products.length} compounds` : 'Browse catalogue' },
-        // Real crawlable category routes now (see
-        // app/products/category/[category]/page.tsx) rather than the
-        // query-string filter — no #catalogue needed since each route is
-        // its own full page, not a scroll target on /products.
         ...Object.entries(CATEGORY_LABELS).map(([slug, label]) => ({
           label, href: `/products/category/${slug}`,
           sub: categoryCounts[slug] != null ? `${categoryCounts[slug]} product${categoryCounts[slug] !== 1 ? 's' : ''}` : undefined,
@@ -184,26 +161,16 @@ export default function Nav() {
         { label: 'FAQ',           href: '/faq',      sub: 'Common questions'         },
         { label: 'Contact Us',    href: '/contact',  sub: 'Get in touch'             },
         { label: 'Shipping Info', href: '/shipping', sub: 'Delivery & tracking'      },
+        { label: 'Refer & Earn',  href: '/referrals', sub: 'Give 15%, get 20%'       },
       ] as { label: string; href: string; sub?: string }[],
     },
   ]
 
-  // ── Active-page detection ──────────────────────────────────────────────
-  // Strips query/hash so "/products#catalogue" and "/products?q=x" both
-  // resolve to the routable path "/products" for comparison against
-  // usePathname(), which never includes query/hash itself.
   const basePath = (href: string) => href.split('#')[0].split('?')[0] || '/'
 
-  // True if the current route is that path or nested under it
-  // (e.g. "/products" also matches "/products/category/metabolic" and
-  // "/products/some-peptide-slug"), so a link stays highlighted while
-  // browsing anything beneath its section.
   const pathMatches = (base: string) =>
     pathname === base || pathname?.startsWith(base === '/' ? '/__never__' : `${base}/`)
 
-  // A top-level nav item is "current" if the route matches its own href
-  // or any of its dropdown items' hrefs — so e.g. visiting /bundles keeps
-  // "Products" highlighted even though /bundles isn't under /products.
   const isLinkCurrent = (link: typeof NAV_LINKS[number]) =>
     pathMatches(basePath(link.href)) || link.items.some(item => pathMatches(basePath(item.href)))
 
@@ -211,464 +178,6 @@ export default function Nav() {
 
   return (
     <>
-      <style>{`
-        .nav-root {
-          position: sticky;
-          top: 0;
-          z-index: 50;
-          background: #fff;
-          transition: box-shadow .25s ease, border-color .25s ease;
-        }
-        .nav-root.scrolled {
-          box-shadow: 0 1px 0 rgba(13,13,13,.07), 0 4px 24px rgba(13,13,13,.06);
-        }
-        .nav-root:not(.scrolled) {
-          border-bottom: 1px solid rgba(13,13,13,.08);
-        }
-        .nav-inner {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 0 clamp(16px,3vw,40px);
-          height: 60px;
-          display: flex;
-          align-items: center;
-          gap: 0;
-        }
-        /* Logo */
-        .nav-logo {
-          display: flex;
-          align-items: center;
-          text-decoration: none;
-          flex-shrink: 0;
-          margin-right: 32px;
-        }
-        .nav-logo img { height: 44px; width: auto; display: block; }
-
-        /* Desktop links */
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 2px;
-          flex: 1;
-        }
-        .nav-link-wrap { position: relative; }
-        .nav-link {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 7px 13px;
-          font-size: 13px;
-          font-weight: 500;
-          color: rgba(13,13,13,.56);
-          border-radius: 8px;
-          border: none;
-          background: none;
-          cursor: pointer;
-          text-decoration: none;
-          white-space: nowrap;
-          transition: background .15s, color .15s;
-          letter-spacing: -.01em;
-        }
-        .nav-link:hover, .nav-link.active {
-          background: #f4f3f0;
-          color: #0d0d0d;
-        }
-        /* Persistent "you are here" state — distinct from the transient
-           hover/dropdown-open .active state above, since a page should
-           stay legible as current even after the pointer moves away. */
-        .nav-link.current {
-          color: #0d0d0d;
-          font-weight: 700;
-        }
-        .nav-link.current::after {
-          content: '';
-          position: absolute;
-          left: 13px;
-          right: 13px;
-          bottom: 1px;
-          height: 2px;
-          border-radius: 2px;
-          background: #0d0d0d;
-        }
-
-        /* Dropdown */
-        .nav-drop {
-          position: absolute;
-          top: calc(100% + 6px);
-          left: 0;
-          background: #fff;
-          border: 1px solid rgba(13,13,13,.09);
-          border-radius: 16px;
-          overflow: hidden;
-          min-width: 220px;
-          box-shadow: 0 8px 32px rgba(13,13,13,.1), 0 2px 8px rgba(13,13,13,.05);
-          padding: 6px;
-          z-index: 60;
-          animation: dropIn .18s cubic-bezier(.16,1,.3,1) forwards;
-        }
-        @keyframes dropIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .nav-drop-item {
-          display: flex;
-          flex-direction: column;
-          padding: 9px 12px;
-          border-radius: 10px;
-          text-decoration: none;
-          transition: background .12s;
-          cursor: pointer;
-        }
-        .nav-drop-item:hover { background: #f4f3f0; }
-        .nav-drop-item-label { font-size: 13px; font-weight: 600; color: #0d0d0d; }
-        .nav-drop-item-sub   { font-size: 11px; color: rgba(13,13,13,.42); margin-top: 2px; }
-        /* Highlight the specific dropdown item matching the current route */
-        .nav-drop-item.current { background: #f4f3f0; }
-        .nav-drop-item.current .nav-drop-item-label::before {
-          content: '';
-          display: inline-block;
-          width: 5px;
-          height: 5px;
-          border-radius: 999px;
-          background: #0d0d0d;
-          margin-right: 7px;
-          vertical-align: middle;
-        }
-
-        /* Right actions */
-        .nav-actions {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-left: auto;
-          flex-shrink: 0;
-        }
-        .nav-icon-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          border: none;
-          background: none;
-          cursor: pointer;
-          color: rgba(13,13,13,.55);
-          position: relative;
-          transition: background .15s, color .15s;
-          flex-shrink: 0;
-        }
-        .nav-icon-btn:hover { background: #f4f3f0; color: #0d0d0d; }
-        .nav-cart-badge {
-          position: absolute;
-          top: 2px; right: 2px;
-          min-width: 16px; height: 16px;
-          background: #0d0d0d;
-          color: #fff;
-          font-size: 9px;
-          font-weight: 700;
-          border-radius: 999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 3px;
-          border: 1.5px solid #fff;
-        }
-        .nav-search-btn {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          font-size: 12.5px;
-          font-weight: 500;
-          color: rgba(13,13,13,.42);
-          border: 1px solid rgba(13,13,13,.1);
-          padding: 7px 13px;
-          border-radius: 8px;
-          background: #faf9f7;
-          cursor: pointer;
-          white-space: nowrap;
-          transition: border-color .15s, color .15s, background .15s;
-        }
-        .nav-search-btn:hover {
-          border-color: rgba(13,13,13,.22);
-          color: rgba(13,13,13,.7);
-          background: #f4f3f0;
-        }
-        .nav-cta {
-          display: inline-flex;
-          align-items: center;
-          background: #0d0d0d;
-          color: #fff;
-          font-size: 12.5px;
-          font-weight: 600;
-          letter-spacing: .03em;
-          padding: 9px 18px;
-          border-radius: 999px;
-          border: none;
-          cursor: pointer;
-          text-decoration: none;
-          white-space: nowrap;
-          transition: background .15s, transform .15s;
-        }
-        .nav-cta:hover { background: #222; transform: translateY(-1px); }
-        .nav-hamburger {
-          display: none;
-          align-items: center;
-          justify-content: center;
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          border: 1px solid rgba(13,13,13,.1);
-          background: none;
-          cursor: pointer;
-          color: #0d0d0d;
-          flex-shrink: 0;
-          gap: 0;
-          flex-direction: column;
-          padding: 0;
-        }
-        .ham-line {
-          display: block;
-          width: 16px;
-          height: 1.5px;
-          background: #0d0d0d;
-          border-radius: 2px;
-          transition: transform .25s ease, opacity .25s ease;
-          margin: 2.5px 0;
-        }
-
-        /* Mobile menu */
-        .mobile-menu-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,.3);
-          z-index: 90;
-          backdrop-filter: blur(4px);
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity .3s ease;
-        }
-        .mobile-menu-overlay.open {
-          opacity: 1;
-          pointer-events: auto;
-        }
-        .mobile-menu {
-          position: fixed;
-          top: 0; right: 0; bottom: 0;
-          width: min(88vw, 360px);
-          background: #fff;
-          z-index: 100;
-          display: flex;
-          flex-direction: column;
-          transform: translateX(100%);
-          transition: transform .35s cubic-bezier(.16,1,.3,1);
-          overflow-y: auto;
-          overflow-x: hidden;
-        }
-        .mobile-menu.open { transform: translateX(0); }
-
-        .mob-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 20px;
-          height: 60px;
-          border-bottom: 1px solid rgba(13,13,13,.07);
-          flex-shrink: 0;
-        }
-        .mob-logo {
-
-        }
-        .mob-search {
-          margin: 12px 16px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 11px 14px;
-          border: 1px solid rgba(13,13,13,.1);
-          border-radius: 10px;
-          background: #faf9f7;
-          cursor: pointer;
-          flex-shrink: 0;
-        }
-        .mob-search span { font-size: 13px; color: rgba(13,13,13,.4); }
-        .mob-links { flex: 1; padding: 4px 0; }
-        .mob-link-row {
-          border-bottom: 1px solid rgba(13,13,13,.05);
-        }
-        .mob-link {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 14px 20px;
-          font-size: 15px;
-          font-weight: 600;
-          color: #0d0d0d;
-          text-decoration: none;
-          background: none;
-          border: none;
-          cursor: pointer;
-          width: 100%;
-          text-align: left;
-          transition: background .12s;
-          position: relative;
-        }
-        .mob-link:hover { background: #faf9f7; }
-        /* Persistent current-page marker in the mobile panel: a left bar
-           plus a filled dot, since bold-weight alone is easy to miss on
-           a 15px label that's already semi-bold by default. */
-        .mob-link.current { background: #faf9f7; }
-        .mob-link.current::before {
-          content: '';
-          position: absolute;
-          left: 0; top: 0; bottom: 0;
-          width: 3px;
-          background: #0d0d0d;
-        }
-        .mob-sub-links {
-          background: #faf9f7;
-          border-top: 1px solid rgba(13,13,13,.05);
-          overflow: hidden;
-          transition: max-height .28s ease, opacity .28s ease;
-        }
-        .mob-sub-link {
-          display: flex;
-          flex-direction: column;
-          padding: 11px 28px;
-          text-decoration: none;
-          transition: background .12s;
-        }
-        .mob-sub-link:hover { background: #f0efe9; }
-        .mob-sub-link.current { background: #f0efe9; }
-        .mob-sub-label { font-size: 13.5px; font-weight: 600; color: #0d0d0d; }
-        .mob-sub-link.current .mob-sub-label { text-decoration: underline; text-underline-offset: 3px; }
-        .mob-sub-sub   { font-size: 11px; color: rgba(13,13,13,.42); margin-top: 2px; }
-        .mob-footer {
-          padding: 16px;
-          border-top: 1px solid rgba(13,13,13,.07);
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          flex-shrink: 0;
-        }
-        .mob-cta-primary {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #0d0d0d;
-          color: #fff;
-          font-size: 14px;
-          font-weight: 600;
-          padding: 15px;
-          border-radius: 12px;
-          text-decoration: none;
-          letter-spacing: .02em;
-        }
-        .mob-cta-secondary {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          background: transparent;
-          color: #0d0d0d;
-          font-size: 13.5px;
-          font-weight: 500;
-          padding: 13px;
-          border-radius: 12px;
-          border: 1px solid rgba(13,13,13,.12);
-          cursor: pointer;
-        }
-        .mob-disclaimer {
-          font-size: 10.5px;
-          color: rgba(13,13,13,.3);
-          text-align: center;
-          line-height: 1.6;
-          font-style: italic;
-        }
-
-        /* Search overlay */
-        .search-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(13,13,13,.45);
-          z-index: 200;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          padding: clamp(56px,10vh,100px) 16px 0;
-          backdrop-filter: blur(3px);
-        }
-        .search-panel {
-          background: #fff;
-          border-radius: 18px;
-          width: 100%;
-          max-width: 560px;
-          border: 1px solid rgba(13,13,13,.09);
-          box-shadow: 0 24px 64px rgba(13,13,13,.18);
-          overflow: hidden;
-          animation: dropIn .2s cubic-bezier(.16,1,.3,1) forwards;
-        }
-        .search-input-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px 18px;
-          border-bottom: 1px solid rgba(13,13,13,.08);
-        }
-        .search-input {
-          flex: 1;
-          font-size: 14px;
-          outline: none;
-          border: none;
-          background: transparent;
-          color: #0d0d0d;
-          min-width: 0;
-        }
-        .search-result-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 11px 18px;
-          text-decoration: none;
-          transition: background .12s;
-        }
-        .search-result-item:hover { background: #f4f3f0; }
-        .search-chip {
-          font-size: 12px;
-          color: rgba(13,13,13,.6);
-          border: 1px solid rgba(13,13,13,.11);
-          padding: 6px 13px;
-          border-radius: 999px;
-          background: none;
-          cursor: pointer;
-          transition: border-color .15s, color .15s, background .15s;
-        }
-        .search-chip:hover {
-          border-color: #0d0d0d;
-          color: #0d0d0d;
-          background: #f4f3f0;
-        }
-
-        /* Responsive */
-        @media (min-width: 1024px) {
-          .nav-hamburger { display: none !important; }
-          .nav-links     { display: flex !important; }
-          .nav-cta       { display: inline-flex !important; }
-          .nav-search-btn { display: flex !important; }
-        }
-        @media (max-width: 1023px) {
-          .nav-links      { display: none !important; }
-          .nav-search-btn { display: none !important; }
-          .nav-cta        { display: none !important; }
-          .nav-hamburger  { display: flex !important; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-        }
-      `}</style>
-
       {/* ── Search overlay ── */}
       {searchOpen && (
         <div className="search-overlay" onClick={() => setSearchOpen(false)}>
@@ -749,10 +258,6 @@ export default function Nav() {
           <span>Search peptides…</span>
         </button>
 
-        {/* MARKET FIX (Aug 2026): mobile currency/region switcher removed —
-            see the desktop nav-actions block above for the same change and
-            why. Single market (AE/AED) now, nothing to switch between. */}
-
         <div className="mob-links">
           {NAV_LINKS.map(link => {
             const current = isLinkCurrent(link)
@@ -809,10 +314,6 @@ export default function Nav() {
 
           {/* Logo */}
           <a href="/" className="nav-logo">
-            {/* This is the LCP element on nearly every page — priority
-                skips lazy-loading and gets it into the initial preload
-                scan, instead of only starting to fetch once React
-                hydrates and the lazy-load IntersectionObserver fires. */}
             <Image src="/pepcologo.png" alt="PepcoLab" width={160} height={40} priority />
           </a>
 
@@ -858,9 +359,6 @@ export default function Nav() {
 
           {/* Actions */}
           <div className="nav-actions">
-            {/* MARKET FIX (Aug 2026): was an interactive currency/region
-                switcher (AED/UAE vs GBP/UK). Single-market now, so this is
-                a static label instead of a dropdown with one option in it. */}
             <span
               className="nav-search-btn"
               style={{ minWidth: 0, cursor: 'default' }}
@@ -869,14 +367,12 @@ export default function Nav() {
               <span>{ready ? currency : '···'}</span>
             </span>
 
-            {/* Search */}
             <button className="nav-search-btn" onClick={() => setSearchOpen(true)}>
               <SearchIcon />
               <span>Search</span>
               <kbd style={{ fontSize: 10, fontWeight: 600, border: '1px solid rgba(13,13,13,.1)', padding: '2px 6px', borderRadius: 5, lineHeight: 1.4, color: 'rgba(13,13,13,.35)' }}>⌘K</kbd>
             </button>
 
-            {/* Wishlist */}
             <a href="/wishlist" className="nav-icon-btn" aria-label={`Wishlist (${wishlistCount})`}>
               <HeartIcon filled={wishlistCount > 0} />
               {wishlistCount > 0 && (
@@ -884,7 +380,6 @@ export default function Nav() {
               )}
             </a>
 
-            {/* Cart */}
             <button className="nav-icon-btn" onClick={openCart} aria-label={`Cart (${totalQuantity})`}>
               <BagIcon />
               {totalQuantity > 0 && (
@@ -892,10 +387,8 @@ export default function Nav() {
               )}
             </button>
 
-            {/* CTA */}
             <a href="/products" className="nav-cta">Shop Now</a>
 
-            {/* Hamburger */}
             <button className="nav-hamburger" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
               <span className="ham-line" style={{ transform: mobileOpen ? 'translateY(7px) rotate(45deg)' : 'none' }} />
               <span className="ham-line" style={{ opacity: mobileOpen ? 0 : 1 }} />
@@ -905,6 +398,441 @@ export default function Nav() {
 
         </div>
       </nav>
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .nav-root {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: #fff;
+            transition: box-shadow .25s ease, border-color .25s ease;
+          }
+          .nav-root.scrolled {
+            box-shadow: 0 1px 0 rgba(13,13,13,.07), 0 4px 24px rgba(13,13,13,.06);
+          }
+          .nav-root:not(.scrolled) {
+            border-bottom: 1px solid rgba(13,13,13,.08);
+          }
+          .nav-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 clamp(16px,3vw,40px);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            gap: 0;
+          }
+          .nav-logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            flex-shrink: 0;
+            margin-right: 32px;
+          }
+          .nav-logo img { height: 44px; width: auto; display: block; }
+          .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex: 1;
+          }
+          .nav-link-wrap { position: relative; }
+          .nav-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 13px;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(13,13,13,.56);
+            border-radius: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background .15s, color .15s;
+            letter-spacing: -.01em;
+          }
+          .nav-link:hover, .nav-link.active {
+            background: #f4f3f0;
+            color: #0d0d0d;
+          }
+          .nav-link.current {
+            color: #0d0d0d;
+            font-weight: 700;
+          }
+          .nav-link.current::after {
+            content: "";
+            position: absolute;
+            left: 13px;
+            right: 13px;
+            bottom: 1px;
+            height: 2px;
+            border-radius: 2px;
+            background: #0d0d0d;
+          }
+          .nav-drop {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: #fff;
+            border: 1px solid rgba(13,13,13,.09);
+            border-radius: 16px;
+            overflow: hidden;
+            min-width: 220px;
+            box-shadow: 0 8px 32px rgba(13,13,13,.1), 0 2px 8px rgba(13,13,13,.05);
+            padding: 6px;
+            z-index: 60;
+            animation: dropIn .18s cubic-bezier(.16,1,.3,1) forwards;
+          }
+          @keyframes dropIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .nav-drop-item {
+            display: flex;
+            flex-direction: column;
+            padding: 9px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background .12s;
+            cursor: pointer;
+          }
+          .nav-drop-item:hover { background: #f4f3f0; }
+          .nav-drop-item-label { font-size: 13px; font-weight: 600; color: #0d0d0d; }
+          .nav-drop-item-sub   { font-size: 11px; color: rgba(13,13,13,.42); margin-top: 2px; }
+          .nav-drop-item.current { background: #f4f3f0; }
+          .nav-drop-item.current .nav-drop-item-label::before {
+            content: "";
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            border-radius: 999px;
+            background: #0d0d0d;
+            margin-right: 7px;
+            vertical-align: middle;
+          }
+          .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0;
+          }
+          .nav-icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: rgba(13,13,13,.55);
+            position: relative;
+            transition: background .15s, color .15s;
+            flex-shrink: 0;
+          }
+          .nav-icon-btn:hover { background: #f4f3f0; color: #0d0d0d; }
+          .nav-cart-badge {
+            position: absolute;
+            top: 2px; right: 2px;
+            min-width: 16px; height: 16px;
+            background: #0d0d0d;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+            border: 1.5px solid #fff;
+          }
+          .nav-search-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: rgba(13,13,13,.42);
+            border: 1px solid rgba(13,13,13,.1);
+            padding: 7px 13px;
+            border-radius: 8px;
+            background: #faf9f7;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color .15s, color .15s, background .15s;
+          }
+          .nav-search-btn:hover {
+            border-color: rgba(13,13,13,.22);
+            color: rgba(13,13,13,.7);
+            background: #f4f3f0;
+          }
+          .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            background: #0d0d0d;
+            color: #fff;
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: .03em;
+            padding: 9px 18px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background .15s, transform .15s;
+          }
+          .nav-cta:hover { background: #222; transform: translateY(-1px); }
+          .nav-hamburger {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(13,13,13,.1);
+            background: none;
+            cursor: pointer;
+            color: #0d0d0d;
+            flex-shrink: 0;
+            gap: 0;
+            flex-direction: column;
+            padding: 0;
+          }
+          .ham-line {
+            display: block;
+            width: 16px;
+            height: 1.5px;
+            background: #0d0d0d;
+            border-radius: 2px;
+            transition: transform .25s ease, opacity .25s ease;
+            margin: 2.5px 0;
+          }
+          .mobile-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.3);
+            z-index: 90;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s ease;
+          }
+          .mobile-menu-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+          }
+          .mobile-menu {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: min(88vw, 360px);
+            background: #fff;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform .35s cubic-bezier(.16,1,.3,1);
+            overflow-y: auto;
+            overflow-x: hidden;
+          }
+          .mobile-menu.open { transform: translateX(0); }
+          .mob-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 60px;
+            border-bottom: 1px solid rgba(13,13,13,.07);
+            flex-shrink: 0;
+          }
+          .mob-search {
+            margin: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border: 1px solid rgba(13,13,13,.1);
+            border-radius: 10px;
+            background: #faf9f7;
+            cursor: pointer;
+            flex-shrink: 0;
+          }
+          .mob-search span { font-size: 13px; color: rgba(13,13,13,.4); }
+          .mob-links { flex: 1; padding: 4px 0; }
+          .mob-link-row {
+            border-bottom: 1px solid rgba(13,13,13,.05);
+          }
+          .mob-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #0d0d0d;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: background .12s;
+            position: relative;
+          }
+          .mob-link:hover { background: #faf9f7; }
+          .mob-link.current { background: #faf9f7; }
+          .mob-link.current::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: #0d0d0d;
+          }
+          .mob-sub-links {
+            background: #faf9f7;
+            border-top: 1px solid rgba(13,13,13,.05);
+            overflow: hidden;
+            transition: max-height .28s ease, opacity .28s ease;
+          }
+          .mob-sub-link {
+            display: flex;
+            flex-direction: column;
+            padding: 11px 28px;
+            text-decoration: none;
+            transition: background .12s;
+          }
+          .mob-sub-link:hover { background: #f0efe9; }
+          .mob-sub-link.current { background: #f0efe9; }
+          .mob-sub-label { font-size: 13.5px; font-weight: 600; color: #0d0d0d; }
+          .mob-sub-link.current .mob-sub-label { text-decoration: underline; text-underline-offset: 3px; }
+          .mob-sub-sub   { font-size: 11px; color: rgba(13,13,13,.42); margin-top: 2px; }
+          .mob-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(13,13,13,.07);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+          }
+          .mob-cta-primary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0d0d0d;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            letter-spacing: .02em;
+          }
+          .mob-cta-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: transparent;
+            color: #0d0d0d;
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 13px;
+            border-radius: 12px;
+            border: 1px solid rgba(13,13,13,.12);
+            cursor: pointer;
+          }
+          .mob-disclaimer {
+            font-size: 10.5px;
+            color: rgba(13,13,13,.3);
+            text-align: center;
+            line-height: 1.6;
+            font-style: italic;
+          }
+          .search-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(13,13,13,.45);
+            z-index: 200;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: clamp(56px,10vh,100px) 16px 0;
+            backdrop-filter: blur(3px);
+          }
+          .search-panel {
+            background: #fff;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 560px;
+            border: 1px solid rgba(13,13,13,.09);
+            box-shadow: 0 24px 64px rgba(13,13,13,.18);
+            overflow: hidden;
+            animation: dropIn .2s cubic-bezier(.16,1,.3,1) forwards;
+          }
+          .search-input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(13,13,13,.08);
+          }
+          .search-input {
+            flex: 1;
+            font-size: 14px;
+            outline: none;
+            border: none;
+            background: transparent;
+            color: #0d0d0d;
+            min-width: 0;
+          }
+          .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 18px;
+            text-decoration: none;
+            transition: background .12s;
+          }
+          .search-result-item:hover { background: #f4f3f0; }
+          .search-chip {
+            font-size: 12px;
+            color: rgba(13,13,13,.6);
+            border: 1px solid rgba(13,13,13,.11);
+            padding: 6px 13px;
+            border-radius: 999px;
+            background: none;
+            cursor: pointer;
+            transition: border-color .15s, color .15s, background .15s;
+          }
+          .search-chip:hover {
+            border-color: #0d0d0d;
+            color: #0d0d0d;
+            background: #f4f3f0;
+          }
+          @media (min-width: 1024px) {
+            .nav-hamburger { display: none !important; }
+            .nav-links     { display: flex !important; }
+            .nav-cta       { display: inline-flex !important; }
+            .nav-search-btn { display: flex !important; }
+          }
+          @media (max-width: 1023px) {
+            .nav-links      { display: none !important; }
+            .nav-search-btn { display: none !important; }
+            .nav-cta        { display: none !important; }
+            .nav-hamburger  { display: flex !important; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+          }
+        `
+      }} />
     </>
   )
 }

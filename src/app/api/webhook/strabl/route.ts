@@ -18,6 +18,8 @@ import { saveOrderRecord, getOrderRecord, type OrderRecord } from '@/lib/orderSt
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
+import { recordReferralRedemption, REFERRER_REWARD_PERCENT } from '@/lib/referralStore'
+import { sendReferralRewardEmail } from '@/lib/referralEmails'
 import { redis } from '@/lib/redis'
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
@@ -617,6 +619,30 @@ Please create this order manually in Shopify and mark it paid. The customer has 
             await incrementRedemption(discountCode)
           } catch (err) {
             console.error('[webhook] Failed to increment discount redemption:', err)
+          }
+
+          // Referral reward — no-ops silently if discountCode isn't a
+          // referral code (a normal promo code just returns null here).
+          // Best-effort, same as everything else in this block: a failed
+          // reward email should never fail the webhook or the real order,
+          // which is already booked either way.
+          try {
+            const result = await recordReferralRedemption(discountCode)
+            if (result) {
+              await sendReferralRewardEmail({
+                to: result.profile.ownerEmail,
+                name: result.profile.ownerName,
+                rewardCode: result.rewardCode,
+                rewardPercent: REFERRER_REWARD_PERCENT,
+              })
+              await sendMailSafe({
+                to: ALERT_EMAIL,
+                subject: `🔁 Referral redeemed — ${result.profile.code}`,
+                text: `${result.profile.ownerName} (${result.profile.ownerEmail})'s referral code ${result.profile.code} was just used on order ${shopifyOrder.name || shopifyOrder.id}.\n\nTotal referrals for this code: ${result.profile.referralCount}\nReward code issued to them: ${result.rewardCode}`,
+              })
+            }
+          } catch (err) {
+            console.error('[webhook] Failed to process referral redemption:', err)
           }
         }
       } catch (err: any) {
