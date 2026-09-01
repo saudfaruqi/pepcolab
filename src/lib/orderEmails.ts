@@ -3,59 +3,62 @@
 // The order-confirmation, review-request, abandoned-cart, and payment-failed
 // customer emails.
 //
-// RESTYLE (Sep 2026): the previous version of this file used its own
-// one-off palette (black / gold / off-white "PAPER") that didn't match the
-// actual site design tokens in app/globals.css (--ink, --blue, --gray-50,
-// etc — see referralEmails.ts, which already used the correct tokens).
-// This version pulls from the real brand palette and leans into PepcoLab's
-// "research lab" visual language already used across the site — the COA
-// terminal card, batch/lot labelling, purity/status pills, monospace
-// reference codes — instead of a generic e-commerce look. Table-based
-// layout, inline styles only, still — that part was correct and stays,
-// since it's what survives Outlook/Gmail clipping without a build step.
+// RESTYLE (Sep 2026), take two — see conversation history. First pass wrongly
+// matched app/globals.css's blue/gray tokens, which turn out to be mostly
+// vestigial (var(--blue) appears in a handful of files; almost nothing else
+// references the CSS custom properties). The palette customers actually see
+// — Nav, Footer, every content page, and critically the checkout
+// success/failure/cancel pages this email family sits right next to — is
+// inline-styled black/cream/gold: #0D0D0D ink, #F7F5F1 paper, #C8992A gold
+// accent, pill-shaped black CTAs, rgba(13,13,13,X) text opacities. This
+// version matches THAT — same ink/paper/gold values, same pill-badge and
+// pill-button formulas, pulled directly from app/checkout/success/page.tsx
+// and app/checkout/failure/page.tsx so this reads as the same product the
+// customer just clicked through, not a different app. Table-based layout,
+// inline styles only, stays — that's what survives Outlook/Gmail clipping.
 import { sendMailSafe } from '@/lib/mailer'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com'
 
-// ── Brand tokens — mirrors :root in app/globals.css ────────────────────
-const INK = '#0D0F14'
-const INK_60 = 'rgba(13,15,20,.60)'
-const INK_40 = 'rgba(13,15,20,.40)'
-const INK_35 = 'rgba(13,15,20,.35)'
+// ── Brand tokens — lifted directly from checkout/success & checkout/failure ─
+const INK = '#0D0D0D'
+const INK_HOVER = '#1a1a1a'
+const INK_60 = 'rgba(13,13,13,.6)'
+const INK_55 = 'rgba(13,13,13,.55)'
+const INK_40 = 'rgba(13,13,13,.4)'
+const INK_30 = 'rgba(13,13,13,.3)'
+const BORDER = 'rgba(13,13,13,.08)'
 const WHITE = '#FFFFFF'
-const GRAY_50 = '#F7F8FA'
-const BORDER = 'rgba(13,15,20,.09)'
-const BLUE = '#1A56DB'
-const BLUE_DEEP = '#0B2C78'
-const BLUE_LIGHT = '#EBF2FF'
-const BLUE_MID = '#BFCFF8'
+const PAPER = '#F7F5F1'
+const GOLD = '#C8992A'
+const GOLD_TEXT = '#8A6A1E' // darkened gold for small-text legibility; #C8992A itself is the accent/marker color
+const GOLD_TINT = 'rgba(200,153,42,.12)'
 const GREEN = '#0A7B45'
-const GREEN_LIGHT = '#E6F5EE'
-const AMBER = '#A86000'
-const AMBER_LIGHT = '#FEF4E0'
+const GREEN_TINT = 'rgba(10,123,69,.1)'
+const WHATSAPP_GREEN = '#25D366' // matches components/FloatingWhatsApp.tsx, not the success green
 const RED = '#B91C1C'
+const RED_TINT = 'rgba(185,28,28,.08)'
 
 function emailShell(bodyHtml: string): string {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
-<body style="margin:0; padding:0; background:${GRAY_50}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${GRAY_50}; background-image:linear-gradient(${BORDER} 1px, transparent 1px), linear-gradient(90deg, ${BORDER} 1px, transparent 1px); background-size:28px 28px; padding:40px 16px;">
+<body style="margin:0; padding:0; background:${PAPER}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER}; padding:40px 16px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background:${WHITE}; border:1px solid ${BORDER}; border-radius:20px; overflow:hidden;">
-        <tr><td style="height:4px; line-height:4px; font-size:0; background:${BLUE};">&nbsp;</td></tr>
-        <tr><td style="padding:28px 36px 24px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px; background:${WHITE}; border:1px solid ${BORDER}; border-radius:20px; overflow:hidden;">
+        <tr><td style="height:3px; line-height:3px; font-size:0; background:${GOLD};">&nbsp;</td></tr>
+        <tr><td style="padding:32px 36px 28px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
             <tr>
-              <td style="font-size:16px; font-weight:800; letter-spacing:-.01em; color:${INK};">PepcoLab</td>
-              <td align="right" style="font-family:'SF Mono',Consolas,monospace; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:${BLUE};">Research Lab</td>
+              <td style="font-size:18px; font-weight:700; letter-spacing:-.02em; color:${INK};">Pepco Lab</td>
+              <td align="right" style="font-family:'SF Mono',Consolas,monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:${GOLD_TEXT};">Research Lab</td>
             </tr>
           </table>
-          <div style="height:1px; background:${BORDER}; margin-bottom:24px;"></div>
           ${bodyHtml}
         </td></tr>
       </table>
-      <div style="max-width:560px; margin:20px auto 0; font-size:11px; line-height:1.6; color:${INK_35}; text-align:center;">
+      <div style="max-width:520px; margin:20px auto 0; font-size:11px; line-height:1.6; color:${INK_30}; text-align:center;">
         For laboratory and research purposes only. Not for human or veterinary use.<br />
         Pepco Lab · <a href="${SITE_URL}" style="color:${INK_40};">${SITE_URL.replace(/^https?:\/\//, '')}</a>
       </div>
@@ -65,8 +68,11 @@ function emailShell(bodyHtml: string): string {
 </html>`
 }
 
-function statusPill(label: string, fg: string, bg: string, border: string): string {
-  return `<span style="display:inline-flex; align-items:center; gap:6px; font-family:'SF Mono',Consolas,monospace; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:${fg}; background:${bg}; border:1px solid ${border}; padding:6px 12px; border-radius:6px;">&#9679; ${label}</span>`
+// Same formula used for every status pill on checkout/success, /failure and
+// /cancel: uppercase 11px/700/.1em tracking, full pill, colored text on a
+// ~10% tint of the same color. No new pill language invented here.
+function statusPill(label: string, color: string, tint: string): string {
+  return `<span style="display:inline-block; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:${color}; background:${tint}; padding:7px 16px; border-radius:999px;">${label}</span>`
 }
 
 function trustStrip(): string {
@@ -94,21 +100,31 @@ function productRows(products: { title: string; price: number; quantity: number 
     .join('')
 }
 
-// Specimen-label-style recap box used for the order/cart reference — the
-// same visual idea as the COA terminal card on the site (monospace code,
-// dashed frame, blue accent stub) instead of a plain grey box.
+// Same "white card, 1px ink-08 border, 20px radius, ink-40 uppercase
+// micro-label" formula as the info box on checkout/success and
+// checkout/failure — plus a monospace lot/ref code, matching how batch
+// codes are set in COASection. A gold dash marks the label row, echoing
+// the gold "—" bullets used for the failure-reasons list on that page.
 function refBox(labelText: string, code: string, innerHtml: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px; border:1px solid ${BORDER}; border-left:3px solid ${BLUE}; border-radius:12px; background:#FBFCFF;">
-    <tr><td style="padding:16px 20px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px; background:${WHITE}; border:1px solid ${BORDER}; border-radius:16px;">
+    <tr><td style="padding:20px 22px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:${innerHtml ? '10px' : '0'};">
         <tr>
-          <td style="font-family:'SF Mono',Consolas,monospace; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:${BLUE_DEEP};">${labelText}</td>
-          <td align="right" style="font-family:'SF Mono',Consolas,monospace; font-size:15px; font-weight:700; letter-spacing:.02em; color:${INK};">${code}</td>
+          <td style="font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:${INK_40};"><span style="color:${GOLD};">&mdash;</span> ${labelText}</td>
+          <td align="right" style="font-family:'SF Mono',Consolas,monospace; font-size:15px; font-weight:700; letter-spacing:.01em; color:${INK};">${code}</td>
         </tr>
       </table>
       ${innerHtml}
     </td></tr>
   </table>`
+}
+
+// The pill CTA used for every primary action on checkout/success (Track
+// Your Order) and checkout/failure (Try Again) — black, full pill,
+// 15px vertical padding. This keeps every order-lifecycle email visually
+// identical to the page the customer will land on after tapping it.
+function primaryButton(label: string, href: string, marginBottom = 0): string {
+  return `<a href="${href}" style="display:block; text-align:center; background:${INK}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:15px; border-radius:999px; margin-bottom:${marginBottom}px;">${label}</a>`
 }
 
 export async function sendOrderConfirmationEmail(params: {
@@ -120,9 +136,9 @@ export async function sendOrderConfirmationEmail(params: {
 }) {
   const trackUrl = `${SITE_URL}/track-order`
   const html = emailShell(`
-    <div style="margin-bottom:20px;">${statusPill('Order Confirmed', GREEN, GREEN_LIGHT, 'rgba(10,123,69,.2)')}</div>
-    <h1 style="font-size:24px; font-weight:800; letter-spacing:-.02em; color:${INK}; margin:0 0 8px;">Thanks for your order.</h1>
-    <p style="font-size:14px; line-height:1.6; color:${INK_60}; margin:0 0 24px;">
+    <div style="margin-bottom:24px;">${statusPill('&#10003; Order Confirmed', GREEN, GREEN_TINT)}</div>
+    <h1 style="font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1.1; color:${INK}; margin:0 0 12px;">Thanks for your order.</h1>
+    <p style="font-size:15px; line-height:1.6; color:${INK_55}; margin:0 0 28px;">
       We're preparing it now — batch-documented and cold-chain dispatched.
     </p>
     ${refBox(
@@ -135,9 +151,7 @@ export async function sendOrderConfirmationEmail(params: {
         </tr>
       </table>`
     )}
-    <a href="${trackUrl}" style="display:block; text-align:center; background:${BLUE}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px; border-radius:12px;">
-      Track Your Order
-    </a>
+    ${primaryButton('Track Your Order', trackUrl)}
     ${trustStrip()}
     <p style="font-size:12px; line-height:1.6; color:${INK_40}; margin:16px 0 0; text-align:center;">
       Keep this order number — you'll need it plus this email address to check status at any time.
@@ -159,14 +173,12 @@ export async function sendReviewRequestEmail(params: {
 }) {
   const trackUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(params.orderShortCode)}&email=${encodeURIComponent(params.to)}`
   const html = emailShell(`
-    <h1 style="font-size:22px; font-weight:800; letter-spacing:-.02em; color:${INK}; margin:0 0 8px;">How was ${params.productTitle}?</h1>
-    <p style="font-size:14px; line-height:1.6; color:${INK_60}; margin:0 0 28px;">
+    <h1 style="font-size:23px; font-weight:700; letter-spacing:-.03em; line-height:1.15; color:${INK}; margin:0 0 12px;">How was ${params.productTitle}?</h1>
+    <p style="font-size:15px; line-height:1.6; color:${INK_55}; margin:0 0 28px;">
       A minute of your time helps other researchers know what to expect. Every review we publish is tied to a real order — yours included.
     </p>
-    <a href="${trackUrl}" style="display:block; text-align:center; background:${BLUE}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px; border-radius:12px;">
-      Leave a Review
-    </a>
-    <p style="font-size:11px; font-family:'SF Mono',Consolas,monospace; color:${INK_35}; text-align:center; margin:16px 0 0;">
+    ${primaryButton('Leave a Review', trackUrl)}
+    <p style="font-size:11px; font-family:'SF Mono',Consolas,monospace; color:${INK_30}; text-align:center; margin:16px 0 0;">
       Order ${params.orderShortCode}
     </p>
   `)
@@ -203,18 +215,18 @@ export async function sendAbandonedCartEmail(params: {
     : null
 
   const pill = isFinal
-    ? statusPill('Final Hold &mdash; Closing Soon', AMBER, AMBER_LIGHT, 'rgba(168,96,0,.2)')
-    : statusPill('Samples Reserved', BLUE_DEEP, BLUE_LIGHT, BLUE_MID)
+    ? statusPill('Final Hold &mdash; Closing Soon', GOLD_TEXT, GOLD_TINT)
+    : statusPill('Samples Reserved', GREEN, GREEN_TINT)
 
   const headline = isFinal ? 'Final hold notice.' : 'Your samples are still reserved.'
   const subcopy = isFinal
     ? "This is the last reminder before these reserved batches go back into inventory. Still want them? It only takes a minute to finish up — and we're happy to help if anything's holding you up."
-    : "Nothing's changed on our end &mdash; your items are held and ready whenever you are."
+    : "Nothing's changed on our end — your items are held and ready whenever you are."
 
   const html = emailShell(`
-    <div style="margin-bottom:20px;">${pill}</div>
-    <h1 style="font-size:23px; font-weight:800; letter-spacing:-.02em; color:${INK}; margin:0 0 8px;">${headline}</h1>
-    <p style="font-size:14px; line-height:1.6; color:${INK_60}; margin:0 0 24px;">${subcopy}</p>
+    <div style="margin-bottom:24px;">${pill}</div>
+    <h1 style="font-size:25px; font-weight:700; letter-spacing:-.03em; line-height:1.1; color:${INK}; margin:0 0 12px;">${headline}</h1>
+    <p style="font-size:15px; line-height:1.6; color:${INK_55}; margin:0 0 28px;">${subcopy}</p>
     ${refBox(
       'Cart Ref',
       params.orderShortCode,
@@ -225,12 +237,10 @@ export async function sendAbandonedCartEmail(params: {
         </tr>
       </table>`
     )}
-    <a href="${cartUrl}" style="display:block; text-align:center; background:${BLUE}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px; border-radius:12px; margin-bottom:${whatsappUrl ? '10px' : '0'};">
-      Complete Your Order &rarr;
-    </a>
+    ${primaryButton('Complete Your Order', cartUrl, whatsappUrl ? 10 : 0)}
     ${
       whatsappUrl
-        ? `<a href="${whatsappUrl}" style="display:block; text-align:center; color:${GREEN}; font-size:13px; font-weight:600; text-decoration:none; padding:6px;">
+        ? `<a href="${whatsappUrl}" style="display:block; text-align:center; color:${WHATSAPP_GREEN}; font-size:13px; font-weight:600; text-decoration:none; padding:6px;">
       Or finish it over WhatsApp
     </a>`
         : ''
@@ -260,17 +270,32 @@ export async function sendPaymentFailedEmail(params: {
   failureReason?: string
 }) {
   const trackUrl = `${SITE_URL}/track-order`
+  const reasons = [
+    'The bank declined or couldn&rsquo;t complete 3D Secure verification',
+    'Insufficient funds or a card limit',
+    'Incorrect card details entered',
+  ]
   const html = emailShell(`
-    <div style="margin-bottom:20px;">${statusPill('Payment Not Completed', RED, '#FEEDED', 'rgba(185,28,28,.2)')}</div>
-    <h1 style="font-size:24px; font-weight:800; letter-spacing:-.02em; color:${INK}; margin:0 0 8px;">Your payment didn't go through.</h1>
-    <p style="font-size:14px; line-height:1.6; color:${INK_60}; margin:0 0 24px;">
-      No charge was made — if your bank shows a pending hold, it will release automatically. You're welcome to try again with the same or a different card.
+    <div style="margin-bottom:24px;">${statusPill('Payment Not Completed', RED, RED_TINT)}</div>
+    <h1 style="font-size:25px; font-weight:700; letter-spacing:-.03em; line-height:1.1; color:${INK}; margin:0 0 12px;">Your payment didn't go through.</h1>
+    <p style="font-size:15px; line-height:1.6; color:${INK_55}; margin:0 0 24px;">
+      No charge was made. If your bank shows a pending hold, it will release automatically.
     </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px; background:${WHITE}; border:1px solid ${BORDER}; border-radius:16px;">
+      <tr><td style="padding:22px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:${INK_40}; margin-bottom:12px;">This is usually one of</div>
+        ${reasons
+          .map(
+            (r, i) => `<div style="display:flex; font-size:13.5px; line-height:1.6; color:${INK_60}; margin-bottom:${i < reasons.length - 1 ? '10px' : '0'};">
+          <span style="color:${GOLD}; margin-right:10px;">&mdash;</span><span>${r}</span>
+        </div>`
+          )
+          .join('')}
+      </td></tr>
+    </table>
     ${refBox('Order Number', params.orderShortCode, '')}
-    <a href="${SITE_URL}/products" style="display:block; text-align:center; background:${BLUE}; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:14px; border-radius:12px; margin-bottom:12px;">
-      Try Again
-    </a>
-    <a href="${trackUrl}" style="display:block; text-align:center; color:${INK_40}; font-size:13px; text-decoration:underline; padding:6px;">
+    ${primaryButton('Try Again', `${SITE_URL}/products`, 8)}
+    <a href="${trackUrl}" style="display:block; text-align:center; color:${INK_40}; font-size:13px; font-weight:600; text-decoration:none; padding:6px;">
       Check order status
     </a>
   `)
