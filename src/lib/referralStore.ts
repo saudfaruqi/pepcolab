@@ -25,6 +25,11 @@ export interface ReferralProfile {
 
 const profileKey = (code: string) => `referral:${code.trim().toUpperCase()}`
 const emailIndexKey = (email: string) => `referral:by-email:${email.trim().toLowerCase()}`
+// Atomic counterparts to profile.referralCount / .rewardCodesIssued — see
+// the fix note on recordReferralRedemption below for why these can't just
+// live as fields on the profile object.
+const referralCountKey = (code: string) => `referral:count:${code.trim().toUpperCase()}`
+const rewardCodesKey = (code: string) => `referral:rewards:${code.trim().toUpperCase()}`
 
 function slugifyName(name: string): string {
   const cleaned = name
@@ -49,6 +54,24 @@ async function generateUniqueCode(name: string): Promise<string> {
   }
   // Extremely unlikely fallback if the loop above never finds a free slot.
   return `REF-${base}${Date.now().toString().slice(-6)}`
+}
+
+// BUG FIX: previously used for reward codes too (`THANKS-${base}-${randomSuffix()}`)
+// with NO uniqueness check, unlike referral codes above which retry against
+// getDiscountCode. A 3-digit suffix is only 900 possibilities, so a
+// referrer who sends a few friends your way has a real chance of colliding
+// with one of their own earlier reward codes. Since createDiscountCode
+// just does a plain redis.set on that code, a collision would silently
+// overwrite the earlier reward code's record — including resetting its
+// redemption count to 0, which could reopen a reward the referrer's friend
+// had already used. Now retries like generateUniqueCode does.
+async function generateUniqueRewardCode(base: string): Promise<string> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const candidate = `THANKS-${base}-${randomSuffix()}`
+    const existing = await getDiscountCode(candidate)
+    if (!existing) return candidate
+  }
+  return `THANKS-${base}-${Date.now().toString().slice(-6)}`
 }
 
 /**
@@ -92,7 +115,19 @@ export async function getOrCreateReferral(name: string, email: string): Promise<
 export async function getReferralByCode(code: string): Promise<ReferralProfile | null> {
   try {
     const profile = await redis.get<ReferralProfile>(profileKey(code))
-    return profile ?? null
+    if (!profile) return null
+    // Live values from the atomic counter/list, not the possibly-stale
+    // fields baked into the profile blob — see the fix note on
+    // recordReferralRedemption below.
+    const [count, rewards] = await Promise.all([
+      redis.get<number>(referralCountKey(code)),
+      redis.lrange<string>(rewardCodesKey(code), 0, -1),
+    ])
+    return {
+      ...profile,
+      referralCount: count ?? profile.referralCount,
+      rewardCodesIssued: rewards.length > 0 ? rewards : profile.rewardCodesIssued,
+    }
   } catch (err) {
     console.error('[referralStore] Failed to read profile:', err)
     return null
@@ -113,9 +148,7 @@ export async function recordReferralRedemption(code: string): Promise<{
   const profile = await getReferralByCode(code)
   if (!profile) return null
 
-  profile.referralCount += 1
-
-  const rewardCode = `THANKS-${profile.code.replace('REF-', '')}-${randomSuffix()}`
+  const rewardCode = await generateUniqueRewardCode(profile.code.replace('REF-', ''))
   const expiresAt = new Date(Date.now() + REWARD_CODE_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
   await createDiscountCode({
@@ -126,8 +159,22 @@ export async function recordReferralRedemption(code: string): Promise<{
     expiresAt,
   })
 
-  profile.rewardCodesIssued.push(rewardCode)
-  await redis.set(profileKey(profile.code), profile)
+  // BUG FIX: previously mutated the in-memory `profile` object
+  // (referralCount += 1, rewardCodesIssued.push(...)) and wrote the whole
+  // thing back with one redis.set — a read-modify-write race. Two friends
+  // of the same referrer completing checkout close together (plausible —
+  // this runs from the order webhook, and STRABL retries can overlap)
+  // could both read the same starting profile and each write their own
+  // "+1" on top of it, permanently losing the other's referral count and
+  // reward-code record. INCR and RPUSH are both atomic server-side, so
+  // concurrent redemptions can no longer stomp on each other.
+  const [newCount] = await Promise.all([
+    redis.incr(referralCountKey(profile.code)),
+    redis.rpush(rewardCodesKey(profile.code), rewardCode),
+  ])
 
-  return { profile, rewardCode }
+  return {
+    profile: { ...profile, referralCount: newCount, rewardCodesIssued: [...profile.rewardCodesIssued, rewardCode] },
+    rewardCode,
+  }
 }

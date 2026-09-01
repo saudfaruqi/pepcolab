@@ -369,7 +369,21 @@ export async function POST(req: NextRequest) {
   // that was missing before: order_failed used to only log to the server
   // console, so a customer with a failed payment had literally nothing to
   // look up.
-  const buildOrderRecord = (status: OrderRecord['status'], shopifyOrderId?: string): OrderRecord => {
+  // BUG FIX: previously stamped createdAt with `new Date().toISOString()`
+  // on every call — meaning order_updated, order_refunded, and
+  // order_chargeback (all real, separate events per the comments above,
+  // not just retries) each reset the record's createdAt to "now". Since
+  // getCompletedOrdersInWindow/getAbandonedOrdersInWindow both key off
+  // createdAt to decide "how long ago was this order placed," an order
+  // that received even one order_updated event would never age past
+  // "just now" in that index — silently preventing its review-request
+  // email from ever becoming eligible, and (had this path re-fired for an
+  // abandoned order) resetting its recovery-email countdown too. Now
+  // preserves the original createdAt from the first record written for
+  // this order short code, only defaulting to "now" when no prior record
+  // exists at all.
+  const buildOrderRecord = async (status: OrderRecord['status'], shopifyOrderId?: string): Promise<OrderRecord> => {
+    const existingRecord = await getOrderRecord(orderShortCode)
     const products = resolvedProducts.map((item: any) => ({
       title: item.title || 'Product',
       price: Number(item.price) || 0,
@@ -395,7 +409,7 @@ export async function POST(req: NextRequest) {
       products,
       currency: 'AED', // STRABL webhook payloads observed so far are AED-only per merchant config
       total,
-      createdAt: new Date().toISOString(),
+      createdAt: existingRecord?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
   }
@@ -514,7 +528,7 @@ export async function POST(req: NextRequest) {
           // gets the same urgent alert as a Shopify API failure — money
           // in, no Shopify order out, and nothing here can fix itself.
           console.error(`[webhook] ⚠️ No usable line items (missing price) for paid order ${orderShortCode}`)
-          const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
+          const record = await buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
           await saveOrderRecord(record) // still let the customer look it up / get their confirmation email below
           if (record.email) {
             await sendOrderConfirmationEmail({
@@ -565,7 +579,7 @@ Please create this order manually in Shopify and mark it paid. The customer has 
           // was already created; a retry will find it via
           // 'awaiting_payment_mark' above and skip straight to retrying
           // mark-paid instead of calling createShopifyOrder again.
-          await saveOrderRecord(buildOrderRecord('awaiting_payment_mark', shopifyOrder.id))
+          await saveOrderRecord(await buildOrderRecord('awaiting_payment_mark', shopifyOrder.id))
         }
 
         if (hasCustomLineItem) {
@@ -587,7 +601,7 @@ Please create this order manually in Shopify and mark it paid. The customer has 
         }
 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
-        const record = buildOrderRecord(type === 'order_created' ? 'created' : 'updated', shopifyOrder.id)
+        const record = await buildOrderRecord(type === 'order_created' ? 'created' : 'updated', shopifyOrder.id)
         await saveOrderRecord(record)
 
         // This is the actual fix for "how does the customer find their
@@ -671,8 +685,8 @@ Please create this order manually in Shopify and mark it paid. The customer has 
         // 'awaiting_payment_mark' (with its id) instead of downgrading to
         // plain 'processing'.
         const processingRecord = shopifyOrder
-          ? buildOrderRecord('awaiting_payment_mark', shopifyOrder.id)
-          : buildOrderRecord('processing')
+          ? await buildOrderRecord('awaiting_payment_mark', shopifyOrder.id)
+          : await buildOrderRecord('processing')
         await saveOrderRecord(processingRecord)
 
         // This is the important one: STRABL has already taken the
@@ -706,7 +720,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
         `[webhook] ⚠️ Payment failed — strabl:${orderUuid} — reason: ${orderUpdate.failureReason} — meta:`,
         JSON.stringify(orderUpdate.meta)
       )
-      const failedRecord = buildOrderRecord('failed')
+      const failedRecord = await buildOrderRecord('failed')
       await saveOrderRecord(failedRecord)
 
       // Reassures the customer no money was taken and gives them the order
@@ -747,17 +761,17 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
 
     case 'order_refunded':
       console.info(`[webhook] 🔄 Order refunded — strabl:${orderUuid}`)
-      await saveOrderRecord(buildOrderRecord('refunded'))
+      await saveOrderRecord(await buildOrderRecord('refunded'))
       break
 
     case 'order_chargeback':
       console.info(`[webhook] 🔄 Chargeback — strabl:${orderUuid}`)
-      await saveOrderRecord(buildOrderRecord('chargeback'))
+      await saveOrderRecord(await buildOrderRecord('chargeback'))
       break
 
     case 'order_abandoned': {
       console.info(`[webhook] 🛒 Order abandoned — strabl order: ${orderShortCode}`)
-      await saveOrderRecord(buildOrderRecord('abandoned'))
+      await saveOrderRecord(await buildOrderRecord('abandoned'))
 
       // Same reasoning as order_failed above: real but voided Shopify
       // order, tagged for filtering, so abandoned carts are visible for

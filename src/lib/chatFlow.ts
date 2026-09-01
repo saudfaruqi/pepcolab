@@ -432,17 +432,13 @@ export const CHAT_NODES: Record<string, ChatNode> = {
   not_found: {
     id: 'not_found',
     message: [
-      "I don't have a specific scripted answer for that question yet.",
+      "I'm a guided assistant rather than open-ended AI, so I didn't catch a topic I have a scripted answer for there.",
       "",
-      "Here's what I can help with:",
-      "• Finding specific compounds or categories",
-      "• Explaining our testing and COA processes",
-      "• Providing research protocols and handling guidance",
-      "• Order tracking and shipping inquiries",
-      "",
-      "Or you can speak directly with our research team — we have analytical chemists and researchers on staff."
+      "Pick whichever's closest below, or tap through to a research specialist — happy to loop in someone who can answer anything I can't."
     ],
-    options: MAIN_OPTIONS,
+    options: [
+      ...MAIN_OPTIONS,
+    ],
     keywords: [],
     researchFocus: 'General assistance'
   },
@@ -454,19 +450,41 @@ export const CHAT_NODES: Record<string, ChatNode> = {
 
 export const START_NODE_ID = 'main'
 
-// Very small keyword router — substring match against each node's
-// `keywords`, longest keyword wins so more specific phrases beat generic
-// ones.
+// Keyword router — scores every node by matched keywords rather than
+// stopping at the single longest hit. A message can legitimately touch
+// several topics ("cold chain shipping to Dubai"); scoring by total matched
+// keyword length (summed, not just the winner) means a node that's the
+// clear overall topic wins even if a shorter, more generic keyword from a
+// different node happens to also appear. Word-boundary matching (rather
+// than raw substring) avoids short keywords firing inside unrelated words —
+// e.g. the old version's `q.includes('order')`-style checks could match
+// "disorder" or "border".
+function keywordMatches(q: string, keyword: string): boolean {
+  if (keyword.includes(' ')) {
+    // Multi-word keywords (e.g. "cold chain") are checked as a substring —
+    // requiring word boundaries on a whole phrase is unnecessary and would
+    // miss legitimate punctuation variants ("cold-chain").
+    return q.includes(keyword)
+  }
+  // Single-word keyword: require it not be embedded inside a longer word.
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}`).test(q)
+}
+
 export function routeFreeText(text: string): string {
-  const q = text.toLowerCase()
-  let best: { nodeId: string; len: number } | null = null
+  const q = text.toLowerCase().trim()
+  if (!q) return 'not_found'
+
+  let best: { nodeId: string; score: number } | null = null
 
   for (const node of Object.values(CHAT_NODES)) {
-    if (!node.keywords) continue
+    if (!node.keywords || node.keywords.length === 0) continue
+    let score = 0
     for (const kw of node.keywords) {
-      if (q.includes(kw) && (!best || kw.length > best.len)) {
-        best = { nodeId: node.id, len: kw.length }
-      }
+      if (keywordMatches(q, kw)) score += kw.length
+    }
+    if (score > 0 && (!best || score > best.score)) {
+      best = { nodeId: node.id, score }
     }
   }
 

@@ -52,8 +52,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Manual backfill support: hitting this route with ?lookbackDays=90 (auth'd
+  // the same way as the scheduled call) sweeps further back than the normal
+  // LOOKBACK_DAYS window, for clearing out checkouts that went abandoned
+  // before this cron existed. Normal scheduled runs never pass this param,
+  // so day-to-day behavior is unchanged.
+  const overrideDays = Number(req.nextUrl.searchParams.get('lookbackDays'))
+  const lookbackDays = overrideDays > 0 ? overrideDays : LOOKBACK_DAYS
+
   const now = Date.now()
-  const orders = await getAbandonedOrdersInWindow(now - LOOKBACK_DAYS * DAY_MS, now)
+  const orders = await getAbandonedOrdersInWindow(now - lookbackDays * DAY_MS, now)
 
   let stage1Sent = 0
   let stage2Sent = 0
@@ -87,7 +95,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ checked: orders.length, stage1Sent, stage2Sent })
+  return NextResponse.json({ checked: orders.length, stage1Sent, stage2Sent, lookbackDays })
 }
 
 /* vercel.json — add alongside the existing review-requests entry:

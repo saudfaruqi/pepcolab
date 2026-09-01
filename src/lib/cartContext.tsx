@@ -223,9 +223,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [country, ready])
 
-  // Persist lines & currency to localStorage on every change
+  // Persist lines & currency to localStorage on every change — including
+  // clearing the stored copy when the cart genuinely empties out, so a
+  // removed item can't flash back on the next page load's optimistic
+  // cache read (see boot effect above).
   useEffect(() => {
-    if (state.lines.length > 0) safeSet(CART_LINES_KEY, JSON.stringify(state.lines))
+    if (state.lines.length > 0) {
+      safeSet(CART_LINES_KEY, JSON.stringify(state.lines))
+    } else {
+      safeRemove(CART_LINES_KEY)
+    }
   }, [state.lines])
 
   useEffect(() => {

@@ -195,6 +195,15 @@ export default function ChatWidget() {
   const [handoffSent, setHandoffSent] = useState(false)
   const [handoffSending, setHandoffSending] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
+
+  // Whether the node about to be played was reached via free-text input
+  // (as opposed to a button click). Feedback ("Was this helpful?") only
+  // makes sense for the former — a button click already told us exactly
+  // what the visitor wanted, so asking again after every menu tap reads as
+  // naggy rather than helpful. Read by playNode via this ref rather than a
+  // function argument, since playNode is also called from a setTimeout.
+  const lastRouteWasFreeText = useRef(false)
 
   // Track if transcript has been sent already (per session)
   const transcriptSentRef = useRef(false)
@@ -253,6 +262,7 @@ export default function ChatWidget() {
     const node = CHAT_NODES[nodeId] ?? CHAT_NODES.not_found
     setCurrentNodeId(node.id)
     setCurrentOptions([])
+    setShowFeedback(false)
     setBotTyping(true)
     // Hide tags when conversation progresses
     setShowTags(false)
@@ -277,8 +287,11 @@ export default function ChatWidget() {
           if (isLast) {
             setBotTyping(false)
             setCurrentOptions(node.options)
-            // Show feedback only after user has interacted and for non-greeting messages
-            if (userHasInteracted.current && !msg.isGreeting) {
+            // Only prompt for feedback when the visitor typed a free-text
+            // question and got routed here — a button click is already a
+            // clear signal they got what they asked for, so re-asking after
+            // every single menu tap felt repetitive rather than attentive.
+            if (userHasInteracted.current && !msg.isGreeting && lastRouteWasFreeText.current) {
               setTimeout(() => {
                 setFeedbackMessageId(msg.id)
                 setShowFeedback(true)
@@ -377,6 +390,8 @@ export default function ChatWidget() {
       window.open(option.href, '_blank', 'noopener,noreferrer')
     }
 
+    lastRouteWasFreeText.current = false
+
     if (option.action === 'handoff') {
       playNode('human')
       return
@@ -384,6 +399,23 @@ export default function ChatWidget() {
 
     if (option.next) {
       playNode(option.next)
+      return
+    }
+
+    // Link-only option (href, no next/action): the click already opened the
+    // page in a new tab. Previously this just silently re-showed the same
+    // options with no acknowledgment, which read as broken — a short
+    // confirmation makes it clear the click registered.
+    if (option.href) {
+      setBotTyping(true)
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { id: uid(), role: 'assistant', content: "Opened that in a new tab. Anything else I can help with?" },
+        ])
+        setBotTyping(false)
+        setCurrentOptions(CHAT_NODES[currentNodeId]?.options ?? [])
+      }, BOT_MESSAGE_DELAY_MS)
       return
     }
 
@@ -434,6 +466,7 @@ export default function ChatWidget() {
     setMessages((prev) => [...prev, { id: uid(), role: 'user', content: text }])
     setInput('')
 
+    lastRouteWasFreeText.current = true
     const nodeId = routeFreeText(text)
     setTimeout(() => playNode(nodeId), BOT_MESSAGE_DELAY_MS)
   }
@@ -482,7 +515,13 @@ export default function ChatWidget() {
   }
 
   async function handleEmailHandoff() {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+      // Previously this just returned silently — a visitor with a typo'd
+      // email would click "Email our team" and see nothing happen at all.
+      setEmailError('Enter a valid email so our team can reply to you.')
+      return
+    }
+    setEmailError(null)
     setHandoffSending(true)
     await sendTranscript('email_handoff')
     setHandoffSent(true)
@@ -643,8 +682,12 @@ export default function ChatWidget() {
                   placeholder="Email"
                   type="email"
                   value={contact.email}
-                  onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                  onChange={(e) => {
+                    setContact((c) => ({ ...c, email: e.target.value }))
+                    if (emailError) setEmailError(null)
+                  }}
                 />
+                {emailError && <div className="cw-field-error">{emailError}</div>}
                 <input
                   className="cw-input-field"
                   placeholder="WhatsApp / phone (optional)"
@@ -1046,6 +1089,12 @@ export default function ChatWidget() {
             border-radius: 9px; border: 1px solid rgba(13,15,20,.15); background: #F7F8FA; color: #0D0F14;
           }
           .cw-input-field:focus { outline: none; border-color: #1A56DB; background: #fff; }
+          .cw-field-error {
+            font-size: 11px;
+            color: #B91C1C;
+            margin: -3px 0 8px;
+            font-weight: 600;
+          }
           .cw-handoff-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
           .cw-handoff-btn {
             flex: 1;

@@ -18,6 +18,10 @@ export interface DiscountCode {
 }
 
 const codeKey = (code: string) => `discount:${code.trim().toUpperCase()}`
+// Separate atomic counter, source of truth for `redemptions` — see the fix
+// note on incrementRedemption below for why the count can't just live as a
+// field on the JSON blob at codeKey.
+const redemptionCountKey = (code: string) => `discount:redemptions:${code.trim().toUpperCase()}`
 
 export async function createDiscountCode(input: {
   code: string
@@ -39,6 +43,7 @@ export async function createDiscountCode(input: {
     createdAt: new Date().toISOString(),
   }
   await redis.set(codeKey(discount.code), discount)
+  await redis.set(redemptionCountKey(discount.code), 0)
   await redis.sadd('discount:all-codes', discount.code)
   return discount
 }
@@ -46,7 +51,11 @@ export async function createDiscountCode(input: {
 export async function getDiscountCode(code: string): Promise<DiscountCode | null> {
   try {
     const d = await redis.get<DiscountCode>(codeKey(code))
-    return d ?? null
+    if (!d) return null
+    // Live count from the atomic counter, not the possibly-stale field
+    // baked into the JSON blob at creation time.
+    const count = await redis.get<number>(redemptionCountKey(code))
+    return { ...d, redemptions: count ?? d.redemptions }
   } catch (err) {
     console.error('[discountStore] Failed to read code:', err)
     return null
@@ -65,11 +74,20 @@ export async function listDiscountCodes(): Promise<DiscountCode[]> {
   }
 }
 
+// BUG FIX: previously read the whole DiscountCode object, incremented
+// `.redemptions` in memory, and wrote the whole object back — a classic
+// read-modify-write race. Two redemptions of the same code landing close
+// together (very plausible for a popular referral code, since this fires
+// from the webhook handler and STRABL retries can overlap in time) could
+// both read the same starting count and each write count+1, permanently
+// losing one increment. A maxRedemptions-limited code could then be
+// redeemed more times than its recorded count ever shows. Upstash's INCR
+// is atomic server-side, so concurrent calls can no longer stomp on each
+// other.
 export async function incrementRedemption(code: string): Promise<void> {
-  const discount = await getDiscountCode(code)
-  if (!discount) return
-  discount.redemptions += 1
-  await redis.set(codeKey(discount.code), discount)
+  const exists = await redis.exists(codeKey(code))
+  if (!exists) return
+  await redis.incr(redemptionCountKey(code))
 }
 
 // Returns { valid, discount, error } — error is a customer-facing message
