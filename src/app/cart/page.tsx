@@ -156,6 +156,53 @@ function CartPageInner() {
     setDiscountError(null)
   }
 
+  // BUG FIX: discountAmount was captured once, at applyDiscount() time, and
+  // never revisited. Since it's a plain dollar amount (not a live
+  // percentage), editing the cart afterward — adding an item, removing one,
+  // bumping a quantity — left it stale: a 20%-off code applied against a
+  // 250 AED subtotal locks in 50 AED off, and if the customer then drops
+  // the subtotal to 100 AED, the UI would still show "−50 AED" (80% off,
+  // not 20%) right up to and including checkout, since useStrablCheckout
+  // consumes this same appliedDiscount value to build the payment payload.
+  // Re-running the same validate call whenever subtotal changes keeps the
+  // amount honest, and also naturally drops a code that's fallen below its
+  // minSubtotal rather than silently keeping it applied.
+  useEffect(() => {
+    if (!appliedDiscount) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/discounts/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: appliedDiscount.code, subtotal }),
+        })
+        const data = await res.json()
+        if (cancelled) return
+        if (!res.ok || !data.valid) {
+          setAppliedDiscount(null)
+          setDiscountError(data.error || 'Your discount no longer applies to this cart.')
+          return
+        }
+        setAppliedDiscount((prev) =>
+          prev && prev.code === data.code
+            ? { ...prev, discountAmount: data.discountAmount, value: data.value, type: data.type }
+            : prev
+        )
+      } catch {
+        // Transient network error — leave the existing amount in place
+        // rather than dropping a valid discount over a blip.
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // Deliberately excludes appliedDiscount from deps — this effect exists
+    // to react to subtotal changes for an already-applied discount, not to
+    // re-fire every time it sets appliedDiscount itself (that would loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal])
+
   const total = appliedDiscount ? Math.max(0, subtotal - appliedDiscount.discountAmount) : subtotal
 
   return (
