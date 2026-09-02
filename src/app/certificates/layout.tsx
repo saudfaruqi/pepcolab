@@ -12,14 +12,14 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Certificate of Analysis Lookup — Verify Your Batch',
+  title: 'Certificate of Analysis (Batch Report) Lookup — Verify Your Batch',
   description:
-    'Look up the published Certificate of Analysis for any PepcoLab peptide batch by product and lot number. Independent COA verification for every research compound shipped to the UAE.',
+    'Look up the published Certificate of Analysis (batch report) for any PepcoLab peptide batch by product and lot number. Independent COA verification for every research compound shipped to the UAE.',
   alternates: { canonical: '/certificates' },
   openGraph: {
-    title: 'Certificate of Analysis Lookup — Verify Your Batch | PepcoLab',
+    title: 'Certificate of Analysis (Batch Report) Lookup — Verify Your Batch | PepcoLab',
     description:
-      'Look up the published Certificate of Analysis for any PepcoLab peptide batch by product and lot number.',
+      'Look up the published Certificate of Analysis (batch report) for any PepcoLab peptide batch by product and lot number.',
     type: 'website',
   },
 }

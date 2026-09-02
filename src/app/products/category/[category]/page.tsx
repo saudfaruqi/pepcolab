@@ -94,12 +94,12 @@ const CATEGORY_CONTENT: Record<
     examples: 'Epithalon, GHK-Cu, longevity-pathway research peptides',
   },
   accessories: {
-    title: 'Peptide Research Accessories — Vials, Pins & Supplies | UAE',
+    title: 'Bacteriostatic Water, Syringes & Peptide Accessories | UAE',
     description:
-      'Bacteriostatic water, syringes, and reconstitution supplies for peptide research, shipped across the UAE.',
-    h1: 'Research Accessories & Supplies',
+      'Pharmaceutical-grade bacteriostatic water, sterile syringes, and reconstitution supplies for peptide research, shipped across the UAE with lot documentation.',
+    h1: 'Bacteriostatic Water & Research Accessories',
     intro:
-      'Bacteriostatic water, sterile syringes, and the reconstitution supplies used alongside our research peptides — shipped across the UAE. Pair with the reconstitution calculator in our research tools for lot-specific dilution figures.',
+      'Pharmaceutical-grade bacteriostatic water, sterile syringes, and the reconstitution supplies used alongside our research peptides — shipped across the UAE. Pair with the reconstitution calculator in our research tools for lot-specific dilution figures.',
     examples: 'bacteriostatic water, syringes, reconstitution supplies',
   },
   immune: {
