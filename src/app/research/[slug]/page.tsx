@@ -18,7 +18,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ContentBlocks from '@/components/ContentBlocks'
 import { ARTICLES, getArticleBySlug, tagColors } from '@/lib/research-data'
-import { relatedProductsForResearchArticle } from '@/lib/contentLinks'
+import { relatedProductsForResearchArticle, crossHubLinkForResearchArticle } from '@/lib/contentLinks'
 import { Clock, ArrowLeft, ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -104,6 +104,7 @@ export default function ResearchArticlePage({ params }: Props) {
   const tagColor = tagColors[article.tag] || { bg: '#f5f5f5', color: '#444' }
   const jsonLd = buildJsonLd(article)
   const relatedProducts = relatedProductsForResearchArticle(article.id)
+  const crossHubLink = crossHubLinkForResearchArticle(article.id)
 
   // Same-tag articles first, then anything else, capped at 3 — same
   // topic-clustering pattern as app/guides/[slug]/page.tsx.
@@ -160,6 +161,25 @@ export default function ResearchArticlePage({ params }: Props) {
         <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 40px' }}>
           <ContentBlocks content={article.content} />
         </section>
+
+        {/* Cross-hub link for the storage/reconstitution pair — this
+            research article covers the chemistry, its guides.ts
+            counterpart covers the step-by-step procedure. See
+            lib/contentLinks.ts crossHubLinkForResearchArticle(). */}
+        {crossHubLink && (
+          <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 24px' }}>
+            <Link
+              href={crossHubLink.href}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                fontSize: 13, fontWeight: 600, color: '#3b5bdb', textDecoration: 'none',
+                border: '1px solid #dbe4ff', background: '#f0f4ff', borderRadius: 999, padding: '9px 16px',
+              }}
+            >
+              {crossHubLink.label} <ChevronRight size={13} />
+            </Link>
+          </section>
+        )}
 
         {/* Shop related compounds — the content -> product half of the
             internal-link fix; product -> content half is in

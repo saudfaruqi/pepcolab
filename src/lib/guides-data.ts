@@ -145,6 +145,10 @@ export const GUIDES: Guide[] = [
         type: 'paragraph',
         text: 'Following this protocol consistently will produce reliable, reproducible results and protect the integrity of your research data.',
       },
+      {
+        type: 'paragraph',
+        text: 'This guide covers the how. For the physicochemical reasoning behind solvent choice — why pI, hydrophobicity, and preservative chemistry point toward a particular solvent for a given sequence — see Solvent Selection Chemistry in our Research section.',
+      },
     ],
   },
   {
@@ -235,6 +239,10 @@ export const GUIDES: Guide[] = [
           'Reconstituted in DMSO: −20°C aliquots, use within 3 months',
           'Working solutions: 4°C, prepare fresh for each experiment if possible',
         ],
+      },
+      {
+        type: 'paragraph',
+        text: 'This guide covers what to do. For the underlying chemistry — why hydrolysis, oxidation, deamidation, and aggregation happen and why sequence composition changes a peptide\'s risk profile — see The Chemistry of Peptide Degradation in our Research section.',
       },
     ],
   },

@@ -14,7 +14,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ContentBlocks from '@/components/ContentBlocks'
 import { GUIDES, CATEGORY_COLORS, getGuideBySlug } from '@/lib/guides-data'
-import { relatedProductsForGuideCategory } from '@/lib/contentLinks'
+import { relatedProductsForGuideCategory, crossHubLinkForGuide } from '@/lib/contentLinks'
 import { Clock, ArrowLeft, ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -97,6 +97,7 @@ export default function GuideDetailPage({ params }: Props) {
   const cat = CATEGORY_COLORS[guide.category] || { bg: '#f5f5f5', color: '#444' }
   const jsonLd = buildJsonLd(guide)
   const relatedProducts = relatedProductsForGuideCategory(guide.category)
+  const crossHubLink = crossHubLinkForGuide(guide.id)
 
   // Same-category guides first, then anything else, capped at 3 — keeps
   // every guide internally linked to its neighbours (topic clustering).
@@ -165,6 +166,25 @@ export default function GuideDetailPage({ params }: Props) {
             </p>
           )}
         </section>
+
+        {/* Cross-hub link for the storage/reconstitution pair — this guide
+            covers the step-by-step procedure, its research-data.ts
+            counterpart covers the underlying chemistry. See
+            lib/contentLinks.ts crossHubLinkForGuide(). */}
+        {crossHubLink && (
+          <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 24px' }}>
+            <Link
+              href={crossHubLink.href}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                fontSize: 13, fontWeight: 600, color: '#3b5bdb', textDecoration: 'none',
+                border: '1px solid #dbe4ff', background: '#f0f4ff', borderRadius: 999, padding: '9px 16px',
+              }}
+            >
+              {crossHubLink.label} <ChevronRight size={13} />
+            </Link>
+          </section>
+        )}
 
         {/* Shop related compounds — content -> product half of the
             internal-link fix; see lib/contentLinks.ts. */}
