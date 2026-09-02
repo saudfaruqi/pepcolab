@@ -18,9 +18,11 @@ import { formatPrice, productHref } from '@/lib/utils'
  * out of stock or being renamed degrades gracefully.
  */
 const FEATURED_HANDLES = [
-  'GLP-uae',
-  'Retatrutide-uae',
-  'retatrutide-uae',
+  'retatrutide-uae', // Retatrutide — Shopify's product TITLE was renamed to "GLP" at
+  // STRABL's request, but the handle/slug was not (and doesn't need to be —
+  // this is the one real handle; see the matching fix in restrictedCheckout.ts).
+  // "GLP" and "Retatrutide" refer to the same single product throughout this
+  // codebase, never two different ones.
   'klow-uae',
   'wolverine-stack-uae',
   'glow-uae',
@@ -30,7 +32,7 @@ const FEATURED_HANDLES = [
 /** Short editorial line per product. Kept factual — format and composition,
  *  not effects. These sit on the most-viewed section of the site. */
 const FEATURED_COPY: Record<string, string> = {
-  'GLP-uae': 'GLP-1/GIP/glucagon triple agonist, single-vial format.',
+  'retatrutide-uae': 'GLP-1/GIP/glucagon triple agonist, single-vial format.',
   'klow-uae': 'The flagship blend. Five peptides, one vial, published COA.',
   'wolverine-stack-uae': 'Repair blend in pen or vial. Two formats, one batch record.',
   'glow-uae': 'Three-peptide preparation, cold-chain dispatched.',
