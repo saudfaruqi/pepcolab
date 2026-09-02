@@ -218,6 +218,63 @@ export default function HeroCinematic() {
               </Link>
             </div>
 
+            {/*
+              Purchase-confidence strip: sits at the exact decision point
+              (right under the primary CTA) rather than only appearing in
+              FeaturesSection further down the page or in the cart drawer.
+              Every claim here mirrors something already verified elsewhere
+              in the codebase — payment methods match CartDrawer.tsx's real
+              badge list, and the refund line matches refund-policy/page.tsx's
+              actual damaged/defective/incorrect-item terms. No new claim is
+              introduced here, just surfaced earlier in the funnel.
+            */}
+            <div
+              className="hero-fade"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: '10px 18px',
+                marginBottom: 40,
+                paddingBottom: 28,
+                borderBottom: '1px solid rgba(255,255,255,.08)',
+              }}
+            >
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,.5)',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Secure checkout
+              </span>
+
+              <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {['Visa', 'Mastercard', 'Amex', 'Apple Pay'].map((m) => (
+                  <span
+                    key={m}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: 'rgba(255,255,255,.55)',
+                      border: '1px solid rgba(255,255,255,.14)',
+                      borderRadius: 6,
+                      padding: '3px 8px',
+                    }}
+                  >
+                    {m}
+                  </span>
+                ))}
+              </span>
+            </div>
+
             {/* Stats */}
             <div
               className="hero-fade"

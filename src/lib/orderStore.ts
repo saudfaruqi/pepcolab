@@ -132,6 +132,23 @@ export async function getCompletedOrdersInWindow(startMs: number, endMs: number)
   }
 }
 
+// Most recent completed orders, newest first — powers the admin dashboard's
+// order/customer list (app/admin). COMPLETED_INDEX_KEY can grow without
+// bound, so this is a capped "recent activity" view, not a full export;
+// bump `limit` (or add real pagination) if the dashboard needs to go back
+// further than that.
+export async function getRecentOrders(limit: number = 200): Promise<OrderRecord[]> {
+  try {
+    const codes = (await redis.zrange(COMPLETED_INDEX_KEY, 0, limit - 1, { rev: true })) as string[]
+    if (codes.length === 0) return []
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return records.filter((r): r is OrderRecord => r !== null)
+  } catch (err) {
+    console.error('[orderStore] Failed to query recent orders:', err)
+    return []
+  }
+}
+
 // Abandoned checkouts with createdAt between [startMs, endMs] — used by the
 // abandoned-cart recovery cron. Callers must re-check record.status: a
 // short code stays in this index forever once abandoned even if the
