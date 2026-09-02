@@ -495,13 +495,13 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'coa-interpretation',
-    title: 'COA Interpretation Guide (HPLC & Mass Spec)',
+    title: 'COA Interpretation & Batch Verification Guide (HPLC & Mass Spec)',
     category: 'Documentation',
     readTime: '10 min',
-    excerpt: 'How to read and verify Certificate of Analysis reports properly.',
+    excerpt: 'How to read, verify, and cross-check a Certificate of Analysis or batch report properly.',
     publishedAt: 'April 28, 2025',
     publishedISO: '2025-04-28',
-    metaDescription: 'How to read an HPLC and mass spec Certificate of Analysis: what a legitimate COA must show and how to verify supplier documentation.',
+    metaDescription: 'How to read and verify an HPLC and mass spec Certificate of Analysis (batch report): what a legitimate COA must show, and how to cross-check batch documentation before trusting a supplier.',
     content: [
       {
         type: 'intro',

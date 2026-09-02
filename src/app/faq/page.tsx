@@ -45,6 +45,26 @@ const FAQS = [
     q: 'Is PepcoLab UK registered?',
     a: 'Yes. PepcoLab operates as a registered UK business and supplies research materials intended solely for laboratory use.',
   },
+  {
+    q: 'How do I verify a Certificate of Analysis (COA) is genuine?',
+    a: 'Every batch we sell has its Certificate of Analysis published in our public Certificate Library, searchable by product and lot number — not sent as a document that has to be taken on trust. Look up the lot number printed on your vial against the published record to confirm the identity and HPLC purity testing results match what you received.',
+  },
+  {
+    q: 'Do you ship research peptides across the UAE, including Dubai?',
+    a: 'Yes. We dispatch across the UAE, including Dubai, using cold-chain packaging and tracked courier delivery. Orders placed before the daily cut-off are processed the same working day.',
+  },
+  {
+    q: 'What is the difference between bacteriostatic water and sterile water?',
+    a: 'Bacteriostatic water contains a small amount of benzyl alcohol as a preservative, which inhibits bacterial growth across repeated draws from the same vial — the standard choice when a vial will be accessed multiple times. Sterile (non-bacteriostatic) water contains no preservative and is intended for single-use preparations. See our full guide for a compound-by-compound breakdown of which applies where.',
+  },
+  {
+    q: 'Is it legal to buy research peptides?',
+    a: 'Research peptides are generally lawful to buy and possess as laboratory reagents in both the UK and UAE, provided they are supplied and used strictly for research — not human or veterinary use. Legal status varies by specific compound (e.g. anti-doping status, controlled-substance schedules), so see our compound-by-compound legal status pages for details on the specific peptide you\'re researching.',
+  },
+  {
+    q: 'Do your research peptides come with documentation?',
+    a: 'Yes. Every batch ships with a published Certificate of Analysis covering identity and HPLC purity testing, searchable in our Certificate Library by product and lot number — the same documentation is available before you order, not just after.',
+  },
 ]
 
 // FAQPage structured data — built once from the same FAQS array the page
