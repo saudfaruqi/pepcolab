@@ -44,15 +44,6 @@ export const metadata: Metadata = {
   publisher: 'PepcoLab',
   category: 'Scientific Research',
 
-  // MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — the UK was never
-  // actually a live, fulfilled market despite the dual-market hreflang/
-  // schema/currency scaffolding that had been built out across the site
-  // (see countryContext.tsx, Nav.tsx's currency switcher, and the
-  // structured-data block below, all trimmed to AE-only alongside this).
-  // A single en-AE self-reference + x-default is the correct annotation
-  // for a single-market site; per-page overrides (products, guides,
-  // research) that previously mirrored this en-GB/en-AE pattern in their
-  // own generateMetadata() should be updated the same way.
   alternates: {
     canonical: '/',
     languages: {
@@ -136,43 +127,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // FIX (Aug 2026): this used to do
-  //   const initialCountry = (await cookies()).get('pepcolab_country')?.value
-  // and pass it down to CountryProvider so it could start "ready" on the
-  // very first render — see countryContext.tsx's own comment on why that
-  // mattered (it's what let page.tsx server-render product data at all).
-  //
-  // The problem: `cookies()` is a Next.js "Dynamic API" — calling it
-  // ANYWHERE in the layout chain opts the entire route tree under it into
-  // dynamic (per-request) rendering, which is exactly the 1.5s-TTFB,
-  // never-edge-cached problem page.tsx's own header comment describes
-  // fixing. That fix was real for page.tsx in isolation, but this file
-  // was silently cancelling it out — the homepage (and everything else
-  // under this layout) was almost certainly still rendering dynamically
-  // on every request despite `export const revalidate = 300`.
-  //
-  // Since RootLayout is itself a Server Component that can't safely read
-  // a per-visitor cookie without forcing dynamic rendering, initialCountry
-  // is no longer resolved here at all. CountryProvider falls back to its
-  // existing client-side chain instead (see countryContext.tsx): checked,
-  // in order, are localStorage (an explicit prior choice), the
-  // `pepcolab_country` cookie via `document.cookie` (fast, synchronous,
-  // no network — set by middleware.ts on every request, and still fully
-  // intact, just no longer read server-side here), and only as a last
-  // resort `/api/country`. For a returning or already-geo-tagged visitor
-  // this resolves within the same tick after mount; for a genuinely new
-  // visitor with no cookie yet, there's a brief flash before it resolves.
-  // Low-stakes now that there's a single market/currency (AED) — this
-  // flash used to matter more when it could show the wrong currency
-  // briefly; now it's just the "ready" gate settling.
-  //
-  // If you want to eliminate that flash entirely while KEEPING static
-  // rendering, the real fix is Next.js Partial Prerendering (PPR): a
-  // static shell with just the country-dependent bits in a Suspense
-  // boundary that reads cookies(). That needs `experimental.ppr` enabled
-  // and a compatible Next.js version — worth checking your next.config
-  // before taking it on, since it wasn't included in this file set.
-
   return (
     <html lang="en-AE" suppressHydrationWarning>
       <head>
@@ -235,12 +189,6 @@ export default function RootLayout({
               url: siteUrl,
               priceRange: 'AED 40 – AED 930',
               paymentAccepted: ['Credit Card', 'Apple Pay', 'Google Pay'],
-              // MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — see
-              // the note on `alternates` above. Dropped GBP/UK from every
-              // spot in this file that previously declared them (this
-              // schema, the two above it, and the metadata/openGraph
-              // blocks up top) so structured data stops telling Google
-              // this ships to a market it doesn't currently serve.
               currenciesAccepted: 'AED',
               address: {
                 '@type': 'PostalAddress',
@@ -253,6 +201,20 @@ export default function RootLayout({
       </head>
 
       <body suppressHydrationWarning>
+        {/* GOOGLE ANALYTICS - Properly implemented with Next.js Script component */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-8SE9C30NMW"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-8SE9C30NMW');
+          `}
+        </Script>
+
         <Script
           src="https://unpkg.com/@strabl-engineering/checkout-sdk@1.0.2/dist/index.global.js"
           strategy="lazyOnload"
