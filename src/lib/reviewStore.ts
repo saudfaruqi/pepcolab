@@ -115,50 +115,68 @@ export async function rejectReview(id: string): Promise<void> {
 }
 
 /**
- * Why this is wrapped in unstable_cache
- * --------------------------------------
+ * Why this is wrapped in unstable_cache — and why it still isn't enough
+ * ------------------------------------------------------------------------
  * @upstash/redis makes its REST calls via `fetch(..., { cache: 'no-store' })`
- * internally, with no way to override that per call. Calling it directly
- * from a statically-generated/ISR route — like /products/[slug], which sets
+ * internally, with no way to override that per call. Calling it from a
+ * statically-generated/ISR route — like /products/[slug], which sets
  * `revalidate = 60` — trips Next's DYNAMIC_SERVER_USAGE bailout during
- * `next build` (and on every background ISR regen after). That error was
- * being swallowed by the try/catch below, so the build "succeeded" but every
- * product page baked in an empty reviews array permanently: ProductReviews
- * skips its own client-side fetch whenever it's handed a non-null
- * initialReviews prop, even an empty one, so reviews never appeared without
- * a hard refresh path that bypassed the static HTML.
+ * `next build` (and on every background ISR regen after).
  *
- * unstable_cache runs its callback inside Next's own cache scope, decoupled
- * from whichever page happened to call it — so a no-store fetch inside it no
- * longer counts as dynamic usage against that page's render. Results are
- * cached for 60s (matching the page's own `revalidate`) and invalidated
- * immediately on approval via revalidateTag, instead of waiting out the
- * window.
+ * unstable_cache is supposed to run its callback inside Next's own cache
+ * scope, decoupled from whichever page called it, so a no-store fetch
+ * inside it shouldn't count as dynamic usage against that page's render.
+ * In practice, on this app's Next 14.2.5, it doesn't fully insulate it —
+ * `next build`'s own output (see the "[reviewStore] Failed to list approved
+ * reviews" lines during `Generating static pages`) shows the
+ * DYNAMIC_SERVER_USAGE error still firing for every product page's
+ * generateStaticParams pass. This is a known rough edge in that Next
+ * version, not something fixable from inside this file — the real fix is a
+ * Next upgrade, which is a bigger, separate change.
+ *
+ * What IS fixed here: this function now returns `null` (not `[]`) when the
+ * underlying fetch fails, instead of swallowing the failure into a result
+ * that's indistinguishable from "genuinely zero approved reviews." That
+ * distinction is what lets callers avoid baking in a false empty state —
+ * see the getApprovedReviews() catch and app/products/[slug]/page.tsx's use
+ * of it, which now passes `initialReviews={undefined}` (triggering
+ * ProductReviews' own client-side fetch against /api/reviews — a Route
+ * Handler, not a static/ISR page, so it isn't subject to this same
+ * DYNAMIC_SERVER_USAGE bailout) instead of `initialReviews={[]}` on
+ * failure. A real reviews section still needs at least one successful
+ * build/regen to appear in the server-rendered HTML (and therefore in
+ * Googlebot's view and the AggregateRating/Review JSON-LD) — this doesn't
+ * fix that, only stops it from being permanently and silently wrong for
+ * human visitors in the browser.
  */
 const getApprovedReviewsCached = unstable_cache(
   async (limit: number, productSlug?: string): Promise<Review[]> => {
-    try {
-      // Most recently approved first. When filtering by product we pull a
-      // larger window before slicing, since the set isn't per-product indexed
-      // and review volume per product is expected to stay small.
-      const pullCount = productSlug ? Math.max(limit * 10, 200) : limit
-      const ids = (await redis.zrange(APPROVED_SET, 0, pullCount - 1, { rev: true })) as string[]
-      if (ids.length === 0) return []
-      const reviews = await Promise.all(ids.map((id) => getReview(id)))
-      let result = reviews.filter((r): r is Review => r !== null)
-      if (productSlug) {
-        result = result.filter((r) => r.productSlug === productSlug)
-      }
-      return result.slice(0, limit)
-    } catch (err) {
-      console.error('[reviewStore] Failed to list approved reviews:', err)
-      return []
+    // Most recently approved first. When filtering by product we pull a
+    // larger window before slicing, since the set isn't per-product indexed
+    // and review volume per product is expected to stay small.
+    const pullCount = productSlug ? Math.max(limit * 10, 200) : limit
+    const ids = (await redis.zrange(APPROVED_SET, 0, pullCount - 1, { rev: true })) as string[]
+    if (ids.length === 0) return []
+    const reviews = await Promise.all(ids.map((id) => getReview(id)))
+    let result = reviews.filter((r): r is Review => r !== null)
+    if (productSlug) {
+      result = result.filter((r) => r.productSlug === productSlug)
     }
+    return result.slice(0, limit)
   },
   ['reviews:approved'],
   { revalidate: 60, tags: [REVIEWS_CACHE_TAG] }
 )
 
-export async function getApprovedReviews(limit = 20, productSlug?: string): Promise<Review[]> {
-  return getApprovedReviewsCached(limit, productSlug)
+// Returns null on failure (see comment above) rather than [] — callers
+// must treat null as "unknown, try again client-side," not "confirmed
+// zero." getApprovedReviewsCached itself no longer catches internally so
+// this is the one place the error is logged and converted.
+export async function getApprovedReviews(limit = 20, productSlug?: string): Promise<Review[] | null> {
+  try {
+    return await getApprovedReviewsCached(limit, productSlug)
+  } catch (err) {
+    console.error('[reviewStore] Failed to list approved reviews:', err)
+    return null
+  }
 }

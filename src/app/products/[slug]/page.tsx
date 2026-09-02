@@ -265,7 +265,16 @@ export default async function ProductPage({ params }: Props) {
   // not JS-only, so crawlers read them"). Fetched here instead so it can
   // both seed the Review/AggregateRating schema above and hydrate
   // ProductReviews with real markup already in the response.
-  const approvedReviews = await getApprovedReviews(20, shopifyProduct.handle).catch(() => [] as Review[])
+  // getApprovedReviews() returns null (not []) when the fetch itself
+  // failed — see reviewStore.ts. Treating that as "confirmed zero reviews"
+  // was the actual bug here: it baked a false empty state into both this
+  // page's static HTML and ProductReviews' initialReviews prop, which
+  // permanently skips its own client-side re-fetch whenever it's handed a
+  // non-null array — including an empty one. `?? []` below is only for
+  // buildJsonLd, which already treats an empty array as "don't emit
+  // AggregateRating," the same safe behavior whether reviews are genuinely
+  // zero or just unknown right now.
+  const approvedReviews = await getApprovedReviews(20, shopifyProduct.handle).catch(() => null)
 
   // ProductVariantView owns the whole two-column layout and passes
   // selectedVariantId / onSelectVariant down to ProductActions, so the format
@@ -287,7 +296,7 @@ export default async function ProductPage({ params }: Props) {
     },
   }
 
-  const jsonLd = buildJsonLd(shopifyProduct, approvedReviews)
+  const jsonLd = buildJsonLd(shopifyProduct, approvedReviews ?? [])
   const related = pickRelated(allProducts, shopifyProduct, 4)
   const relatedCategory = categoryTag(shopifyProduct.tags)
   // SEO FIX: product pages had zero links into /guides or /research (audit
@@ -332,15 +341,23 @@ export default async function ProductPage({ params }: Props) {
         <ProductReviews
           productSlug={shopifyProduct.handle}
           productTitle={shopifyProduct.title}
-          initialReviews={approvedReviews.map((r) => ({
-            id: r.id,
-            productTitle: r.productTitle,
-            authorName: r.authorName,
-            rating: r.rating,
-            text: r.text,
-            verified: r.verified,
-            createdAt: r.createdAt,
-          }))}
+          // undefined (not []) when approvedReviews is null — this is what
+          // makes ProductReviews run its own client-side fetch against
+          // /api/reviews instead of trusting a failed build-time fetch that
+          // looks identical to "this product really has zero reviews."
+          initialReviews={
+            approvedReviews
+              ? approvedReviews.map((r) => ({
+                  id: r.id,
+                  productTitle: r.productTitle,
+                  authorName: r.authorName,
+                  rating: r.rating,
+                  text: r.text,
+                  verified: r.verified,
+                  createdAt: r.createdAt,
+                }))
+              : undefined
+          }
         />
 
         {/* ── Related products ──────────────────────────────────────────────

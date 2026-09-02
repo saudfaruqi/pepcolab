@@ -4,17 +4,19 @@
 // silently no-op'ing (see the comment there) with no way to tell how long
 // or how many signups were lost.
 //
-// No ESP (Mailchimp/Klaviyo) is wired up yet, so this stores subscribers
-// in the same Upstash Redis used by orderStore.ts and emails an admin
-// notification per signup via the existing SMTP config (lib/mailer.ts).
-// That's enough to stop losing signups today. When you're ready to run
-// actual campaigns, swap the redis.sadd() call below for a real ESP's
+// Storage now lives in lib/newsletterStore.ts (shared with the CSV export
+// route and the admin dashboard's subscriber list) — see that file for
+// why every signup here was almost certainly failing until its
+// self-healing migration was added.
+//
+// No ESP (Mailchimp/Klaviyo) is wired up yet — this is enough to stop
+// losing signups today. When you're ready to run actual campaigns, swap
+// the addSubscriber() call in lib/newsletterStore.ts for a real ESP's
 // subscribe API call — everything else here stays the same.
 import { NextRequest, NextResponse } from 'next/server'
-import { redis } from '@/lib/redis'
+import { addSubscriber } from '@/lib/newsletterStore'
 import { sendMailSafe } from '@/lib/mailer'
 
-const SUBSCRIBERS_KEY = 'newsletter:subscribers' // Redis sorted set: member=email, score=subscribedAt (ms)
 const ADMIN_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
 function isValidEmail(email: string): boolean {
@@ -35,15 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // A sorted set (score = subscribe timestamp) rather than a plain set —
-    // lets /api/newsletter/export report when each person signed up, and
-    // lets a future "export only what's new since my last export" filter
-    // use ZRANGEBYSCORE. zscore existing-check first so re-subscribing
-    // doesn't re-trigger the admin notification email or bump the date.
-    const existingScore = await redis.zscore(SUBSCRIBERS_KEY, email)
-    const isNew = existingScore === null
-
-    await redis.zadd(SUBSCRIBERS_KEY, { score: Date.now(), member: email })
+    const { isNew } = await addSubscriber(email)
 
     if (isNew) {
       await sendMailSafe({
