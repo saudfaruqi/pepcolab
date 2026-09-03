@@ -1,41 +1,43 @@
 'use client'
 // src/components/ChatWidget.tsx
 //
-// PepcoLab support assistant — rebuilt September 2026.
+// PepcoLab support assistant — visual rebuild, September 2026.
 //
-// WHAT CHANGED AND WHY
-// --------------------
-// The previous widget was ~1,200 lines with its copy, its conversation graph,
-// its matching logic and its UI all interleaved, plus a live model call to
-// /api/chat. Three problems with that:
+// WHAT WAS WRONG WITH THE PREVIOUS VERSION
+// It worked and it was accessible, but it looked like a generic support
+// widget bolted onto the site, and on a phone it was worse than that. Six
+// concrete faults, all fixed here:
 //
-//   1. Editing an answer meant editing a React component, so in practice
-//      answers didn't get edited. All copy now lives in lib/chatContent.ts.
-//   2. A model generating customer-facing text for a research-compound
-//      supplier can invent a dosage, a delivery date or a purity figure. Every
-//      answer here is now pre-written. Nothing is generated. /api/chat is no
-//      longer called by this component.
-//   3. Reaching a human was buried at the bottom of a menu. It is now
-//      permanently visible in the header, on every screen, at every step.
+//   1. iOS ZOOM BUG. The composer input was 14px. Safari zooms the entire
+//      page when a focused input is under 16px, so tapping the field threw
+//      the layout off-centre on every iPhone. Now 16px.
+//   2. height:100% ON MOBILE. When the keyboard opened, the composer went
+//      off-screen — you could not see what you were typing. Now 100dvh,
+//      which tracks the visual viewport.
+//   3. NO SAFE-AREA INSETS. Full-screen on a notched phone put the header
+//      under the status bar and the composer under the home indicator.
+//   4. FOUR CONTROLS IN THE HEADER at 380px wide: back, title, "Talk to us",
+//      close. Cramped and unreadable. The human route is now its own bar
+//      under the header — more prominent AND less crowded.
+//   5. BACKGROUND SCROLLED behind the open sheet on mobile.
+//   6. EVERY SUGGESTION A FULL-WIDTH BUTTON, which read as a form rather
+//      than a conversation. They are inline chips now.
 //
-// PAGE AWARENESS
-// The assistant reads the route and adapts: the greeting, the suggested
-// questions, and — on a product page — the compound's own name. That context
-// is also attached to the handoff, so the representative opens the
-// conversation already knowing where the visitor was and what they'd asked.
+// VISUAL DIRECTION
+// Taken from the site rather than invented: ink #0D0D0D, paper #F7F5F1, the
+// gold #C8992A hairline that already runs across the emails and checkout
+// pages. Messages are set as a TRANSCRIPT rather than two-colour chat
+// bubbles — assistant replies sit unbubbled on paper, the visitor's own words
+// sit in a small ink pill. That reads as a record of an exchange, which suits
+// a brand whose whole argument is documentation, and it avoids the generic
+// messaging-app look the previous version had.
 //
-// ACCESSIBILITY
-// Labelled dialog, focus moved in on open and restored on close, Escape to
-// close, full keyboard operation, an aria-live region announcing new
-// messages, visible focus rings, 44px minimum touch targets, and honoured
-// prefers-reduced-motion. The panel is deliberately NOT aria-modal: it is a
-// support tool alongside the page, not a barrier across it, so screen-reader
-// users can still reach the content they came for.
+// All copy lives in lib/chatContent.ts. This file only renders it.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, X, ArrowLeft, Send, ExternalLink, Headset, Mail, Check } from 'lucide-react'
+import { MessageCircle, X, ArrowLeft, ArrowUp, Headset, Mail, Check, Loader2 } from 'lucide-react'
 import {
   FAQS, FAQ_BY_ID, TOPICS, resolvePageContext, matchFaq,
   REFUSAL_ANSWER, NO_MATCH_ANSWER,
@@ -44,23 +46,14 @@ import {
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { trackChatHandoff } from '@/lib/analytics'
 
-/** Routes where a floating widget is in the way — same rule the other
- *  floating elements use, so they appear and disappear together. */
 const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
-
 const SUPPORT_EMAIL = 'hello@pepcolab.com'
 
-type Bubble = {
-  id: string
-  role: 'bot' | 'user'
-  text: string
-  links?: { label: string; href: string }[]
-}
-
+type Bubble = { id: string; role: 'bot' | 'user'; text: string; links?: { label: string; href: string }[] }
 type Screen = 'chat' | 'topics' | 'handoff'
 
-let bubbleSeq = 0
-const nextId = () => `b${++bubbleSeq}`
+let seq = 0
+const nextId = () => `b${++seq}`
 
 export default function ChatWidget() {
   const pathname = usePathname() || '/'
@@ -78,24 +71,18 @@ export default function ChatWidget() {
 
   const panelRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
   const startedRef = useRef(false)
 
   const hidden = HIDDEN_ON.some(p => pathname.startsWith(p))
 
-  /* ── conversation helpers ─────────────────────────────────────────────── */
+  /* ── conversation ─────────────────────────────────────────────────────── */
 
   const pushBot = useCallback((lines: string[], links?: Bubble['links']) => {
-    setBubbles(prev => [
-      ...prev,
-      ...lines.map((text, i) => ({
-        id: nextId(),
-        role: 'bot' as const,
-        text,
-        links: i === lines.length - 1 ? links : undefined,
-      })),
-    ])
+    setBubbles(prev => [...prev, ...lines.map((text, i) => ({
+      id: nextId(), role: 'bot' as const, text,
+      links: i === lines.length - 1 ? links : undefined,
+    }))])
     setAnnounce(lines.join(' '))
   }, [])
 
@@ -104,39 +91,28 @@ export default function ChatWidget() {
   }, [])
 
   const answerFaq = useCallback((faq: Faq) => {
-    if (faq.id === 'contact-human') {
-      pushBot(faq.answer)
-      setScreen('handoff')
-      return
-    }
+    if (faq.id === 'contact-human') { pushBot(faq.answer); setScreen('handoff'); return }
     pushBot(faq.answer, faq.links)
     const related = (faq.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)
     setSuggestions(related.length ? related : context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean))
   }, [pushBot, context.suggested])
 
-  const handleSelect = useCallback((faq: Faq) => {
-    pushUser(faq.question)
-    answerFaq(faq)
-  }, [pushUser, answerFaq])
+  const handleSelect = useCallback((faq: Faq) => { pushUser(faq.question); answerFaq(faq) }, [pushUser, answerFaq])
 
   const handleSubmit = useCallback((raw: string) => {
     const text = raw.trim()
     if (!text) return
     pushUser(text)
     setInput('')
-
     const result = matchFaq(text)
     if (result.kind === 'blocked') {
       pushBot(REFUSAL_ANSWER)
       setSuggestions([FAQ_BY_ID['coa-what'], FAQ_BY_ID['handling-storage'], FAQ_BY_ID['contact-human']].filter(Boolean))
       return
     }
-    if (result.kind === 'match') {
-      answerFaq(result.faq)
-      return
-    }
+    if (result.kind === 'match') { answerFaq(result.faq); return }
     if (result.kind === 'ambiguous') {
-      pushBot(['I can answer a few things there \u2014 which did you mean?'])
+      pushBot(['A few things could match that — which did you mean?'])
       setSuggestions(result.faqs)
       return
     }
@@ -153,7 +129,6 @@ export default function ChatWidget() {
     setSuggestions(context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean))
   }, [open, context, pushBot])
 
-  // Focus into the panel on open, restore to the launcher on close.
   useEffect(() => {
     if (open) {
       const t = setTimeout(() => panelRef.current?.focus(), 30)
@@ -162,11 +137,19 @@ export default function ChatWidget() {
     launcherRef.current?.focus()
   }, [open])
 
+  // Lock the page behind the sheet on mobile only. On desktop the panel is a
+  // corner overlay and locking the page would be obstructive.
   useEffect(() => {
     if (!open) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) }
-    }
+    if (!window.matchMedia('(max-width: 560px)').matches) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) } }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
@@ -183,19 +166,12 @@ export default function ChatWidget() {
   )
 
   const handoffSummary = useMemo(() => {
-    const where = context.productSlug
-      ? `Page: ${context.label} \u2014 ${context.productSlug}`
-      : `Page: ${context.label}`
-    const asked = bubbles.filter(b => b.role === 'user').slice(-3).map(b => `\u2022 ${b.text}`).join('\n')
+    const where = context.productSlug ? `Page: ${context.label} — ${context.productSlug}` : `Page: ${context.label}`
+    const asked = bubbles.filter(b => b.role === 'user').slice(-3).map(b => `• ${b.text}`).join('\n')
     return [where, typeof window !== 'undefined' ? window.location.href : '', asked && `I asked about:\n${asked}`]
       .filter(Boolean).join('\n')
   }, [bubbles, context])
 
-  /**
-   * Fires the transcript email. This is what guarantees the team sees the
-   * conversation even if the visitor never completes the WhatsApp step —
-   * wa.me links open the visitor's own device and we get no callback.
-   */
   const sendTranscript = useCallback(async (reason: string) => {
     if (transcript.length === 0) return
     setHandoffState('sending')
@@ -211,9 +187,7 @@ export default function ChatWidget() {
         }),
       })
       setHandoffState(res.ok ? 'sent' : 'error')
-    } catch {
-      setHandoffState('error')
-    }
+    } catch { setHandoffState('error') }
   }, [transcript, contactEmail])
 
   if (hidden) return null
@@ -221,291 +195,294 @@ export default function ChatWidget() {
   const waConfigured = isWhatsAppConfigured()
   const topicFaqs = activeTopic ? FAQS.filter(f => f.topic === activeTopic) : []
 
-  /* ── styles ───────────────────────────────────────────────────────────── */
-
-  const btnBase: React.CSSProperties = {
-    minHeight: 44, borderRadius: 12, cursor: 'pointer', fontSize: 13.5,
-    fontWeight: 600, textAlign: 'left', padding: '11px 14px', width: '100%',
-    border: '1px solid rgba(0,0,0,.12)', background: '#fff', color: '#101010',
-    display: 'flex', alignItems: 'center', gap: 9,
-  }
-
   return (
     <>
       <style>{`
-        .pl-chat *:focus-visible { outline: 2px solid #101010; outline-offset: 2px; }
-        .pl-chip:hover, .pl-btn:hover { background: #F2F2EF; }
-        .pl-panel { animation: plIn .18s ease-out; }
-        @keyframes plIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
-        @media (prefers-reduced-motion: reduce) {
-          .pl-panel { animation: none }
-          .pl-chat * { transition: none !important }
+        .plc, .plc * { box-sizing: border-box; }
+        .plc {
+          --ink: #0D0D0D;
+          --paper: #F7F5F1;
+          --gold: #C8992A;
+          --line: rgba(13,13,13,.10);
+          --muted: rgba(13,13,13,.55);
+          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
         }
-        @media (max-width: 480px) {
-          .pl-panel { inset: 0 !important; width: 100% !important; height: 100% !important;
-                      max-height: 100% !important; border-radius: 0 !important; }
+        .plc-launcher {
+          position: fixed; right: 20px; z-index: 900;
+          bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+          display: flex; align-items: center; gap: 9px;
+          height: 52px; padding: 0 20px 0 17px;
+          border: none; border-radius: 999px; cursor: pointer;
+          background: var(--ink); color: #fff;
+          font-size: 14.5px; font-weight: 600; letter-spacing: -.01em;
+          box-shadow: 0 6px 24px rgba(13,13,13,.26);
+          transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .plc-launcher:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(13,13,13,.3); }
+        .plc-launcher:active { transform: translateY(0); }
+
+        .plc-panel {
+          position: fixed; right: 20px; bottom: 20px; z-index: 950;
+          width: 384px; height: min(600px, calc(100vh - 40px));
+          display: flex; flex-direction: column; overflow: hidden;
+          background: var(--paper);
+          border: 1px solid var(--line); border-radius: 18px;
+          box-shadow: 0 20px 60px rgba(13,13,13,.22);
+          animation: plcIn .2s cubic-bezier(.2,.8,.3,1);
+        }
+        @keyframes plcIn { from { opacity: 0; transform: translateY(10px) scale(.99) } to { opacity: 1; transform: none } }
+
+        .plc-head { flex-shrink: 0; background: var(--ink); color: #fff; padding: 14px 14px 13px 16px; }
+        .plc-head-row { display: flex; align-items: center; gap: 10px; }
+        .plc-title { font-size: 15px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
+        .plc-where { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 1px;
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .plc-rule { height: 2px; background: var(--gold); flex-shrink: 0; }
+
+        .plc-icon { display: flex; align-items: center; justify-content: center;
+                    width: 34px; height: 34px; flex-shrink: 0;
+                    background: none; border: none; border-radius: 9px;
+                    color: rgba(255,255,255,.7); cursor: pointer; transition: background .15s, color .15s; }
+        .plc-icon:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+        /* The route to a person gets its own bar, so it never competes with
+           the title for width on a narrow screen. */
+        .plc-human { flex-shrink: 0; display: flex; align-items: center; gap: 8px; width: 100%;
+                     padding: 11px 16px; border: none; border-bottom: 1px solid var(--line);
+                     background: #fff; color: var(--ink); cursor: pointer;
+                     font-size: 13.5px; font-weight: 600; text-align: left; transition: background .15s; }
+        .plc-human:hover { background: #FBFAF7; }
+        .plc-human span { color: var(--muted); font-weight: 400; }
+
+        .plc-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 18px 16px 20px; }
+
+        /* Transcript, not chat bubbles. */
+        .plc-bot { font-size: 14.5px; line-height: 1.6; color: var(--ink);
+                   margin: 0 0 14px; max-width: 92%; letter-spacing: -.005em; }
+        .plc-user { display: block; margin: 0 0 16px auto; width: fit-content; max-width: 85%;
+                    padding: 9px 14px; border-radius: 16px 16px 4px 16px;
+                    background: var(--ink); color: #fff; font-size: 14px; line-height: 1.5; }
+
+        .plc-links { display: flex; flex-direction: column; gap: 6px; margin: -6px 0 16px; }
+        .plc-link { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+                    min-height: 42px; padding: 0 14px; border-radius: 11px;
+                    border: 1px solid var(--line); background: #fff;
+                    font-size: 13.5px; font-weight: 600; color: var(--ink); text-decoration: none;
+                    transition: border-color .15s; }
+        .plc-link:hover { border-color: rgba(13,13,13,.3); }
+
+        /* Suggestions as inline chips, not stacked form buttons. */
+        .plc-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
+        .plc-chip { min-height: 36px; padding: 8px 14px; border-radius: 999px;
+                    border: 1px solid rgba(13,13,13,.16); background: transparent;
+                    font-family: inherit; font-size: 13.5px; line-height: 1.35; color: var(--ink);
+                    cursor: pointer; text-align: left; transition: background .15s, border-color .15s; }
+        .plc-chip:hover { background: #fff; border-color: var(--ink); }
+        .plc-chip-quiet { color: var(--muted); border-style: dashed; }
+
+        .plc-topic { display: block; width: 100%; text-align: left; cursor: pointer;
+                     padding: 14px 16px; margin-bottom: 8px; border-radius: 13px;
+                     font-family: inherit;
+                     border: 1px solid var(--line); background: #fff; transition: border-color .15s; }
+        .plc-topic:hover { border-color: rgba(13,13,13,.35); }
+        .plc-topic b { display: block; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+        .plc-topic span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+
+        .plc-foot { flex-shrink: 0; display: flex; gap: 8px; align-items: flex-end;
+                    padding: 12px; border-top: 1px solid var(--line); background: #fff; }
+        /* 16px is not a style choice: Safari zooms the whole page when a
+           focused input is smaller, which was throwing the layout off-centre
+           on every iPhone. */
+        .plc-input { flex: 1; min-height: 44px; padding: 11px 14px; font-size: 16px;
+                     font-family: inherit; color: var(--ink);
+                     border: 1px solid var(--line); border-radius: 12px; background: var(--paper);
+                     outline: none; transition: border-color .15s; }
+        .plc-input:focus { border-color: rgba(13,13,13,.4); }
+        .plc-send { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                    width: 44px; height: 44px; border: none; border-radius: 12px;
+                    background: var(--ink); color: #fff; cursor: pointer; }
+        .plc-send:disabled { background: rgba(13,13,13,.12); color: rgba(13,13,13,.35); cursor: not-allowed; }
+
+        .plc-note { font-size: 13px; line-height: 1.65; color: var(--muted); margin: 0 0 16px; }
+        .plc-ok { display: flex; align-items: center; gap: 9px; padding: 13px 16px;
+                  border-radius: 12px; background: rgba(10,123,69,.09);
+                  border: 1px solid rgba(10,123,69,.2); color: #0A7B45;
+                  font-size: 13.5px; font-weight: 600; }
+        .plc-err { font-size: 12.5px; color: #B91C1C; margin: 8px 0 0; }
+        .plc-action { display: flex; align-items: center; gap: 10px; width: 100%;
+                      min-height: 48px; padding: 0 16px; margin-bottom: 9px;
+                      border-radius: 13px; border: 1px solid var(--line); background: #fff;
+                      font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink);
+                      text-decoration: none; cursor: pointer; transition: border-color .15s, background .15s; }
+        .plc-action:hover { border-color: rgba(13,13,13,.35); }
+        .plc-action-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+        .plc-action-primary:hover { background: #1c1c1c; border-color: #1c1c1c; }
+
+        .plc-label { font-size: 13px; font-weight: 600; color: var(--ink); display: block; margin: 20px 0 8px; }
+        .plc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden;
+                  clip: rect(0 0 0 0); white-space: nowrap; }
+
+        .plc :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+        .plc-head :focus-visible, .plc-action-primary:focus-visible { outline-color: #fff; }
+
+        /* Mobile: a full-height sheet. dvh tracks the visual viewport, so the
+           composer stays visible when the keyboard opens — height:100% pushed
+           it off-screen. */
+        @media (max-width: 560px) {
+          .plc-panel { inset: 0; width: 100%; height: 100dvh; max-height: none;
+                       border: none; border-radius: 0; animation: plcUp .22s cubic-bezier(.2,.8,.3,1); }
+          .plc-head { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+          .plc-body { padding: 18px 18px 24px; }
+          .plc-bot { font-size: 15px; max-width: 100%; }
+          .plc-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+          .plc-launcher { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+        }
+        @keyframes plcUp { from { transform: translateY(100%) } to { transform: none } }
+
+        @media (prefers-reduced-motion: reduce) {
+          .plc-panel { animation: none }
+          .plc * { transition: none !important }
         }
       `}</style>
 
-      {/* Launcher */}
       {!open && (
-        <button
-          ref={launcherRef}
-          className="pl-chat"
-          onClick={() => setOpen(true)}
-          aria-label="Open support chat"
-          style={{
-            position: 'fixed', bottom: 24, right: 24, zIndex: 900,
-            height: 56, minWidth: 56, borderRadius: 999, border: 'none',
-            background: '#101010', color: '#fff', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 9, padding: '0 20px',
-            fontSize: 14, fontWeight: 600,
-            boxShadow: '0 8px 28px rgba(0,0,0,.28)',
-          }}
-        >
-          <MessageCircle size={19} aria-hidden="true" />
+        <button ref={launcherRef} className="plc plc-launcher" onClick={() => setOpen(true)} aria-label="Open support chat">
+          <MessageCircle size={18} aria-hidden="true" />
           Help
         </button>
       )}
 
       {open && (
-        <div
-          ref={panelRef}
-          className="pl-chat pl-panel"
-          role="dialog"
-          aria-label="PepcoLab support assistant"
-          tabIndex={-1}
-          style={{
-            position: 'fixed', bottom: 24, right: 24, zIndex: 950,
-            width: 390, maxWidth: 'calc(100vw - 32px)',
-            height: 580, maxHeight: 'calc(100vh - 48px)',
-            background: '#FAFAF8', borderRadius: 20,
-            border: '1px solid rgba(0,0,0,.1)',
-            boxShadow: '0 24px 70px rgba(0,0,0,.24)',
-            display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          }}
-        >
-          {/* Header — the human route lives here, permanently, on every screen */}
-          <div style={{ background: '#101010', color: '#fff', padding: '14px 16px', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div ref={panelRef} className="plc plc-panel" role="dialog" aria-label="PepcoLab support" tabIndex={-1}>
+          <div className="plc-head">
+            <div className="plc-head-row">
               {screen !== 'chat' && (
-                <button
-                  onClick={() => { setScreen('chat'); setActiveTopic(null) }}
-                  aria-label="Back to chat"
-                  style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4, display: 'flex' }}
-                >
+                <button className="plc-icon" onClick={() => { setScreen('chat'); setActiveTopic(null) }} aria-label="Back">
                   <ArrowLeft size={18} aria-hidden="true" />
                 </button>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14.5, fontWeight: 700, letterSpacing: '-.01em' }}>PepcoLab support</div>
-                <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>
-                  {screen === 'handoff' ? 'Connecting you to a person' : context.label}
+                <div className="plc-title">PepcoLab support</div>
+                <div className="plc-where">
+                  {screen === 'handoff' ? 'Getting you to a person' : context.label}
                 </div>
               </div>
-              {screen !== 'handoff' && (
-                <button
-                  onClick={() => setScreen('handoff')}
-                  style={{
-                    minHeight: 34, padding: '0 12px', borderRadius: 999,
-                    border: '1px solid rgba(255,255,255,.25)', background: 'rgba(255,255,255,.08)',
-                    color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-                  }}
-                >
-                  <Headset size={14} aria-hidden="true" />
-                  Talk to us
-                </button>
-              )}
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close support chat"
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.75)', cursor: 'pointer', padding: 4, display: 'flex' }}
-              >
+              <button className="plc-icon" onClick={() => setOpen(false)} aria-label="Close support chat">
                 <X size={19} aria-hidden="true" />
               </button>
             </div>
           </div>
+          <div className="plc-rule" />
 
-          {/* Body */}
-          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-            <p aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
-              {announce}
-            </p>
+          {screen !== 'handoff' && (
+            <button className="plc-human" onClick={() => setScreen('handoff')}>
+              <Headset size={16} aria-hidden="true" />
+              Talk to a person <span>— usually within a few minutes</span>
+            </button>
+          )}
+
+          <div className="plc-body" ref={scrollRef}>
+            <p aria-live="polite" className="plc-sr">{announce}</p>
 
             {screen === 'handoff' ? (
-              <div style={{ display: 'grid', gap: 12 }}>
-                <p style={{ fontSize: 14, lineHeight: 1.65, color: '#101010', margin: 0 }}>
-                  Pick whichever is easiest. We&apos;ll already have the page you&apos;re on and
-                  what you&apos;ve asked so far, so you won&apos;t have to explain it twice.
+              <>
+                <p className="plc-note">
+                  Whichever is easiest. We&apos;ll already have the page you&apos;re on and what
+                  you&apos;ve asked, so you won&apos;t explain it twice.
                 </p>
 
-                {waConfigured ? (
+                {waConfigured && (
                   <a
+                    className="plc-action plc-action-primary"
                     href={whatsAppChatHandoffLink(handoffSummary)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target="_blank" rel="noopener noreferrer"
                     onClick={() => { trackChatHandoff('whatsapp', pathname); sendTranscript('whatsapp_handoff') }}
-                    className="pl-btn"
-                    style={{ ...btnBase, background: '#101010', color: '#fff', border: 'none', textDecoration: 'none', justifyContent: 'space-between' }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <MessageCircle size={16} aria-hidden="true" />
-                      WhatsApp — usually fastest
-                    </span>
-                    <ExternalLink size={14} aria-hidden="true" />
+                    <MessageCircle size={17} aria-hidden="true" />
+                    Message us on WhatsApp
                   </a>
-                ) : null}
+                )}
 
-                <a href={`mailto:${SUPPORT_EMAIL}`} className="pl-btn"
-                   onClick={() => trackChatHandoff('email', pathname)}
-                   style={{ ...btnBase, textDecoration: 'none' }}>
-                  <Mail size={16} aria-hidden="true" />
-                  Email {SUPPORT_EMAIL}
+                <a className="plc-action" href={`mailto:${SUPPORT_EMAIL}`}
+                   onClick={() => trackChatHandoff('email', pathname)}>
+                  <Mail size={17} aria-hidden="true" />
+                  {SUPPORT_EMAIL}
                 </a>
 
-                <div style={{ borderTop: '1px solid rgba(0,0,0,.08)', paddingTop: 14, marginTop: 2 }}>
-                  <label htmlFor="pl-email" style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 8 }}>
-                    Or leave your email and we&apos;ll come to you
-                  </label>
-                  {handoffState === 'sent' ? (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600,
-                      color: '#3B6D11', background: '#EAF3DE', border: '0.5px solid #D3E8BE',
-                      borderRadius: 12, padding: '12px 14px',
-                    }}>
-                      <Check size={15} aria-hidden="true" />
-                      Sent. A person will pick this up.
+                <label className="plc-label" htmlFor="plc-email">Or leave your email and we&apos;ll come to you</label>
+                {handoffState === 'sent' ? (
+                  <div className="plc-ok"><Check size={16} aria-hidden="true" /> Sent. A person will pick this up.</div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input id="plc-email" className="plc-input" type="email" value={contactEmail}
+                             onChange={e => setContactEmail(e.target.value)} placeholder="you@lab.com" />
+                      <button className="plc-send" aria-label="Send"
+                              onClick={() => { trackChatHandoff('callback', pathname); sendTranscript('requested_callback') }}
+                              disabled={handoffState === 'sending' || !contactEmail.trim()}>
+                        {handoffState === 'sending'
+                          ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                          : <ArrowUp size={17} aria-hidden="true" />}
+                      </button>
                     </div>
-                  ) : (
-                    <>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input
-                          id="pl-email"
-                          type="email"
-                          value={contactEmail}
-                          onChange={e => setContactEmail(e.target.value)}
-                          placeholder="your@email.com"
-                          style={{
-                            flex: 1, minHeight: 44, padding: '0 12px', fontSize: 14,
-                            border: '1px solid rgba(0,0,0,.15)', borderRadius: 12, background: '#fff', color: '#101010',
-                          }}
-                        />
-                        <button
-                          onClick={() => { trackChatHandoff('callback', pathname); sendTranscript('requested_callback') }}
-                          disabled={handoffState === 'sending' || !contactEmail.trim()}
-                          style={{
-                            minHeight: 44, padding: '0 16px', borderRadius: 12, border: 'none',
-                            background: contactEmail.trim() ? '#101010' : 'rgba(0,0,0,.15)',
-                            color: '#fff', fontWeight: 700, fontSize: 13,
-                            cursor: contactEmail.trim() ? 'pointer' : 'not-allowed',
-                          }}
-                        >
-                          <Send size={15} aria-hidden="true" />
-                        </button>
-                      </div>
-                      {handoffState === 'error' && (
-                        <p style={{ fontSize: 12.5, color: '#B3261E', margin: '8px 0 0' }}>
-                          That didn&apos;t send. Please use WhatsApp or email us directly.
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
+                    {handoffState === 'error' && (
+                      <p className="plc-err">That didn&apos;t send. Use WhatsApp or email us directly.</p>
+                    )}
+                  </>
+                )}
+              </>
             ) : screen === 'topics' ? (
-              <div style={{ display: 'grid', gap: 8 }}>
-                {!activeTopic ? TOPICS.map(t => (
-                  <button key={t.id} className="pl-btn" onClick={() => setActiveTopic(t.id)}
-                          style={{ ...btnBase, flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
-                    <span style={{ fontWeight: 700 }}>{t.label}</span>
-                    <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(0,0,0,.55)' }}>{t.blurb}</span>
-                  </button>
-                )) : topicFaqs.map(f => (
-                  <button key={f.id} className="pl-btn" onClick={() => { handleSelect(f); setScreen('chat'); setActiveTopic(null) }} style={btnBase}>
-                    {f.question}
-                  </button>
-                ))}
-              </div>
+              !activeTopic ? TOPICS.map(t => (
+                <button key={t.id} className="plc-topic" onClick={() => setActiveTopic(t.id)}>
+                  <b>{t.label}</b><span>{t.blurb}</span>
+                </button>
+              )) : topicFaqs.map(f => (
+                <button key={f.id} className="plc-topic"
+                        onClick={() => { handleSelect(f); setScreen('chat'); setActiveTopic(null) }}>
+                  <b>{f.question}</b>
+                </button>
+              ))
             ) : (
               <>
-                <div style={{ display: 'grid', gap: 10 }}>
-                  {bubbles.map(b => (
-                    <div key={b.id} style={{ display: 'flex', justifyContent: b.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                      <div style={{
-                        maxWidth: '88%', padding: '10px 13px', borderRadius: 14, fontSize: 13.8, lineHeight: 1.6,
-                        background: b.role === 'user' ? '#101010' : '#fff',
-                        color: b.role === 'user' ? '#fff' : '#101010',
-                        border: b.role === 'user' ? 'none' : '1px solid rgba(0,0,0,.08)',
-                      }}>
-                        {b.text}
+                {bubbles.map(b => (
+                  b.role === 'user'
+                    ? <span key={b.id} className="plc-user">{b.text}</span>
+                    : (
+                      <div key={b.id}>
+                        <p className="plc-bot">{b.text}</p>
                         {b.links && b.links.length > 0 && (
-                          <div style={{ display: 'grid', gap: 6, marginTop: 10 }}>
+                          <div className="plc-links">
                             {b.links.map(l => (
-                              <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
-                                    style={{
-                                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                      minHeight: 40, padding: '0 12px', borderRadius: 10, fontSize: 12.8, fontWeight: 600,
-                                      border: '1px solid rgba(0,0,0,.12)', color: '#101010', textDecoration: 'none',
-                                    }}>
+                              <Link key={l.href} className="plc-link" href={l.href} onClick={() => setOpen(false)}>
                                 {l.label}
-                                <ExternalLink size={13} aria-hidden="true" />
+                                <ArrowUp size={14} style={{ transform: 'rotate(45deg)', opacity: .45 }} aria-hidden="true" />
                               </Link>
                             ))}
                           </div>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )
+                ))}
 
                 {suggestions.length > 0 && (
-                  <div style={{ display: 'grid', gap: 7, marginTop: 14 }}>
+                  <div className="plc-chips">
                     {suggestions.map(f => (
-                      <button key={f.id} className="pl-chip" onClick={() => handleSelect(f)}
-                              style={{ ...btnBase, minHeight: 40, padding: '9px 13px', fontSize: 13 }}>
-                        {f.question}
-                      </button>
+                      <button key={f.id} className="plc-chip" onClick={() => handleSelect(f)}>{f.question}</button>
                     ))}
-                    <button className="pl-chip" onClick={() => setScreen('topics')}
-                            style={{ ...btnBase, minHeight: 40, padding: '9px 13px', fontSize: 13, color: 'rgba(0,0,0,.6)' }}>
-                      Browse all topics
-                    </button>
+                    <button className="plc-chip plc-chip-quiet" onClick={() => setScreen('topics')}>All topics</button>
                   </div>
                 )}
               </>
             )}
           </div>
 
-          {/* Composer */}
           {screen === 'chat' && (
-            <form
-              onSubmit={e => { e.preventDefault(); handleSubmit(input) }}
-              style={{ borderTop: '1px solid rgba(0,0,0,.08)', padding: 12, display: 'flex', gap: 8, background: '#fff', flexShrink: 0 }}
-            >
-              <label htmlFor="pl-input" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
-                Type your question
-              </label>
-              <input
-                id="pl-input"
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                placeholder="Type a question…"
-                autoComplete="off"
-                style={{
-                  flex: 1, minHeight: 44, padding: '0 13px', fontSize: 14,
-                  border: '1px solid rgba(0,0,0,.14)', borderRadius: 12, background: '#FAFAF8', color: '#101010',
-                }}
-              />
-              <button type="submit" aria-label="Send question" disabled={!input.trim()}
-                      style={{
-                        minWidth: 44, minHeight: 44, borderRadius: 12, border: 'none',
-                        background: input.trim() ? '#101010' : 'rgba(0,0,0,.15)', color: '#fff',
-                        cursor: input.trim() ? 'pointer' : 'not-allowed',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                <Send size={16} aria-hidden="true" />
+            <form className="plc-foot" onSubmit={e => { e.preventDefault(); handleSubmit(input) }}>
+              <label htmlFor="plc-input" className="plc-sr">Type your question</label>
+              <input id="plc-input" className="plc-input" value={input} autoComplete="off"
+                     onChange={e => setInput(e.target.value)} placeholder="Ask a question…" />
+              <button type="submit" className="plc-send" aria-label="Send question" disabled={!input.trim()}>
+                <ArrowUp size={18} aria-hidden="true" />
               </button>
             </form>
           )}
