@@ -1,7 +1,8 @@
 // src/components/ProductVariantView.tsx
 'use client'
 
-import { useMemo, useState } from 'react'
+import { trackViewItem } from '@/lib/analytics'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import Vial from '@/components/Vial'
@@ -28,6 +29,20 @@ interface Props {
  */
 export default function ProductVariantView({ product }: Props) {
   const images: { url: string; alt: string }[] = product.images ?? []
+
+  // ANALYTICS: view_item. Keyed on the handle so navigating between products
+  // in a single session reports each one, while re-renders from variant or
+  // thumbnail selection on the same product do not fire duplicates.
+  useEffect(() => {
+    if (!product?.handle) return
+    trackViewItem({
+      item_id: product.handle,
+      item_name: product.title,
+      item_category: (product.tags ?? []).find((t: string) => !['uae', 'uk'].includes(t.toLowerCase())),
+      price: Number(product.price) || 0,
+      quantity: 1,
+    })
+  }, [product?.handle, product?.title, product?.price, product?.tags])
 
   const [selectedVariantId, setSelectedVariantId] = useState<string>(
     product.variantId ?? product.variants?.[0]?.id ?? ''

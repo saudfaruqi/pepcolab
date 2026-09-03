@@ -1,6 +1,7 @@
 // src/lib/useStrablCheckout.ts
 'use client'
 
+import { trackBeginCheckout, lineToItem } from '@/lib/analytics'
 import { useEffect, useState } from 'react'
 import type { CartLine } from '@/lib/cartContext'
 
@@ -169,6 +170,19 @@ export function useStrablCheckout() {
         setCheckingOut(false)
         return
       }
+
+      // ANALYTICS: begin_checkout, fired once every validation above has
+      // passed and we are genuinely about to open STRABL — not on the button
+      // press, which would count carts that never reached a payment screen.
+      //
+      // This call also stashes the pending order in sessionStorage so
+      // /checkout/success can report the purchase. STRABL redirects back with
+      // no order data in the URL, so without the stash there is no way to
+      // attribute revenue client-side. See lib/analytics.ts.
+      trackBeginCheckout(
+        lines.map(l => lineToItem(l)),
+        appliedDiscount?.code
+      )
 
       // HONESTY NOTE: STRABL's checkoutWithRedirect has no dedicated
       // "discount" field in the schema we've verified against, so a

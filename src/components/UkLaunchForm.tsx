@@ -17,6 +17,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { CheckCircle, Loader2 } from 'lucide-react'
+import { trackUkWaitlist } from '@/lib/analytics'
 
 export default function UkLaunchForm() {
   const [email, setEmail] = useState('')
@@ -44,6 +45,7 @@ export default function UkLaunchForm() {
         setStatus('error')
         return
       }
+      trackUkWaitlist('uk_page')
       setStatus('done')
     } catch {
       setMessage('Something went wrong. Please try again.')

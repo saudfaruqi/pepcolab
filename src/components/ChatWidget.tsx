@@ -42,6 +42,7 @@ import {
   type Faq, type TopicId,
 } from '@/lib/chatContent'
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
+import { trackChatHandoff } from '@/lib/analytics'
 
 /** Routes where a floating widget is in the way — same rule the other
  *  floating elements use, so they appear and disappear together. */
@@ -344,7 +345,7 @@ export default function ChatWidget() {
                     href={whatsAppChatHandoffLink(handoffSummary)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => sendTranscript('whatsapp_handoff')}
+                    onClick={() => { trackChatHandoff('whatsapp', pathname); sendTranscript('whatsapp_handoff') }}
                     className="pl-btn"
                     style={{ ...btnBase, background: '#101010', color: '#fff', border: 'none', textDecoration: 'none', justifyContent: 'space-between' }}
                   >
@@ -356,7 +357,9 @@ export default function ChatWidget() {
                   </a>
                 ) : null}
 
-                <a href={`mailto:${SUPPORT_EMAIL}`} className="pl-btn" style={{ ...btnBase, textDecoration: 'none' }}>
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="pl-btn"
+                   onClick={() => trackChatHandoff('email', pathname)}
+                   style={{ ...btnBase, textDecoration: 'none' }}>
                   <Mail size={16} aria-hidden="true" />
                   Email {SUPPORT_EMAIL}
                 </a>
@@ -389,7 +392,7 @@ export default function ChatWidget() {
                           }}
                         />
                         <button
-                          onClick={() => sendTranscript('requested_callback')}
+                          onClick={() => { trackChatHandoff('callback', pathname); sendTranscript('requested_callback') }}
                           disabled={handoffState === 'sending' || !contactEmail.trim()}
                           style={{
                             minHeight: 44, padding: '0 16px', borderRadius: 12, border: 'none',

@@ -1,10 +1,29 @@
 // src/app/checkout/success/page.tsx
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
+import { trackPurchaseFromPending } from '@/lib/analytics'
 
 export default function CheckoutSuccessPage() {
+  // ANALYTICS: the purchase event.
+  //
+  // STRABL redirects here with no order data in the URL, so there is nothing
+  // on this page to report. lib/analytics.ts solves that by having
+  // begin_checkout stash the pending order in sessionStorage; this reads it,
+  // fires `purchase`, and clears the stash.
+  //
+  // The ref guards against React 18 StrictMode running effects twice in
+  // development. The stash clear inside trackPurchaseFromPending() guards
+  // against a refresh or back-navigation double-counting in production.
+  const reported = useRef(false)
+  useEffect(() => {
+    if (reported.current) return
+    reported.current = true
+    trackPurchaseFromPending()
+  }, [])
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F7F5F1' }}>
       <Nav />

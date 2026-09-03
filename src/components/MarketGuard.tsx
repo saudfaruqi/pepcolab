@@ -25,6 +25,7 @@ import Link from 'next/link'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { useCountry } from '@/lib/countryContext'
 import { isInMarket } from '@/lib/pricing'
+import { trackUkWaitlist } from '@/lib/analytics'
 
 interface Props {
   tags: string[]
@@ -69,6 +70,7 @@ export default function MarketGuard({
         }),
       })
       if (!res.ok) throw new Error('failed')
+      trackUkWaitlist('product_guard', productSlug)
       setStatus('done')
     } catch {
       setStatus('error')

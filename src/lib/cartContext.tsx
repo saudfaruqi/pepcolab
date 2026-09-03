@@ -8,6 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from 'react'
+import { trackAddToCart, trackRemoveFromCart, lineToItem } from '@/lib/analytics'
 import {
   createCart as shopifyCreateCart,
   addToCart as shopifyAddToCart,
@@ -284,6 +285,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LINES', lines, total: realTotal, qty: realQty, currencyCode })
       safeSet(CART_LINES_KEY, JSON.stringify(lines))
       safeSet(CART_CURRENCY_KEY, currencyCode)
+
+      // ANALYTICS: fire only after Shopify confirms the line landed, never on
+      // the optimistic update above — otherwise a failed add still counts as
+      // an add_to_cart and the funnel overstates itself at the top.
+      trackAddToCart(lineToItem({ variantId, slug, title, variantTitle, price, quantity: 1 }))
     } catch (err) {
       // Roll back
       const { total: t, qty: q } = computeTotals(state.lines)
@@ -302,6 +308,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ERROR', error: null })
 
     const prev = state.lines
+    // Captured before the filter — once the line is dropped from state there
+    // is nothing left to report to analytics.
+    const removed = state.lines.find(l => l.id === lineId)
     const next = state.lines.filter(l => l.id !== lineId)
     const { total, qty } = computeTotals(next)
     dispatch({ type: 'SET_LINES', lines: next, total, qty })
@@ -314,6 +323,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         safeSet(CART_LINES_KEY, JSON.stringify(lines))
         safeSet(CART_CURRENCY_KEY, currencyCode)
       }
+      if (removed) trackRemoveFromCart(lineToItem(removed))
     } catch (err) {
       const { total: t, qty: q } = computeTotals(prev)
       dispatch({ type: 'SET_LINES', lines: prev, total: t, qty: q })
