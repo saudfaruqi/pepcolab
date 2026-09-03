@@ -316,27 +316,91 @@ export async function sendOrderConfirmationEmail(params: {
   })
 }
 
+/**
+ * REVIEW REQUEST — improved September 2026.
+ *
+ * The previous version asked "how was it?" and pointed at a button. That gets
+ * a low response rate for a predictable reason: it asks for a favour without
+ * saying what makes answering worth a minute, and it asks an open question
+ * the recipient has to invent a frame for.
+ *
+ * Three changes:
+ *  - PREHEADER, so the inbox preview isn't scraped body text.
+ *  - PROMPTS. Three specific things to comment on — documentation, packaging,
+ *    delivery. A concrete question gets answered far more often than an open
+ *    one, and these three are the axes PepcoLab competes on, so the reviews
+ *    that come back reinforce the positioning rather than drifting.
+ *  - HONEST FRAMING about why it matters here. Buyers in this market are
+ *    choosing between suppliers they cannot verify. Saying so is true and it
+ *    is the actual reason a researcher would bother.
+ *
+ * DELIBERATELY NO INCENTIVE. Offering a discount for a review is a DMCC Act
+ * 2024 problem in the UK and a Google policy problem everywhere, and it
+ * produces exactly the reviews nobody believes. The ask stands on its own.
+ *
+ * NOTE ON CONTENT: this asks about supply, documentation and service. It does
+ * NOT invite the reviewer to describe results or effects — a product page
+ * full of user-reported outcomes would undo the compliance position the whole
+ * catalogue is written to hold. The moderation queue should reject any review
+ * that goes there, however positive.
+ */
 export async function sendReviewRequestEmail(params: {
   to: string
   orderShortCode: string
   productTitle: string
+  customerName?: string
 }) {
-  const trackUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(params.orderShortCode)}&email=${encodeURIComponent(params.to)}`
+  const { to, orderShortCode, productTitle, customerName } = params
+  const reviewUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(orderShortCode)}&email=${encodeURIComponent(to)}`
+  const firstName = (customerName || '').trim().split(/\s+/)[0]
+
+  const prompts = [
+    'Did the documentation match the batch you received?',
+    'How did it arrive — packaging, cold chain, condition?',
+    'How was ordering and delivery overall?',
+  ]
+
   const html = emailShell(`
-    <h1 style="font-size:23px; font-weight:700; letter-spacing:-.03em; line-height:1.15; color:${INK}; margin:0 0 12px;">How was ${params.productTitle}?</h1>
-    <p style="font-size:15px; line-height:1.6; color:${INK_55}; margin:0 0 28px;">
-      A minute of your time helps other researchers know what to expect. Every review we publish is tied to a real order — yours included.
+    ${preheader(`A minute on ${productTitle} would help the next researcher choosing a supplier`)}
+    <h1 style="font-size:23px; font-weight:700; letter-spacing:-.03em; line-height:1.15; color:${INK}; margin:0 0 12px;">
+      ${firstName ? `${firstName}, how was ` : 'How was '}${productTitle}?
+    </h1>
+    <p style="font-size:15px; line-height:1.65; color:${INK_55}; margin:0 0 22px;">
+      Researchers choosing a peptide supplier are mostly choosing between claims they can&rsquo;t
+      check. A review from someone who actually received an order is worth more than anything
+      we can say about ourselves &mdash; so if you have a minute, it genuinely helps.
     </p>
-    ${primaryButton('Leave a Review', trackUrl)}
-    <p style="font-size:11px; font-family:'SF Mono',Consolas,monospace; color:${INK_30}; text-align:center; margin:16px 0 0;">
-      Order ${params.orderShortCode}
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${BORDER}; border-radius:14px; margin:0 0 24px;">
+      <tr><td style="padding:16px 20px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:${GOLD_TEXT}; margin-bottom:10px;">
+          Useful things to mention
+        </div>
+        ${prompts.map(q => `<div style="font-size:13px; line-height:1.7; color:${INK_60}; padding:3px 0;">&mdash;&nbsp; ${q}</div>`).join('')}
+      </td></tr>
+    </table>
+
+    ${primaryButton('Write a review', reviewUrl, 14)}
+    <p style="font-size:12px; line-height:1.6; color:${INK_40}; text-align:center; margin:0;">
+      Every review we publish is tied to a real, matching order. Nothing is incentivised and
+      nothing is edited.
+    </p>
+    <p style="font-size:11px; font-family:'SF Mono',Consolas,monospace; color:${INK_30}; text-align:center; margin:18px 0 0;">
+      Order ${orderShortCode}
     </p>
   `)
 
   await sendMailSafe({
-    to: params.to,
-    subject: `How was your order? — ${params.orderShortCode}`,
-    text: `How was ${params.productTitle}?\n\nA minute of your time helps other researchers know what to expect.\n\nLeave a review: ${trackUrl}\n\nOrder ${params.orderShortCode}`,
+    to,
+    subject: `How was your order? \u2014 ${orderShortCode}`,
+    text:
+      `${firstName ? `${firstName}, how was ` : 'How was '}${productTitle}?\n\n` +
+      `Researchers choosing a peptide supplier are mostly choosing between claims they can't check. ` +
+      `A review from someone who actually received an order is worth more than anything we can say about ourselves.\n\n` +
+      `Useful things to mention:\n${prompts.map(q => `- ${q}`).join('\n')}\n\n` +
+      `Write a review: ${reviewUrl}\n\n` +
+      `Every review we publish is tied to a real, matching order. Nothing is incentivised and nothing is edited.\n\n` +
+      `Order ${orderShortCode}`,
     html,
   })
 }

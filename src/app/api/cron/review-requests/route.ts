@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
         to: order.email,
         orderShortCode: order.orderShortCode,
         productTitle: order.products[0].title,
+        customerName: order.customerName,
       })
       await saveOrderRecord({ ...order, reviewRequestSentAt: new Date().toISOString() })
       sent++
