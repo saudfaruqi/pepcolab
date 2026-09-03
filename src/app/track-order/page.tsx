@@ -30,6 +30,13 @@ interface OrderResult {
   currency: string
   total: number
   createdAt: string
+  // Shipment tracking (Sep 2026). Null until a parcel is logged against the
+  // order — most lookups happen before that, so the UI treats absence as
+  // "still preparing" rather than as missing data.
+  shippedAt?: string | null
+  carrier?: string | null
+  trackingNumber?: string | null
+  trackingUrl?: string | null
 }
 
 const STATUS_DISPLAY: Record<OrderResult['status'], { label: string; color: string; bg: string; icon: typeof Package }> = {
@@ -362,6 +369,53 @@ function TrackOrderContent() {
 
             {(result.status === 'created' || result.status === 'updated') && (
               <div className="border-t border-gray-100 pt-5 mt-5">
+                {/* SHIPMENT TRACKING (Sep 2026). Shown only when a tracking
+                    number has genuinely been recorded — never inferred from
+                    elapsed time. When it hasn't, the customer gets the honest
+                    "being prepared" line instead of an empty panel, which is
+                    the state most lookups land in. */}
+                {result.trackingNumber ? (
+                  <div className="mb-5 rounded-xl border border-green-200/60 bg-green-50 px-4 py-3.5">
+                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-green-800/70 mb-1.5">
+                      <Package size={13} />
+                      {result.carrier ? `Shipped · ${result.carrier}` : 'Shipped'}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-mono text-sm font-bold text-green-900">
+                        {result.trackingNumber}
+                      </span>
+                      {result.trackingUrl && (
+                        <a
+                          href={result.trackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[13px] font-semibold text-green-800 underline underline-offset-2"
+                        >
+                          Track with carrier
+                        </a>
+                      )}
+                    </div>
+                    {result.shippedAt && (
+                      <div className="mt-1.5 text-xs text-green-800/60">
+                        Handed to the courier on{' '}
+                        {new Date(result.shippedAt).toLocaleDateString('en-GB', {
+                          day: 'numeric', month: 'long', year: 'numeric',
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mb-5 rounded-xl border border-gray-200/70 bg-gray-50 px-4 py-3.5">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                      Being prepared
+                    </div>
+                    <p className="text-[13px] leading-relaxed text-gray-600 m-0">
+                      Your order is confirmed and being packed. Tracking appears here once it&rsquo;s
+                      handed to the courier &mdash; orders are dispatched within one business day.
+                    </p>
+                  </div>
+                )}
+
                 {reorderDone ? (
                   <div className="flex items-center gap-2.5 rounded-xl border border-green-200/60 bg-green-50 px-4 py-3 text-sm text-green-700 font-medium">
                     <ShoppingBag size={16} />

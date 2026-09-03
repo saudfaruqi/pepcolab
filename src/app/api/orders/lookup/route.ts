@@ -63,6 +63,13 @@ export async function POST(req: NextRequest) {
       currency: record.currency,
       total: record.total,
       createdAt: record.createdAt,
+      // Shipment tracking (Sep 2026). Null when the parcel hasn't been
+      // logged yet, which the page renders as "preparing" rather than as an
+      // error — most orders are looked up before they ship.
+      shippedAt: record.shippedAt || null,
+      carrier: record.carrier || null,
+      trackingNumber: record.trackingNumber || null,
+      trackingUrl: record.trackingUrl || null,
     },
   })
 }

@@ -61,6 +61,23 @@ export interface OrderRecord {
   updatedAt: string // ISO timestamp this record was last written
   reviewRequestSentAt?: string // set once the post-delivery review-request email has gone out — prevents re-sending on every cron run
   recoveryEmailStage?: 0 | 1 | 2 // abandoned-cart recovery: 0 = none sent, 1 = first reminder sent, 2 = final reminder sent
+  // SHIPMENT TRACKING (Sep 2026)
+  //
+  // Set by POST /api/admin/tracking when you hand a parcel to the courier.
+  // These exist so the customer can see where their order is; they do NOT
+  // trigger any email. That separation is deliberate — an automatic dispatch
+  // email fires from a state that must always be maintained, whereas
+  // tracking degrades gracefully: an order with no tracking simply shows as
+  // Confirmed, which is true.
+  //
+  // shippedAt is what makes an order "shipped" for display purposes. Nothing
+  // downstream is timed off it — the reorder cron keys off createdAt, so a
+  // parcel you forget to log still gets its reminder.
+  shippedAt?: string
+  trackingNumber?: string
+  trackingUrl?: string
+  carrier?: string
+  reorderReminderSentAt?: string // set once the reorder prompt has gone out — prevents the cron re-sending every run
 }
 
 const KEY_PREFIX = 'order-lookup:'
@@ -76,6 +93,19 @@ const COMPLETED_INDEX_KEY = 'order-lookup:completed-index'
 // callers must still check record.status themselves when reading these
 // back, this index just narrows down which keys to look at.
 const ABANDONED_INDEX_KEY = 'order-lookup:abandoned-index'
+// CUSTOMER ACCOUNTS (Sep 2026): per-email index of that customer's order
+// short codes, score = createdAt (ms), so /account can list someone's order
+// history without scanning every key. One sorted set per email address.
+//
+// This is written for EVERY status, not just completed ones — a customer
+// looking at their account should see a failed or abandoned attempt too,
+// because "where did my order go" is exactly the question that brings them
+// there. The account page decides what to show; the index just records.
+const EMAIL_INDEX_PREFIX = 'order-lookup:by-email:'
+
+export function emailIndexKey(email: string): string {
+  return `${EMAIL_INDEX_PREFIX}${email.trim().toLowerCase()}`
+}
 
 function keyFor(orderShortCode: string): string {
   return `${KEY_PREFIX}${orderShortCode.trim().toUpperCase()}`
@@ -96,6 +126,15 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
     }
     if (record.status === 'abandoned') {
       await redis.zadd(ABANDONED_INDEX_KEY, {
+        score: new Date(record.createdAt).getTime() || Date.now(),
+        member: record.orderShortCode.trim().toUpperCase(),
+      })
+    }
+
+    // Per-customer index. zadd is idempotent on member, so re-saving a
+    // record as its status changes updates the score rather than duplicating.
+    if (record.email) {
+      await redis.zadd(emailIndexKey(record.email), {
         score: new Date(record.createdAt).getTime() || Date.now(),
         member: record.orderShortCode.trim().toUpperCase(),
       })
@@ -162,6 +201,59 @@ export async function getAbandonedOrdersInWindow(startMs: number, endMs: number)
     return records.filter((r): r is OrderRecord => r !== null)
   } catch (err) {
     console.error('[orderStore] Failed to query abandoned orders in window:', err)
+    return []
+  }
+}
+
+/**
+ * Every order placed with a given email, newest first.
+ *
+ * CUSTOMER ACCOUNTS (Sep 2026). Reads the per-email sorted set written by
+ * saveOrderRecord above, then fetches each record. Capped because an account
+ * page never needs more than a page of history, and an unbounded fan-out of
+ * Redis gets is the kind of thing that only hurts once you have a customer
+ * worth keeping.
+ */
+export async function getOrdersForEmail(email: string, limit = 50): Promise<OrderRecord[]> {
+  if (!email) return []
+  try {
+    const codes = (await redis.zrange(emailIndexKey(email), 0, limit - 1, {
+      rev: true,
+    })) as string[]
+    if (!codes?.length) return []
+
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return records
+      .filter((r): r is OrderRecord => Boolean(r))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  } catch (err) {
+    console.error('[orderStore] Failed to read orders for email:', err)
+    return []
+  }
+}
+
+/**
+ * Orders whose reorder window is now open, for the reorder-reminder cron.
+ *
+ * Timed from ORDER DATE, not dispatch. There is no dispatch tracking in this
+ * system, so order date is the only timestamp that is always real. It runs a
+ * couple of days ahead of actual delivery, which the cron's day offset
+ * accounts for — a reminder that lands slightly early is useful, one keyed
+ * off a field nobody maintains would never land at all.
+ */
+export async function getOrdersDueForReorderReminder(
+  startMs: number,
+  endMs: number
+): Promise<OrderRecord[]> {
+  try {
+    const codes = (await redis.zrange(COMPLETED_INDEX_KEY, startMs, endMs, { byScore: true })) as string[]
+    if (!codes?.length) return []
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return records.filter((r): r is OrderRecord =>
+      Boolean(r && !r.reorderReminderSentAt && r.email)
+    )
+  } catch (err) {
+    console.error('[orderStore] Failed to read reorder-reminder candidates:', err)
     return []
   }
 }

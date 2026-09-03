@@ -17,6 +17,10 @@ export default function robots(): MetadataRoute.Robots {
           '/_next/',
           '/admin',
           '/admin/',
+          // Personal, and a signed-out crawler would only ever see the login
+          // screen — nothing here is worth a crawl budget.
+          '/account',
+          '/account/',
         ],
       },
     ],

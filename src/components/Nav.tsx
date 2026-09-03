@@ -301,6 +301,9 @@ export default function Nav() {
           <button className="mob-cta-secondary" onClick={() => { setMobileOpen(false); openCart() }}>
             <BagIcon /> View Cart {totalQuantity > 0 && `(${totalQuantity})`}
           </button>
+          <a href="/account" className="mob-cta-secondary" onClick={() => setMobileOpen(false)}>
+            Your orders &amp; reorder
+          </a>
           <a href="/wishlist" className="mob-cta-secondary" onClick={() => setMobileOpen(false)}>
             <HeartIcon filled={wishlistCount > 0} /> Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
           </a>
@@ -373,6 +376,16 @@ export default function Nav() {
               <kbd style={{ fontSize: 10, fontWeight: 600, border: '1px solid rgba(13,13,13,.1)', padding: '2px 6px', borderRadius: 5, lineHeight: 1.4, color: 'rgba(13,13,13,.35)' }}>⌘K</kbd>
             </button>
 
+            {/* CUSTOMER ACCOUNTS (Sep 2026): order history, batch certificates
+                and one-tap reorder. Deliberately placed beside the wishlist
+                rather than buried in the Support menu — for a consumable,
+                reorder is a primary action, not a support task. */}
+            <a href="/account" className="nav-icon-btn" aria-label="Your account">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </a>
             <a href="/wishlist" className="nav-icon-btn" aria-label={`Wishlist (${wishlistCount})`}>
               <HeartIcon filled={wishlistCount > 0} />
               {wishlistCount > 0 && (

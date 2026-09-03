@@ -537,6 +537,7 @@ export async function POST(req: NextRequest) {
               products: record.products,
               total: record.total,
               currency: record.currency,
+              customerName: record.customerName,
             })
           }
           await sendMailSafe({
@@ -617,6 +618,7 @@ Please create this order manually in Shopify and mark it paid. The customer has 
             products: record.products,
             total: record.total,
             currency: record.currency,
+            customerName: record.customerName,
           })
         }
 
