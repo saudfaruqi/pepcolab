@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import './globals.css'
 
+import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/lib/cartContext'
 import CartDrawer from '@/components/CartDrawer'
 import { CountryProvider } from '@/lib/countryContext'
@@ -271,6 +272,7 @@ export default function RootLayout({
             </RecentlyViewedProvider>
           </WishlistProvider>
         </CountryProvider>
+        <Analytics />
       </body>
     </html>
   )
