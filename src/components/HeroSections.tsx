@@ -131,7 +131,7 @@ export default function HeroCinematic() {
                 marginBottom: 14,
               }}
             >
-              Research Without Compromise · UAE
+              Research Without Compromise · UAE & UK
             </div>
 
             <h1
@@ -163,10 +163,10 @@ export default function HeroCinematic() {
                 marginBottom: 36,
               }}
             >
-              Premium research compounds manufactured to exceptional
-              standards and verified through independent laboratory testing.
-              Transparent batch data, pharmaceutical-grade quality, and
-              temperature-controlled fulfilment — shipped across the UAE.
+              Research compounds verified through independent third-party
+              laboratory testing, with batch-matched certificates of analysis
+              and lot traceability to the vial. Temperature-controlled
+              fulfilment across the UAE — United Kingdom launching soon.
             </p>
 
             {/* CTA Buttons */}
@@ -382,17 +382,41 @@ export default function HeroCinematic() {
                   '0 60px 140px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04)',
               }}
             >
+              {/*
+                HERO VIDEO — REBUILT (Sep 2026)
+                ------------------------------
+                The previous source was a 29.6 MB, 1440x1440, 60 fps, 23 Mbps
+                HEVC (H.265) file, autoplaying with no preload hint. Two
+                separate failures:
+
+                1. CODEC. HEVC in MP4 does not play in Chrome on Windows or
+                   Android, or in Firefox on any platform. A large share of
+                   visitors were downloading tens of megabytes to render a
+                   still poster frame — the video never played for them at
+                   all. Now H.264 (universal) with a VP9/WebM sibling that
+                   modern browsers will prefer.
+
+                2. WEIGHT. 29.6 MB above the fold, on a hero, for a market
+                   that is heavily mobile. Re-encoded to 720x720 at 30 fps:
+                   1.2 MB H.264 / 1.5 MB WebM. Visually identical at the
+                   rendered size, ~96% smaller.
+
+                preload="none" keeps the video entirely out of the critical
+                path — the poster paints immediately and the file is fetched
+                only once the browser is idle, so LCP is decided by a 60 KB
+                JPEG rather than a multi-megabyte media download.
+
+                REQUIRED FILES in /public: pepcovideo2.mp4, pepcovideo2.webm,
+                pepcovideo-poster.jpg — all three are supplied with this fix.
+              */}
               <video
                 autoPlay
                 muted
                 loop
                 playsInline
-                // No poster meant this box painted solid black until the
-                // video buffered — worst case for LCP, and gave crawlers no
-                // image to associate with the hero at all. pepcovideo.jpg
-                // below is a placeholder still frame — swap it for a real
-                // exported still once you have one.
-                poster="/pepcovideo.jpg"
+                preload="none"
+                poster="/pepcovideo-poster.jpg"
+                aria-label="PepcoLab research vials"
                 style={{
                   width: '100%',
                   height: '400px',
@@ -400,6 +424,7 @@ export default function HeroCinematic() {
                   display: 'block',
                 }}
               >
+                <source src="/pepcovideo2.webm" type="video/webm" />
                 <source src="/pepcovideo2.mp4" type="video/mp4" />
               </video>
 

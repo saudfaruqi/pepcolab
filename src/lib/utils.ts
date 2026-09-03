@@ -94,6 +94,25 @@ export function stripLeadingName(
   let trimmed = text.trim()
   if (!name) return trimmed
 
+  // FIX (Sep 2026): the back-to-back-repeat collapse below only fired when the
+  // Shopify TITLE matched the text repeated in the description. Several
+  // products use an abbreviated title against a full-name description, so the
+  // repeat survived and shipped to the live catalogue page:
+  //
+  //   title "Pharma Grade Bac Water"  ->  "Pharma Grade Bacteriostatic WaterPharma Grade Bacteriostatic Water is..."
+  //   title "CJC No DAC"              ->  "CJC-1295 No DACCJC-1295 No DAC is..."
+  //   title "Thymosin Alpha"          ->  "1Thymosin Alpha-1 is a synthetic..."  (stray leading "1")
+  //
+  // This pass runs BEFORE the name-based logic and is title-independent: it
+  // collapses any leading phrase that is immediately repeated verbatim,
+  // however the product happens to be titled. Anchored at the start and
+  // bounded to 60 characters, so it cannot touch a legitimate repetition
+  // occurring later in real body copy.
+  const genericDupe = trimmed.match(/^(.{4,60}?)\1(?=[\s,.:;-]|[A-Z]|$)/)
+  if (genericDupe) {
+    trimmed = trimmed.slice(genericDupe[1].length)
+  }
+
   const escaped = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   if (!escaped) return trimmed
 

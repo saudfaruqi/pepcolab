@@ -52,8 +52,27 @@ export async function generateStaticParams() {
   // The legacy "{handle}" path (still "-uae"-suffixed) is no longer
   // statically built; middleware.ts 301-redirects it here instead. See
   // toNeutralSlug() in lib/utils.ts for the full rationale.
-  const products = await getProducts(250)
-  return products.map((product) => ({ slug: toNeutralSlug(product.handle) }))
+  //
+  // RESILIENCE FIX (Sep 2026): this was an unguarded await. sitemap.ts and
+  // app/page.tsx both wrap their getProducts() calls in try/catch precisely
+  // so a Shopify outage cannot take down a route — this one did not, and it
+  // is the most fragile place to leave unguarded: a throw here fails
+  // `next build` entirely ("Failed to collect page data for /products/[slug]"),
+  // so a transient Storefront API error, an expired token, or a rate limit
+  // during a Vercel deploy blocks the whole deployment rather than degrading
+  // one page.
+  //
+  // Returning [] is safe: `dynamicParams` defaults to true, so product pages
+  // are still rendered on demand and cached by the existing revalidate = 60.
+  // The only cost of an empty list is that the first request per product is
+  // uncached — a far better outcome than a failed deploy.
+  try {
+    const products = await getProducts(250)
+    return products.map((product) => ({ slug: toNeutralSlug(product.handle) }))
+  } catch (err) {
+    console.error('[products/[slug]] generateStaticParams: Shopify fetch failed, falling back to on-demand rendering:', err)
+    return []
+  }
 }
 
 /* -------------------------------------------------------------------------- */

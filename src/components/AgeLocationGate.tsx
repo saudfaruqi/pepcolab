@@ -1,43 +1,70 @@
 'use client'
 // src/components/AgeLocationGate.tsx
 //
-// Full-site entry gate: confirms the visitor is 21+ and captures their
-// market before they can browse. Mounted once in layout.tsx, inside
-// CountryProvider, so a market selection here also sets the site's live
-// currency/country context — no separate state to keep in sync.
+// Full-site entry gate: confirms the visitor is 21+ and records their market
+// before they browse. Mounted once in layout.tsx inside CountryProvider, so a
+// selection here also sets the site's live country context.
 //
-// FIX (Aug 2026): PepcoLab is UAE-only (see countryContext.tsx /
-// MarketGuard.tsx) — this previously offered 'United Kingdom' as a
-// selectable market alongside UAE. A UK visitor would confirm that
-// choice, have it silently normalised back to AE by countryContext's
-// normaliseCountry() (since 'GB' isn't in SUPPORTED_COUNTRIES), and never
-// be told their stated location wasn't actually being used. Now only UAE
-// or "somewhere else" are offered — matching what the site can actually
-// fulfil.
+// THREE FIXES (Sep 2026)
+// ----------------------
+// 1. DUPLICATE H1. This component rendered an <h1> ("Confirm your age &
+//    location") on EVERY page of the site, above the page's own H1 in the
+//    DOM. On the homepage that meant the first H1 a crawler encountered was
+//    a consent dialog rather than anything about peptides. It is now a
+//    role="heading" element at level 2 — identical for screen readers, no
+//    longer competing for the document's primary heading.
+//
+// 2. UK RESTORED. August removed 'United Kingdom' as an option, leaving UK
+//    visitors to pick "Somewhere else" — while the helper text underneath
+//    still read "dispatches to the UAE and UK only", contradicting itself on
+//    screen. GB is a real option again, with copy that states plainly that
+//    UK dispatch is not open yet and points at /uk.
+//
+// 3. FRICTION. The gate required three interactions (pick region, tick age,
+//    press enter) before any content was reachable, on every first visit,
+//    including from paid and organic traffic. Region is now PRE-SELECTED
+//    from the country middleware already resolved, so the common path is one
+//    tick and one press. The visitor can still change it.
+//
+// The gate is deliberately not dismissible by backdrop click or Escape.
+
 import { useEffect, useRef, useState } from 'react'
 import { useCountry } from '@/lib/countryContext'
 
 const GATE_KEY = 'pepcolab_gate_v1'
 
-// Re-ask periodically rather than trusting a confirmation made once, ever —
-// a stale localStorage entry from months ago isn't meaningful consent.
-// 180 days is a common compliance baseline for age gates; adjust freely.
+// Re-ask periodically rather than trusting a confirmation made once, ever.
 const GATE_TTL_MS = 1000 * 60 * 60 * 24 * 180
+
+type GateMarket = 'AE' | 'GB' | 'OTHER'
 
 interface GateRecord {
   ageConfirmed: true
-  market: 'AE' | 'OTHER'
+  market: GateMarket
   ts: number
 }
 
-export default function AgeLocationGate() {
-  const { setCountry } = useCountry()
+const MARKET_OPTIONS: { code: GateMarket; label: string }[] = [
+  { code: 'AE', label: 'United Arab Emirates' },
+  { code: 'GB', label: 'United Kingdom' },
+  { code: 'OTHER', label: 'Somewhere else' },
+]
 
-  const [mounted, setMounted]   = useState(false)   // avoids SSR/client mismatch
-  const [open, setOpen]         = useState(false)
-  const [ageOk, setAgeOk]       = useState(false)
-  const [market, setMarket]     = useState<'AE' | 'OTHER' | null>(null)
-  const [blocked, setBlocked]   = useState(false)    // visitor said they're under 21
+const MARKET_NOTE: Record<GateMarket, string | null> = {
+  AE: null,
+  GB: 'PepcoLab does not dispatch to the UK yet. You can browse the full catalogue and every published certificate, and join the launch list to be told when UK ordering opens.',
+  OTHER:
+    'PepcoLab currently dispatches within the UAE only. You are welcome to browse, but checkout will not be available for your location.',
+}
+
+export default function AgeLocationGate() {
+  const { setCountry, country } = useCountry()
+
+  const [mounted, setMounted] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [ageOk, setAgeOk] = useState(false)
+  const [market, setMarket] = useState<GateMarket | null>(null)
+  const [blocked, setBlocked] = useState(false)
 
   const dialogRef = useRef<HTMLDivElement>(null)
 
@@ -53,22 +80,25 @@ export default function AgeLocationGate() {
         }
       }
     } catch {
-      // localStorage unavailable (private mode etc.) — fall through and gate every visit
+      // localStorage unavailable (private mode etc.) — gate every visit
     }
     setOpen(true)
   }, [])
+
+  // Pre-select from the country middleware resolved (cookie -> context), so
+  // the visitor usually only has to confirm their age. Runs once the country
+  // context is ready and only if they haven't chosen manually yet.
+  useEffect(() => {
+    if (market !== null) return
+    if (country === 'AE' || country === 'GB') setMarket(country)
+  }, [country, market])
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  // Focus trap: this gate has no backdrop-click or Escape dismissal by
-  // design (it's mandatory), but without a trap Tab can still walk focus
-  // out into the page underneath, which is both a real accessibility bug
-  // and a way to interact with content that's supposed to be blocked.
-  // Re-runs whenever the visible content changes (blocked vs. form) so it
-  // always targets the elements that are actually on screen.
+  // Focus trap. Without it, Tab walks focus into the blocked page beneath.
   useEffect(() => {
     if (!open) return
     const dialog = dialogRef.current
@@ -102,11 +132,13 @@ export default function AgeLocationGate() {
   function handleContinue() {
     if (!ageOk || !market) return
 
-    if (market === 'AE') {
+    // AE and GB are both real, supported countries now — record either.
+    // 'OTHER' deliberately does not call setCountry(): the site keeps
+    // whatever it already detected rather than being told a country it
+    // cannot represent.
+    if (market === 'AE' || market === 'GB') {
       setCountry(market)
     }
-    // market === 'OTHER' → deliberately does not call setCountry(); site
-    // keeps whatever default/detected country it already had.
 
     try {
       const rec: GateRecord = { ageConfirmed: true, market, ts: Date.now() }
@@ -144,11 +176,9 @@ export default function AgeLocationGate() {
         .gate-btn.gate-primary:hover:not(:disabled) { background: rgba(255,255,255,.88); }
         .gate-btn.gate-secondary:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.75); }
         .gate-btn:active:not(:disabled) { transform: scale(.98); }
-        /* Outline (not box-shadow) so it renders outside the button, against
-           the dark card background, and stays visible regardless of the
-           button's own fill color (white primary button included). */
         .gate-btn:focus-visible { outline: 2px solid rgba(255,255,255,.85); outline-offset: 2px; }
         .gate-checkbox:focus-visible { outline: 2px solid rgba(255,255,255,.85); outline-offset: 3px; }
+        .gate-link { color: rgba(255,255,255,.75); text-decoration: underline; }
       `}</style>
 
       <div
@@ -165,9 +195,14 @@ export default function AgeLocationGate() {
       >
         {blocked ? (
           <>
-            <h1 id="gate-heading" style={{ fontFamily: 'Georgia, serif', fontSize: 28, letterSpacing: '-.03em', margin: '0 0 12px' }}>
+            <div
+              id="gate-heading"
+              role="heading"
+              aria-level={2}
+              style={{ fontFamily: 'Georgia, serif', fontSize: 28, letterSpacing: '-.03em', margin: '0 0 12px' }}
+            >
               Access restricted
-            </h1>
+            </div>
             <p id="gate-desc" style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(255,255,255,.6)', margin: '0 0 24px' }}>
               PepcoLab is only available to visitors aged 21 and over. Please come back once you meet the age requirement.
             </p>
@@ -194,9 +229,17 @@ export default function AgeLocationGate() {
             <div style={{ fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700, marginBottom: 14 }}>
               Before you continue
             </div>
-            <h1 id="gate-heading" style={{ fontFamily: 'Georgia, serif', fontSize: 32, letterSpacing: '-.04em', lineHeight: 1.05, margin: '0 0 20px' }}>
+
+            {/* Was an <h1>. See the file header — it was competing with every
+                page's real H1 on every route. */}
+            <div
+              id="gate-heading"
+              role="heading"
+              aria-level={2}
+              style={{ fontFamily: 'Georgia, serif', fontSize: 32, letterSpacing: '-.04em', lineHeight: 1.05, margin: '0 0 20px' }}
+            >
               Confirm your age<br />&amp; location
-            </h1>
+            </div>
 
             {/* Market select */}
             <div style={{ marginBottom: 22 }} role="group" aria-label="Where are you browsing from?">
@@ -204,10 +247,7 @@ export default function AgeLocationGate() {
                 Where are you browsing from?
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {([
-                  { code: 'AE', label: 'United Arab Emirates' },
-                  { code: 'OTHER', label: 'Somewhere else' },
-                ] as const).map(opt => (
+                {MARKET_OPTIONS.map(opt => (
                   <button
                     key={opt.code}
                     className="gate-btn gate-market"
@@ -228,9 +268,16 @@ export default function AgeLocationGate() {
                   </button>
                 ))}
               </div>
-              {market === 'OTHER' && (
-                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)', marginTop: 8, lineHeight: 1.6 }}>
-                  PepcoLab currently dispatches to the UAE and UK only. You're welcome to browse, but checkout may not be available.
+
+              {market && MARKET_NOTE[market] && (
+                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.42)', marginTop: 10, lineHeight: 1.65 }}>
+                  {MARKET_NOTE[market]}
+                  {market === 'GB' && (
+                    <>
+                      {' '}
+                      <a href="/uk" className="gate-link">More on the UK launch</a>.
+                    </>
+                  )}
                 </p>
               )}
             </div>
@@ -285,7 +332,7 @@ export default function AgeLocationGate() {
                   cursor: 'pointer',
                 }}
               >
-                I'm under 21
+                I&apos;m under 21
               </button>
             </div>
 

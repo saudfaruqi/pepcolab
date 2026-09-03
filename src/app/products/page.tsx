@@ -13,19 +13,24 @@ export const metadata: Metadata = {
   // Page-level title left without the brand suffix — root layout's
   // `template: '%s | PepcoLab'` appends it once. Setting it here too
   // double-suffixed the tag and got truncated by Google at ~60 chars.
-  title: 'Research Peptides for Sale — UAE',
-  description: 'Browse research-grade peptides for laboratory use, shipped across the UAE. Supplied with the manufacturer\u2019s certificate of analysis for every batch.',
+  title: 'Research Peptides for Sale — UAE & UK',
+  description: 'Browse research-grade peptides for laboratory use. Every batch supplied with a certificate of analysis matched to the lot number on the vial. Cold-chain dispatch across the UAE; United Kingdom launching soon.',
   alternates: { canonical: '/products' },
   openGraph: {
-    title: 'Research Peptides for Sale — UAE | PepcoLab',
-    description: 'Browse research-grade peptides for laboratory use, shipped across the UAE. Supplied with the manufacturer\u2019s certificate of analysis for every batch.',
+    title: 'Research Peptides for Sale — UAE & UK | PepcoLab',
+    description: 'Browse research-grade peptides for laboratory use. Batch-matched certificates of analysis, lot traceability and cold-chain dispatch. UAE now, UK launching soon.',
     type: 'website',
   },
 }
 
 const IMGS = {
-  hero: 'https://images.unsplash.com/photo-1532187643603-ba119ca4109e?w=2000&q=80&auto=format&fit=crop',
-  lab:  'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1400&q=80&auto=format&fit=crop',
+  // PERF (Sep 2026): these were requested at w=2000/w=1400 and then served
+  // through next/image at w=3840 — a multi-megabyte decode for a background
+  // banner. Capped at the width actually rendered. Both are generic Unsplash
+  // stock; replacing them with real PepcoLab lab photography is the bigger
+  // win, for trust as much as for weight.
+  hero: 'https://images.unsplash.com/photo-1532187643603-ba119ca4109e?w=1600&q=70&auto=format&fit=crop',
+  lab:  'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200&q=70&auto=format&fit=crop',
 }
 
 const TRUST_ITEMS = [

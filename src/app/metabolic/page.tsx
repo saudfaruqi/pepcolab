@@ -15,10 +15,29 @@ import { ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
+// SEO FIX (Sep 2026) — KEYWORD CANNIBALISATION
+//
+// This hub and /products/category/{slug} were both titled "<Topic> Research
+// Peptides — UAE" and both described as the compounds studied in that field.
+// Two pages on the same domain competing for the same query is a net loss:
+// internal links and external signal split between them, Google picks one
+// (often not the one you wanted), and both rank lower than a single
+// consolidated page would.
+//
+// They are not merged, because the intent genuinely differs. The split is now
+// explicit:
+//   THIS page  -> informational. "which compounds, what the research says,
+//                 how to evaluate a supplier." No "for sale", no price, no
+//                 market qualifier in the title.
+//   /products/category/{slug} -> commercial. "<Topic> Peptides for Sale —
+//                 Research Grade | UAE & UK", product grid, prices.
+//
+// The existing link from this page down to the category page is what passes
+// the informational traffic through to the commercial page. Keep it.
 export const metadata: Metadata = {
-  title: 'Metabolic Research Peptides — UAE',
+  title: 'Metabolic Peptides: Research Overview & Compound Guide',
   description:
-    'An overview of the GLP-1-class and related compounds most studied in metabolic-pathway research — mechanism, research literature, and where to find batch-tested stock.',
+    'Which compounds appear most in metabolic-pathway and GLP-1-class research, what distinguishes them, and how to verify purity and batch documentation before you order.',
   alternates: {
     canonical: '/metabolic',
     languages: { 'en-GB': '/metabolic', 'en-AE': '/metabolic', 'x-default': '/metabolic' },

@@ -61,15 +61,32 @@ const nextConfig = {
       { source: '/products/epithalon-5mg', destination: '/products/epithalon', permanent: true },
       { source: '/products/ipamorelin-2mg', destination: '/products/ipamorelin', permanent: true },
 
-      // Discontinued lines with no direct equivalent — send to the catalogue
-      // rather than 404. TB-500 is no longer stocked; glp-1-tera has no
-      // successor product.
-      { source: '/products/tb-500-10mg', destination: '/products', permanent: true },
-      { source: '/products/glp-1-tera-5mg', destination: '/products', permanent: true },
+      // Discontinued lines with no direct equivalent.
+      //
+      // FIX (Sep 2026): these previously both landed on /products, the bare
+      // collection page. Google treats a redirect to a generic hub as a soft
+      // 404 and passes little or nothing through — the whole reason for
+      // redirecting instead of 404ing is lost. Pointing each at the category
+      // that actually matches the compound keeps the destination topically
+      // relevant to the query the old URL used to rank for.
+      //
+      // FIX (Sep 2026): '/products/glp-1-tera-5mg' was ALSO listed in
+      // middleware's DISCONTINUED_PRODUCT_REDIRECTS pointing at
+      // /products/category/metabolic. next.config.js redirects resolve before
+      // middleware runs, so the middleware entry could never execute and the
+      // two silently disagreed. Resolved here, and removed from middleware.
+      { source: '/products/tb-500-10mg', destination: '/products/category/recovery', permanent: true },
+      { source: '/products/glp-1-tera-5mg', destination: '/products/category/metabolic', permanent: true },
 
-      // Catch-all safety net: any remaining /products/*-Nmg style slug from
-      // the old catalogue lands on the collection page instead of a 404.
-      // Runs last, so the specific rules above always win.
+      // Catch-all safety net for the old "-Nmg" slug pattern.
+      //
+      // Verified against the live catalogue before keeping this: no current
+      // Shopify handle contains a "-Nmg" segment (handles are "{name}-uae",
+      // e.g. bpc-157-uae), so this cannot capture a live product URL. Recheck
+      // that assumption if the handle scheme ever changes — as written, a
+      // handle like "bpc-157-10mg" would be 301'd off its own product page.
+      //
+      // Runs last; every specific rule above wins.
       {
         source: '/products/:slug(.*-\\d+mg)',
         destination: '/products',

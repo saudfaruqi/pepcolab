@@ -283,7 +283,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
             </a>
 
             <p style={{ fontSize: 11, lineHeight: 1.7, color: '#AAB3C8', margin: 0 }}>
-              All testing conducted by an independent accredited laboratory. PepcoLab has no influence over test results.
+              Testing conducted by Freedom Diagnostics, an independent third-party laboratory. PepcoLab has no influence over test results.
             </p>
           </div>
         )

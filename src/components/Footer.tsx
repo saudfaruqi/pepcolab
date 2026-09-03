@@ -388,7 +388,11 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-bottom">
           <div className="footer-bottom-left">
-            <span className="footer-bottom-text">© {year} PepcoLab Ltd.</span>
+            {/* LEGAL (Sep 2026): "PepcoLab Ltd" is not a registered company. PepcoLab
+                is the trading name of SEE BEE DEE LIMITED (England &amp; Wales,
+                17072052). Naming a company that does not exist in your own footer
+                is exactly the detail a cautious buyer checks at Companies House. */}
+            <span className="footer-bottom-text">© {year} PepcoLab — SEE BEE DEE LIMITED (England &amp; Wales, 17072052)</span>
             <div className="footer-dot" />
             <Link href="/privacy" className="footer-bottom-link">Privacy</Link>
             <Link href="/terms"   className="footer-bottom-link">Terms</Link>

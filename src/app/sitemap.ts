@@ -32,6 +32,11 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/guides',       changeFrequency: 'weekly',  priority: 0.8 },
   // New Phase 1 content — see growth-playbook §04. High-intent,
   // zero-competition clusters, so given priority just under the hub pages.
+  // UK market entry page (Sep 2026). Priority sits with the other
+  // high-intent cluster hubs: it is the only URL on the site currently
+  // targeting UK-qualified queries, and it is what gives Google a reason to
+  // associate the domain with the UK before any UK catalogue exists.
+  { path: '/uk',           changeFrequency: 'weekly',  priority: 0.8  },
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },

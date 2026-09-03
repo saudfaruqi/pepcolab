@@ -4,18 +4,39 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 
 const COUNTRY_KEY = 'pepcolab_country'
 
-// MARKET FIX (Aug 2026): PepcoLab is UAE-only for now — GB removed. This
-// was previously ['AE', 'GB'], with a currency switcher, GBP pricing, and
-// UK checkout all live in the UI despite the UK not actually being a
-// fulfilled market. Any visitor detected as anything other than AE (or
-// where detection fails) now falls back to AE — the only market this
-// actually supports — rather than being offered a currency/checkout path
-// that doesn't work.
-const SUPPORTED_COUNTRIES = ['AE'] as const
+// DUAL MARKET (Sep 2026): GB is back as a recognised country, but on
+// different terms than the version removed in August.
+//
+// The August removal was correct about the underlying problem — GB was being
+// offered a currency switcher and a checkout path that did not work — and
+// solved it by pretending UK visitors were in the UAE. That silently
+// mislabels real people, loses the ability to say anything UK-specific, and
+// makes it impossible to capture UK demand ahead of launch.
+//
+// The fix here separates two things the old code conflated:
+//   - which country a visitor is IN            (AE or GB, honestly recorded)
+//   - whether we can SELL to them              (canCheckout / pricing.ts)
+//
+// UK visitors are correctly identified as GB, see UK-specific messaging and
+// the /uk page, and are offered the launch list instead of a buy button.
+// Prices stay in AED for everyone because AED is what STRABL actually
+// charges — showing a converted GBP figure we cannot honour at checkout was
+// one of the original sins here and is not being reintroduced.
+const SUPPORTED_COUNTRIES = ['AE', 'GB'] as const
 type SupportedCountry = (typeof SUPPORTED_COUNTRIES)[number]
 
+// AED for both markets: it is the currency charged, so it is the currency
+// displayed. When UK fulfilment goes live and a GBP price list exists in
+// Shopify, change GB here and in lib/pricing.ts together.
 const COUNTRY_CURRENCY: Record<SupportedCountry, string> = {
   AE: 'AED',
+  GB: 'AED',
+}
+
+/** Markets that can currently complete a purchase. */
+const CHECKOUT_ENABLED: Record<SupportedCountry, boolean> = {
+  AE: true,
+  GB: false,
 }
 
 function normaliseCountry(input: string | null | undefined): SupportedCountry {
@@ -24,14 +45,13 @@ function normaliseCountry(input: string | null | undefined): SupportedCountry {
     : 'AE'
 }
 
-// FIX (Aug 2026): reads the SAME `pepcolab_country` cookie middleware.ts
-// already sets on every request — it's just no longer read server-side in
-// layout.tsx (see that file's comment for why: cookies() there forced the
-// whole app to render dynamically). middleware.ts's cookie is not
-// httpOnly, so `document.cookie` can read it here, synchronously, with no
-// network round-trip. This is what keeps the fallback path below fast for
-// the common case (anyone middleware has already geo-tagged) instead of
-// always waiting on `/api/country`.
+// Reads the `pepcolab_country` cookie set by src/middleware.ts.
+//
+// NOTE (Sep 2026): this fallback was load-bearing for longer than intended,
+// because middleware.ts was sitting at src/lib/middleware.ts and never ran —
+// so this cookie never existed and every first-time visitor paid for the
+// /api/country round-trip at the bottom of the chain. With middleware at the
+// correct path the cookie is present from the first request onward.
 function readCountryCookie(): string | null {
   if (typeof document === 'undefined') return null
   const match = document.cookie.match(/(?:^|;\s*)pepcolab_country=([^;]+)/)
@@ -41,6 +61,8 @@ function readCountryCookie(): string | null {
 interface CountryCtx {
   country: SupportedCountry
   currency: string
+  /** False for markets we cannot yet fulfil — drives MarketGuard and the cart. */
+  canCheckout: boolean
   setCountry: (c: string) => void
   ready: boolean
 }
@@ -48,6 +70,7 @@ interface CountryCtx {
 const CountryContext = createContext<CountryCtx>({
   country: 'AE',
   currency: 'AED',
+  canCheckout: true,
   setCountry: () => {},
   ready: false,
 })
@@ -58,37 +81,25 @@ export function CountryProvider({
 }: {
   children: ReactNode
   /**
-   * Optional country resolved server-side, if a caller has one available
-   * (e.g. a route that's already dynamic for other reasons and can safely
-   * call cookies() itself). When present, this lets the provider start in
-   * its final state on the very first render instead of waiting on the
-   * client-side fallback chain below.
+   * Optional country resolved server-side. RootLayout deliberately does NOT
+   * supply this: reading cookies() anywhere in the layout chain forces every
+   * route beneath it to render dynamically, which defeats the static
+   * rendering that keeps the homepage on the edge cache. The prop remains
+   * for any route that opts into dynamic rendering for its own reasons.
    *
-   * FIX (Aug 2026): RootLayout (app/layout.tsx) used to always supply this
-   * from cookies() — removed there because reading cookies() anywhere in
-   * the layout chain forces the ENTIRE app to render dynamically, which
-   * was silently defeating page.tsx's static-rendering fix. This prop
-   * still exists for any route that wants to opt into dynamic rendering
-   * deliberately and pass a real value, but nothing currently does. The
-   * default path is the client-side fallback in the effect below:
-   * localStorage (explicit prior choice) → the `pepcolab_country` cookie
-   * via document.cookie (fast, no network, still set by middleware.ts on
-   * every request) → `/api/country` as a last resort.
+   * Default path is the client-side chain in the effect below:
+   * localStorage (an explicit prior choice) -> the `pepcolab_country` cookie
+   * via document.cookie (synchronous, no network) -> /api/country.
    */
   initialCountry?: string
 }) {
   const resolvedInitial = normaliseCountry(initialCountry)
   const [country, setCountryState] = useState<SupportedCountry>(resolvedInitial)
-  // If the server already resolved a supported country, we're ready
-  // immediately — no flash, no waiting on an effect.
   const [ready, setReady] = useState<boolean>(
     Boolean(initialCountry && SUPPORTED_COUNTRIES.includes(initialCountry as SupportedCountry))
   )
 
   useEffect(() => {
-    // Already resolved server-side — still check localStorage in case the
-    // visitor explicitly picked a different market on a previous visit
-    // (setCountry below), but don't block on a network round-trip.
     if (ready) {
       const stored = localStorage.getItem(COUNTRY_KEY)
       if (stored && stored !== country && SUPPORTED_COUNTRIES.includes(stored as SupportedCountry)) {
@@ -97,8 +108,6 @@ export function CountryProvider({
       return
     }
 
-    // Fallback path — reached whenever no initialCountry was supplied
-    // server-side (the normal case now — see the prop doc above).
     const stored = localStorage.getItem(COUNTRY_KEY)
     if (stored && SUPPORTED_COUNTRIES.includes(stored as SupportedCountry)) {
       setCountryState(stored as SupportedCountry)
@@ -106,10 +115,6 @@ export function CountryProvider({
       return
     }
 
-    // No explicit prior choice — try middleware's geo-detected cookie
-    // before falling all the way back to a network round-trip. This is
-    // the fast path for anyone who's hit the site before (or even just
-    // this session): synchronous, no request, resolves in the same tick.
     const cookieCountry = readCountryCookie()
     if (cookieCountry && SUPPORTED_COUNTRIES.includes(cookieCountry as SupportedCountry)) {
       setCountryState(cookieCountry as SupportedCountry)
@@ -118,9 +123,6 @@ export function CountryProvider({
       return
     }
 
-    // Last resort — no cookie either (e.g. middleware didn't run, or this
-    // is genuinely the visitor's first-ever request before it could set
-    // one). Only this path pays for a network round-trip.
     fetch('/api/country')
       .then(r => r.json())
       .then(({ country: detected }) => {
@@ -129,7 +131,6 @@ export function CountryProvider({
         localStorage.setItem(COUNTRY_KEY, resolved)
       })
       .catch(() => {
-        // Detection failed — fall back to AE, don't leave it unset
         setCountryState('AE')
         localStorage.setItem(COUNTRY_KEY, 'AE')
       })
@@ -147,6 +148,7 @@ export function CountryProvider({
     <CountryContext.Provider value={{
       country,
       currency: COUNTRY_CURRENCY[country],
+      canCheckout: CHECKOUT_ENABLED[country],
       setCountry,
       ready,
     }}>

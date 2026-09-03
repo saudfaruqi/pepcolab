@@ -7,10 +7,29 @@ import { ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
+// SEO FIX (Sep 2026) — KEYWORD CANNIBALISATION
+//
+// This hub and /products/category/{slug} were both titled "<Topic> Research
+// Peptides — UAE" and both described as the compounds studied in that field.
+// Two pages on the same domain competing for the same query is a net loss:
+// internal links and external signal split between them, Google picks one
+// (often not the one you wanted), and both rank lower than a single
+// consolidated page would.
+//
+// They are not merged, because the intent genuinely differs. The split is now
+// explicit:
+//   THIS page  -> informational. "which compounds, what the research says,
+//                 how to evaluate a supplier." No "for sale", no price, no
+//                 market qualifier in the title.
+//   /products/category/{slug} -> commercial. "<Topic> Peptides for Sale —
+//                 Research Grade | UAE & UK", product grid, prices.
+//
+// The existing link from this page down to the category page is what passes
+// the informational traffic through to the commercial page. Keep it.
 export const metadata: Metadata = {
-  title: 'Cognitive Research Peptides — UAE',
+  title: 'Cognitive Peptides: Research Overview & Compound Guide',
   description:
-    'An overview of the peptide compounds most studied in cognitive and neurological research — mechanism, research literature, and where to find batch-tested stock.',
+    'Which peptides appear most in cognitive and neurological research literature, how they differ, and how to check a supplier’s certificate of analysis before you order.',
   alternates: {
     canonical: '/cognitive',
     languages: { 'en-GB': '/cognitive', 'en-AE': '/cognitive', 'x-default': '/cognitive' },
