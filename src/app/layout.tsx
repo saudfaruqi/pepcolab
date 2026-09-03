@@ -12,6 +12,7 @@ import AgeLocationGate from '@/components/AgeLocationGate'
 import FloatingCalculator from '@/components/FloatingCalculator'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import ChatWidget from '@/components/ChatWidget'
+import { Analytics } from '@vercel/analytics/next'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -271,6 +272,7 @@ export default function RootLayout({
             </RecentlyViewedProvider>
           </WishlistProvider>
         </CountryProvider>
+        <Analytics />
       </body>
     </html>
   )
