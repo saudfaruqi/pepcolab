@@ -2,6 +2,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -209,6 +210,33 @@ function ContactPageContent() {
 
             {/* Form */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-4 lg:p-10 shadow-sm">
+              {/* AUDIENCE FORK (Sep 2026).
+                  Institutional buyers were previously funnelled through the
+                  same freeform box as everyone else, so a university
+                  procurement enquiry arrived as "hi, do you do bulk?" and cost
+                  three emails to turn into a quote. The bulk form asks for
+                  compounds, quantities and procurement requirements up front,
+                  which is the whole difference between a lead and a brief.
+
+                  Individuals stay here — sending them to a quote form would
+                  be worse for the far larger group. */}
+              <div className="mb-8 rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
+                <div className="text-sm font-semibold text-neutral-900">
+                  Buying for a university, CRO or laboratory?
+                </div>
+                <p className="mt-1 text-sm leading-relaxed text-neutral-600">
+                  Institutional orders work differently &mdash; quotations, purchase orders and
+                  invoicing rather than card checkout. The bulk form asks the right questions
+                  so you get a real number back first time.
+                </p>
+                <Link
+                  href="/bulk-orders"
+                  className="mt-3 inline-flex min-h-[42px] items-center rounded-full bg-neutral-900 px-5 text-[13px] font-bold text-white"
+                >
+                  Request an institutional quote
+                </Link>
+              </div>
+
               <div className="flex items-center justify-between mb-8">
                 <h2 className="font-serif text-3xl tracking-tight">Send us a message</h2>
                 <span className="text-xs text-neutral-400 font-medium">* Required</span>

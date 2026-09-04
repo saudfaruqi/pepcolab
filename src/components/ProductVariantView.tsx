@@ -8,6 +8,7 @@ import { ShieldCheck, Truck, RotateCcw } from 'lucide-react'
 import Vial from '@/components/Vial'
 import ProductActions from '@/components/ProductActions'
 import MarketGuard from '@/components/MarketGuard'
+import ContactModal from '@/components/ContactModal'
 import WishlistButton from '@/components/WishlistButton'
 import ShareButton from '@/components/ShareButton'
 import { useRecordRecentlyViewed } from '@/lib/recentlyViewedContext'
@@ -54,6 +55,7 @@ export default function ProductVariantView({ product }: Props) {
   // thumbnail once would "stick" and silently stop the sync the strength
   // picker is supposed to provide.
   const [manualImageUrl, setManualImageUrl] = useState<string | null>(null)
+  const [askOpen, setAskOpen] = useState(false)
 
   const selectedVariant = useMemo(
     () => product.variants?.find((v: any) => v.id === selectedVariantId),
@@ -296,6 +298,38 @@ export default function ProductVariantView({ product }: Props) {
             onSelectVariant={handleSelectVariant}
           />
         </MarketGuard>
+
+        {/* IN-CONTEXT ASK (Sep 2026).
+            The questions worth capturing happen here, not on the contact
+            page: which format it ships in, whether the current lot's COA is
+            published, what the storage requirement is. Someone with that
+            question and no way to ask it in place mostly just leaves — a
+            contact page is a destination you have to decide to visit.
+
+            The modal carries the product name through, so the enquiry lands
+            already answering "about what?". */}
+        <button
+          onClick={() => setAskOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', minHeight: 46, marginTop: 12,
+            borderRadius: 999, border: '1px solid rgba(13,13,13,.12)',
+            background: 'transparent', color: 'rgba(13,13,13,.65)',
+            fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          Ask a question about {product.title}
+        </button>
+
+        <ContactModal
+          open={askOpen}
+          onClose={() => setAskOpen(false)}
+          subject={`Question about ${product.title}`}
+          title={`About ${product.title}`}
+          blurb="Formats, documentation, storage, availability — a person reads these, usually the same working day."
+          placeholder="e.g. Is the COA for the current lot published yet?"
+          context={`Product: ${product.title}`}
+        />
       </div>
     </div>
   )
