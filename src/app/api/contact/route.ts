@@ -92,8 +92,13 @@ This message was sent from the PepcoLab contact form.
       box-shadow: 0 4px 40px rgba(0,0,0,0.04);
     }
     .header {
-      background: #0d0d0d !important;
-      padding: 32px 30px 24px;
+      /* Was #0d0d0d. The inline style on the element itself is what most
+         clients actually honour (many strip <style> blocks entirely), and
+         that is already light — but leaving a dark rule in the stylesheet
+         means any client that DOES apply it renders dark-on-dark. Both now
+         agree. */
+      background: #ffffff !important;
+      padding: 30px 30px 22px;
       text-align: center;
       position: relative;
     }
@@ -249,12 +254,16 @@ This message was sent from the PepcoLab contact form.
     .yshortcuts a {
       border-bottom: none !important;
     }
-    /* Apple Mail dark mode override */
+    /* Apple Mail dark mode override.
+       NOTE (Sep 2026): this block already forced .header to a white
+       background — which, while the header was #0d0d0d with white type, meant
+       Apple Mail in dark mode rendered white text on white. The header is
+       light now, so the rule and the markup finally agree. */
     @media (prefers-color-scheme: dark) {
-      body, .container, .content, .summary-box, .next-steps, .footer {
+      body, .container, .header, .content, .summary-box, .next-steps, .footer {
         background-color: #ffffff !important;
       }
-      body, p, h1, h2, h3, h4, div, span, li, .value, .greeting {
+      body, p, h1, h2, h3, h4, div, span, li, .value, .greeting, .sub {
         color: #1a1a1a !important;
       }
     }
@@ -270,10 +279,17 @@ This message was sent from the PepcoLab contact form.
     <tr>
       <td align="center" style="padding:40px 20px;">
         <div class="container" style="max-width:580px; margin:0 auto; background:#ffffff !important; border-radius:20px; overflow:hidden; box-shadow:0 4px 40px rgba(0,0,0,0.04);">
-          <div class="header" style="background:#0d0d0d !important; padding:32px 30px 24px; text-align:center; position:relative;">
-            <span class="check" style="font-size:44px; display:block; margin-bottom:8px; color:#ffffff !important;">✓</span>
-            <h1 style="font-size:24px; font-weight:700; color:#ffffff !important; letter-spacing:-0.02em; margin:0;">We've Received Your Message</h1>
-            <div class="sub" style="color:rgba(255,255,255,0.4) !important; font-size:13px; margin-top:4px;">PepcoLab — Research-Grade Peptides</div>
+          <!-- LIGHT-ONLY (Sep 2026): this header was a solid #0d0d0d banner
+               with white type — the only dark block in any customer email, and
+               the one most likely to be mangled by a client that re-tints
+               backgrounds. Replaced with the gold hairline and light head that
+               emailShell uses, so every email the brand sends now looks like it
+               came from the same company. -->
+          <div style="height:3px; line-height:3px; font-size:0; background:#C8992A;">&nbsp;</div>
+          <div class="header" style="background:#ffffff !important; padding:30px 30px 22px; text-align:center;">
+            <span class="check" style="font-size:34px; display:block; margin-bottom:10px; color:#0A7B45 !important;">&#10003;</span>
+            <h1 style="font-size:23px; font-weight:700; color:#0d0d0d !important; letter-spacing:-0.03em; margin:0;">We&rsquo;ve received your message</h1>
+            <div class="sub" style="color:rgba(13,13,13,0.45) !important; font-size:13px; margin-top:5px;">PepcoLab &mdash; research-grade peptides</div>
           </div>
           <div class="content" style="padding:32px 30px 28px; background:#ffffff !important;">
             <div class="greeting" style="font-size:18px; font-weight:600; color:#0d0d0d !important; margin-bottom:8px;">Hi ${name.split(' ')[0]} 👋</div>

@@ -29,6 +29,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import AccountTabs from '@/components/AccountTabs'
 import { useCart } from '@/lib/cartContext'
 import { Loader2, Package, RotateCw, ExternalLink, LogOut, FileText } from 'lucide-react'
 
@@ -49,6 +50,8 @@ interface AccountOrder {
     quantity: number
     variantOptions: string[]
     variantId: string | null
+    coaUrl: string | null
+    coaLot: string | null
   }[]
 }
 
@@ -169,6 +172,8 @@ export default function AccountPage() {
               <LogOut size={14} aria-hidden="true" /> Sign out
             </button>
           </div>
+
+          <AccountTabs />
 
           {notice && (
             <div role="status" style={{
@@ -294,14 +299,33 @@ export default function AccountPage() {
                         Reorder
                       </button>
 
-                      <Link href="/certificates"
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 7, minHeight: 44, padding: '0 18px',
-                              borderRadius: 999, border: `1px solid ${BORDER}`, background: '#fff',
-                              fontSize: 13.5, fontWeight: 600, color: INK, textDecoration: 'none',
-                            }}>
-                        <FileText size={15} aria-hidden="true" /> Batch certificates
-                      </Link>
+                      {/* Links straight to the certificate for a line we can
+                          resolve; falls back to the library only when we
+                          can't. A customer should never have to copy a lot
+                          number off a vial to reach the document we already
+                          published for it. */}
+                      {order.products.filter(p => p.coaUrl).length > 0 ? (
+                        order.products.filter(p => p.coaUrl).map((p, i) => (
+                          <a key={i} href={p.coaUrl as string} target="_blank" rel="noopener noreferrer"
+                             style={{
+                               display: 'flex', alignItems: 'center', gap: 7, minHeight: 44, padding: '0 18px',
+                               borderRadius: 999, border: `1px solid ${BORDER}`, background: '#fff',
+                               fontSize: 13.5, fontWeight: 600, color: INK, textDecoration: 'none',
+                             }}>
+                            <FileText size={15} aria-hidden="true" />
+                            {p.title} COA{p.coaLot ? ` · ${p.coaLot}` : ''}
+                          </a>
+                        ))
+                      ) : (
+                        <Link href="/certificates"
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 7, minHeight: 44, padding: '0 18px',
+                                borderRadius: 999, border: `1px solid ${BORDER}`, background: '#fff',
+                                fontSize: 13.5, fontWeight: 600, color: INK, textDecoration: 'none',
+                              }}>
+                          <FileText size={15} aria-hidden="true" /> Batch certificates
+                        </Link>
+                      )}
 
                       <Link href={`/track-order?code=${encodeURIComponent(order.orderShortCode)}`}
                             style={{

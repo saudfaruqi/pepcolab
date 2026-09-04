@@ -16,6 +16,9 @@ const LINKS = {
   Research: [
     { label: 'Research Hub',   href: '/research'      },
     { label: 'COA Library',    href: '/certificates'  },
+    // Reviews (Sep 2026). Open to anyone who has dealt with us, ordered or
+    // not — the write page does not require an order code.
+    { label: 'Reviews',        href: '/reviews'       },
     { label: 'Guides',         href: '/guides'        },
     { label: 'Comparisons',    href: '/compare'       },
     { label: 'Legal & Compliance', href: '/legal'     },

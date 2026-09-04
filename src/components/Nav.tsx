@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useCart } from '@/lib/cartContext'
 import { useWishlist } from '@/lib/wishlistContext'
 import { useCustomer } from '@/lib/customerContext'
+import SignInModal from '@/components/SignInModal'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice, productHref } from '@/lib/utils'
 import { useCountry } from '@/lib/countryContext'
@@ -56,6 +57,7 @@ export default function Nav() {
   const { totalQuantity, openCart } = useCart()
   const { count: wishlistCount } = useWishlist()
   const { signedIn, firstName, orderCount } = useCustomer()
+  const [signInOpen, setSignInOpen] = useState(false)
   const { country, currency, ready } = useCountry()
   const pathname = usePathname()
 
@@ -386,9 +388,15 @@ export default function Nav() {
                 else gets a plain sign-in control. `signedIn === null` means
                 the check hasn't resolved yet — render the neutral icon
                 rather than flashing "Sign in" at someone who is signed in. */}
+            {/* Signed out, this opens a modal rather than navigating: a visitor
+                mid-way through a product page shouldn't have to lose their
+                place to sign in, because they won't — they'll skip it, and the
+                account goes unused by exactly the people it was built for.
+                Signed in, it goes straight to their orders. */}
             <a
               href="/account"
               className="nav-icon-btn"
+              onClick={e => { if (signedIn === false) { e.preventDefault(); setSignInOpen(true) } }}
               aria-label={signedIn ? `Your account${orderCount ? ` — ${orderCount} orders` : ''}` : 'Sign in'}
               title={signedIn && firstName ? `Signed in as ${firstName}` : undefined}
             >
@@ -871,6 +879,8 @@ export default function Nav() {
           }
         `
       }} />
+
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
     </>
   )
 }

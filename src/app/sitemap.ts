@@ -37,6 +37,11 @@ const STATIC_ROUTES: StaticRoute[] = [
   // targeting UK-qualified queries, and it is what gives Google a reason to
   // associate the domain with the UK before any UK catalogue exists.
   { path: '/uk',           changeFrequency: 'weekly',  priority: 0.8  },
+  // Reviews (Sep 2026). Social proof is the one thing every competitor above
+  // us in the SERPs shows and we don't — worth its own indexable URL rather
+  // than only existing scattered across product pages.
+  { path: '/reviews',      changeFrequency: 'weekly',  priority: 0.7  },
+  { path: '/reviews/write', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },

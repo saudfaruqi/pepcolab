@@ -17,6 +17,7 @@
 // regardless of whether the visitor actually completes the WhatsApp step.
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMailSafe } from '@/lib/mailer'
+import { emailShell, primaryButton, INK, INK_60, INK_40 } from '@/lib/orderEmails'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
 const ADMIN_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
@@ -71,10 +72,10 @@ export async function POST(req: NextRequest) {
         const isUser = m.role === 'user'
         return `
           <div style="margin-bottom:14px; text-align:${isUser ? 'right' : 'left'};">
-            <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:${isUser ? '#1A56DB' : 'rgba(13,15,20,.4)'}; margin-bottom:3px;">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:${isUser ? '#8A6A1E' : 'rgba(13,13,13,.4)'}; margin-bottom:3px;">
               ${isUser ? 'Visitor' : 'Assistant'}
             </div>
-            <div style="display:inline-block; max-width:85%; text-align:left; padding:10px 14px; border-radius:12px; font-size:14px; line-height:1.55; background:${isUser ? '#EBF2FF' : '#F7F8FA'}; color:#0D0F14;">
+            <div style="display:inline-block; max-width:85%; text-align:left; padding:10px 14px; border-radius:12px; font-size:14px; line-height:1.55; background:${isUser ? 'rgba(200,153,42,.10)' : '#F4F3F0'}; color:#0D0F14;">
               ${escapeHtml(m.content).replace(/\n/g, '<br />')}
             </div>
           </div>`
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; max-width:640px; margin:0 auto;">
           <h2 style="font-size:18px; color:#0D0F14;">New website chat transcript</h2>
           <p style="font-size:13px; color:rgba(13,15,20,.5); margin-top:-8px;">Reason: ${escapeHtml(reason)}${pageUrl ? ` · Page: ${escapeHtml(pageUrl)}` : ''}</p>
-          <div style="background:#F7F8FA; border-radius:10px; padding:14px 16px; margin:16px 0; font-size:14px;">
+          <div style="background:#F4F3F0; border-radius:10px; padding:14px 16px; margin:16px 0; font-size:14px;">
             ${contactLine ? escapeHtml(contactLine).replace(/\n/g, '<br />') : '<em>No contact details captured — visitor was anonymous.</em>'}
           </div>
           <div style="border-top:1px solid rgba(13,15,20,.08); padding-top:16px; margin-top:16px;">
@@ -113,15 +114,22 @@ export async function POST(req: NextRequest) {
         to: contact.email,
         subject: "We've got your chat — PepcoLab",
         text: `Hi ${contact.name || 'there'},\n\nThanks for chatting with us. A member of the PepcoLab team has your conversation and will follow up shortly${contact.phone ? ' on WhatsApp or email' : ' by email'}.\n\nIn the meantime: https://www.pepcolab.com/products\n\n— PepcoLab Team`,
-        html: `
-          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; max-width:520px; margin:0 auto; padding:8px;">
-            <p style="font-size:15px; color:#0D0F14;">Hi ${escapeHtml(contact.name || 'there')} 👋</p>
-            <p style="font-size:14px; color:rgba(13,15,20,.7); line-height:1.7;">
-              Thanks for chatting with us on pepcolab.com. A member of our team now has your full conversation and will follow up shortly${contact.phone ? ' on WhatsApp or email' : ' by email'}.
-            </p>
-            <p style="font-size:14px;"><a href="https://www.pepcolab.com/products" style="color:#1A56DB;">Browse the catalogue</a> while you wait.</p>
-            <p style="font-size:13px; color:rgba(13,15,20,.4); margin-top:24px;">— PepcoLab Team</p>
-          </div>`,
+        // Was a bare <div> with no HTML document around it, no light-only
+        // declaration, and a #1A56DB link that appears nowhere else in the
+        // brand. Routed through emailShell so it is light-locked and looks
+        // like the rest of what PepcoLab sends.
+        html: emailShell(`
+          <h1 style="font-size:22px; font-weight:700; letter-spacing:-.03em; line-height:1.2; color:${INK}; margin:0 0 12px;">
+            Thanks for getting in touch${contact.name ? `, ${escapeHtml(contact.name.split(' ')[0])}` : ''}.
+          </h1>
+          <p style="font-size:14px; line-height:1.7; color:${INK_60}; margin:0 0 24px;">
+            Someone on the team has your full conversation and will follow up shortly${contact.phone ? ' on WhatsApp or by email' : ' by email'}. You don&rsquo;t need to repeat anything.
+          </p>
+          ${primaryButton('Browse the catalogue', 'https://www.pepcolab.com/products', 16)}
+          <p style="font-size:11px; line-height:1.6; color:${INK_40}; margin:20px 0 0; text-align:center;">
+            Supplied for in-vitro laboratory research use only.
+          </p>
+        `),
       })
     }
 

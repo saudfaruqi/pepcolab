@@ -30,7 +30,23 @@ export const INK_40 = 'rgba(13,13,13,.4)'
 const INK_30 = 'rgba(13,13,13,.3)'
 export const BORDER = 'rgba(13,13,13,.08)'
 const WHITE = '#FFFFFF'
-const PAPER = '#F7F5F1'
+// EMAIL BACKGROUNDS ARE STRICTLY LIGHT (Sep 2026, at Mohammed's direction).
+//
+// The outer canvas was #F7F5F1, the site's paper tone. It is now a near-white
+// #FCFCFB — still enough separation for the white card to read as a card, but
+// unmistakably light rather than cream.
+//
+// This is also the safer choice technically. Several clients (Outlook dark
+// mode, Gmail on Android) forcibly invert or re-tint email backgrounds, and
+// they treat a light-but-tinted canvas far less predictably than a near-white
+// one — a cream that gets inverted can land as muddy grey with low-contrast
+// text on top. Explicit near-white plus the colour-scheme meta below tells
+// the client we have handled light mode ourselves.
+//
+// If you ever want a dark email, do NOT flip these constants: build it as a
+// separate shell. Every template in this file and in accountEmails.ts sets
+// text colour on the assumption of a light ground.
+const PAPER = '#FCFCFB'
 const GOLD = '#C8992A'
 export const GOLD_TEXT = '#8A6A1E' // darkened gold for small-text legibility; #C8992A itself is the accent/marker color
 export const GOLD_TINT = 'rgba(200,153,42,.12)'
@@ -46,7 +62,21 @@ const RED_TINT = 'rgba(185,28,28,.08)'
 export function emailShell(bodyHtml: string): string {
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Declare light-only so Apple Mail, Outlook and Gmail stop auto-inverting
+       the palette. Without these, a dark-mode client rewrites the background
+       and leaves dark text on a dark ground in at least one major client. -->
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light only" />
+  <style>
+    :root { color-scheme: light only; supported-color-schemes: light only; }
+    /* Some Gmail/Outlook dark-mode engines respect this and stop remapping. */
+    [data-ogsc] body, [data-ogsb] body { background: ${PAPER} !important; }
+    u + .body { background: ${PAPER} !important; }
+  </style>
+</head>
 <body style="margin:0; padding:0; background:${PAPER}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER}; padding:40px 16px;">
     <tr><td align="center">
