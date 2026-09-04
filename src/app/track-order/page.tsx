@@ -12,7 +12,7 @@ import { getVariantsByIds, type ReorderVariant } from '@/lib/shopify'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { whatsAppCartLink } from '@/lib/whatsapp'
-import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight, Star, ShoppingBag, MessageCircle } from 'lucide-react'
+import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight, Star, ShoppingBag, MessageCircle, CheckCircle2 } from 'lucide-react'
 
 interface OrderProduct {
   title: string
@@ -70,7 +70,42 @@ function TrackOrderContent() {
 
   const [orderCode, setOrderCode] = useState(prefillCode)
   const [email, setEmail] = useState(prefillEmail)
-  const { email: customerEmail, signedIn } = useCustomer()
+  const { email: customerEmail, signedIn, orderCount } = useCustomer()
+
+  // LOST ORDER NUMBER (Sep 2026).
+  //
+  // The order code is the half of this form people lose — it lives in one
+  // email they may have deleted, while they always know their own address.
+  // Demanding both turned "where's my order" into a support message.
+  //
+  // The account system already looks orders up by email alone, so the
+  // capability existed; it just wasn't reachable from the page where people
+  // actually get stuck. This sends the same magic link and lands them on
+  // /account with every order they've placed — which is strictly more than
+  // the single order they were hunting for.
+  //
+  // Security is unchanged: it proves control of the inbox before showing
+  // anything, exactly as the sign-in flow does. It is NOT a lookup that
+  // returns order data to whoever types an address.
+  const [emailOnly, setEmailOnly] = useState(false)
+  const [linkEmail, setLinkEmail] = useState('')
+  const [linkStatus, setLinkStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+  async function sendLookupLink(e: FormEvent) {
+    e.preventDefault()
+    if (linkStatus === 'sending') return
+    setLinkStatus('sending')
+    try {
+      const res = await fetch('/api/account/request-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: linkEmail }),
+      })
+      setLinkStatus(res.ok ? 'sent' : 'error')
+    } catch {
+      setLinkStatus('error')
+    }
+  }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<OrderResult | null>(null)
@@ -104,7 +139,8 @@ function TrackOrderContent() {
   // empty field, so a URL prefill or something they typed always wins.
   useEffect(() => {
     if (customerEmail && !email) setEmail(customerEmail)
-  }, [customerEmail, email])
+    if (customerEmail && !linkEmail) setLinkEmail(customerEmail)
+  }, [customerEmail, email, linkEmail])
 
   const runLookup = async (codeArg?: string, emailArg?: string) => {
     const codeToUse = (codeArg ?? orderCode).trim()
@@ -270,10 +306,88 @@ function TrackOrderContent() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Track Your Order</h1>
           <p className="text-sm text-gray-500 mt-2">
-            Enter your order number and the email used at checkout.
+            Enter your order number and the email used at checkout &mdash; or look it up with
+            just your email.
           </p>
         </div>
 
+        {/* Signed in already? Then this whole page is the long way round. */}
+        {signedIn && (
+          <div className="mb-5 rounded-2xl border border-gray-200 bg-white p-5 text-center">
+            <p className="text-sm text-gray-700">
+              You&rsquo;re signed in{orderCount ? ` — ${orderCount} order${orderCount === 1 ? '' : 's'} on file` : ''}.
+            </p>
+            <Link
+              href="/account"
+              className="mt-3 inline-flex min-h-[42px] items-center rounded-full bg-gray-900 px-5 text-[13px] font-bold text-white"
+            >
+              Go to your orders
+            </Link>
+          </div>
+        )}
+
+        {emailOnly ? (
+          <form
+            onSubmit={sendLookupLink}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4"
+          >
+            {linkStatus === 'sent' ? (
+              <div className="text-center py-2">
+                <CheckCircle2 size={24} className="mx-auto mb-3 text-emerald-600" />
+                <p className="text-sm font-semibold text-gray-900">Check your email</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-500">
+                  We&rsquo;ve sent a link that opens every order placed with that address. It
+                  works once and expires in 15 minutes.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label htmlFor="linkEmail" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                    Email used at checkout
+                  </label>
+                  <input
+                    id="linkEmail"
+                    type="email"
+                    required
+                    value={linkEmail}
+                    onChange={(e) => setLinkEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full h-12 px-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-colors"
+                  />
+                  <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                    We&rsquo;ll email you a link to your orders. No password, and no need for the
+                    order number.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={linkStatus === 'sending' || !linkEmail.trim()}
+                  className="w-full h-12 rounded-xl bg-gray-900 text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:text-white/60"
+                >
+                  {linkStatus === 'sending'
+                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <>Email me a link to my orders</>}
+                </button>
+
+                {linkStatus === 'error' && (
+                  <p className="text-sm text-red-600 text-center">
+                    Couldn&rsquo;t send that. Try again, or email hello@pepcolab.com.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setEmailOnly(false)}
+                  className="text-sm text-gray-500 underline underline-offset-2 hover:text-gray-900"
+                >
+                  I have my order number
+                </button>
+              </>
+            )}
+          </form>
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4"
@@ -331,7 +445,18 @@ function TrackOrderContent() {
           {error && (
             <p className="text-sm text-red-600 text-center">{error}</p>
           )}
+
+          {/* The escape hatch, placed where people hit the wall rather than
+              in a help page they'd have to go looking for. */}
+          <button
+            type="button"
+            onClick={() => setEmailOnly(true)}
+            className="text-sm text-gray-500 underline underline-offset-2 hover:text-gray-900"
+          >
+            Lost your order number?
+          </button>
         </form>
+        )}
 
         {result && statusInfo && StatusIcon && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-5">

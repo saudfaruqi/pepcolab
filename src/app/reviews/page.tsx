@@ -165,13 +165,6 @@ export default async function ReviewsPage() {
               </article>
             ))}
           </div>
-
-          <p style={{ fontSize: 12, lineHeight: 1.7, color: 'rgba(13,13,13,.4)', marginTop: 30 }}>
-            Every review is read by a person before publication and nothing is edited. We
-            don&apos;t offer discounts or anything else in exchange for one. &ldquo;Verified
-            purchase&rdquo; means an order number and matching email were checked against a
-            completed order; reviews without that are published and labelled unverified.
-          </p>
         </div>
       </main>
       <Footer />

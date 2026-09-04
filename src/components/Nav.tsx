@@ -222,14 +222,35 @@ export default function Nav() {
                   </a>
                 ))}
                 <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(13,13,13,.07)' }}>
-                  <a href={`/products?q=${searchQuery}`} onClick={() => setSearchOpen(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none' }}>
-                    All results for "{searchQuery}" <ArrowRight />
+                  {/* SITE-WIDE (Sep 2026): was /products?q=, which only ever
+                      searched the catalogue. /search covers certificates, lot
+                      numbers, guides and research too — so a term that is a
+                      product AND an article AND a lot number finally has
+                      somewhere to go. */}
+                  <a href={`/search?q=${encodeURIComponent(searchQuery)}`} onClick={() => setSearchOpen(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none' }}>
+                    Search everything for "{searchQuery}" <ArrowRight />
                   </a>
                 </div>
               </div>
             ) : searchQuery.length > 1 ? (
-              <div style={{ padding: '36px 18px', textAlign: 'center', fontSize: 13, color: 'rgba(13,13,13,.4)' }}>
-                No results for "{searchQuery}"
+              <div style={{ padding: '28px 18px 22px', textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: 'rgba(13,13,13,.45)', marginBottom: 14 }}>
+                  No products match &ldquo;{searchQuery}&rdquo;
+                </div>
+                {/* This is where a lot-number search lands, since lot numbers
+                    aren't product names. Offering the full index here turns a
+                    dead end into the answer. */}
+                <a
+                  href={`/search?q=${encodeURIComponent(searchQuery)}`}
+                  onClick={() => setSearchOpen(false)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 40,
+                    padding: '0 16px', borderRadius: 999, background: '#0d0d0d', color: '#fff',
+                    fontSize: 12.5, fontWeight: 700, textDecoration: 'none',
+                  }}
+                >
+                  Search certificates, guides &amp; research <ArrowRight />
+                </a>
               </div>
             ) : (
               <div style={{ padding: '14px 18px 18px' }}>

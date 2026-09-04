@@ -50,6 +50,7 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/dubai',        changeFrequency: 'weekly',  priority: 0.8  },
   { path: '/bulk-orders',  changeFrequency: 'monthly', priority: 0.7  },
   { path: '/help',         changeFrequency: 'monthly', priority: 0.6  },
+  { path: '/search',       changeFrequency: 'monthly', priority: 0.3  },
   { path: '/reviews/write', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },

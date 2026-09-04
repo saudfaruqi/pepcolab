@@ -30,6 +30,13 @@ export async function POST(req: NextRequest) {
   const productSlug = String(body.productSlug || '').trim()
   const productName = String(body.productName || '').trim() || productSlug
 
+  // UK launch signups share this store under a "uk-launch:" prefix. See the
+  // note on the alert below — they must never be treated as restock requests.
+  const isUkLaunch = productSlug.startsWith('uk-launch:')
+  const ukProductName = isUkLaunch
+    ? (productSlug.slice('uk-launch:'.length) || 'catalogue')
+    : productName
+
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
@@ -47,8 +54,29 @@ export async function POST(req: NextRequest) {
       const count = await notifyRequestCount(productSlug)
       await sendMailSafe({
         to: ADMIN_EMAIL,
-        subject: `🔔 Back-in-stock request: ${productName}`,
-        text: `${email} wants to be notified when ${productName} (${productSlug}) is back in stock.\n\n${count} total request${count === 1 ? '' : 's'} for this product.\n\nOnce restocked, trigger the notification emails via:\nPOST /api/notify/trigger  { "productSlug": "${productSlug}" }  (Authorization: Bearer NOTIFY_ADMIN_TOKEN)`,
+        // UK LAUNCH INTEREST IS NOT A RESTOCK REQUEST (fixed Sep 2026).
+        //
+        // UK launch signups are stored in this same notify store under a
+        // "uk-launch:" prefix — deliberately, so pre-launch demand lands
+        // somewhere without standing up a second store. But the alert email
+        // didn't know the difference, so a UK enquiry arrived reading
+        // "Back-in-stock request", and the instructions told you to fire the
+        // restock trigger at it.
+        //
+        // That was a live footgun: running that command would have emailed
+        // someone "PT-141 is back in stock" when what they actually asked was
+        // when you'll ship to the UK. Wrong message, to someone already
+        // waiting on you. The two are now labelled and instructed separately.
+        subject: isUkLaunch
+          ? `🇬🇧 UK launch interest: ${ukProductName}`
+          : `🔔 Back-in-stock request: ${productName}`,
+        text: isUkLaunch
+          ? `${email} wants to be told when PepcoLab opens UK dispatch.\n\n` +
+            `Compound of interest: ${ukProductName}\n` +
+            `${count} total UK request${count === 1 ? '' : 's'} recorded against this compound.\n\n` +
+            `DO NOT run the restock trigger for this — it would send a "back in stock" email, which is not what they asked.\n` +
+            `These are the UK launch list. Contact them when UK dispatch actually opens.`
+          : `${email} wants to be notified when ${productName} (${productSlug}) is back in stock.\n\n${count} total request${count === 1 ? '' : 's'} for this product.\n\nOnce restocked, trigger the notification emails via:\nPOST /api/notify/trigger  { "productSlug": "${productSlug}" }  (Authorization: Bearer NOTIFY_ADMIN_TOKEN)`,
       })
     }
 

@@ -7,6 +7,7 @@ import Vial from '@/components/Vial'
 import WishlistButton from '@/components/WishlistButton'
 import { useCart } from '@/lib/cartContext'
 import { formatPrice, stripLeadingName, productHref } from '@/lib/utils'
+import NotifyMeModal from '@/components/NotifyMeModal'
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
 import type { Product } from '@/app/data'
 
@@ -16,6 +17,13 @@ interface Props {
 }
 
 export default function ProductCard({ product: p, featured = false }: Props) {
+  // NOTIFY ME FROM THE CARD (Sep 2026).
+  //
+  // The out-of-stock overlay told people the answer was no and gave them
+  // nothing to do about it, so the demand signal was lost — a card is where
+  // most people meet an unavailable product, not the product page. The
+  // add-to-cart control becomes a notify control instead of going dead.
+  const [notifyOpen, setNotifyOpen] = useState(false)
   const [added,   setAdded]   = useState(false)
   const [hovered, setHovered] = useState(false)
   const { addItem } = useCart()
@@ -322,6 +330,21 @@ export default function ProductCard({ product: p, featured = false }: Props) {
             </span>
           </div>
 
+          {!p.inStock && !paymentLinkOnly ? (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNotifyOpen(true) }}
+              aria-label={`Notify me when ${p.name} is back in stock`}
+              title="Notify me when back in stock"
+              style={{
+                minHeight: 40, padding: '0 16px', borderRadius: 999,
+                border: '1px solid rgba(13,13,13,.15)', background: '#fff',
+                color: '#0d0d0d', fontSize: 12.5, fontWeight: 700,
+                cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit',
+              }}
+            >
+              Notify me
+            </button>
+          ) : (
           <button
             onClick={handleAdd}
             disabled={paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock}
@@ -353,8 +376,16 @@ export default function ProductCard({ product: p, featured = false }: Props) {
           >
             {added ? <CheckCircle size={13} /> : paymentLinkOnly ? <CreditCard size={13} /> : <ShoppingCart size={13} />}
           </button>
+          )}
         </div>
       </div>
+
+      <NotifyMeModal
+        open={notifyOpen}
+        onClose={() => setNotifyOpen(false)}
+        productName={p.name}
+        productSlug={p.slug}
+      />
     </article>
   )
 }

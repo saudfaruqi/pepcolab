@@ -40,6 +40,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'productSlug is required.' }, { status: 400 })
   }
 
+  // HARD GUARD (Sep 2026): UK launch signups live in this same store under a
+  // "uk-launch:" prefix, and this endpoint sends a "back in stock" email.
+  // Firing it at a uk-launch slug would tell someone their compound is
+  // available again when what they actually asked was when PepcoLab starts
+  // shipping to the UK — a wrong answer to a person already waiting on you.
+  //
+  // Refused at the endpoint rather than left to whoever runs the command,
+  // because the admin alert email used to print the trigger instruction
+  // underneath every UK request. Anyone following those instructions would
+  // have sent it. A guard here means the mistake is not available to make.
+  //
+  // When UK dispatch opens, announce it with a UK-specific email — the list
+  // is queryable from this store by the same prefix.
+  if (productSlug.startsWith('uk-launch:')) {
+    return NextResponse.json(
+      {
+        error:
+          'This is a UK launch-interest list, not a restock list. Sending the back-in-stock email here would tell people a product is available again, which is not what they asked. Announce UK availability with a UK-specific email instead.',
+      },
+      { status: 400 }
+    )
+  }
+
   const emails = await listNotifyRequests(productSlug)
   if (emails.length === 0) {
     return NextResponse.json({ sent: 0, message: 'No pending requests for this product.' })

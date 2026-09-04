@@ -6,9 +6,11 @@ import {
   useReducer,
   useEffect,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react'
 import { trackAddToCart, trackRemoveFromCart, lineToItem } from '@/lib/analytics'
+import { useCustomer } from '@/lib/customerContext'
 import {
   createCart as shopifyCreateCart,
   addToCart as shopifyAddToCart,
@@ -431,6 +433,75 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [ensureCart, country])
 
   // ── Helper to get cart lines ─────────────────────────────────────────────
+
+  // ── CROSS-DEVICE CART SYNC (Sep 2026) ────────────────────────────────────
+  //
+  // The cart lives in localStorage, which is per-browser. Someone who browses
+  // on a phone and orders on a laptop previously started from empty. For a
+  // multi-item research order, rebuilding it is enough friction that plenty
+  // of people simply don't.
+  //
+  // Two effects below:
+  //   1. MERGE ONCE per sign-in. Pulls the saved cart, unions it with what is
+  //      in this browser, and writes the result back. See lib/cartSync.ts for
+  //      the merge rules — the important ones being that it never deletes a
+  //      line, and never sums quantities across devices.
+  //   2. SAVE on change, debounced. Only variant IDs and quantities are
+  //      stored; prices and titles are re-resolved from Shopify on restore,
+  //      so a synced cart can never show a stale price.
+  //
+  // Both are best-effort. A sync failure must never break the local cart —
+  // the browser copy stays authoritative for the current session either way.
+  const { email: customerEmail } = useCustomer()
+  const mergedForRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!customerEmail) return
+    if (mergedForRef.current === customerEmail) return
+    mergedForRef.current = customerEmail
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/account/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'merge',
+            lines: state.lines.map(l => ({ variantId: l.variantId, quantity: l.quantity })),
+          }),
+        })
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        // Only touch the local cart if the merge actually brought something
+        // back. Re-adding lines that are already present would churn the
+        // Shopify cart for no reason.
+        if (data?.addedFromSaved > 0 && Array.isArray(data.lines)) {
+          await restoreItems(data.lines)
+        }
+      } catch {
+        // Offline or the endpoint is down — local cart is unaffected.
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerEmail])
+
+  useEffect(() => {
+    if (!customerEmail) return
+    // Debounced: adding three items in quick succession should be one write,
+    // not three.
+    const t = setTimeout(() => {
+      fetch('/api/account/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lines: state.lines.map(l => ({ variantId: l.variantId, quantity: l.quantity })),
+        }),
+      }).catch(() => {})
+    }, 1200)
+    return () => clearTimeout(t)
+  }, [customerEmail, state.lines])
 
   const getCartLines = useCallback(() => state.lines, [state.lines])
 

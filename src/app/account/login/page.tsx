@@ -56,7 +56,8 @@ function LoginForm() {
         <CheckCircle size={26} style={{ color: '#0A7B45', marginBottom: 12 }} aria-hidden="true" />
         <h2 style={{ fontSize: 19, fontWeight: 700, color: INK, margin: '0 0 8px' }}>Check your email</h2>
         <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)', margin: 0 }}>
-          Your sign-in link is on its way. It works once and expires in 15 minutes.
+          Your sign-in link is on its way. It works once and expires in 15 minutes &mdash; if it
+          runs out, just request another. There&apos;s no limit and nothing gets locked.
         </p>
         <p style={{ fontSize: 12.5, color: 'rgba(13,13,13,.45)', marginTop: 18 }}>
           Nothing arrived? Check spam, or email{' '}
@@ -77,11 +78,29 @@ function LoginForm() {
         </div>
       )}
 
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)', margin: '0 0 20px' }}>
-        Enter your email and we&apos;ll send a sign-in link — no password to
-        remember, and no separate sign-up step. If you&apos;ve ordered before, use
-        the address you ordered with and your history will be there.
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)', margin: '0 0 18px' }}>
+        Enter your email and we&apos;ll send you a link. Tapping it signs you in &mdash;
+        there&apos;s no password, because there never was one.
       </p>
+
+      {/* RETURNING CUSTOMERS (Sep 2026).
+          The commonest confusion with passwordless sign-in is people hunting
+          for a password they were never given, or looking for a "register"
+          button that doesn't exist. Both are answered here, before they go
+          looking. */}
+      <div style={{
+        background: PAPER, border: `1px solid ${BORDER}`, borderRadius: 14,
+        padding: '14px 16px', marginBottom: 20,
+      }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: INK, marginBottom: 6 }}>
+          Been here before?
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 17, fontSize: 12.5, lineHeight: 1.75, color: 'rgba(13,13,13,.6)' }}>
+          <li>Use the address you ordered with and your full history is there.</li>
+          <li>There is no password to have forgotten &mdash; the emailed link is the sign-in.</li>
+          <li>Signing in lasts 30 days, so you won&apos;t be doing this often.</li>
+        </ul>
+      </div>
 
       <form onSubmit={submit}>
         <label htmlFor="acct-email" style={{ fontSize: 12.5, fontWeight: 600, color: INK, display: 'block', marginBottom: 7 }}>
@@ -123,8 +142,9 @@ function LoginForm() {
       )}
 
       <p style={{ fontSize: 12.5, color: 'rgba(13,13,13,.45)', margin: '20px 0 0', lineHeight: 1.65 }}>
-        Just tracking a single order?{' '}
-        <Link href="/track-order" style={{ color: INK, fontWeight: 600 }}>Track it without signing in</Link>.
+        Just tracking one order?{' '}
+        <Link href="/track-order" style={{ color: INK, fontWeight: 600 }}>Track it without signing in</Link>{' '}
+        using your order number &mdash; or sign in here and see every order at once.
       </p>
     </div>
   )
