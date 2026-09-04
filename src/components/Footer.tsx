@@ -19,6 +19,10 @@ const LINKS = {
     // Reviews (Sep 2026). Open to anyone who has dealt with us, ordered or
     // not — the write page does not require an order code.
     { label: 'Reviews',        href: '/reviews'       },
+    { label: 'How We Test',    href: '/testing'       },
+    { label: 'Storage Guide',  href: '/storage'       },
+    { label: 'Bulk Orders',    href: '/bulk-orders'   },
+    { label: 'Help',           href: '/help'          },
     { label: 'Guides',         href: '/guides'        },
     { label: 'Comparisons',    href: '/compare'       },
     { label: 'Legal & Compliance', href: '/legal'     },

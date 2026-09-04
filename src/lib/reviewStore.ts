@@ -180,3 +180,30 @@ export async function getApprovedReviews(limit = 20, productSlug?: string): Prom
     return null
   }
 }
+
+/**
+ * Every review awaiting moderation, newest first.
+ *
+ * ADDED Sep 2026, for the admin moderation screen.
+ *
+ * Until now the ONLY way to approve a review was the per-review link in the
+ * "new review pending" email — and that email is only sent when
+ * REVIEW_MODERATION_TOKEN is set. With it unset, reviews accumulated in the
+ * pending set with no route to approve them and no way to even see that they
+ * existed. A queue you cannot open is not a queue.
+ *
+ * The admin screen reads this and actions reviews through the admin session,
+ * so moderation no longer depends on an email arriving at all. The emailed
+ * links still work — they are just no longer the only door.
+ */
+export async function listPendingReviews(limit = 100): Promise<Review[]> {
+  try {
+    const ids = (await redis.zrange(PENDING_SET, 0, limit - 1, { rev: true })) as string[]
+    if (!ids?.length) return []
+    const reviews = await Promise.all(ids.map((id) => getReview(id)))
+    return reviews.filter((r): r is Review => Boolean(r) && r!.status === 'pending')
+  } catch (err) {
+    console.error('[reviewStore] Failed to list pending reviews:', err)
+    return []
+  }
+}

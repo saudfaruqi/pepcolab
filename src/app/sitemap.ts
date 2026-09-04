@@ -41,6 +41,15 @@ const STATIC_ROUTES: StaticRoute[] = [
   // us in the SERPs shows and we don't — worth its own indexable URL rather
   // than only existing scattered across product pages.
   { path: '/reviews',      changeFrequency: 'weekly',  priority: 0.7  },
+  // New reference and market pages (Sep 2026). /storage and /testing target
+  // high-intent informational queries the catalogue cannot rank for; /dubai
+  // defends the geography no competitor is contesting; /bulk-orders opens a
+  // buying route the product copy already promised.
+  { path: '/storage',      changeFrequency: 'monthly', priority: 0.75 },
+  { path: '/testing',      changeFrequency: 'monthly', priority: 0.8  },
+  { path: '/dubai',        changeFrequency: 'weekly',  priority: 0.8  },
+  { path: '/bulk-orders',  changeFrequency: 'monthly', priority: 0.7  },
+  { path: '/help',         changeFrequency: 'monthly', priority: 0.6  },
   { path: '/reviews/write', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
