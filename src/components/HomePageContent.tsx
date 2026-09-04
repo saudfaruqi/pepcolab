@@ -463,7 +463,18 @@ export default function PepcoLabPage({
       .forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
   }, [addItem]);
 
-  const featuredReview = [...realReviews].sort((a, b) => b.rating - a.rating)[0];
+  // FIX (Sep 2026): the featured pull-quote picked the highest-rated review —
+  // which, with only one or two reviews, is a review the section has ALREADY
+  // shown directly above it. The homepage was printing the same text twice,
+  // once in a card and once at 32px on black.
+  //
+  // The pull-quote is a good device when there are enough reviews that
+  // singling one out reads as emphasis. Below four it just reads as
+  // repetition, so it only renders once the marquee is active — the same
+  // threshold, so the two treatments appear and disappear together.
+  const featuredReview = realReviews.length >= 4
+    ? [...realReviews].sort((a, b) => b.rating - a.rating)[0]
+    : null;
 
   const handleSubscribe = async () => {
     const trimmed = email.trim();
@@ -1032,7 +1043,7 @@ export default function PepcoLabPage({
             </div>
           </div>
 
-          <div style={{ maxWidth:1440, margin:"0 auto 40px", padding:"0 clamp(20px,5vw,60px)", display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
+          <div style={{ maxWidth:1440, margin: featuredReview ? "0 auto 40px" : "0 auto", padding:"0 clamp(20px,5vw,60px)", display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
             <Link href="/reviews" style={{
               display:"inline-flex", alignItems:"center", minHeight:46, padding:"0 22px",
               borderRadius:999, border:"1px solid rgba(13,13,13,.15)", background:"#fff",
