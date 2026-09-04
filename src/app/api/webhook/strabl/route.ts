@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createShopifyOrder, markShopifyOrderPaid, type AdminLineItemInput } from '@/lib/shopifyAdmin'
 import { saveOrderRecord, getOrderRecord, type OrderRecord } from '@/lib/orderStore'
+import { normaliseAddress } from '@/lib/addressNormalise'
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
@@ -406,6 +407,21 @@ export async function POST(req: NextRequest) {
       phone: resolvedCustomer.phone.trim() || undefined,
       customerName:
         [resolvedCustomer.firstName, resolvedCustomer.lastName].filter(Boolean).join(' ') || undefined,
+      // Persist the delivery address on our own record, normalised. Falls
+      // back to whatever is already stored when this event's payload is
+      // sparse — the same recovery pattern resolvedCustomer uses above, so a
+      // thin order_updated cannot wipe an address that a fuller
+      // order_created already captured.
+      shippingAddress:
+        (resolvedCustomer.address1 || resolvedCustomer.city)
+          ? normaliseAddress({
+              address1: resolvedCustomer.address1,
+              address2: resolvedCustomer.address2,
+              city: resolvedCustomer.city,
+              postalCode: resolvedCustomer.postalCode,
+              countryCode: resolvedCustomer.countryCode,
+            })
+          : existingRecord?.shippingAddress,
       products,
       currency: 'AED', // STRABL webhook payloads observed so far are AED-only per merchant config
       total,

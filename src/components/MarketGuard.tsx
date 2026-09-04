@@ -20,12 +20,13 @@
  * when deciding what to hold in a UK opening order.
  */
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { useCountry } from '@/lib/countryContext'
 import { isInMarket } from '@/lib/pricing'
 import { trackUkWaitlist } from '@/lib/analytics'
+import { useCustomer } from '@/lib/customerContext'
 
 interface Props {
   tags: string[]
@@ -44,7 +45,13 @@ export default function MarketGuard({
 }: Props) {
   const { country, ready } = useCountry()
   const [email, setEmail] = useState('')
+  const { email: customerEmail } = useCustomer()
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+  // AUTOFILL: prefill for a signed-in customer.
+  useEffect(() => {
+    if (customerEmail && !email) setEmail(customerEmail)
+  }, [customerEmail, email])
 
   // Until the country resolves, render the buy area. Showing the purchase
   // control and then replacing it is a better failure mode than hiding it

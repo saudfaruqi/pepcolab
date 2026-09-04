@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       orderShortCode: o.orderShortCode,
       status: o.status,
       createdAt: o.createdAt,
+      shippingAddress: o.shippingAddress ?? null,
       shippedAt: o.shippedAt ?? null,
       carrier: o.carrier ?? null,
       trackingNumber: o.trackingNumber ?? null,

@@ -6,6 +6,7 @@ import './globals.css'
 import { CartProvider } from '@/lib/cartContext'
 import CartDrawer from '@/components/CartDrawer'
 import { CountryProvider } from '@/lib/countryContext'
+import { CustomerProvider } from '@/lib/customerContext'
 import { WishlistProvider } from '@/lib/wishlistContext'
 import { RecentlyViewedProvider } from '@/lib/recentlyViewedContext'
 import AgeLocationGate from '@/components/AgeLocationGate'
@@ -258,6 +259,9 @@ export default function RootLayout({
         />
 
         <CountryProvider>
+          {/* Signed-in state, available to Nav and every page beneath it. One
+              fetch per load, shared — see lib/customerContext.tsx. */}
+          <CustomerProvider>
           <AgeLocationGate />
           <WishlistProvider>
             <RecentlyViewedProvider>
@@ -270,6 +274,7 @@ export default function RootLayout({
               </CartProvider>
             </RecentlyViewedProvider>
           </WishlistProvider>
+          </CustomerProvider>
         </CountryProvider>
       </body>
     </html>

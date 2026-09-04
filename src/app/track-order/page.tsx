@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, FormEvent, Suspense } from 'react'
+import { useCustomer } from '@/lib/customerContext'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
@@ -33,6 +34,7 @@ interface OrderResult {
   // Shipment tracking (Sep 2026). Null until a parcel is logged against the
   // order — most lookups happen before that, so the UI treats absence as
   // "still preparing" rather than as missing data.
+  shippingAddress?: { line1: string; line2: string; city: string; postalCode: string; countryCode: string } | null
   shippedAt?: string | null
   carrier?: string | null
   trackingNumber?: string | null
@@ -68,6 +70,7 @@ function TrackOrderContent() {
 
   const [orderCode, setOrderCode] = useState(prefillCode)
   const [email, setEmail] = useState(prefillEmail)
+  const { email: customerEmail, signedIn } = useCustomer()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<OrderResult | null>(null)
@@ -95,6 +98,13 @@ function TrackOrderContent() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
+
+  // AUTOFILL (Sep 2026): a signed-in customer should not be typing the
+  // address we already have on file to look up their own order. Only fills an
+  // empty field, so a URL prefill or something they typed always wins.
+  useEffect(() => {
+    if (customerEmail && !email) setEmail(customerEmail)
+  }, [customerEmail, email])
 
   const runLookup = async (codeArg?: string, emailArg?: string) => {
     const codeToUse = (codeArg ?? orderCode).trim()
@@ -374,6 +384,15 @@ function TrackOrderContent() {
                     elapsed time. When it hasn't, the customer gets the honest
                     "being prepared" line instead of an empty panel, which is
                     the state most lookups land in. */}
+                {result.shippingAddress && (
+                  <div className="mb-4 text-[13px] leading-relaxed text-gray-600">
+                    <span className="font-semibold text-gray-800">Delivering to</span>{' '}
+                    {[result.shippingAddress.line1, result.shippingAddress.line2,
+                      result.shippingAddress.city, result.shippingAddress.postalCode]
+                      .filter(Boolean).join(', ')}
+                  </div>
+                )}
+
                 {result.trackingNumber ? (
                   <div className="mb-5 rounded-xl border border-green-200/60 bg-green-50 px-4 py-3.5">
                     <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-green-800/70 mb-1.5">

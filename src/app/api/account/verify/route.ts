@@ -21,7 +21,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/account/login?expired=1', req.url))
   }
 
-  const response = NextResponse.redirect(new URL('/account', req.url))
+  // Honour an optional ?to= destination so an activation link from the order
+  // confirmation can land the customer on the page they actually wanted.
+  // Restricted to same-site relative paths — an open redirect on an
+  // authenticated endpoint is a phishing gift.
+  const requested = req.nextUrl.searchParams.get('to') || '/account'
+  const destination = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/account'
+
+  const response = NextResponse.redirect(new URL(destination, req.url))
   response.cookies.set(
     CUSTOMER_COOKIE_NAME,
     issueSessionToken(email),

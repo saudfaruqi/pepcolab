@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useCart } from '@/lib/cartContext'
 import { useWishlist } from '@/lib/wishlistContext'
+import { useCustomer } from '@/lib/customerContext'
 import { getProducts } from '@/lib/shopify'
 import { formatPrice, productHref } from '@/lib/utils'
 import { useCountry } from '@/lib/countryContext'
@@ -54,6 +55,7 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 export default function Nav() {
   const { totalQuantity, openCart } = useCart()
   const { count: wishlistCount } = useWishlist()
+  const { signedIn, firstName, orderCount } = useCustomer()
   const { country, currency, ready } = useCountry()
   const pathname = usePathname()
 
@@ -302,7 +304,9 @@ export default function Nav() {
             <BagIcon /> View Cart {totalQuantity > 0 && `(${totalQuantity})`}
           </button>
           <a href="/account" className="mob-cta-secondary" onClick={() => setMobileOpen(false)}>
-            Your orders &amp; reorder
+            {signedIn
+              ? `Your orders${orderCount ? ` (${orderCount})` : ''} & reorder`
+              : 'Sign in — orders & reorder'}
           </a>
           <a href="/wishlist" className="mob-cta-secondary" onClick={() => setMobileOpen(false)}>
             <HeartIcon filled={wishlistCount > 0} /> Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
@@ -376,15 +380,36 @@ export default function Nav() {
               <kbd style={{ fontSize: 10, fontWeight: 600, border: '1px solid rgba(13,13,13,.1)', padding: '2px 6px', borderRadius: 5, lineHeight: 1.4, color: 'rgba(13,13,13,.35)' }}>⌘K</kbd>
             </button>
 
-            {/* CUSTOMER ACCOUNTS (Sep 2026): order history, batch certificates
-                and one-tap reorder. Deliberately placed beside the wishlist
-                rather than buried in the Support menu — for a consumable,
-                reorder is a primary action, not a support task. */}
-            <a href="/account" className="nav-icon-btn" aria-label="Your account">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+            {/* CUSTOMER ACCOUNTS (Sep 2026). The nav now says something
+                different to a customer than to a stranger: a signed-in
+                visitor gets their initial and their order count, everyone
+                else gets a plain sign-in control. `signedIn === null` means
+                the check hasn't resolved yet — render the neutral icon
+                rather than flashing "Sign in" at someone who is signed in. */}
+            <a
+              href="/account"
+              className="nav-icon-btn"
+              aria-label={signedIn ? `Your account${orderCount ? ` — ${orderCount} orders` : ''}` : 'Sign in'}
+              title={signedIn && firstName ? `Signed in as ${firstName}` : undefined}
+            >
+              {signedIn && firstName ? (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 24, height: 24, borderRadius: 999,
+                    background: '#0D0D0D', color: '#fff',
+                    fontSize: 11, fontWeight: 700, letterSpacing: '.01em',
+                  }}
+                >
+                  {firstName.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
             </a>
             <a href="/wishlist" className="nav-icon-btn" aria-label={`Wishlist (${wishlistCount})`}>
               <HeartIcon filled={wishlistCount > 0} />

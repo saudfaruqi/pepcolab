@@ -17,6 +17,7 @@
 // customer just clicked through, not a different app. Table-based layout,
 // inline styles only, stays — that's what survives Outlook/Gmail clipping.
 import { sendMailSafe } from '@/lib/mailer'
+import { buildActivationUrl } from '@/lib/customerAuth'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com'
 
@@ -218,7 +219,27 @@ export async function sendOrderConfirmationEmail(params: {
   const { to, orderShortCode, products, total, currency, customerName } = params
 
   const trackUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(orderShortCode)}`
-  const accountUrl = `${SITE_URL}/account`
+
+  // ONE-TAP ACCOUNT ACTIVATION (Sep 2026).
+  //
+  // A signed link, so tapping it signs the customer in and lands them on
+  // their orders. No password, no registration form, no second email — the
+  // click on this link IS the email confirmation.
+  //
+  // It replaces a bare /account link that would have bounced a brand-new
+  // customer straight to a sign-in form, asking them to type the address we
+  // had just emailed. That is the exact kind of pointless manual step this
+  // change exists to remove.
+  //
+  // Falls back to the plain URL if CUSTOMER_SESSION_SECRET is unset, so a
+  // missing env var degrades the email rather than throwing inside the
+  // webhook and losing the confirmation entirely.
+  let accountUrl = `${SITE_URL}/account`
+  try {
+    accountUrl = buildActivationUrl(to, '/account')
+  } catch {
+    // secret not configured — plain link is still correct, just not one-tap
+  }
   const coaUrl = `${SITE_URL}/certificates`
   const firstName = (customerName || '').trim().split(/\s+/)[0]
   const greeting = firstName ? `Thanks, ${firstName}.` : 'Thanks for your order.'
@@ -277,7 +298,7 @@ export async function sendOrderConfirmationEmail(params: {
 
     ${primaryButton('Track your order', trackUrl, 10)}
     <p style="font-size:12.5px; line-height:1.6; color:${INK_60}; text-align:center; margin:0 0 4px;">
-      or <a href="${accountUrl}" style="color:${INK}; font-weight:600;">sign in to your account</a> to see every order and reorder in one tap
+      or <a href="${accountUrl}" style="color:${INK}; font-weight:600;">open your account</a> \u2014 one tap, no password. Every order and one-tap reorder.
     </p>
 
     ${trustStrip()}
@@ -309,7 +330,7 @@ export async function sendOrderConfirmationEmail(params: {
       `3. When it arrives, look up the lot number printed on the vial at ${coaUrl} for that batch's certificate.\n\n` +
       `ON ARRIVAL\nRefrigerate on delivery and follow the storage requirements printed on the enclosed documentation - they differ between vials, pens and sprays.\n\n` +
       `Track your order: ${trackUrl}\n` +
-      `Your account (order history and one-tap reorder): ${accountUrl}\n\n` +
+      `Open your account (one tap, no password — order history and reorder): ${accountUrl}\n\n` +
       `Questions? Reply to this email or contact hello@pepcolab.com\n\n` +
       `Supplied for in-vitro laboratory research use only. Not for human or veterinary consumption.`,
     html,

@@ -21,6 +21,7 @@
 // /track-order page) only calls saveOrderRecord/getOrderRecord.
 
 import { redis } from '@/lib/redis'
+import type { CleanAddress } from '@/lib/addressNormalise'
 
 // BUG FIX (Aug 2026): added 'awaiting_payment_mark'. Previously, when
 // createShopifyOrder() succeeded but the follow-up markShopifyOrderPaid()
@@ -61,6 +62,19 @@ export interface OrderRecord {
   updatedAt: string // ISO timestamp this record was last written
   reviewRequestSentAt?: string // set once the post-delivery review-request email has gone out — prevents re-sending on every cron run
   recoveryEmailStage?: 0 | 1 | 2 // abandoned-cart recovery: 0 = none sent, 1 = first reminder sent, 2 = final reminder sent
+  // SHIPPING ADDRESS (Sep 2026)
+  //
+  // STRABL has always sent this and the webhook has always forwarded it to
+  // Shopify — but it was never written to our own record, so the only place
+  // an address existed was inside Shopify. That is why anything
+  // address-related meant opening Shopify by hand.
+  //
+  // Stored NORMALISED (see lib/addressNormalise.ts): STRABL's address2
+  // repeats address1 and the city, and buries the postcode inline as
+  // "pin_code 95959" while postalCode sits empty. Cleaning on write means
+  // every consumer sees the same tidy record instead of each one guessing.
+  shippingAddress?: CleanAddress
+
   // SHIPMENT TRACKING (Sep 2026)
   //
   // Set by POST /api/admin/tracking when you hand a parcel to the courier.

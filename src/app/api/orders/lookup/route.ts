@@ -66,6 +66,9 @@ export async function POST(req: NextRequest) {
       // Shipment tracking (Sep 2026). Null when the parcel hasn't been
       // logged yet, which the page renders as "preparing" rather than as an
       // error — most orders are looked up before they ship.
+      // Safe to return: the caller already proved they hold the order code
+      // AND the matching email before reaching this point.
+      shippingAddress: record.shippingAddress || null,
       shippedAt: record.shippedAt || null,
       carrier: record.carrier || null,
       trackingNumber: record.trackingNumber || null,

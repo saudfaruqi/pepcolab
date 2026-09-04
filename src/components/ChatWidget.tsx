@@ -45,6 +45,7 @@ import {
 } from '@/lib/chatContent'
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { trackChatHandoff } from '@/lib/analytics'
+import { useCustomer } from '@/lib/customerContext'
 
 const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
 const SUPPORT_EMAIL = 'hello@pepcolab.com'
@@ -67,6 +68,7 @@ export default function ChatWidget() {
   const [activeTopic, setActiveTopic] = useState<TopicId | null>(null)
   const [handoffState, setHandoffState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [contactEmail, setContactEmail] = useState('')
+  const { email: customerEmail, firstName } = useCustomer()
   const [announce, setAnnounce] = useState('')
 
   const panelRef = useRef<HTMLDivElement>(null)
@@ -122,10 +124,19 @@ export default function ChatWidget() {
 
   /* ── open / close ─────────────────────────────────────────────────────── */
 
+  // AUTOFILL (Sep 2026): a signed-in customer should never retype the
+  // address we emailed their order to. Only fills an untouched field, so it
+  // can't stamp over something they typed.
+  useEffect(() => {
+    if (customerEmail && !contactEmail) setContactEmail(customerEmail)
+  }, [customerEmail, contactEmail])
+
   useEffect(() => {
     if (!open || startedRef.current) return
     startedRef.current = true
-    pushBot([context.greeting])
+    // Greet a known customer by name — the assistant should not act like a
+    // stranger to someone whose orders it can already see.
+    pushBot([firstName ? `${firstName} — ${context.greeting.charAt(0).toLowerCase()}${context.greeting.slice(1)}` : context.greeting])
     setSuggestions(context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean))
   }, [open, context, pushBot])
 

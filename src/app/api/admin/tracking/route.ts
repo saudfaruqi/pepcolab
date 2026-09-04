@@ -25,6 +25,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOrderRecord, saveOrderRecord } from '@/lib/orderStore'
 import { verifySessionToken as verifyAdminSession, ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
+import { formatAddressLines } from '@/lib/addressNormalise'
 
 const CARRIER_URLS: Record<string, (ref: string) => string> = {
   aramex: ref => `https://www.aramex.com/us/en/track/results?ShipmentNumber=${encodeURIComponent(ref)}`,
@@ -109,9 +110,19 @@ export async function GET(req: NextRequest) {
   if (!order) {
     return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 })
   }
+  // The label block is the point of this endpoint being readable at all:
+  // it returns the delivery address already cleaned and line-broken, so
+  // booking a courier is a copy-paste rather than a trip into Shopify to
+  // untangle STRABL's duplicated address2 by hand.
   return NextResponse.json({
     success: true,
     orderShortCode: order.orderShortCode,
+    customerName: order.customerName ?? null,
+    phone: order.phone ?? null,
+    label: order.shippingAddress
+      ? [order.customerName, ...formatAddressLines(order.shippingAddress)].filter(Boolean).join('\n')
+      : null,
+    shippingAddress: order.shippingAddress ?? null,
     shippedAt: order.shippedAt ?? null,
     carrier: order.carrier ?? null,
     trackingNumber: order.trackingNumber ?? null,

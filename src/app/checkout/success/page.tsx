@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import { trackPurchaseFromPending } from '@/lib/analytics'
+import { useCustomer } from '@/lib/customerContext'
 
 export default function CheckoutSuccessPage() {
   // ANALYTICS: the purchase event.
@@ -17,6 +18,7 @@ export default function CheckoutSuccessPage() {
   // The ref guards against React 18 StrictMode running effects twice in
   // development. The stash clear inside trackPurchaseFromPending() guards
   // against a refresh or back-navigation double-counting in production.
+  const { signedIn } = useCustomer()
   const reported = useRef(false)
   useEffect(() => {
     if (reported.current) return
@@ -46,17 +48,22 @@ export default function CheckoutSuccessPage() {
               Order Confirmation
             </div>
             <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)', margin: 0 }}>
-              We've emailed your order number and a link to track status to the address you checked out with.
+              {signedIn
+                ? "We've emailed your order number to the address you checked out with. It's already in your account."
+                : "We've emailed your order number to the address you checked out with. That email has a one-tap link to your account \u2014 no password, no sign-up form. One tap is all the confirmation we need."}
             </p>
           </div>
 
+          {/* A signed-in customer goes straight to their orders; there is no
+              reason to send them to a lookup form that asks for a code and an
+              email we already hold. */}
           <Link
-            href="/track-order"
+            href={signedIn ? '/account' : '/track-order'}
             style={{ display: 'block', background: '#0D0D0D', color: '#fff', padding: '15px', borderRadius: 999, textDecoration: 'none', fontSize: 14, fontWeight: 700, marginBottom: 12, transition: 'background .2s' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1a1a' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = '#0D0D0D' }}
           >
-            Track Your Order
+            {signedIn ? 'View your orders' : 'Track your order'}
           </Link>
 
           <Link

@@ -37,6 +37,17 @@ import crypto from 'crypto'
 export const CUSTOMER_COOKIE_NAME = 'pepcolab_customer_session'
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 days
 export const MAGIC_LINK_TTL_SECONDS = 60 * 15 // 15 minutes
+/**
+ * Longer-lived link embedded in the ORDER CONFIRMATION email, so a customer
+ * who just paid can reach their account in one tap without typing anything.
+ *
+ * 30 days rather than 15 minutes because order confirmations get opened days
+ * or weeks later — a 15-minute fuse would mean the link is almost always dead
+ * by the time someone goes looking for it, which is worse than useless.
+ * It still proves control of the inbox, which is the property that matters,
+ * and it is the same model Substack and Medium use for their sign-in links.
+ */
+export const ACTIVATION_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 days
 
 type TokenType = 'magic' | 'session'
 
@@ -121,6 +132,20 @@ export function issueSessionToken(email: string): string {
 export function verifySessionToken(token: string | undefined | null): string | null {
   if (!token) return null
   return verify(token, 'session')
+}
+
+/**
+ * One-tap account link for the order confirmation email.
+ *
+ * This is what "you're signed in already, just confirm it's you" means in
+ * practice: the customer taps once from the email that was already going to
+ * arrive, and lands signed in on their order. No password, no separate
+ * registration, no second email.
+ */
+export function buildActivationUrl(email: string, redirectTo = '/account'): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com'
+  const token = issue(email, 'magic', ACTIVATION_TTL_SECONDS)
+  return `${siteUrl}/api/account/verify?token=${encodeURIComponent(token)}&to=${encodeURIComponent(redirectTo)}`
 }
 
 export function buildMagicLinkUrl(email: string): string {

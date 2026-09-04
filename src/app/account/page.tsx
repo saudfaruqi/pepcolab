@@ -36,6 +36,7 @@ interface AccountOrder {
   orderShortCode: string
   status: string
   createdAt: string
+  shippingAddress: { line1: string; line2: string; city: string; postalCode: string; countryCode: string } | null
   shippedAt: string | null
   carrier: string | null
   trackingNumber: string | null
@@ -238,6 +239,14 @@ export default function AccountPage() {
                         <span>{order.currency} {order.total.toFixed(2)}</span>
                       </div>
                     </div>
+
+                    {order.shippingAddress && (
+                      <div style={{ fontSize: 12.5, lineHeight: 1.6, color: 'rgba(13,13,13,.5)', marginBottom: 14 }}>
+                        Delivering to{' '}
+                        {[order.shippingAddress.line1, order.shippingAddress.line2, order.shippingAddress.city]
+                          .filter(Boolean).join(', ')}
+                      </div>
+                    )}
 
                     {order.trackingNumber && (
                       <div style={{

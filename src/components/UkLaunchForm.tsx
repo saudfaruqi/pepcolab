@@ -15,14 +15,21 @@
  * so there is nothing extra to guard here.
  */
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { trackUkWaitlist } from '@/lib/analytics'
+import { useCustomer } from '@/lib/customerContext'
 
 export default function UkLaunchForm() {
   const [email, setEmail] = useState('')
+  const { email: customerEmail } = useCustomer()
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState('')
+
+  // AUTOFILL: prefill for a signed-in customer, without overwriting typing.
+  useEffect(() => {
+    if (customerEmail && !email) setEmail(customerEmail)
+  }, [customerEmail, email])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
