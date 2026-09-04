@@ -359,7 +359,6 @@ export default function ChatWidget() {
       {!open && (
         <button ref={launcherRef} className="plc plc-launcher" onClick={() => setOpen(true)} aria-label="Open support chat">
           <MessageCircle size={18} aria-hidden="true" />
-          Help
         </button>
       )}
 
