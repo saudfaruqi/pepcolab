@@ -21,7 +21,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import { getApprovedReviews } from '@/lib/reviewStore'
+import { listApprovedReviewsRaw } from '@/lib/reviewStore'
 import { Star, BadgeCheck } from 'lucide-react'
 
 const INK = '#0D0D0D'
@@ -35,9 +35,27 @@ export const metadata: Metadata = {
   alternates: { canonical: '/reviews' },
 }
 
-// Reviews change when one is approved, not on a schedule. The store already
-// revalidates its cache tag on approval, so this only bounds staleness.
-export const revalidate = 600
+// RENDERED DYNAMICALLY, DELIBERATELY (fixed Sep 2026)
+// ---------------------------------------------------
+// This page originally set `revalidate = 600` and read through
+// getApprovedReviews(), which goes via unstable_cache. Both were wrong here,
+// for the reason documented at length in lib/reviewStore.ts:
+//
+// @upstash/redis issues its REST calls with `cache: 'no-store'` and offers no
+// way to override that. On Next 14.2.5, unstable_cache does not fully
+// insulate that from the calling route, so a statically-generated page that
+// reads reviews trips DYNAMIC_SERVER_USAGE during `next build` — the read
+// fails, and the page bakes an EMPTY reviews list into its HTML. Which is
+// exactly what happened: the page shipped saying "nothing published yet"
+// while approved reviews sat in Redis.
+//
+// An empty state that is wrong is worse than a slow page. So:
+//   - force-dynamic, so the list is read per request rather than at build;
+//   - listApprovedReviewsRaw(), which reads Redis directly and skips
+//     unstable_cache entirely.
+//
+// The cost is a Redis round-trip per view, which for this page is nothing.
+export const dynamic = 'force-dynamic'
 
 function Stars({ n }: { n: number }) {
   return (
@@ -52,7 +70,17 @@ function Stars({ n }: { n: number }) {
 }
 
 export default async function ReviewsPage() {
-  const reviews = (await getApprovedReviews(100)) ?? []
+  // Distinguish "no reviews" from "couldn't read reviews". Collapsing the two
+  // is what produced a confident, false empty state — see the note above.
+  let reviews: Awaited<ReturnType<typeof listApprovedReviewsRaw>> = []
+  let loadFailed = false
+  try {
+    reviews = await listApprovedReviewsRaw(200)
+  } catch (err) {
+    console.error('[reviews] Failed to load approved reviews:', err)
+    loadFailed = true
+  }
+
   const verifiedCount = reviews.filter(r => r.verified).length
   const average = reviews.length
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
@@ -67,7 +95,12 @@ export default async function ReviewsPage() {
             Reviews
           </h1>
 
-          {reviews.length > 0 ? (
+          {loadFailed ? (
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(13,13,13,.6)', margin: '0 0 26px' }}>
+              Reviews couldn&apos;t be loaded just now. Please refresh in a moment &mdash; this is
+              a temporary problem at our end, not an empty page.
+            </p>
+          ) : reviews.length > 0 ? (
             <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(13,13,13,.6)', margin: '0 0 26px' }}>
               {average.toFixed(1)} out of 5 across {reviews.length} published{' '}
               {reviews.length === 1 ? 'review' : 'reviews'}
