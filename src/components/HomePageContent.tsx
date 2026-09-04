@@ -87,6 +87,13 @@ interface RealReview {
   rating: number
   text: string
   createdAt: string
+  // FIX (Sep 2026): this field existed in the API response and was dropped
+  // here, so the homepage rendered a hardcoded "Verified ·" label on EVERY
+  // review. A review reading "Haven't placed an order yet" was appearing on
+  // the homepage badged as a verified purchase — a false claim about the one
+  // thing this brand asks to be judged on, and precisely the DMCC Act 2024
+  // misrepresentation the review system was rebuilt to avoid.
+  verified: boolean
 }
 
 function initialsFor(name: string): string {
@@ -927,10 +934,12 @@ export default function PepcoLabPage({
                     margin: 0,
                     fontWeight: 400,
                   }}>
-                    Every review we publish is tied to a real, verified order — no exceptions. Placed one recently? Be the first to share your experience.
+                    Every review here is read by a person before it goes up, and nothing is
+                    incentivised. You don&rsquo;t need to have ordered &mdash; if you&rsquo;ve dealt with us
+                    at all, we&rsquo;d rather hear it.
                   </p>
                 </div>
-                <Link href="/track-order" style={{ 
+                <Link href="/reviews/write" style={{ 
                   display:"inline-block", 
                   background:"#0D0D0D", 
                   color:"#fff", 
@@ -941,7 +950,7 @@ export default function PepcoLabPage({
                   fontWeight: 600,
                   whiteSpace:"nowrap" 
                 }}>
-                  Leave a Verified Review
+                  Write a review
                 </Link>
               </div>
             </FadeUp>
@@ -951,15 +960,52 @@ export default function PepcoLabPage({
         <section style={{ background: "#fff", padding: "clamp(80px,9vw,130px) 0", borderBottom: "1px solid rgba(13,13,13,.06)", overflow: "hidden" }}>
           <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 clamp(20px,5vw,60px)" }}>
             <FadeUp style={{ maxWidth:680, marginBottom:60 }}>
-              <div style={TYPOGRAPHY.label}>Trusted By Researchers</div>
-              <h2 style={TYPOGRAPHY.heading}>What verified<br />researchers say.</h2>
+              <div style={TYPOGRAPHY.label}>Reviews</div>
+              {/* Was "What verified researchers say." Reviews are open to
+                  anyone who has dealt with us now, so a blanket "verified"
+                  in the heading is a claim the section below can't back.
+                  Individual reviews carry their own badge instead. */}
+              <h2 style={TYPOGRAPHY.heading}>What researchers<br />say about us.</h2>
             </FadeUp>
           </div>
 
-          <div className="scrollbar-hidden" style={{ overflow:"hidden", marginBottom:56 }}>
-            <div className="review-marquee-track">
-              {[...realReviews, ...realReviews].map((r, i) => (
-                <div key={`${r.id}-${i}`} style={{ background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:20, padding:"24px 28px", width:340, flexShrink:0, marginRight:16 }}>
+          {/* LAYOUT FIX (Sep 2026).
+              The marquee duplicated the array and scrolled it infinitely,
+              which only reads as a marquee once there are enough cards to
+              fill the viewport. With one or two reviews it rendered the SAME
+              review twice side by side, drifting across a mostly-empty row —
+              which is exactly what the homepage was doing.
+
+              Below four reviews it now renders as a centred grid: honest
+              about how many there are, and it looks deliberate rather than
+              broken. The marquee returns automatically once there are enough
+              to justify it. */}
+          <div
+            className={realReviews.length >= 4 ? "scrollbar-hidden" : undefined}
+            style={
+              realReviews.length >= 4
+                ? { overflow: "hidden", marginBottom: 56 }
+                : {
+                    maxWidth: 1440, margin: "0 auto 56px",
+                    padding: "0 clamp(20px,5vw,60px)",
+                    display: "grid", gap: 16,
+                    gridTemplateColumns: `repeat(auto-fit, minmax(280px, ${realReviews.length === 1 ? '420px' : '1fr'}))`,
+                    justifyContent: realReviews.length < 3 ? "start" : "stretch",
+                  }
+            }
+          >
+            <div
+              className={realReviews.length >= 4 ? "review-marquee-track" : undefined}
+              style={realReviews.length >= 4 ? undefined : { display: "contents" }}
+            >
+              {(realReviews.length >= 4 ? [...realReviews, ...realReviews] : realReviews).map((r, i) => (
+                <div key={`${r.id}-${i}`} style={{
+                  background:"#FAFAF8", border:"1px solid rgba(13,13,13,.07)", borderRadius:20,
+                  padding:"24px 28px",
+                  ...(realReviews.length >= 4
+                    ? { width:340, flexShrink:0, marginRight:16 }
+                    : { width:"auto" }),
+                }}>
                   <div style={{ display:"flex", gap:3, marginBottom:12 }}>
                     {Array.from({ length: 5 }).map((_, j) => (
                       <span key={j} style={{ color: j < r.rating ? "#C8992A" : "rgba(13,13,13,.12)", fontSize:13 }}>★</span>
@@ -976,12 +1022,27 @@ export default function PepcoLabPage({
                     <div style={{ width:36, height:36, borderRadius:"50%", background:"#F0EDE6", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:600, color:"#0d0d0d", flexShrink:0 }}>{initialsFor(r.authorName)}</div>
                     <div>
                       <div style={{ fontSize: "clamp(12px, 0.9vw, 13px)", fontWeight: 600, color: "#0d0d0d" }}>{r.authorName}</div>
-                      <div style={{ fontSize: "clamp(10px, 0.8vw, 11px)", color: "rgba(13,13,13,.4)" }}>Verified · {r.productTitle}</div>
+                      <div style={{ fontSize: "clamp(10px, 0.8vw, 11px)", color: r.verified ? "#0A7B45" : "rgba(13,13,13,.4)" }}>
+                        {r.verified ? "Verified purchase" : "Unverified"} · {r.productTitle}
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+
+          <div style={{ maxWidth:1440, margin:"0 auto 40px", padding:"0 clamp(20px,5vw,60px)", display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
+            <Link href="/reviews" style={{
+              display:"inline-flex", alignItems:"center", minHeight:46, padding:"0 22px",
+              borderRadius:999, border:"1px solid rgba(13,13,13,.15)", background:"#fff",
+              color:"#0D0D0D", fontSize:13.5, fontWeight:600, textDecoration:"none",
+            }}>Read all reviews</Link>
+            <Link href="/reviews/write" style={{
+              display:"inline-flex", alignItems:"center", minHeight:46, padding:"0 22px",
+              borderRadius:999, background:"#0D0D0D", color:"#fff",
+              fontSize:13.5, fontWeight:700, textDecoration:"none",
+            }}>Write a review</Link>
           </div>
 
           {featuredReview && (
@@ -1010,7 +1071,12 @@ export default function PepcoLabPage({
                       <div style={{ fontSize: "clamp(14px, 1vw, 16px)", fontWeight: 600, color: "#fff", marginBottom: 3 }}>{featuredReview.authorName}</div>
                       <div style={{ fontSize: "clamp(12px, 0.9vw, 13px)", color: "rgba(255,255,255,.45)" }}>{featuredReview.productTitle}</div>
                     </div>
-                    <div style={{ marginLeft:"auto", ...TYPOGRAPHY.label, fontSize: "10px", color:"#0A7B45", background:"rgba(10,123,69,.15)", padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>✓ VERIFIED PURCHASE</div>
+                    <div style={{ marginLeft:"auto", ...TYPOGRAPHY.label, fontSize: "10px",
+                      color: featuredReview.verified ? "#0A7B45" : "rgba(255,255,255,.5)",
+                      background: featuredReview.verified ? "rgba(10,123,69,.15)" : "rgba(255,255,255,.08)",
+                      padding:"7px 14px", borderRadius:999, letterSpacing:".06em" }}>
+                      {featuredReview.verified ? "✓ VERIFIED PURCHASE" : "UNVERIFIED REVIEW"}
+                    </div>
                   </div>
                 </div>
               </FadeUp>

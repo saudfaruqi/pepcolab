@@ -8,7 +8,7 @@
 // rejected. They clear on the next page load.
 
 import { useState } from 'react'
-import { Check, X, Loader2, BadgeCheck, Star } from 'lucide-react'
+import { Check, X, Trash2, Loader2, BadgeCheck, Star } from 'lucide-react'
 
 export interface PendingReview {
   id: string
@@ -20,12 +20,17 @@ export interface PendingReview {
   verified: boolean
   orderShortCode: string | null
   createdAt: string
+  status: 'pending' | 'approved'
 }
 
 export default function ReviewQueue({ reviews }: { reviews: PendingReview[] }) {
-  const [state, setState] = useState<Record<string, 'idle' | 'working' | 'approved' | 'rejected' | 'error'>>({})
+  const [state, setState] = useState<Record<string, 'idle' | 'working' | 'approved' | 'rejected' | 'deleted' | 'error'>>({})
 
-  async function act(id: string, action: 'approve' | 'reject') {
+  async function act(id: string, action: 'approve' | 'reject' | 'delete') {
+    // Deletion is irreversible — rejecting keeps the record, this does not.
+    // A confirm step here is worth the friction.
+    if (action === 'delete' && !window.confirm('Delete this review permanently? Rejecting hides it but keeps the record; deleting removes it entirely.')) return
+
     setState(s => ({ ...s, [id]: 'working' }))
     try {
       const res = await fetch('/api/admin/reviews', {
@@ -34,7 +39,8 @@ export default function ReviewQueue({ reviews }: { reviews: PendingReview[] }) {
         body: JSON.stringify({ id, action }),
       })
       const data = await res.json()
-      setState(s => ({ ...s, [id]: res.ok ? (action === 'approve' ? 'approved' : 'rejected') : 'error' }))
+      const outcome = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'deleted'
+      setState(s => ({ ...s, [id]: res.ok ? outcome : 'error' }))
       if (!res.ok) console.error('[admin/reviews]', data)
     } catch (err) {
       console.error('[admin/reviews]', err)
@@ -57,7 +63,7 @@ export default function ReviewQueue({ reviews }: { reviews: PendingReview[] }) {
     <div className="grid gap-3">
       {reviews.map(r => {
         const s = state[r.id] || 'idle'
-        const done = s === 'approved' || s === 'rejected'
+        const done = s === 'approved' || s === 'rejected' || s === 'deleted'
         return (
           <article
             key={r.id}
@@ -91,24 +97,35 @@ export default function ReviewQueue({ reviews }: { reviews: PendingReview[] }) {
 
             {done ? (
               <div className={`text-sm font-semibold ${s === 'approved' ? 'text-green-700' : 'text-[#0D0D0D]/45'}`}>
-                {s === 'approved' ? 'Approved — now live' : 'Rejected'}
+                {s === 'approved' ? 'Approved — now live' : s === 'deleted' ? 'Deleted' : 'Rejected'}
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
+                {r.status === 'pending' && (
+                  <>
+                    <button
+                      onClick={() => act(r.id, 'approve')}
+                      disabled={s === 'working'}
+                      className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-[#0A7B45] px-4 text-[13px] font-bold text-white disabled:opacity-50"
+                    >
+                      {s === 'working' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => act(r.id, 'reject')}
+                      disabled={s === 'working'}
+                      className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-red-50 px-4 text-[13px] font-bold text-red-800 disabled:opacity-50"
+                    >
+                      <X size={14} /> Reject
+                    </button>
+                  </>
+                )}
                 <button
-                  onClick={() => act(r.id, 'approve')}
+                  onClick={() => act(r.id, 'delete')}
                   disabled={s === 'working'}
-                  className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-[#0A7B45] px-4 text-[13px] font-bold text-white disabled:opacity-50"
+                  className="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-[#0D0D0D]/12 px-4 text-[13px] font-semibold text-[#0D0D0D]/60 hover:border-red-300 hover:text-red-700 disabled:opacity-50"
                 >
-                  {s === 'working' ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  Approve
-                </button>
-                <button
-                  onClick={() => act(r.id, 'reject')}
-                  disabled={s === 'working'}
-                  className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-red-50 px-4 text-[13px] font-bold text-red-800 disabled:opacity-50"
-                >
-                  <X size={14} /> Reject
+                  <Trash2 size={14} /> Delete
                 </button>
                 {s === 'error' && (
                   <span className="self-center text-[13px] text-red-700">Failed — try again.</span>

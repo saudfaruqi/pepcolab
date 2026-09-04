@@ -207,3 +207,52 @@ export async function listPendingReviews(limit = 100): Promise<Review[]> {
     return []
   }
 }
+
+
+/**
+ * Permanently remove a review.
+ *
+ * ADDED Sep 2026. Rejecting a review only flips its status — the record stays,
+ * which is right for an ordinary "we're not publishing this" decision because
+ * it leaves an audit trail. Deletion is for the cases where keeping the record
+ * is itself the problem: a review containing someone's personal details, a
+ * submission a customer has asked you to erase, obvious spam you don't want
+ * accumulating, or content that shouldn't sit in your database at all.
+ *
+ * Removes the review from both index sets as well as the record itself, so a
+ * deleted review cannot resurface in a listing through a stale index entry.
+ * Revalidates the public cache so an approved-then-deleted review disappears
+ * from the site immediately rather than at the next natural expiry.
+ */
+export async function deleteReview(id: string): Promise<boolean> {
+  try {
+    const review = await getReview(id)
+    if (!review) return false
+    await redis.del(reviewKey(id))
+    await redis.zrem(PENDING_SET, id)
+    await redis.zrem(APPROVED_SET, id)
+    if (review.status === 'approved') revalidateTag(REVIEWS_CACHE_TAG)
+    return true
+  } catch (err) {
+    console.error('[reviewStore] Failed to delete review:', err)
+    return false
+  }
+}
+
+/**
+ * Approved reviews, for the admin screen — so published reviews can be
+ * reviewed and removed after the fact, not only moderated on arrival.
+ * Reads the store directly rather than the public cached path, because an
+ * admin looking at the queue needs current state, not a cached snapshot.
+ */
+export async function listApprovedReviewsRaw(limit = 200): Promise<Review[]> {
+  try {
+    const ids = (await redis.zrange(APPROVED_SET, 0, limit - 1, { rev: true })) as string[]
+    if (!ids?.length) return []
+    const reviews = await Promise.all(ids.map((id) => getReview(id)))
+    return reviews.filter((r): r is Review => Boolean(r) && r!.status === 'approved')
+  } catch (err) {
+    console.error('[reviewStore] Failed to list approved reviews for admin:', err)
+    return []
+  }
+}

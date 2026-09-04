@@ -13,7 +13,7 @@
 // different door — so moderation works whether or not email is configured,
 // and a backlog of already-pending reviews can be cleared.
 import { NextRequest, NextResponse } from 'next/server'
-import { approveReview, rejectReview, getReview } from '@/lib/reviewStore'
+import { approveReview, rejectReview, deleteReview, getReview } from '@/lib/reviewStore'
 import { verifySessionToken as verifyAdminSession, ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 
 export async function POST(req: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}))
   const id = typeof body?.id === 'string' ? body.id.trim() : ''
-  const action = body?.action === 'approve' ? 'approve' : body?.action === 'reject' ? 'reject' : null
+  const action = ['approve', 'reject', 'delete'].includes(body?.action) ? body.action as 'approve' | 'reject' | 'delete' : null
 
   if (!id || !action) {
     return NextResponse.json({ success: false, message: 'id and action are required.' }, { status: 400 })
@@ -37,8 +37,20 @@ export async function POST(req: NextRequest) {
 
   const review = await getReview(id)
   if (!review) {
+    // Idempotent: deleting something already gone is a success, not a 404 —
+    // two clicks on the same delete button shouldn't surface an error.
+    if (action === 'delete') return NextResponse.json({ success: true, status: 'deleted' })
     return NextResponse.json({ success: false, message: 'Review not found.' }, { status: 404 })
   }
+
+  // Delete works on ANY status. Approve/reject only make sense on a pending
+  // review, but a published review that turns out to contain personal details
+  // or spam has to be removable after the fact.
+  if (action === 'delete') {
+    const ok = await deleteReview(id)
+    return NextResponse.json({ success: ok, status: 'deleted' })
+  }
+
   if (review.status !== 'pending') {
     // Idempotent rather than an error: two clicks, or a click after the
     // emailed link was already used, should not read as a failure.

@@ -11,7 +11,7 @@
 // This screen reads the pending set directly and moderates through the admin
 // session, so it works regardless of email configuration. The emailed links
 // still function; they are no longer the only route.
-import { listPendingReviews } from '@/lib/reviewStore'
+import { listPendingReviews, listApprovedReviewsRaw } from '@/lib/reviewStore'
 import ReviewQueue, { type PendingReview } from './ReviewQueue'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +21,14 @@ export default async function AdminReviewsPage() {
   let loadError: string | null = null
 
   try {
-    reviews = (await listPendingReviews()).map(r => ({
+    const [pending, approved] = await Promise.all([
+      listPendingReviews(),
+      // Published reviews are listed too, so one that later turns out to
+      // contain personal details or spam can be removed after the fact
+      // rather than only being catchable on arrival.
+      listApprovedReviewsRaw(),
+    ])
+    reviews = [...pending, ...approved].map(r => ({
       id: r.id,
       productTitle: r.productTitle,
       productSlug: r.productSlug,
@@ -31,6 +38,7 @@ export default async function AdminReviewsPage() {
       verified: r.verified,
       orderShortCode: r.orderShortCode,
       createdAt: r.createdAt,
+      status: r.status as 'pending' | 'approved',
     }))
   } catch (err) {
     console.error('[admin/reviews] Failed to load pending reviews:', err)
@@ -42,8 +50,10 @@ export default async function AdminReviewsPage() {
       <div className="mb-6">
         <h1 className="text-lg font-semibold text-[#0D0D0D]">Reviews</h1>
         <p className="text-sm text-[#0D0D0D]/50">
-          {reviews.length} awaiting moderation. Approved reviews appear on the product page and
-          on /reviews immediately.
+          {reviews.filter(r => r.status === 'pending').length} awaiting moderation,{' '}
+          {reviews.filter(r => r.status === 'approved').length} published. Approving puts a review
+          on the product page and on /reviews immediately. Rejecting hides it but keeps the
+          record; deleting removes it entirely.
         </p>
       </div>
 
