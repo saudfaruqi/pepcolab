@@ -293,7 +293,31 @@ export default async function ProductPage({ params }: Props) {
   // buildJsonLd, which already treats an empty array as "don't emit
   // AggregateRating," the same safe behavior whether reviews are genuinely
   // zero or just unknown right now.
-  const approvedReviews = await getApprovedReviews(20, shopifyProduct.handle).catch(() => null)
+  // BUILD-TIME SKIP (Sep 2026)
+  //
+  // @upstash/redis fetches with `cache: 'no-store'`, which Next 14.2.5 treats
+  // as DYNAMIC_SERVER_USAGE inside a statically-generated page. During
+  // `next build` this read therefore ALWAYS fails — 37 products × 2 attempts
+  // = 74 stack traces per deploy, and roughly 4.5 seconds of retry per page,
+  // which is most of a three-minute build.
+  //
+  // It was never going to succeed, so we no longer try. Skipping it during
+  // the build removes the noise and the wasted time; on a real request the
+  // ISR revalidate below re-renders the page and the read works normally.
+  //
+  // WHAT THIS COSTS, STATED PLAINLY: the FIRST build of each product page
+  // ships without reviews and without AggregateRating in its schema. The
+  // client-side fallback fills reviews in for human visitors, but a crawler
+  // hitting a freshly-built page may miss the markup. With revalidate = 60
+  // that window is one minute per page, so in practice Google sees the
+  // regenerated version — but if you ever want review rich results
+  // guaranteed, product pages need to be dynamic rather than prerendered.
+  // That is a deliberate trade, not an oversight: 37 static pages are worth
+  // more today than review markup on pages that have almost no reviews yet.
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
+  const approvedReviews = isBuildPhase
+    ? null
+    : await getApprovedReviews(20, shopifyProduct.handle).catch(() => null)
 
   // ProductVariantView owns the whole two-column layout and passes
   // selectedVariantId / onSelectVariant down to ProductActions, so the format
