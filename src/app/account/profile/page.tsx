@@ -77,6 +77,12 @@ export default function ProfilePage() {
   }, [router])
 
   const signOut = async () => {
+    // Confirmed, because with passwordless auth signing out has a real cost:
+    // getting back in means waiting on an email. Sessions renew as they're
+    // used (see lib/customerAuth.ts), so staying signed in is the normal
+    // state — this button is for shared or borrowed devices, and the prompt
+    // says so rather than letting people discover it afterwards.
+    if (!window.confirm('Sign out? You\u2019ll need an emailed link to sign back in. If this is your own device, you can just close the tab — you\u2019ll stay signed in.')) return
     await fetch('/api/account/logout', { method: 'POST' })
     router.replace('/')
   }
@@ -239,6 +245,11 @@ export default function ProfilePage() {
               }}>
                 <LogOut size={15} aria-hidden="true" /> Sign out
               </button>
+
+              <p style={{ fontSize: 12, lineHeight: 1.7, color: 'rgba(13,13,13,.45)', margin: '12px 0 0', maxWidth: 460 }}>
+                You stay signed in on this device &mdash; there&apos;s no need to sign out unless
+                it&apos;s shared or borrowed. Signing back in means waiting on an emailed link.
+              </p>
             </>
           )}
         </div>

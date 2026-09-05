@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ClipboardList, Mail, LogOut, Star } from 'lucide-react'
+import { ClipboardList, Mail, LogOut, Star, ShoppingCart, Send } from 'lucide-react'
 
 const NAV = [
   { href: '/admin', label: 'Orders', icon: ClipboardList },
   { href: '/admin/subscribers', label: 'Subscribers', icon: Mail },
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
+  { href: '/admin/abandoned', label: 'Abandoned', icon: ShoppingCart },
+  { href: '/admin/emails', label: 'Emails', icon: Send },
 ]
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

@@ -10,11 +10,15 @@
 // Being signed out is the normal state, not an error, and a 401 on every
 // anonymous page load fills the console with noise that hides real problems.
 import { NextRequest, NextResponse } from 'next/server'
-import { verifySessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/customerAuth'
+import {
+  verifySessionToken, shouldRenewSession, issueSessionToken,
+  sessionCookieOptions, CUSTOMER_COOKIE_NAME, SESSION_TTL_SECONDS,
+} from '@/lib/customerAuth'
 import { getOrdersForEmail } from '@/lib/orderStore'
 
 export async function GET(req: NextRequest) {
-  const email = verifySessionToken(req.cookies.get(CUSTOMER_COOKIE_NAME)?.value)
+  const token = req.cookies.get(CUSTOMER_COOKIE_NAME)?.value
+  const email = verifySessionToken(token)
   if (!email) {
     return NextResponse.json({ signedIn: false })
   }
@@ -30,11 +34,25 @@ export async function GET(req: NextRequest) {
     // authenticated, we just can't decorate the nav with their order count.
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     signedIn: true,
     email,
     name,
     firstName: name ? name.trim().split(/\s+/)[0] : null,
     orderCount,
   })
+
+  // SLIDING RENEWAL. This endpoint runs on every page load, which makes it
+  // the natural place to extend an active session. Someone who uses the site
+  // at all is now effectively never signed out, so they never wait on a
+  // sign-in email again — while an abandoned session still lapses normally.
+  if (shouldRenewSession(token)) {
+    response.cookies.set(
+      CUSTOMER_COOKIE_NAME,
+      issueSessionToken(email),
+      sessionCookieOptions(SESSION_TTL_SECONDS)
+    )
+  }
+
+  return response
 }

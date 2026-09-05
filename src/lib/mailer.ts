@@ -5,6 +5,7 @@
 // rather than introducing a second email provider/dependency for order
 // alerts and the newsletter.
 import nodemailer from 'nodemailer'
+import { recordEmail } from '@/lib/emailLog'
 
 let cachedTransporter: ReturnType<typeof nodemailer.createTransport> | null = null
 
@@ -41,14 +42,34 @@ export async function sendMail(opts: {
   if (!smtpFrom) throw new Error('SMTP configuration is missing (SMTP_FROM)')
 
   const transporter = getTransporter()
-  await transporter.sendMail({
-    from: `"PepcoLab" <${smtpFrom}>`,
-    to: opts.to,
-    replyTo: opts.replyTo,
-    subject: opts.subject,
-    text: opts.text,
-    html: opts.html,
-  })
+
+  // EVERY SEND IS LOGGED (Sep 2026), success or failure.
+  //
+  // Instrumented here rather than at each call site so nothing can be added
+  // later and quietly go unrecorded. The log is best-effort and never
+  // throws — see lib/emailLog.ts — so it cannot break a send.
+  try {
+    await transporter.sendMail({
+      from: `"PepcoLab" <${smtpFrom}>`,
+      to: opts.to,
+      replyTo: opts.replyTo,
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    })
+    await recordEmail({ to: opts.to, subject: opts.subject, status: 'sent', text: opts.text })
+  } catch (err) {
+    // Recorded BEFORE rethrowing, so a failure is visible in the admin log
+    // even when the caller swallows it.
+    await recordEmail({
+      to: opts.to,
+      subject: opts.subject,
+      status: 'failed',
+      error: err instanceof Error ? err.message : String(err),
+      text: opts.text,
+    })
+    throw err
+  }
 }
 
 // Best-effort — used for internal alerts where a failed notification

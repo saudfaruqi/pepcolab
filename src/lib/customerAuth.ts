@@ -35,7 +35,25 @@
 import crypto from 'crypto'
 
 export const CUSTOMER_COOKIE_NAME = 'pepcolab_customer_session'
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 days
+export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 90 // 90 days
+
+/**
+ * SLIDING SESSIONS (Sep 2026)
+ * ---------------------------
+ * A fixed 30-day session expired an active customer on day 31 for no reason
+ * other than the calendar, and every expiry meant another wait for an email.
+ * That was the real friction in passwordless sign-in — not the first sign-in,
+ * which happens once, but the pointless repeat ones.
+ *
+ * Sessions now renew as they are used. Any authenticated request with more
+ * than a third of its life elapsed gets a fresh 90-day cookie, so somebody
+ * who visits even occasionally is effectively never signed out, while a
+ * genuinely abandoned session still lapses on schedule.
+ *
+ * The renewal threshold exists so we aren't rewriting a cookie on every
+ * single request — only when it's actually worth extending.
+ */
+export const SESSION_RENEW_AFTER_SECONDS = SESSION_TTL_SECONDS / 3
 export const MAGIC_LINK_TTL_SECONDS = 60 * 15 // 15 minutes
 /**
  * Longer-lived link embedded in the ORDER CONFIRMATION email, so a customer
@@ -132,6 +150,30 @@ export function issueSessionToken(email: string): string {
 export function verifySessionToken(token: string | undefined | null): string | null {
   if (!token) return null
   return verify(token, 'session')
+}
+
+/**
+ * Whether a still-valid session is old enough to be worth reissuing.
+ *
+ * Reads the expiry out of the token rather than tracking issue time
+ * separately: a token with less than two-thirds of its life left has had more
+ * than a third elapsed, which is the renewal point.
+ *
+ * Returns false for anything unparseable — a token we can't read is one we
+ * shouldn't be extending.
+ */
+export function shouldRenewSession(token: string | undefined | null): boolean {
+  if (!token) return false
+  try {
+    const [encoded] = token.split('.')
+    if (!encoded) return false
+    const payload: TokenPayload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'))
+    if (payload.t !== 'session' || !payload.x) return false
+    const remaining = payload.x - Math.floor(Date.now() / 1000)
+    return remaining > 0 && remaining < SESSION_TTL_SECONDS - SESSION_RENEW_AFTER_SECONDS
+  } catch {
+    return false
+  }
 }
 
 /**

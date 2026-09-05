@@ -271,3 +271,38 @@ export async function getOrdersDueForReorderReminder(
     return []
   }
 }
+
+
+/**
+ * Abandoned checkouts, newest first — for the admin recovery screen.
+ *
+ * ADDED Sep 2026, because a whole class of these was invisible and
+ * unrecoverable.
+ *
+ * The abandoned-cart cron skips any record with no products:
+ *   if (!order.email || order.products.length === 0) continue
+ *
+ * That guard is right for an automated CART email — you cannot send someone
+ * "you left these items behind" with no items. But STRABL emits abandoned
+ * records that carry a name, an email and a phone number with an empty
+ * products array, so those people were dropped entirely. Nothing was sent,
+ * nothing was flagged, and nobody could see they existed.
+ *
+ * They are often the most recoverable leads on the list: someone who reached
+ * checkout and gave you a phone number. This lister returns everything so a
+ * human can decide, and marks which ones the automation can and cannot help
+ * with.
+ */
+export async function listAbandonedOrders(limit = 100): Promise<OrderRecord[]> {
+  try {
+    const codes = (await redis.zrange(ABANDONED_INDEX_KEY, 0, limit - 1, { rev: true })) as string[]
+    if (!codes?.length) return []
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return records
+      .filter((r): r is OrderRecord => Boolean(r) && r!.status === 'abandoned')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  } catch (err) {
+    console.error('[orderStore] Failed to list abandoned orders:', err)
+    return []
+  }
+}
