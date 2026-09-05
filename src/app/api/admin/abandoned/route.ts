@@ -13,8 +13,9 @@
 //   2. Records the send against recoveryEmailStage, so the cron won't
 //      duplicate what you sent by hand.
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrderRecord, saveOrderRecord } from '@/lib/orderStore'
+import { getOrderRecord, saveOrderRecord, getOrdersForEmail } from '@/lib/orderStore'
 import { sendAbandonedCartEmail } from '@/lib/orderEmails'
+import { sendCheckoutHelpEmail } from '@/lib/accountEmails'
 import { verifySessionToken as verifyAdminSession, ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 
 export async function POST(req: NextRequest) {
@@ -39,28 +40,55 @@ export async function POST(req: NextRequest) {
   if (!order.email) {
     return NextResponse.json({ success: false, message: 'No email captured on this checkout.' }, { status: 400 })
   }
-  if (!order.products?.length) {
+  // ── THE GUARD THAT MATTERS ───────────────────────────────────────────────
+  //
+  // STRABL writes an abandoned record when checkout OPENS, under its own
+  // AC-* code. When the same person then completes an order, that order gets
+  // a different code — so nothing ever supersedes the abandoned record and it
+  // sits on the list forever. Two people on the current list did go on to
+  // order successfully.
+  //
+  // Emailing "did something go wrong at checkout?" to a customer whose order
+  // you already shipped is worse than sending nothing: it tells them you
+  // don't know what you sold them. Checked at send time rather than trusted
+  // to the list being clean, because this is the one mistake in this feature
+  // that cannot be taken back.
+  const history = await getOrdersForEmail(order.email, 50)
+  const completed = history.filter(
+    o => o.status !== 'abandoned' && o.status !== 'failed' && (o.products?.length ?? 0) > 0
+  )
+  if (completed.length > 0) {
     return NextResponse.json(
       {
         success: false,
-        message: 'No items were captured on this checkout, so a recovery email would show an empty cart. Contact them directly instead.',
+        message: `This customer went on to place ${completed.length} real order${completed.length === 1 ? '' : 's'} (${completed[0].orderShortCode}). The abandoned record was never cleared. Don't send — they already bought.`,
       },
-      { status: 400 }
+      { status: 409 }
     )
   }
 
-  // Stage 2 wording for a second send, so a manual follow-up doesn't repeat
-  // the first email verbatim.
   const stage: 1 | 2 = (order.recoveryEmailStage ?? 0) >= 1 ? 2 : 1
 
-  await sendAbandonedCartEmail({
-    to: order.email,
-    orderShortCode: order.orderShortCode,
-    products: order.products,
-    total: order.total,
-    currency: order.currency,
-    stage,
-  })
+  if (!order.products?.length) {
+    // No cart was captured, so the normal recovery template — which renders
+    // the items and the total — would show an empty basket. This one asks
+    // what went wrong instead, which is the only honest thing available and,
+    // at this volume, the more useful question anyway.
+    await sendCheckoutHelpEmail({
+      to: order.email,
+      customerName: order.customerName,
+      attempts: typeof body?.attempts === 'number' ? body.attempts : 1,
+    })
+  } else {
+    await sendAbandonedCartEmail({
+      to: order.email,
+      orderShortCode: order.orderShortCode,
+      products: order.products,
+      total: order.total,
+      currency: order.currency,
+      stage,
+    })
+  }
 
   await saveOrderRecord({
     ...order,

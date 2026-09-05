@@ -28,12 +28,15 @@ export interface AbandonedRow {
   itemCount: number
   recoveryEmailStage: number
   products: { title: string; quantity: number }[]
+  /** True when this person later placed a real order — never email them. */
+  laterOrdered: boolean
 }
 
 interface Group {
   email: string
   name: string | null
   phone: string | null
+  laterOrdered: boolean
   attempts: AbandonedRow[]
   best: AbandonedRow
 }
@@ -53,6 +56,7 @@ function group(rows: AbandonedRow[]): Group[] {
     return {
       email,
       name: attempts.find(a => a.customerName)?.customerName ?? null,
+      laterOrdered: attempts.some(a => a.laterOrdered),
       phone: attempts.find(a => a.phone)?.phone ?? null,
       attempts,
       best,
@@ -65,13 +69,13 @@ export default function AbandonedTable({ rows }: { rows: AbandonedRow[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const groups = group(rows)
 
-  async function send(code: string) {
+  async function send(code: string, attempts = 1) {
     setState(s => ({ ...s, [code]: 'sending' }))
     try {
       const res = await fetch('/api/admin/abandoned', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderShortCode: code }),
+        body: JSON.stringify({ orderShortCode: code, attempts }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -99,11 +103,18 @@ export default function AbandonedTable({ rows }: { rows: AbandonedRow[] }) {
       {groups.map(g => {
         const code = g.best.orderShortCode
         const s = state[code] || 'idle'
-        const recoverable = g.best.itemCount > 0
+        // Never offer a send to someone who actually bought.
+        const recoverable = g.best.itemCount > 0 && !g.laterOrdered
+        const canEmail = !g.laterOrdered
         return (
           <article key={g.email} className="rounded-xl border border-[#0D0D0D]/10 bg-white p-5">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold text-[#0D0D0D]">{g.name || g.email}</span>
+              {g.laterOrdered && (
+                <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-800">
+                  Later ordered — do not email
+                </span>
+              )}
               {g.attempts.length > 1 && (
                 <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">
                   {g.attempts.length} attempts
@@ -136,6 +147,14 @@ export default function AbandonedTable({ rows }: { rows: AbandonedRow[] }) {
                   {g.best.currency} {g.best.total.toFixed(2)}
                 </div>
               </div>
+            ) : g.laterOrdered ? (
+              <div className="mb-4 flex items-start gap-2 rounded-lg bg-green-50 p-3 text-[13px] leading-relaxed text-green-900">
+                <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+                <span>
+                  <strong>This person went on to order.</strong> The abandoned record was never
+                  cleared, so they&rsquo;re still listed here. Nothing to recover, and nothing to send.
+                </span>
+              </div>
             ) : (
               <div className="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-[13px] leading-relaxed text-amber-900">
                 <AlertTriangle size={15} className="mt-0.5 shrink-0" />
@@ -150,6 +169,20 @@ export default function AbandonedTable({ rows }: { rows: AbandonedRow[] }) {
             )}
 
             <div className="flex flex-wrap gap-2">
+              {!recoverable && canEmail && (
+                s === 'sent' ? (
+                  <span className="text-sm font-semibold text-green-700">Email sent</span>
+                ) : (
+                  <button
+                    onClick={() => send(code, g.attempts.length)}
+                    disabled={s === 'sending'}
+                    className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-[#0D0D0D] px-4 text-[13px] font-bold text-white disabled:opacity-50"
+                  >
+                    {s === 'sending' ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    Send &ldquo;did something go wrong?&rdquo;
+                  </button>
+                )
+              )}
               {recoverable && (
                 s === 'sent' ? (
                   <span className="text-sm font-semibold text-green-700">Recovery email sent</span>

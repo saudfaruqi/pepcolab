@@ -33,7 +33,7 @@
 
 import { sendMailSafe } from '@/lib/mailer'
 import {
-  emailShell, primaryButton, productRows, trustStrip,
+  emailShell, primaryButton, productRows, trustStrip, preheader,
   INK, INK_60, INK_40, GOLD_TEXT, GOLD_TINT,
 } from '@/lib/orderEmails'
 
@@ -114,6 +114,71 @@ export async function sendReorderReminderEmail(params: {
       `${greeting}\n\nIt has been about four weeks since order ${orderShortCode}. Reconstituted material is documented for use within 28 days at 2-8 C, so this is roughly when a next batch tends to be needed.\n\n` +
       `Reorder the same items in one tap: ${reorderUrl}\n\n${RUO}` +
       (unsubscribeUrl ? `\n\nStop reorder reminders: ${unsubscribeUrl}` : ''),
+    html,
+  })
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3. CHECKOUT HELP — for abandoned checkouts with no captured cart            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * "Something go wrong at checkout?"
+ *
+ * WHY THIS EXISTS SEPARATELY FROM sendAbandonedCartEmail
+ * That template renders the items and the total, which is the right email for
+ * a normal abandoned cart. But every abandoned record in this system has an
+ * EMPTY products array — STRABL writes the record when checkout opens, before
+ * a cart is attached — so that email would show an empty basket worth nothing.
+ *
+ * This one doesn't reference a cart at all. It asks a question instead, which
+ * is both the only honest thing we can say and, at this volume, the more
+ * useful one: someone who reached checkout and stopped had a reason, and the
+ * reason is worth more than the recovered order.
+ *
+ * Deliberately short and plain. It reads as a person noticing, because that
+ * is what it is — it is sent by hand from the admin screen, one at a time.
+ */
+export async function sendCheckoutHelpEmail(params: {
+  to: string
+  customerName?: string
+  attempts?: number
+}) {
+  const { to, customerName, attempts = 1 } = params
+  const firstName = (customerName || '').trim().split(/\s+/)[0]
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,'
+
+  // More than one attempt in a session almost always means a payment that
+  // kept failing rather than a change of mind — worth naming, because being
+  // told "we noticed" is what makes someone reply.
+  // Lower-cased because it follows "Hi Name," — otherwise it reads
+  // "Hi Saoud, We noticed", which is the sort of seam that tells someone
+  // they're reading a template.
+  const opener = attempts > 1
+    ? 'we noticed you tried to check out a few times and it didn&rsquo;t go through.'
+    : 'we noticed you got as far as checkout and didn&rsquo;t complete the order.'
+
+  const html = emailShell(`
+    ${preheader('Did something go wrong at checkout? We can help.')}
+    ${h1('Did something go wrong?')}
+    ${para(`${greeting} ${opener} If it was a payment that wouldn&rsquo;t go through, or a question you wanted answered first, just reply to this email &mdash; a person reads it.`)}
+    ${para('If you simply changed your mind, no problem at all, and you can ignore this. We&rsquo;re not going to chase you.')}
+    ${primaryButton('Back to the catalogue', `${SITE_URL}/products`, 16)}
+    ${trustStrip()}
+    ${footNote(`Sent once because a checkout was started with this address. ${RUO}`)}
+  `)
+
+  await sendMailSafe({
+    to,
+    subject: 'Did something go wrong at checkout?',
+    text:
+      `${greeting}\n\n` +
+      (attempts > 1
+        ? "we noticed you tried to check out a few times and it didn't go through."
+        : "we noticed you got as far as checkout and didn't complete the order.") +
+      ` If it was a payment that wouldn't go through, or a question you wanted answered first, just reply to this email — a person reads it.\n\n` +
+      `If you simply changed your mind, no problem at all. We're not going to chase you.\n\n` +
+      `${SITE_URL}/products\n\n${RUO}`,
     html,
   })
 }
