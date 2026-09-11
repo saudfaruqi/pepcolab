@@ -13,6 +13,7 @@
 import { cookies } from 'next/headers'
 import { getProducts } from '@/lib/shopify'
 import CertificatesClient from './CertificatesClient'
+import CertificateIndex from '@/components/CertificateIndex'
 
 export default async function CertificatesPage() {
   const country = (await cookies()).get('pepcolab_country')?.value ?? 'AE'
@@ -24,5 +25,19 @@ export default async function CertificatesPage() {
     console.error('[certificates] Server-side product fetch failed:', err)
   }
 
-  return <CertificatesClient initialProducts={initialProducts} />
+  return (
+    <>
+      <CertificatesClient initialProducts={initialProducts} />
+      {/* INDEXABILITY (Sep 2026): Google reported this page as "Crawled —
+          currently not indexed", which is a value judgement rather than a
+          crawl failure. Read as a crawler sees it, the page was a search box
+          and a product grid: the certificate records themselves — lot
+          numbers, accession numbers, measured purity, test dates — were never
+          rendered. This puts them in the HTML as text, which is both what
+          makes the page worth indexing and what matches the "kpv coa",
+          "epithalon coa" and "ahk-cu coa" queries already showing in Search
+          Console. */}
+      <CertificateIndex />
+    </>
+  )
 }

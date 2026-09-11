@@ -22,6 +22,11 @@ const LINKS = {
     { label: 'How We Test',    href: '/testing'       },
     { label: 'Storage Guide',  href: '/storage'       },
     { label: 'Bulk Orders',    href: '/bulk-orders'   },
+    // /uk had ZERO inbound links anywhere on the site, which is why Google
+    // reported it as "Discovered — currently not indexed" with no crawl ever
+    // attempted. A page in the sitemap and nowhere else tells Google it
+    // exists and that nothing on the site considers it worth pointing at.
+    { label: 'UK Launch',      href: '/uk'            },
     { label: 'Help',           href: '/help'          },
     { label: 'Guides',         href: '/guides'        },
     { label: 'Comparisons',    href: '/compare'       },
