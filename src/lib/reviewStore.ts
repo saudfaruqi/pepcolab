@@ -256,3 +256,92 @@ export async function listApprovedReviewsRaw(limit = 200): Promise<Review[]> {
     return []
   }
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* STATICALLY-RENDERABLE READ                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Approved reviews for a product, readable from a STATICALLY GENERATED page.
+ *
+ * THE PROBLEM THIS SOLVES
+ * `@upstash/redis` issues every command as `fetch(..., { cache: 'no-store' })`
+ * and gives no way to override it. Next 14 treats a no-store fetch inside a
+ * static render as DYNAMIC_SERVER_USAGE and aborts the read. That happens at
+ * BUILD time and again on every ISR regeneration — so product pages have
+ * never once rendered reviews server-side, and the AggregateRating block in
+ * their JSON-LD has never shipped. The client-side fallback hid it from
+ * humans, which is why it went unnoticed; Google saw the version without it.
+ *
+ * THE FIX
+ * Talk to the Upstash REST API directly instead of through the client, using
+ * a fetch WE control — with `next: { revalidate, tags }` rather than
+ * no-store. That is an ordinary cacheable fetch, so a static render is happy
+ * to wait for it, and the existing revalidateTag() call in approveReview()
+ * still busts it the moment a review is published.
+ *
+ * Only used for this one read. Everything else keeps using the client, where
+ * no-store is correct — an admin queue or a cart must never serve a cached
+ * answer.
+ */
+async function upstashCommand<T>(command: (string | number)[], revalidate: number): Promise<T | null> {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(command),
+      // The whole point: a cacheable fetch, not no-store.
+      next: { revalidate, tags: [REVIEWS_CACHE_TAG] },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return (data?.result ?? null) as T | null
+  } catch (err) {
+    console.error('[reviewStore] Upstash REST command failed:', command[0], err)
+    return null
+  }
+}
+
+export async function getApprovedReviewsStatic(
+  limit = 20,
+  productSlug?: string
+): Promise<Review[]> {
+  // Read a generous slice of the approved set: filtering by product happens
+  // below, so the window has to be wider than the requested limit.
+  const ids = await upstashCommand<string[]>(
+    ['ZRANGE', APPROVED_SET, 0, 199, 'REV'],
+    300
+  )
+  if (!ids?.length) return []
+
+  const raw = await upstashCommand<(string | null)[]>(
+    ['MGET', ...ids.map((id) => reviewKey(id))],
+    300
+  )
+  if (!raw?.length) return []
+
+  const reviews: Review[] = []
+  for (const item of raw) {
+    if (!item) continue
+    try {
+      const parsed = typeof item === 'string' ? (JSON.parse(item) as Review) : (item as Review)
+      if (parsed?.status !== 'approved') continue
+      if (productSlug && parsed.productSlug !== productSlug) continue
+      reviews.push(parsed)
+    } catch {
+      // A single malformed record shouldn't empty the whole list.
+    }
+  }
+
+  return reviews
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, limit)
+}

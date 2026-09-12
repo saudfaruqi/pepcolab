@@ -14,7 +14,7 @@ import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 import { stripLeadingName, toNeutralSlug, toShopifyHandle, productHref } from '@/lib/utils'
 import { relatedContentForProduct } from '@/lib/contentLinks'
-import { getApprovedReviews, type Review } from '@/lib/reviewStore'
+import { getApprovedReviewsStatic, type Review } from '@/lib/reviewStore'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -293,31 +293,28 @@ export default async function ProductPage({ params }: Props) {
   // buildJsonLd, which already treats an empty array as "don't emit
   // AggregateRating," the same safe behavior whether reviews are genuinely
   // zero or just unknown right now.
-  // BUILD-TIME SKIP (Sep 2026)
+  // REVIEWS, NOW ACTUALLY RENDERED SERVER-SIDE (Sep 2026)
   //
-  // @upstash/redis fetches with `cache: 'no-store'`, which Next 14.2.5 treats
-  // as DYNAMIC_SERVER_USAGE inside a statically-generated page. During
-  // `next build` this read therefore ALWAYS fails — 37 products × 2 attempts
-  // = 74 stack traces per deploy, and roughly 4.5 seconds of retry per page,
-  // which is most of a three-minute build.
+  // This previously called getApprovedReviews(), which goes through
+  // @upstash/redis — and that client fetches with `cache: 'no-store'`, which
+  // Next 14 treats as DYNAMIC_SERVER_USAGE inside a static render. The read
+  // therefore failed at build AND on every ISR regeneration, which the
+  // production logs confirmed. Net effect: product pages had NEVER rendered
+  // reviews server-side, and the AggregateRating block in their JSON-LD had
+  // never shipped. A client-side fallback filled reviews in for humans, which
+  // is exactly why it went unnoticed for so long — Google was seeing the
+  // version without the markup.
   //
-  // It was never going to succeed, so we no longer try. Skipping it during
-  // the build removes the noise and the wasted time; on a real request the
-  // ISR revalidate below re-renders the page and the read works normally.
+  // An earlier attempt here skipped the read during the build phase. That
+  // silenced the build log but treated the symptom: ISR regeneration is also
+  // a static render, so the read kept failing in production.
   //
-  // WHAT THIS COSTS, STATED PLAINLY: the FIRST build of each product page
-  // ships without reviews and without AggregateRating in its schema. The
-  // client-side fallback fills reviews in for human visitors, but a crawler
-  // hitting a freshly-built page may miss the markup. With revalidate = 60
-  // that window is one minute per page, so in practice Google sees the
-  // regenerated version — but if you ever want review rich results
-  // guaranteed, product pages need to be dynamic rather than prerendered.
-  // That is a deliberate trade, not an oversight: 37 static pages are worth
-  // more today than review markup on pages that have almost no reviews yet.
-  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
-  const approvedReviews = isBuildPhase
-    ? null
-    : await getApprovedReviews(20, shopifyProduct.handle).catch(() => null)
+  // getApprovedReviewsStatic() talks to the Upstash REST API through a fetch
+  // with `next: { revalidate, tags }` instead of no-store — an ordinary
+  // cacheable fetch that a static render will happily await. The existing
+  // revalidateTag() in approveReview() still busts it the moment a review is
+  // published, so approving a review still shows up promptly.
+  const approvedReviews = await getApprovedReviewsStatic(20, shopifyProduct.handle).catch(() => null)
 
   // ProductVariantView owns the whole two-column layout and passes
   // selectedVariantId / onSelectVariant down to ProductActions, so the format
