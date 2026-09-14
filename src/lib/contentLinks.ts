@@ -28,6 +28,17 @@ const RESEARCH_BY_PRODUCT_KEYWORD: { match: RegExp; id: string; title: string }[
   { match: /ss-?31|elamipretide/i, id: 'ss-31', title: 'SS-31' },
 ]
 
+// NEW LONG-FORM RESEARCH (Sep 2026). These four are cluster hubs rather than
+// single-compound pages, so they are linked by topic from every product page
+// rather than matched to one compound. The briefs that came with them specify
+// the inbound links; this is the product-page half of that.
+//
+// NOTE: /research/glp1-receptor-agonists-compared is deliberately NOT here.
+// It is held for regulatory review (see research-data.ts), and even once
+// published it must not be linked from product pages — a page reporting human
+// weight-loss outcomes at named doses should not sit one click from a
+// purchase path in either direction.
+
 // Cross-hub links between the two duplicate-topic pairs — /research covers
 // the underlying chemistry, /guides covers the step-by-step procedure. See
 // research-data.ts 'peptide-storage'/'reconstitution-guide' comments for
@@ -71,6 +82,10 @@ export function relatedContentForProduct(title: string, categorySlug?: string): 
     links.push({ href: `/research/${researchMatch.id}`, label: `Research: ${researchMatch.title}` })
   }
 
+  // Quality verification leads, because it is the page that makes PepcoLab's
+  // own batch documentation legible — and it is where the briefs specify an
+  // inbound link from every product page's quality section.
+  links.push({ href: '/research/peptide-quality-failures', label: 'How peptide vials fail QC' })
   links.push({ href: '/guides/coa-interpretation', label: 'How to read this COA' })
   links.push({ href: '/guides/peptide-reconstitution', label: 'Reconstitution guide' })
   links.push({ href: '/guides/storage-conditions', label: 'Storage guide' })

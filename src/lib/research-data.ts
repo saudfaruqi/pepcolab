@@ -884,6 +884,684 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  {
+    id: 'research-peptide-cost',
+    title: 'What Research Peptides Actually Cost — And Why Price Per Milligram Tells You Almost Nothing',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'Peptide prices vary fourfold for the same labelled milligrams. Synthesis length, purification passes, endotoxin testing and net peptide content explain the gap.',
+    tag: 'Guide',
+    readTime: '9 min',
+    excerpt:
+      'Two vials of the same compound, same milligram label, can differ fourfold in price. The gap is rarely margin — synthesis length, purification passes, analytical testing and what the label actually weighs explain almost all of the spread.',
+    image: 'guide',
+    content: [
+      {
+        type: 'intro',
+        text: 'Anyone comparing research peptide suppliers arrives at the same question within about ten minutes: why does a 10 mg vial cost £28 from one source and £115 from another, when both certificates say 99% purity? It is a reasonable question, and the usual answers — brand premium, marketing spend, someone is overcharging — are mostly wrong. Peptide manufacture has an unusually well-documented cost structure, and the published data explain nearly all of the spread in research peptide price.',
+      },
+      { type: 'heading', text: 'Peptides Are Materially Expensive to Make, and the Data Say So' },
+      {
+        type: 'paragraph',
+        text: 'In 2024, fourteen member companies of the ACS Green Chemistry Institute Pharmaceutical Roundtable — including Novo Nordisk, Pfizer, GSK, PolyPeptide and Bachem — published the most comprehensive analysis yet of peptide manufacturing efficiency, covering forty separate commercial and late-stage processes. Their metric is Process Mass Intensity (PMI): kilograms of total material input per kilogram of finished active substance.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Small-molecule drugs: PMI 168–308',
+          'Synthetic oligonucleotides: ~4,299 average',
+          'Synthetic peptides (SPPS, commercial/Phase 3): 1,684–34,585, average 13,063',
+          'Synthetic peptides (early development): ~33,141 average',
+          'Biopharmaceuticals: ~8,300',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'A commercial-scale synthetic peptide consumes, on average, roughly forty to seventy times more material per kilogram of product than a small-molecule drug. That is not inefficiency — it is the arithmetic of solid-phase peptide synthesis, where every amino acid added requires coupling, washing, deprotection and washing again. The wash solvent alone, dimethylformamide, accounts for 39% of total solvent mass across the processes surveyed.',
+      },
+      { type: 'heading', text: 'Length Is the Single Largest Cost Multiplier' },
+      {
+        type: 'paragraph',
+        text: 'The same dataset breaks PMI down per amino acid residue: an average of 874.5 for commercial and Phase 3 SPPS processes, rising to 1,464 for early-development material. For comparison, an oligonucleotide costs roughly 199 PMI units per building block — adding an amino acid is about 4.4 times more material-intensive than adding a nucleotide.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Industrial process guidance targets a cycle time of no more than three hours per residue including all handling operations. Apply that arithmetic and a 15-residue peptide represents roughly 45 hours of reactor occupancy before cleavage; a 31-residue backbone is closer to 90 hours. Reactor time scales linearly with sequence length while yield scales geometrically — each coupling step is high-yielding but never quite 100%, and the losses compound. The practical ceiling for efficient SPPS sits at around 100 amino acids.',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is why a short peptide and a long one are not the same commercial proposition even at identical milligram weights, and why a supplier charging the same per milligram across a catalogue of very different sequences is telling you something about their pricing model rather than their cost base.',
+      },
+      { type: 'heading', text: 'Difficult Sequences Cost More Than Difficult-Sounding Ones' },
+      {
+        type: 'paragraph',
+        text: 'Some sequences are simply harder. The published industrial view is blunt: when synthesising longer peptides, inefficient coupling reactions, low yield and excessive impurity formation are often traceable to the growing protected chain forming secondary structures on the resin — the chain folds on itself and the next residue cannot reach its coupling site.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The evidence for how badly this bites is unusually direct. In a study of 98 synthetic peptides ordered from two international suppliers at a specified minimum 95% purity, all nine cyclic peptides in the batch failed to exceed 90% purity, and eight of the nine came in below 80%. When challenged, the suppliers conceded they could not make those sequences to the requested specification. Every one had arrived with a certificate claiming at least 95%.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Cyclic, disulfide-bridged and aggregation-prone sequences are the worst value per advertised milligram in any catalogue. Solvent choice alone moves the outcome measurably: in one published octapeptide model, crude purity ranged from 86% in DMF down to 51% in DMPU depending purely on the reaction solvent.',
+      },
+      { type: 'heading', text: 'Purification Is Where the Price Is Actually Set' },
+      {
+        type: 'paragraph',
+        text: 'Synthesis and purification together account for 30–70% of total PMI across development stages — and purification\u2019s share rises in commercial-stage processes specifically because the purity expectation is higher. The published data confirm directly what the industry knows: a tighter purity specification costs more per kilogram, and there is no way around it.',
+      },
+      {
+        type: 'paragraph',
+        text: 'What a well-developed purification actually looks like, from a GMP manufacturer\u2019s published worked example: a ~0.5 kg batch entering at roughly 74% crude purity, passing through two chromatographic steps — ion exchange, then reversed phase — and emerging above 99.5% purity with an overall molar yield above 80%.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The trade-off is measurable within a single run. In one documented preparative separation of crude bradykinin at 84.6% starting purity, volume-overloaded loading achieved 100% purity at 77% recovery, while a concentration-overload strategy achieved the same purity at 97% recovery. Same material, same target, twenty points of yield difference depending on how the column was run. Every purification pass removed shows up as margin — and it does not show up on a chromatogram that the seller chose the method for.',
+      },
+      { type: 'heading', text: 'The Milligrams You Are Comparing May Not Be Peptide' },
+      {
+        type: 'paragraph',
+        text: 'A lyophilised peptide vial contains peptide — and also counterion, water, and residual salts from purification. Reversed-phase purification uses trifluoroacetic acid as an ion-pairing agent, so peptides are typically isolated as TFA salts. TFA contributes roughly 114 Da per basic site: the free N-terminus, plus every arginine, lysine and histidine in the sequence.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The worked arithmetic published by peptide manufacturers: a peptide of molecular weight 1000 Da with a free N-terminus and one arginine has a theoretical net peptide content of 1000 ÷ (1000 + 2 × 114) = 81%, before any water is counted. Industry-typical net peptide content for lyophilised material is quoted at 60–90% by one GMP supplier and 50–90% by another, depending on sequence, purity and purification method.',
+      },
+      {
+        type: 'paragraph',
+        text: 'So a vial labelled "10 mg, 99% purity" with 70% net peptide content holds around 7 mg of peptide. The certificate is not lying. Purity and content are simply different quantities: purity is the main peak as a percentage of total peak area on a chromatogram; net peptide content is how many milligrams of peptide are in the vial.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The pathological version of this gap is documented. In a 2024 JAMA Network Open analysis of semaglutide vials test-purchased without prescription online, LC-MS chromatograms showed a single clean peak with no peptide-like impurities — by the vendors\u2019 own metric, immaculate material. Measured polypeptide concentration in those same vials was 14.37%, 8.97% and 7.70% against a stated claim of at least 99% purity.',
+      },
+      {
+        type: 'callout',
+        text: 'Unless a certificate reports net peptide content by amino acid analysis, or assay against a reference standard, the milligram figure is unverified. The ratio is known; the mass is not.',
+      },
+      { type: 'heading', text: 'What a Low Price Actually Removes' },
+      {
+        type: 'paragraph',
+        text: 'Set aside outright fraud and the mechanism is mundane. Cheap peptides are cheap because specific, identifiable costs have been removed:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Fewer or less selective purification passes. In the 98-peptide study, only 43 met the 95% specification their certificates claimed — traced to the supplier\u2019s own chromatographic method lacking selectivity. One peptide reported at ≥95.0% by the supplier measured 80.6% under a selective method.',
+          'No pyrogen control. In the largest available dataset of consumer-submitted research peptide tests — 6,285 samples across 14 compounds — endotoxin data existed for fewer than 4% of them. Chromatographic purity predicted endotoxin essentially not at all (R² below 0.01, p = 0.75).',
+          'No batch discipline upstream. The FDA has inspected 48 GLP-1 API manufacturing sites and found 21% non-compliant with current good manufacturing practice, alongside a documented pattern of firms registering, offering product, refusing inspection and then deregistering.',
+          'Cheaper molecules wearing the right label. Analyses of seized material have identified glycine-extended GHRP analogues and a 192-amino-acid growth hormone variant carrying an extra N-terminal alanine — near-analogues that are cheaper to make and pass a loose mass check.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'One widely held assumption deserves correcting. The largest dataset does not show systematic underdosing: median measured abundance was 101.80% of label, and the vials in the 2024 test-purchase study were actually overfilled by 29–39% in absolute semaglutide mass. The documented failure in this market is variance and contamination, not short measure. Cheap material is not reliably less; it is reliably less predictable.',
+      },
+      { type: 'heading', text: 'How to Read a Price Properly' },
+      {
+        type: 'paragraph',
+        text: 'Price per milligram is a denominator problem. Before it means anything, the numerator has to be defined:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Net peptide content, without which the milligram figure is gross fill weight rather than peptide mass.',
+          'Water content, since lyophilised cake is hygroscopic and water is both dead mass and a degradation accelerant.',
+          'Counterion identity and quantity — TFA at ~114 Da per basic residue is the largest non-peptide mass sink in the vial.',
+          'A disclosed analytical method, run on the specific lot by a laboratory independent of the seller.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'A higher price does not guarantee any of these. But a price that is dramatically lower has to have come from somewhere, and the published cost structure is narrow enough that the possibilities are countable. The wider verification sequence — including identity confirmation and pyrogen testing — is set out in How Research Peptide Vials Fail Quality Control.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. Nothing in this article constitutes guidance on administration, and a research-use designation does not authorise human use.',
+      },
+    ],
+  },
+  {
+    id: 'peptide-quality-failures',
+    title: 'How Research Peptide Vials Fail Quality Control — And the Six Checks That Catch It',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'Purity, net content, identity and endotoxin are four independent measurements. Published testing data show how research peptides actually fail — and how to verify.',
+    tag: 'Guide',
+    readTime: '11 min',
+    excerpt:
+      'Research peptide purity, net content, identity and pyrogen load are four independent variables. A vial can pass one and fail the other three without the certificate saying anything untrue.',
+    image: 'guide',
+    content: [
+      {
+        type: 'intro',
+        text: 'The research peptide market runs on a single number. "99% purity" appears on nearly every product page, and for most buyers it is the whole of quality assurance. It is a real measurement. It is also, on its own, close to uninformative — and the published analytical literature is now detailed enough to show precisely why, and precisely how vials fail.',
+      },
+      { type: 'heading', text: 'What the Testing Data Actually Show' },
+      {
+        type: 'paragraph',
+        text: 'A 2026 preprint analysed 6,285 consumer-submitted third-party test results across 14 compounds including BPC-157, TB-500, retatrutide, semaglutide, tirzepatide, GHK-Cu, PT-141 and CJC-1295. Depending on which acceptance model was applied, between 41.6% and 71.1% of samples failed basic quality criteria. Median purity was high — 99.80% — but median measured abundance was 101.80% of label with an interquartile range of 95–109%. The authors\u2019 conclusion is the important one: dosing accuracy, not gross impurity, was the dominant deficit. Pass rates varied enormously by compound: against the stricter manufactured-product model, TB-500 passed in 7.5% of cases and CJC-1295 in 10.7%.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A caveat worth stating, which most coverage does not: this is voluntarily submitted data, not a random sample, and it is a preprint rather than peer-reviewed work. The authors themselves describe their failure rates as a lower bound.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The cleanest demonstration of the purity/content gap comes from a 2024 study in JAMA Network Open, which test-purchased semaglutide from online sellers operating without prescription. Three lyophilised vials were delivered; three orders were simply non-delivery scams. LC-MS on the delivered material showed a single chromatographic peak with no peptide-like impurities. Measured polypeptide concentration was 14.37%, 8.97% and 7.70% against a labelled claim of at least 99% purity. Sterility testing found no viable organisms — and endotoxin was present in all three at 2.16–8.95 EU/mg.',
+      },
+      {
+        type: 'callout',
+        text: 'Clean chromatogram. Sterile. Pyrogenic. Roughly a tenth peptide by mass. Every one of those statements is simultaneously true.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A separate certificate-integrity study ordered 98 synthetic peptides from two international suppliers at a specified minimum 95% purity. All 98 arrived with certificates stating at least 95%. In-house quality control found 43 of 98 actually met it. The authors identified the mechanism: the supplier\u2019s own chromatographic method clearly lacked selectivity. For one peptide, the supplier\u2019s chromatogram claimed at least 95%; a selective method found 80.6%. For another, the main peak was not the ordered sequence at all — it was the intramolecularly disulfide-cyclised form, 2.1 Da lighter. A pure-looking trace of the wrong molecule.',
+      },
+      {
+        type: 'paragraph',
+        text: 'And sometimes the compound simply is not there. Polish official medicines control laboratory analysis of 601 samples seized between 2020 and 2024 examined a 63-sample post-cycle-therapy subset in which 34.9% did not contain the declared active substance at all — 20.6% contained none whatsoever, and 14.3% contained a different, undeclared one. Within the peptide-specific portion, of 16 samples declared as human chorionic gonadotrophin, 37.5% contained no active substance — mannitol only.',
+      },
+      { type: 'heading', text: 'What Each Analytical Method Actually Proves' },
+      {
+        type: 'paragraph',
+        text: 'The gap between what a test measures and what buyers assume it measures is where most of the confusion lives. RP-HPLC at 210–220 nm measures purity: the main peak area as a percentage of total peak area. It has four blind spots, each evidenced above.',
+      },
+      {
+        type: 'list',
+        items: [
+          'It is a ratio, not a mass. It cannot tell you how much peptide is in the vial.',
+          'It only counts what absorbs UV and elutes. Water, counterion, inorganic salt and bulking agents are invisible to it.',
+          'It is method-dependent. Same peptide, 80.6% or ≥95% depending on column and gradient.',
+          'The main peak may not be your peptide. Disulfide-scrambled and cyclised species can present as a single clean peak.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'LC-MS and high-resolution MS confirm identity — molecular weight, and with MS² the sequence through fragment ions. But they do not give quantity without a calibrated reference standard, do not distinguish D- from L-amino acid epimers (identical mass), do not reliably distinguish leucine from isoleucine, and an intact-mass check with a loose tolerance will not catch an N-terminal glycine (+57 Da) or alanine (+71 Da) extension — both identified in real seized material.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Amino acid analysis — net peptide content. Acid hydrolysis to free amino acids, then quantification. This is the test that answers how many milligrams of peptide are actually in the vial, and its absence is the single largest information gap in grey-market documentation.',
+          'Karl Fischer titration — water content. Lyophilised cake is hygroscopic, and water is both dead mass and a degradation accelerant.',
+          'Ion chromatography — counterion. TFA from reversed-phase purification cannot be completely removed; the FDA expects counterion content and identity on a drug substance specification.',
+          'LAL or recombinant Factor C — endotoxin. Endotoxin is heat-stable and is not removed by sterile filtration. A vial can be sterile and pyrogenic at once. It must be measured directly and reported as a number with a unit.',
+        ],
+      },
+      { type: 'heading', text: 'The Eight Ways a Vial Goes Wrong' },
+      {
+        type: 'paragraph',
+        text: 'Solid-phase synthesis has a characteristic failure catalogue. The question that matters commercially is whether routine RP-HPLC catches each one.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Deletion sequences (incomplete coupling): usually caught, but short polar deletions can co-elute. 74% of all identified impurities in the 98-peptide study involved at least one deletion.',
+          'Insertion sequences (excess amino acid driving double coupling): often caught.',
+          'Racemisation / D-epimers: frequently NOT caught — identical mass, similar retention. Needs chiral analysis. Cysteine racemisation of ~50% has been documented under the wrong base.',
+          'Oxidation of Met, Trp or Cys: usually caught, since +16 Da is more polar and elutes earlier.',
+          'Deamidation of Asn/Gln via succinimide: only partially — the +0.98 Da shift sits at the edge of low-resolution MS.',
+          'Aggregation and high-molecular-weight species: NOT caught. Largely invisible to analytical RP-HPLC; needs SEC or light obscuration.',
+          'Disulfide scrambling: deceptively — presents as a clean single peak that is the wrong molecule.',
+          'Residual protecting groups (tBu, Trt, Pbf adducts): usually caught, since the hydrophobicity shift is large.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Two of these — aggregation and disulfide scrambling — are the ones regulators cite most often. The FDA\u2019s stated rationale for placing several peptides in its higher-risk compounding category is immunogenicity due to the potential for aggregation and peptide-related impurities. Aggregates are precisely what a purity chromatogram does not show you.',
+      },
+      { type: 'heading', text: 'What a Certificate Has to Contain to Mean Anything' },
+      {
+        type: 'paragraph',
+        text: 'There is an established standard, and it is not a matter of opinion. ICH Q7 §11.4 and EU GMP Part II require a certificate of analysis to carry the name of the substance, the batch number, release and expiry dates, a list of each test performed including acceptance limits, numerical results rather than "pass" or "conforms", a dated signature by authorised personnel, and the name of the company or laboratory.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The FDA\u2019s expectation for a peptide drug substance specification goes further: identity by a combination of orthogonal methods, a stability-indicating assay, related substances by orthogonal methods, plus water content, residual solvents, elemental impurities, counterion content and identity, bacterial endotoxins and microbial limits. Measured against that, a certificate reporting only HPLC purity and MS mass confirmation omits six of the nine expected attributes.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Impurity thresholds are what give a purity figure meaning. The European Pharmacopoeia monograph for synthetic peptides sets reporting at 0.1%, identification at 0.5% and qualification at 1.0%. The FDA\u2019s synthetic peptide guidance requires applicants to identify each peptide-related impurity at 0.10% or greater, and justification for any new impurity must include data showing it does not contain sequences with increased MHC affinity — potential T-cell epitopes. A bare percentage with no impurity table cannot speak to any of this.',
+      },
+      {
+        type: 'paragraph',
+        text: 'One point of honesty: there is a great deal of industry talk about fabricated and recycled certificates, and no peer-reviewed study or regulatory publication quantifies it. What can be said with evidence is narrower and more useful — a certificate lacking a lot number, numerical results or acceptance limits fails on its face against ICH Q7, and supplier-generated purity figures have been shown empirically to overstate.',
+      },
+      { type: 'heading', text: 'The Six Checks, in Order' },
+      {
+        type: 'list',
+        items: [
+          'Does the certificate carry a lot number, a test list with acceptance limits, numerical results, and a dated signature? Anything less is not a certificate of analysis in the regulatory sense.',
+          'Does it report net peptide content or assay — not just purity by HPLC? Without it the ratio is known and the mass is not. This is the single most common omission.',
+          'Does it report water content and counterion identity and quantity? These are the two largest non-peptide mass sinks in a lyophilised vial.',
+          'Does it report endotoxin as a number with a unit? Purity predicts pyrogenic load with an R² below 0.01. If it is not measured, it is not known.',
+          'Is identity confirmed by MS² or peptide mapping rather than intact mass alone? Glycine- and alanine-extended analogues have been found in seized material precisely because a loose mass check passes them.',
+          'Was the analysis performed on the specific lot supplied, by a laboratory independent of the seller, with the method disclosed on the certificate? This is the check the published evidence supports most strongly — and the one most rarely satisfied.',
+        ],
+      },
+      { type: 'heading', text: 'The Underlying Point' },
+      {
+        type: 'paragraph',
+        text: 'Purity, content, identity and pyrogen load are four independent measurements. Treating one as a proxy for the others is not a small analytical imprecision; it is the specific error the 2024 test-purchase study documented in its purest form — a flawless chromatogram sitting on top of a vial that was roughly 90% something else. Read "99% purity" as a statement about a chromatogram, not about a vial. Everything else follows from that.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. The analytical framework described here concerns material characterisation; it is not guidance on administration.',
+      },
+    ],
+  },
+  {
+    id: 'bpc-157-vs-tb-500',
+    title: 'BPC-157 vs TB-500 — What the Preclinical Evidence Actually Compares',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'Different molecules, different mechanisms, different evidence problems — and one 2026 head-to-head study finding no additive benefit from combining them.',
+    tag: 'Recovery',
+    readTime: '11 min',
+    excerpt:
+      'BPC-157 vs TB-500 is routinely framed as a choice between interchangeable compounds, or as a natural pairing. The published literature supports neither reading — and in July 2026 they were finally tested head to head.',
+    image: 'recovery',
+    content: [
+      {
+        type: 'intro',
+        text: 'Ask about BPC-157 vs TB-500 and you will usually get an answer that treats them as two versions of the same idea. They occupy the same shelf in almost every research peptide catalogue and are frequently sold as a blend. They are not similar molecules, they do not act through similar mechanisms, and the quality of evidence behind each is different in kind rather than degree.',
+      },
+      { type: 'heading', text: 'What These Compounds Are' },
+      {
+        type: 'paragraph',
+        text: 'BPC-157 is a 15-amino-acid peptide, sequence GEPPPGKPADDAGLV, molecular weight 1419.5 Da. It was first described in 1993 by a group at the University of Zagreb School of Medicine, who reported isolating a roughly 40 kDa protein from human gastric juice — which they named BPC, for Body Protection Compound — and identified this 15-residue fragment as the essential active portion.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A point of accuracy that most supplier literature gets wrong: the parent protein has not, to our knowledge, been deposited in any public sequence database. The 1993 paper characterises it by apparent molecular weight alone. It is therefore not defensible to describe BPC-157 flatly as "a naturally occurring human peptide" — the honest formulation is that its discoverers described it as a partial sequence of a gastric juice protein that has never been independently sequenced.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Its composition is unusual and relevant to handling. BPC-157 contains no methionine, cysteine, tryptophan, asparagine or glutamine — removing the principal oxidative and deamidation degradation routes that dominate most peptides. Its main chemical liability is hydrolysis at the Asp10–Asp11 bond.',
+      },
+      {
+        type: 'paragraph',
+        text: 'TB-500 is where the market gets genuinely confused, and the confusion has an analytical consequence. TB-500 is not thymosin beta-4. It is the N-terminally acetylated seven-residue actin-binding fragment, Ac-LKKTETQ, corresponding to residues 17–23 of Tβ4, with a molecular weight of 889.0 Da. This has been confirmed three independent ways: by high-resolution Orbitrap mass spectrometry performed on actual purchased TB-500 product, by equine doping control analysis, and by the FDA\u2019s own nomenclature, which lists the substance as "Thymosin Beta-4, Fragment (LKKTETQ)."',
+      },
+      {
+        type: 'callout',
+        text: 'Full-length thymosin beta-4 is a 43-residue protein of approximately 4,963 Da — 5.6 times heavier. Both circulate in the research market under the name "TB-500". A mass spectrometry identity check trivially separates them, so any certificate reporting only HPLC purity without an MS-confirmed mass cannot establish which peptide is in the vial. The definitive marker is the +42 Da acetyl shift distinguishing Ac-LKKTETQ (889.0) from free LKKTETQ (847.0).',
+      },
+      { type: 'heading', text: 'Mechanism: A Defined Target Versus a Pleiotropic One' },
+      {
+        type: 'paragraph',
+        text: 'Thymosin beta-4 is the principal actin-monomer-sequestering protein of mammalian cells, established in the early 1990s, and the LKKTETQ motif is its actin-binding site. The landmark functional work is Bock-Marquette and colleagues in Nature (2004): Tβ4 forms a complex with PINCH and integrin-linked kinase, activating Akt; in mice after coronary artery ligation it improved early myocyte survival and cardiac function. Angiogenic activity in endothelial cells and anti-inflammatory activity through blockade of NF-κB p65 nuclear translocation are separately documented.',
+      },
+      {
+        type: 'paragraph',
+        text: 'BPC-157 has no identified receptor. Its effects are described as pleiotropic modulation of several systems — and, a point worth making because it cuts against the usual criticism, the flagship mechanistic papers come from an independent group in Taiwan, not from Zagreb:',
+      },
+      {
+        type: 'list',
+        items: [
+          'VEGFR2–Akt–eNOS signalling (J Mol Med, 2017). Note carefully: BPC-157 upregulated VEGF receptor 2, not VEGF-A itself. This distinction is routinely mangled.',
+          'FAK–paxillin phosphorylation in rat tendon explants and isolated fibroblasts (J Appl Physiol, 2011). The same study found it did not increase proliferation; it increased migration, spreading and survival under oxidative stress.',
+          'Growth hormone receptor upregulation in cultured rat tendon fibroblasts (Molecules, 2014), with JAK2 activated only when growth hormone was also present — a permissive, sensitising effect. BPC-157 did not raise growth hormone.',
+          'Src–caveolin-1–eNOS-mediated vasodilation in isolated rat aorta (Sci Rep, 2020).',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Reported dopaminergic and serotonergic effects rest on rodent behavioural pharmacology, not receptor binding data. No published binding or occupancy study exists.',
+      },
+      { type: 'heading', text: 'Evidence Quality: Two Different Problems' },
+      {
+        type: 'paragraph',
+        text: 'BPC-157\u2019s problem is concentration. A PubMed query for "BPC 157" on 14 September 2026 returned 228 indexed records, of which 176 — just over 77% — carry Sikirić or Seiwerth as an author, and 177 carry a Zagreb affiliation. Zero are indexed as clinical trials or randomised controlled trials.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The nuance most coverage misses: this applies primarily to the efficacy literature. The mechanistic work and the one formal pharmacokinetic study come from independent groups. The accurate statement is that efficacy claims rest heavily on one laboratory while mechanistic and PK characterisation has been independently produced — not that a single lab did everything.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A 2026 review in Pharmaceutics adds sharper methodological criticism: virtually all preclinical studies use a single dose level, precluding any dose–response relationship; no study has characterised the relationship between plasma concentration and observed effect; and human exposure amounts to fewer than 30 subjects across three uncontrolled pilot studies using non-standardised preparations. A registered Phase I trial was terminated without publishing results.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Its pharmacokinetics were characterised independently in 2022 at Air Force Medical University, Xi\u2019an: plasma half-life under 30 minutes in both rats and beagles, linear kinetics, intramuscular bioavailability of 14–19% in rats and 45–51% in dogs. That produces a genuine puzzle — a sub-30-minute half-life against reported effects lasting hours to days.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The widely repeated claim that BPC-157 is "stable in human gastric juice for more than 24 hours" deserves scepticism. Tracing the citation chain leads only to review articles by the same group citing one another. No primary experimental stability study with methods and data appears to exist, and the structural explanation usually offered — a polyproline II helix conferring protease resistance — has not been confirmed by circular dichroism, NMR or crystallography.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Thymosin beta-4\u2019s problem is the opposite. It has been trialled extensively in humans — and has consistently failed on primary efficacy endpoints while proving consistently safe. ARISE-3 (dry eye, Phase 3, n=700) missed its primary endpoint. SEER-1 (neurotrophic keratopathy, Phase 3, n=18) terminated early at p = 0.0656. SEER-3 (EU, 2025) missed its primary endpoint. A Phase 2 pressure ulcer trial (n=72) met safety but not efficacy. A Phase 1 IV study in 40 healthy volunteers found no dose-limiting toxicities.',
+      },
+      {
+        type: 'callout',
+        text: 'The critical caveat: every one of these trials used full-length thymosin beta-4, not TB-500. Trial data for the 43-residue protein cannot be read across to the 7-residue fragment.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The scientific basis for using the fragment at all rests on a specific 2003 study in diabetic and 26-month-aged mice, which concluded that the seven-amino-acid synthetic peptide LKKTETQ was able to promote repair comparable to the parent molecule. That is a real finding — in aged mice, on dermal wound endpoints, using the non-acetylated fragment. A 2024 metabolism study complicates it considerably: using high-resolution mass spectrometry across human serum, enzyme systems and rat urine alongside fibroblast scratch assays, the authors found Ac-LK dominant as an early metabolite and reported that only Ac-LKKTE showed significant wound-healing activity — concluding that previously reported TB-500 activity may be due to its metabolite rather than the parent form.',
+      },
+      { type: 'heading', text: 'The Head-to-Head Study' },
+      {
+        type: 'paragraph',
+        text: 'Until July 2026 no primary study had compared them directly. There is now exactly one. Published in Jt Dis Relat Surg, the design was 32 male Sprague-Dawley rats aged 12 weeks: standardised Achilles transection and repair, four arms of eight — control, BPC-157, TB-500, and the combination — dosed intraperitoneally daily and assessed at four weeks.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Maximum load to failure was higher in both treatment arms, but reached significance only for TB-500 (p = 0.041; BPC-157 p = 0.389).',
+          'Total Bonar score was significantly better for TB-500 only (p = 0.016).',
+          'Total Movin score was significantly better for TB-500 (p = 0.017) and the combination (p = 0.040).',
+          'Collagen type I expression showed no significant difference between any groups (p = 0.242). Collagen type III did differ significantly (p < 0.0001), elevated in the TB-500 arm — a shift in collagen subtype ratio rather than an increase in the mature load-bearing collagen.',
+          'Combined BPC-157 and TB-500 treatment did not confer additional benefits compared to either agent alone.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'How to read this responsibly matters. Eight animals per group, a single dose level for each compound, one four-week timepoint, described by its own authors as exploratory. It does not establish that TB-500 outperforms BPC-157 — the arms were not dose-matched or dose-optimised, so the comparison is between two arbitrary doses rather than two compounds.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The genuinely robust finding is the negative one: no additive effect from combination. The authors\u2019 proposed explanation — convergence on shared downstream pathways — is explicitly labelled as requiring confirmation. For a market that sells the two as a blend, this is the most commercially inconvenient and best-evidenced result available.',
+      },
+      { type: 'heading', text: 'Regulatory Position' },
+      {
+        type: 'paragraph',
+        text: 'Both are prohibited in sport at all times, but under different provisions, and getting these the wrong way round is a common tell. BPC-157 was added to the WADA Prohibited List for 2022 under S0, Non-Approved Substances — the category that exists because nothing else covers it. Thymosin-β4 and its derivatives, e.g. TB-500, has been named explicitly since the 2018 List under S2, Growth Factors. Both are non-specified substances, and neither holds a marketing authorisation in the UK, EU or US.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The FDA position has moved twice in 2026 and most published summaries are behind it. In April 2026, both compounds were removed from the agency\u2019s higher-risk compounding category (503A Category 2) after their nominators withdrew, and now appear under bulk substances nominated but withdrawn. Withdrawal is not approval: the FDA\u2019s stated concern remains that it lacks sufficient information to know whether the drug would cause harm when administered to humans, citing immunogenicity risk from aggregation and peptide-related impurities.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Then on 23–24 July 2026, the Pharmacy Compounding Advisory Committee voted 8–6 with one abstention in favour of adding both BPC-157 and TB-500 to the 503A Bulks List, against the opposition of FDA career scientists. The committee\u2019s recommendation is non-binding, the FDA has not accepted it, and notice-and-comment rulemaking has not taken place. Neither compound is lawfully compoundable today — but anyone reading a summary written before July 2026 is missing the most significant development of the year in either direction.',
+      },
+      { type: 'heading', text: 'Where This Leaves the Comparison' },
+      {
+        type: 'list',
+        items: [
+          'Size: BPC-157 is 15 aa / 1419.5 Da; TB-500 is 7 aa / 889.0 Da.',
+          'Molecular target: BPC-157 none identified; TB-500 binds G-actin via a characterised WH2 motif.',
+          'Degradation liabilities: BPC-157 Asp10–Asp11 hydrolysis, no Met/Cys/Trp/Asn/Gln; TB-500 rapid exopeptidase trimming.',
+          'Plasma half-life: BPC-157 under 30 min (rat, beagle); TB-500 not formally reported.',
+          'Human trials: both zero controlled. Full-length Tβ4 reached Phase 3 — a different molecule.',
+          'WADA: BPC-157 S0 since 2022; TB-500 S2 since 2018.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'The defensible summary is not that one is better. It is that TB-500 has a defined molecular target and no human data; BPC-157 has no identified receptor and an efficacy literature concentrated in one institution. Those are different evidentiary problems, and neither is solved by combining the two.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. All mechanistic and efficacy data referenced here derive from in-vitro studies or preclinical animal models. Neither compound has completed a controlled human trial.',
+      },
+    ],
+  },
+  {
+    id: 'cold-chain-customs-uk-uae',
+    title: 'Do Research Peptides Need Refrigeration? Cold Chain, Customs and Carriers',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'What the published stability data actually say about shipping lyophilised peptides, why dry ice is the wrong coolant, and how UK and UAE customs treat peptides.',
+    tag: 'Guide',
+    readTime: '11 min',
+    excerpt:
+      'The published stability data say lyophilised material is far more robust in transit than the ice packs imply, the real thermal risk sits in customs hold rather than scheduled transit, and dry ice is more dangerous to material in solution than an ambient excursion is.',
+    image: 'guide',
+    content: [
+      {
+        type: 'intro',
+        text: 'Two questions dominate every enquiry about research peptide supply: will it clear customs, and will it survive the journey. Behind the second sits a narrower one — do research peptides need refrigeration in transit at all, or is the ice pack theatre? The honest answers are more interesting than the marketing. One of them contradicts an industry convention that almost every supplier repeats, this one included.',
+      },
+      { type: 'heading', text: 'The Stability Science' },
+      {
+        type: 'paragraph',
+        text: 'The best-characterised published data point comes from a 2026 study of thermally stressed solid-state semaglutide. Using FT-IR, circular dichroism, modulated DSC, RP-HPLC and LC-HRMS, the authors found the material retains its native α-helical conformation up to 60 °C, with helical content falling from 49.07% to 43.75% at 60 °C and collapsing to 0.2% at 80 °C. The amorphous solid has a glass transition temperature of 169 °C.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That figure is the crux. Below its glass transition the matrix is a rigid glass, and molecular mobility — and therefore the hydrolysis, deamidation and aggregation that destroy peptides — is kinetically suppressed. A parcel sitting at 35 °C in a Dubai delivery van is roughly 134 °C below Tg. The temperature that genuinely threatens a lyophilised peptide is not shipping ambient; it is the 60–80 °C range where secondary structure collapses. The same paper still reports temperature-dependent degradation, so robust does not mean unaffected — but the order of magnitude is not what cold-chain marketing implies.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The mechanism is chemistry rather than folklore: deamidation, the dominant degradation route for peptides containing asparagine or glutamine, is water-mediated. Lyophilisation removes the reactant. A dry cake is slow, not inert.',
+      },
+      { type: 'heading', text: 'What the Innovators\u2019 Own Labels Permit' },
+      {
+        type: 'paragraph',
+        text: 'The most persuasive evidence is what manufacturers submitted to regulators about their own products. Ozempic\u2019s FDA label §16 states that after first use the pen can be stored for 56 days at controlled room temperature, 15–30 °C. Mounjaro, per its SmPC, may be stored unrefrigerated for up to 30 days at a temperature not above 30 °C after first use.',
+      },
+      {
+        type: 'paragraph',
+        text: 'These are aqueous, preservative-containing solutions — the physically less stable form — and the regulatory dossier permits a month at 30 °C. They are in-use allowances following an unbroken cold chain, not licence to ship warm, but they establish the scale. A two to four day air transit at ambient is not the event that degrades the molecule.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A useful real-world analogue: a 2021 PLOS ONE study placed insulin under temperature profiles logged in a refugee camp in northern Kenya, oscillating between 25 °C and 37 °C. Weekly HPLC showed conformity to pharmacopoeial guidelines across four weeks, and bioactivity in hepatic cells was identical to material held at 2–8 °C.',
+      },
+      { type: 'heading', text: 'The Asymmetry That Actually Matters: Do Not Freeze' },
+      {
+        type: 'paragraph',
+        text: 'Both labels above carry the same instruction, and it points the opposite way to intuition: do not freeze, and do not use if it has been frozen. Freezing damages peptide solutions through ice-interface denaturation and freeze-concentration.',
+      },
+      {
+        type: 'callout',
+        text: 'This produces the most counter-intuitive conclusion in this article: for any peptide shipped in solution rather than as a lyophilised solid, dry ice poses a greater risk to the material than an ambient excursion does.',
+      },
+      {
+        type: 'paragraph',
+        text: 'For context on what the industry considers a punishing thermal challenge, ICH Q1A(R2) sets the accelerated stability condition at 40 °C and 75% relative humidity for six months. A 72-hour transit is not in the same universe. ICH also supplies the right tool for assessing an excursion — mean kinetic temperature, weighted by the Arrhenius equation — and published modelling shows excursions consume a stability budget rather than producing a binary pass or fail.',
+      },
+      { type: 'heading', text: 'So What Does Cold-Chain Dispatch Actually Buy' },
+      {
+        type: 'list',
+        items: [
+          'Protection against tail risk. Not the scheduled transit, but the parcel forgotten in a sorting hub or standing on a Gulf tarmac where surface temperatures reach the range that does matter.',
+          'Documentary evidence of controlled conditions. A quality-system artefact under Good Distribution Practice, which is a real and separate value.',
+          'Signal — which is legitimate, provided it is not dressed as the first two.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'What it does not buy, on any evidence located: preserved potency that would otherwise be lost over 48–72 hours of ambient transit in a lyophilised product. The genuine dividing line is solid versus solution, not cold versus warm. Lyophilised powder in short transit is a minor thermal event; its real risks are moisture ingress — a stopper and seal problem, not an ice pack problem — and sustained heat above 60 °C. In solution, water is present, degradation chemistry proceeds, and freezing becomes a distinct failure mode. That is where controlled 2–8 °C storage genuinely earns its place: in qualified cold storage at the receiving facility, not in the carrier\u2019s network.',
+      },
+      { type: 'heading', text: 'Standards and Carriers' },
+      {
+        type: 'paragraph',
+        text: 'EU Good Distribution Practice (2013/C 343/01), Chapter 9 governs transport and is applied by the MHRA. Its principle: regardless of mode, it should be possible to demonstrate that the medicines have not been exposed to conditions that may compromise their quality and integrity. Three requirements are worth quoting because they are frequently ignored — container selection must account for the estimated maximum time for transportation including transit storage at customs; monitoring equipment must be calibrated at least once a year; and if cool-packs are used in insulated boxes they must be located so the product does not come into direct contact with the cool-pack.',
+      },
+      {
+        type: 'paragraph',
+        text: 'WHO TRS 961 Annex 9 sets container qualification expectations: a qualified passive system must demonstrate it can hold the required range, documenting the packaging assembly, conditioning regime and the minimum and maximum shipping volume and thermal mass it accommodates. Data loggers should be accurate to ±0.5 °C, recording at least six times per hour. On excursions, affected product is to be quarantined and evaluated, not automatically discarded. ISTA 7E profiles, developed from real-world data across 82 shipping lanes, are published in 72-hour and 144-hour variants.',
+      },
+      {
+        type: 'callout',
+        text: 'One gap worth stating: no neutral, non-commercial source publishes comparative hold times for gel packs versus dry ice versus phase-change materials. Every such figure originates from a packaging manufacturer marketing its own product. WHO TRS 961 treats coolants as ancillary packaging with no independent duration requirement — performance is only ever established by qualifying the complete system.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Dry ice is a regulatory event. Under IATA Packing Instruction 954 it is UN 1845, Class 9 dangerous goods: packaging must vent to prevent pressure build-up, the outer must be marked with UN 1845, the proper shipping name and net weight in kilograms and carry a Class 9 label, the air waybill needs a specific entry, and shippers require IATA or DOT training renewed every two years. Combined with the freezing prohibition above, the conclusion is clean: dry ice is the wrong coolant for peptide product in almost every commercial scenario. It adds a dangerous-goods burden and introduces a failure mode.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A caution on carriers: none of the major integrators publishes a pharmaceutical acceptance rule. DHL routes such questions to a restricted commodities team; UPS accepts certain categories on a contractual basis only. Acceptance here is a commercial relationship, not a public standard.',
+      },
+      { type: 'heading', text: 'The UK Border' },
+      {
+        type: 'paragraph',
+        text: 'The classification framework — the two-limb medicinal product test under the Human Medicines Regulations 2012, the supply prohibitions in regulations 46 and 255, and the penalties in regulation 47 — is covered in full in our UK legal status guide. Two points specific to physically moving goods across the border are worth adding, because both are routinely reported wrongly.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Customs classification saves nothing fiscally. Duty on peptide hormones into the UK is zero. Commodity heading 2937 — which expressly covers chain modified polypeptides used primarily as hormones — attracts 0.00% third-country duty and 20% import VAT. Laboratory reagents under 3822 also attract 0% duty and 20% VAT. Declaring under a reagent code therefore changes no tax outcome whatsoever; the only variable it moves is the regulatory flag attached to the commodity code, which makes misclassification a customs exposure rather than a tax strategy. Separately, VAT liability shifts at £135 consignment value.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The controlled-drug trap. Most research peptides — BPC-157, TB-500, ipamorelin, CJC-1295, sermorelin, tesamorelin, melanotan — are not controlled under the Misuse of Drugs Act 1971. But somatropin, somatotropin, somatrem and human chorionic gonadotrophin are Class C controlled drugs, added by the 1996 Modification Order. There is no simple possession offence for Schedule 4 Part II drugs, but a 2012 amendment narrowed the import exemption to importation carried out in person for administration to that person. A courier parcel is not "in person". Mail-ordering somatropin or hCG into the UK is therefore an importation offence, not merely a medicines-regulation breach — a change made in 2012 and still reported incorrectly across most of the industry.',
+      },
+      { type: 'heading', text: 'The UAE Border' },
+      {
+        type: 'paragraph',
+        text: 'A free zone sits outside the import perimeter by definition. The governing law defines import as bringing products from outside the country or its free zones to the mainland. A free-zone entity can therefore hold and re-export stock without it ever having been imported; the regulatory event occurs at the moment goods cross into the mainland, which requires marketing approval and an import permit. A free-zone licence is not market access, and it is not a workaround for product registration. Note also that the scope of licensable establishments expressly includes research entities, contract research organisations, pharmaceutical laboratories and biobanks — describing an activity as research does not remove it from the licensing regime, it places it inside a different part of it.',
+      },
+      {
+        type: 'paragraph',
+        text: 'On customs specifically: Abu Dhabi Customs lists pharmaceutical preparations and medicines, medical devices, accessories, laboratory solutions and sterilization devices as restricted and requiring health-ministry approval — the closest official UAE text to research-reagent classification, and notable because it routes lab solutions through the health regulator by default rather than a general chemicals regime. Dubai Customs applies 5% duty on CIF value and prohibits bulk quantities for personal use without special permission.',
+      },
+      { type: 'heading', text: 'What This Adds Up To' },
+      {
+        type: 'paragraph',
+        text: 'Transit duration is not the binding constraint on a UK–UAE lane. Against in-use ambient allowances measured in weeks and a solid-state glass transition at 169 °C, a two to four day express transit is thermally trivial. The binding constraints are customs hold time — unbounded, and expressly called out in EU GDP as a factor in container selection — and peak temperature in sorting hubs and on tarmac, neither of which is a function of how fast the plane flies.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The regulatory constraints are the real ones, and they are not symmetrical: the UK question is medicines classification and the controlled-drug carve-outs; the UAE question is mainland entry, registration and the free-zone boundary. Neither is solved by a label, and neither is solved by an ice pack.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. This article addresses material handling and regulatory logistics; it is not guidance on administration, and a research-use designation does not authorise human use.',
+      },
+    ],
+  },
+]
+
+/* ──────────────────────────────────────────────────────────────────────────
+   HELD FOR REGULATORY REVIEW — NOT PUBLISHED
+   ──────────────────────────────────────────────────────────────────────────
+   This article is complete and ready. It is deliberately NOT spread into
+   ARTICLES above, so it does not render, does not appear in /research, is not
+   in the sitemap, and is not indexed.
+
+   WHY IT IS GATED
+   Its own editorial brief flagged it as the one of the five to hold if only
+   one is held, and the reasons are specific rather than theoretical:
+
+     - MHRA named retatrutide in three separate seizure announcements across
+       2025–26, the most recent involving arrests under the Human Medicines
+       Regulations 2012.
+     - The UAE's Emirates Drug Establishment ran a July 2026 campaign naming
+       retatrutide as unapproved, acting against 71 sources and referring 14
+       influencers to the media authority. That is PepcoLab's primary market.
+     - FDA warning letters establish that intended use is inferred from the
+       TOTALITY of a site's copy — mechanism claims, outcome claims, vial
+       sizing, selling bacteriostatic water alongside — and that a
+       "research use only" disclaimer does not cure it.
+     - Eli Lilly filed suit against six companies in August 2026 over
+       retatrutide sales. Civil litigation risk on top of regulatory risk.
+
+   The decisive fact is that PepcoLab SELLS retatrutide. A page reporting
+   human weight-loss percentages at named dose levels, on the same domain as a
+   purchase path for that compound, is precisely the adjacency the FDA's
+   totality-of-copy test is designed to catch. The article itself is written
+   defensibly — published data only, explicit unapproved status, no
+   administration guidance, no CTA — but whether to publish it at all is a
+   commercial risk judgement, not a copywriting one.
+
+   TO PUBLISH: move this object into the ARTICLES array above. Nothing else
+   needs to change. Do NOT link it from product pages, and do not add Product
+   or Offer schema to it.
+   ────────────────────────────────────────────────────────────────────────── */
+export const HELD_FOR_REVIEW_ARTICLES: Article[] = [
+  {
+    id: 'glp1-receptor-agonists-compared',
+    title: 'Retatrutide vs Tirzepatide vs Semaglutide — Pharmacology, Trial Evidence and Regulatory Reality',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'Mono-, dual- and triple-agonist pharmacology, TRIUMPH and SURMOUNT trial data, and the September 2026 regulatory position in the UK and UAE.',
+    tag: 'Metabolic',
+    readTime: '12 min',
+    excerpt:
+      'One is a GLP-1 mono-agonist, one a GIP/GLP-1 dual agonist, one a triple agonist adding glucagon. Two are licensed medicines in the UK; one is approved nowhere on earth.',
+    image: 'metabolic',
+    content: [
+      {
+        type: 'intro',
+        text: 'The incretin class has expanded faster than almost any area of modern pharmacology, and the naming has not helped. Semaglutide, tirzepatide and retatrutide are structurally related, share a synthetic lineage, and are frequently discussed as a progression — as though each were simply a more powerful version of the last. They are meaningfully different molecules with different receptor profiles, and, critically, different legal statuses.',
+      },
+      { type: 'heading', text: 'Receptor Pharmacology' },
+      {
+        type: 'paragraph',
+        text: 'Semaglutide is a GLP-1 receptor mono-agonist built on the human GLP-1(7-37) backbone, 31 amino acids, 4113.58 Da. An α-aminoisobutyric acid substitution at position 8 blocks DPP-4 cleavage; lysine 26 carries a C18 fatty diacid attached through a γ-glutamate and two hydrophilic spacers, driving albumin binding — and an arginine substitution at position 34 exists specifically to ensure only one diacid attaches. Published potency: GLP-1 receptor EC50 of 6.2 pM, binding IC50 of 0.38 nM without albumin rising to 357 nM in 2% albumin, a 940-fold shift that is itself the protraction mechanism. Half-life approximately one week.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Tirzepatide is a 39-residue GIP/GLP-1 dual agonist, 4813.53 Da, C-terminally amidated, with Aib at positions 2 and 13 and a C20 diacid on lysine 20 via an AEEA₂–γGlu linker. Its agonism is deliberately imbalanced: binding and stimulation at the GIP receptor is similar to native GIP, whereas activity at the GLP-1 receptor is less than native GLP-1. Half-life approximately five days.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Retatrutide is a 39-residue triple agonist at GIP, GLP-1 and glucagon receptors, 4731 Da, built on a GIP peptide backbone, with Aib at positions 2 and 20, α-methyl-leucine at 13, and a γGlu-linked long-chain fatty diacid on lysine 17. Half-life approximately six days. In-vitro EC50 values against human receptors, from Coskun and colleagues in Cell Metab (2022): GIP receptor 0.0643 nM, GLP-1 receptor 0.775 nM, glucagon receptor 5.79 nM — characterised in that paper as balanced GCGR and GLP-1R activity but more GIPR activity. Secondary sources frequently invert the direction of the derived potency ratios.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Cagrilintide sits outside this lineage entirely: a 37-residue long-acting acylated amylin analogue derived from pramlintide, 4409 Da, agonist at both amylin and calcitonin receptors, half-life roughly seven to eight days. Two substitutions — N14E and V17R — form an intramolecular salt bridge that blocks amyloid fibril formation, amylin\u2019s defining pharmaceutical problem.',
+      },
+      { type: 'heading', text: 'What the Trials Reported' },
+      {
+        type: 'paragraph',
+        text: 'A note before the numbers, because cross-compound comparison is exactly where this goes wrong: these trials report under different estimands, and figures are not interchangeable between them.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Semaglutide: STEP 1 (NEJM 2021, n = 1,961, 68 weeks) reported mean weight change of −14.9% against −2.4% on placebo. SELECT (NEJM 2023, n = 17,604) reported a primary MACE hazard ratio of 0.80. SUSTAIN-6 carried a safety signal: diabetic retinopathy complications at 3.0% versus 1.8%, p = 0.02.',
+          'Tirzepatide: SURMOUNT-1 (NEJM 2022, n = 2,539, 72 weeks) reported −15.0%, −19.5% and −20.9% at 5, 10 and 15 mg against −3.1% placebo. SURMOUNT-5, head-to-head against semaglutide (NEJM 2025, n = 751), reported −20.2% versus −13.7%.',
+          'Retatrutide: Phase 2 (NEJM 2023, n = 338, 48 weeks) reported −8.7%, −17.1%, −22.8% and −24.2% at 1, 4, 8 and 12 mg against −2.1% placebo. The Phase 3 TRIUMPH programme has since read out: TRIUMPH-1 (May 2026, n = 2,339, 80 wk) −28.3% at 12 mg; TRIUMPH-4 (Dec 2025, n = 445) −28.7%; TRIUMPH-2 (Jul 2026, n = 1,152) up to −20.8%; TRIUMPH-3 (Jul 2026, n = 1,949) up to −22.6%.',
+          'CagriSema: REDEFINE 1 (NEJM 2025, n = 3,417, 68 weeks) reported −20.4% against −3.0% placebo on the treatment-policy estimand.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Adverse events across the class are predominantly gastrointestinal, dose-related and concentrated during escalation. Retatrutide carries two signals that distinguish it: dose-dependent heart rate increases peaking around week 24 before declining, attributable to glucagon receptor agonism, and dysesthesia reported at 12.5% on 12 mg against 0.9% on placebo in TRIUMPH-1. Discontinuation for adverse events rose with dose, reaching 11.3% at 12 mg.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. Trial doses are reported here as published experimental parameters. Nothing in this article constitutes guidance on administration, and a research-use designation does not authorise human use.',
+      },
+      { type: 'heading', text: 'Regulatory Status, September 2026' },
+      {
+        type: 'paragraph',
+        text: 'United Kingdom: semaglutide is licensed as Wegovy for weight management and as Ozempic and Rybelsus for type 2 diabetes. Tirzepatide is licensed as Mounjaro for both indications. Retatrutide, cagrilintide and CagriSema hold no UK marketing authorisation. Eli Lilly has stated it plans to submit a New Drug Application for retatrutide to the FDA in Q1 2027 — meaning that as of today, retatrutide is not approved in any jurisdiction on earth and no application has been filed anywhere.',
+      },
+      {
+        type: 'paragraph',
+        text: 'United Arab Emirates: oral semaglutide was approved by the Emirates Drug Establishment on 1 June 2026, launching 3 June — the first country outside the US. Orforglipron was approved in April 2026. Retatrutide and cagrilintide are not approved. Note that the UAE\u2019s regulator changed: Federal Decree-Law No. 38 of 2024 came into force on 2 January 2025, transferring federal responsibility for medical product approvals from MoHAP to the Emirates Drug Establishment. Any guidance referring to MoHAP as the current federal gate is out of date.',
+      },
+      { type: 'heading', text: 'The Enforcement Position' },
+      {
+        type: 'paragraph',
+        text: 'The FDA has stated that a research-use label is not a defence. Its guidance page, last updated 1 September 2026, refers specifically to illegally sold unapproved drugs containing semaglutide, tirzepatide, retatrutide, survodutide or mazdutide that are falsely labeled for research purposes or not for human consumption, and states that retatrutide and cagrilintide cannot be used in compounding under federal law.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The agency\u2019s warning letters make the mechanism explicit. In a February 2025 letter: despite statements such as research use only, not for human consumption, lab purposes only, evidence obtained from the website establishes that certain products offered for sale are drugs intended for human use. Intended use is determined from the totality of website and marketing copy — mechanism claims, outcome claims, reconstitution instructions, vial sizing, the sale of bacteriostatic water alongside. The disclaimer does not cure it.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The MHRA has named retatrutide in three separate seizure announcements. In October 2025, a Northampton warehouse raid recovered over 2,000 unlicensed retatrutide and tirzepatide pens. In February 2026, a second facility was disrupted across Lincolnshire and Nottinghamshire. On 28 May 2026 the agency\u2019s largest-ever seizure of unlicensed weight-loss medicines recovered approximately 12,000 doses near Northampton, with two men arrested on suspicion of offences under the Human Medicines Regulations 2012. MHRA\u2019s 2025 annual figures: almost £45 million street value, nearly 20 million doses, over 1,500 websites and social accounts disrupted.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The UAE regulator has run the same campaign. On 25 July 2026 the Emirates Drug Establishment reported action against 71 sources marketing or selling unapproved peptide-based weight-loss products, referred 14 social media influencers to the national media authority, and implicated 14 registered establishments. Retatrutide was named specifically as unapproved and still in clinical trials. Notably, no unapproved peptides were found in licensed pharmaceutical warehouses — the illicit supply sits entirely outside the licensed distribution chain.',
+      },
+      { type: 'heading', text: 'Why Impurity Profiles Matter More for This Class' },
+      {
+        type: 'paragraph',
+        text: 'Acylated long-acting analogues are amphiphilic by design — a hydrophobic C18 or C20 diacid grafted onto a hydrophilic peptide. That hydrophobicity drives the intended albumin binding and also unintended self-association. Aggregate control is therefore a potency-relevant specification, not a cosmetic one — and aggregates are largely invisible to analytical RP-HPLC.',
+      },
+      {
+        type: 'paragraph',
+        text: 'More subtly, the acyl group is hydrolytically labile. Losing the fatty diacid produces a des-acyl impurity that is still an intact, receptor-active peptide — but with native-GLP-1-like pharmacokinetics measured in minutes rather than days. It will not appear as missing peptide in a content assay. Only a resolving related-substances method separates it. Mis-acylation regiochemistry is a structurally anticipated failure mode: semaglutide\u2019s Arg34 substitution exists precisely to prevent a second diacid attaching.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A final note on specifications: there is no pharmacopoeial standard establishing 98% or 99% purity for these compounds outside an approved drug substance monograph. Every such figure in circulation is a market convention. A single area-percent number says nothing about which impurities are present, their identity, or counterion content.',
+      },
+    ],
+  },
 ]
 
 
