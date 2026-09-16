@@ -269,7 +269,7 @@ export default function FloatingCalculator() {
         aria-label="Reconstitution calculator"
         className={`fc-fab${mounted ? ' fc-in' : ''}`}
       >
-        {open ? <X size={20} /> : <Calculator size={20} />}
+        {open ? <X size={20} /> : <Calculator size={20} style={{ color: '#0d0d0d' }} />}
       </button>
 
       <style>{`
@@ -288,7 +288,7 @@ export default function FloatingCalculator() {
           padding: 0 14px 0 14px;
           border: none;
           border-radius: 999px;
-          background: #0d0d0d;
+          background: #fff;
           color: #fff;
           font-size: 13.5px;
           font-weight: 700;
