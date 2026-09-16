@@ -14,8 +14,8 @@
 // the item but keeps charging the old total. Create a new link instead and
 // swap the ID here / in the env var.
 //
-// Any variant+quantity without a live, correctly-priced link resolves to the placeholder,
-// so the UI shows "link coming soon" instead of a wrong-price checkout.
+// Any variant+quantity without a valid link resolves to the placeholder,
+// so the UI shows "link coming soon" instead of a broken checkout.
 // ---------------------------------------------------------------------------
 
 // Shopify handles are lowercase; comparison below is case-insensitive.
@@ -48,10 +48,9 @@ const STRABL = 'https://checkout.strabl.io/'
 // NEXT_PUBLIC_* vars are inlined at BUILD time, so every var is referenced
 // literally and a changed value only takes effect after a redeploy.
 // Env var wins when set; otherwise the fallback ID below is used.
-// All 35 links (7 variants × qty 1–5) are listed. 26 were verified live on
-// 16-09-2026. The 9 in PENDING_LINK_IDS below were edited in STRABL and
-// still charged pre-update totals when last checked, so they stay switched
-// off until STRABL shows the correct amount.
+// All 35 links (7 variants × qty 1–5) are live and were checked against
+// STRABL on 16-09-2026. See LINK_CHARGED_TOTAL_AED for the 9 whose amount
+// differs from unit price × quantity.
 const PAYMENT_LINKS: Record<RetaVariantKey, Record<number, string | undefined>> = {
   '10MG': {
     1: process.env.NEXT_PUBLIC_RETA_PAYMENT_LINK_10MG || `${STRABL}PL-YL6IET`,
@@ -104,22 +103,24 @@ const PAYMENT_LINKS: Record<RetaVariantKey, Record<number, string | undefined>> 
   },
 }
 
-// PENDING — links that still charged the old total at the last live check
-// (16-09-2026). They are blocked even if an env var points at them, so a
-// wrong price can never reach checkout. When the STRABL dashboard "Amount"
-// column shows the correct figure for a link, delete its line and redeploy.
-//   ID            link                  charged   must charge
-const PENDING_LINK_IDS = new Set<string>([
-  'PL-YL6IET', // 10mg Pen × 1        580       900
-  'PL-BVQC55', // 20mg Pen × 1        630       1000
-  'PL-HN08LB', // 30mg Pen × 1        680       1100
-  'PL-0QQSVU', // 40mg Pen × 1        730       1200
-  'PL-BTMFTN', // 50mg Pen × 1        780       1300
-  'PL-ZOWHNN', // 60mg Pen × 1        830       1400
-  'PL-RGKVJV', // 60mg Pen × 2        1660      2800
-  'PL-E1E84I', // 60mg Pen × 3        2800      4200
-  'PL-RETZGA', // 60mg Vial × 1       730       1460
-])
+// Links whose STRABL checkout total is NOT unit price × quantity. These were
+// edited in STRABL after creation and kept their original amount (checked
+// live 16-09-2026). They are live by decision; the site shows the amount
+// STRABL actually charges so the button always matches checkout.
+// To bring one in line with Shopify: create a new STRABL link at the correct
+// amount, swap its ID in PAYMENT_LINKS / .env, and delete its line here.
+//   ID                 link               charges   Shopify price
+const LINK_CHARGED_TOTAL_AED: Record<string, number> = {
+  'PL-YL6IET': 580,  // 10mg Pen × 1        580       900
+  'PL-BVQC55': 630,  // 20mg Pen × 1        630       1000
+  'PL-HN08LB': 680,  // 30mg Pen × 1        680       1100
+  'PL-0QQSVU': 730,  // 40mg Pen × 1        730       1200
+  'PL-BTMFTN': 780,  // 50mg Pen × 1        780       1300
+  'PL-ZOWHNN': 830,  // 60mg Pen × 1        830       1400
+  'PL-RGKVJV': 1660, // 60mg Pen × 2        1660      2800
+  'PL-E1E84I': 2800, // 60mg Pen × 3        2800      4200
+  'PL-RETZGA': 730,  // 60mg Vial × 1       730       1460
+}
 
 const PLACEHOLDER_LINK = 'https://PLACEHOLDER-payment-link.example.com/reta'
 
@@ -128,9 +129,11 @@ const STRABL_LINK_RE = /^https:\/\/checkout\.strabl\.io\/(?:payment-link\/)?(PL-
 function validLink(url?: string | null): string | null {
   const value = url?.trim()
   if (!value) return null
-  const match = STRABL_LINK_RE.exec(value)
-  if (!match || PENDING_LINK_IDS.has(match[1])) return null
-  return value
+  return STRABL_LINK_RE.test(value) ? value : null
+}
+
+function linkId(url: string): string | null {
+  return STRABL_LINK_RE.exec(url)?.[1] ?? null
 }
 
 /**
@@ -163,10 +166,14 @@ export function getAvailableRetaQuantities(variantTitle?: string | null): number
   return quantities
 }
 
-/** Total (AED) that the matching STRABL link charges, or null for an unknown variant. */
+/** Total (AED) the matching STRABL link actually charges, or null for an unknown variant. */
 export function getRetaTotalAED(variantTitle: string | null | undefined, quantity: number): number | null {
   const key = resolveRetaVariant(variantTitle)
-  return key ? RETA_UNIT_PRICE_AED[key] * quantity : null
+  if (!key) return null
+  const link = getRetaPaymentLink(variantTitle, quantity)
+  const id = link ? linkId(link) : null
+  if (id && id in LINK_CHARGED_TOTAL_AED) return LINK_CHARGED_TOTAL_AED[id]
+  return RETA_UNIT_PRICE_AED[key] * quantity
 }
 
 /**
