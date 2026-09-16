@@ -111,15 +111,15 @@ const PAYMENT_LINKS: Record<RetaVariantKey, Record<number, string | undefined>> 
 // amount, swap its ID in PAYMENT_LINKS / .env, and delete its line here.
 //   ID                 link               charges   Shopify price
 const LINK_CHARGED_TOTAL_AED: Record<string, number> = {
-  'PL-YL6IET': 580,  // 10mg Pen × 1        580       900
-  'PL-BVQC55': 630,  // 20mg Pen × 1        630       1000
-  'PL-HN08LB': 680,  // 30mg Pen × 1        680       1100
-  'PL-0QQSVU': 730,  // 40mg Pen × 1        730       1200
-  'PL-BTMFTN': 780,  // 50mg Pen × 1        780       1300
-  'PL-ZOWHNN': 830,  // 60mg Pen × 1        830       1400
-  'PL-RGKVJV': 1660, // 60mg Pen × 2        1660      2800
-  'PL-E1E84I': 2800, // 60mg Pen × 3        2800      4200
-  'PL-RETZGA': 730,  // 60mg Vial × 1       730       1460
+  'PL-YL6IET': 900,  // 10mg Pen × 1        580       900
+  'PL-BVQC55': 1000,  // 20mg Pen × 1        630       1000
+  'PL-HN08LB': 1100,  // 30mg Pen × 1        680       1100
+  'PL-0QQSVU': 1200,  // 40mg Pen × 1        730       1200
+  'PL-BTMFTN': 1300,  // 50mg Pen × 1        780       1300
+  'PL-ZOWHNN': 1400,  // 60mg Pen × 1        830       1400
+  'PL-RGKVJV': 2800, // 60mg Pen × 2        1660      2800
+  'PL-E1E84I': 4200, // 60mg Pen × 3        2800      4200
+  'PL-RETZGA': 1460,  // 60mg Vial × 1       730       1460
 }
 
 const PLACEHOLDER_LINK = 'https://PLACEHOLDER-payment-link.example.com/reta'
