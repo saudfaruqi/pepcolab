@@ -11,25 +11,22 @@
 // sit in a small ink pill. That reads as a record of an exchange, which suits
 // a brand whose whole argument is documentation.
 //
-// CHANGES IN THIS PASS
+// FLAT BY DESIGN — no box-shadows anywhere in this file. Depth comes from the
+// ink/paper contrast, the gold rule and 1px borders. The open panel is
+// separated from the page by fill, not by a blur.
+//
+// FIXES IN THIS PASS
 //   1. FOCUS WAS STOLEN ON PAGE LOAD. The focus effect ran on first mount
-//      with open=false, so the launcher grabbed focus the moment the page
-//      hydrated — jumping the viewport to the bottom-right corner. It now
-//      only restores focus on an actual close.
-//   2. NO FOCUS TRAP. Tab walked straight out of an open dialog into the
-//      page behind it. Trapped now, with aria-modal set.
-//   3. LAUNCHER WAS A LOPSIDED PILL. It carried pill padding, a font size
-//      and a gap but rendered an icon alone. It's a circle on phones and a
-//      labelled pill from 561px up, which also makes it far easier to spot.
-//   4. iOS SCROLL LOCK DIDN'T LOCK. overflow:hidden on body does not stop
-//      Safari rubber-banding. Position-fixed with scroll restore does.
-//   5. SINGLE-LINE COMPOSER. Long questions scrolled sideways inside a
-//      44px box. Auto-growing textarea, Enter sends, Shift+Enter newlines.
-//      (.plc-foot was already align-items:flex-end for exactly this.)
-//   6. INSTANT REPLIES read as a lookup table rather than a conversation.
-//      Short typing indicator before each assistant turn.
-//   7. CSS WAS DESKTOP-FIRST with a max-width override undoing it. Base is
-//      the phone layout now; 561px+ layers the corner panel on top.
+//      with open=false, so the launcher grabbed focus at hydration.
+//   2. NO FOCUS TRAP. Tab walked out of the open dialog. Trapped now.
+//   3. LAUNCHER WAS A LOPSIDED PILL — pill padding and a gap, icon alone.
+//      Circle on phones, labelled pill from 561px up.
+//   4. iOS SCROLL LOCK DIDN'T LOCK. overflow:hidden doesn't stop Safari.
+//   5. SINGLE-LINE COMPOSER. Auto-growing textarea, Enter sends.
+//   6. INSTANT REPLIES read as a lookup table. Short typing indicator now.
+//   7. CSS WAS DESKTOP-FIRST with a max-width override undoing it.
+//   8. NUDGE SHOWED ONCE AND NEVER RETURNED. It now recurs on a cycle until
+//      dismissed — see the constants below.
 //
 // All copy lives in lib/chatContent.ts. This file only renders it.
 
@@ -49,10 +46,14 @@ import { useCustomer } from '@/lib/customerContext'
 const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
 const SUPPORT_EMAIL = 'hello@pepcolab.com'
 
-/** Proactive nudge — once per session, never on a repeat page view. */
-const NUDGE_KEY = 'plc:nudged'
-const NUDGE_DELAY = 6000
-const NUDGE_LIFETIME = 12000
+/* Recurring nudge. Longer intervals than the calculator's — support is a
+   fallback, not the main event, so it should ask less often. Only the × or
+   opening the panel stops the cycle for the session. */
+const NUDGE_DISMISS_KEY = 'plc:nudge-dismissed'
+const NUDGE_FIRST_DELAY = 6000
+const NUDGE_VISIBLE = 11000
+const NUDGE_REPEAT = 60000
+const NUDGE_MAX_SHOWS = 3
 
 /** Assistant "thinking" beat. Long enough to read as a reply rather than a
  *  lookup, short enough that nobody waits on it. */
@@ -83,6 +84,7 @@ export default function ChatWidget() {
   const { email: customerEmail, firstName } = useCustomer()
   const [announce, setAnnounce] = useState('')
   const [nudge, setNudge] = useState(false)
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
 
   const panelRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -182,22 +184,41 @@ export default function ChatWidget() {
       () => setSuggestions(context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean)))
   }, [open, context, firstName, pushBot])
 
-  // Proactive nudge. Held until the visitor has actually settled on a page,
-  // dismissible, and capped at once per session so it never nags.
   const dismissNudge = useCallback(() => {
     setNudge(false)
-    try { sessionStorage.setItem(NUDGE_KEY, '1') } catch { /* private mode */ }
+    setNudgeDismissed(true)
+    try { sessionStorage.setItem(NUDGE_DISMISS_KEY, '1') } catch { /* private mode */ }
   }, [])
 
   useEffect(() => {
-    if (hidden) return
-    let seen = true
-    try { seen = sessionStorage.getItem(NUDGE_KEY) === '1' } catch { seen = false }
-    if (seen) return
-    const show = later(() => setNudge(true), NUDGE_DELAY)
-    const hide = later(() => setNudge(false), NUDGE_DELAY + NUDGE_LIFETIME)
-    return () => { clearTimeout(show); clearTimeout(hide) }
-  }, [hidden, later])
+    try {
+      if (sessionStorage.getItem(NUDGE_DISMISS_KEY) === '1') setNudgeDismissed(true)
+    } catch { /* ignore */ }
+  }, [])
+
+  // Recurring cycle: wait → show → hide → wait → show …
+  useEffect(() => {
+    if (hidden || nudgeDismissed) return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+    let shows = 0
+
+    const cycle = (delay: number) => {
+      timer = setTimeout(() => {
+        if (cancelled) return
+        shows += 1
+        setNudge(true)
+        timer = setTimeout(() => {
+          if (cancelled) return
+          setNudge(false)
+          if (shows < NUDGE_MAX_SHOWS) cycle(NUDGE_REPEAT)
+        }, NUDGE_VISIBLE)
+      }, delay)
+    }
+
+    cycle(NUDGE_FIRST_DELAY)
+    return () => { cancelled = true; clearTimeout(timer); setNudge(false) }
+  }, [hidden, nudgeDismissed])
 
   // Focus into the panel on open; return focus to the launcher only on a real
   // close. Previously this ran on first mount and stole focus at hydration.
@@ -333,11 +354,10 @@ export default function ChatWidget() {
           bottom: calc(16px + env(safe-area-inset-bottom, 0px));
           display: flex; align-items: center; justify-content: center;
           width: 58px; height: 58px; padding: 0;
-          border: none; border-radius: 999px; cursor: pointer;
+          border: 1px solid var(--ink); border-radius: 999px; cursor: pointer;
           background: var(--ink); color: #fff;
           font-family: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: -.01em;
-          box-shadow: 0 8px 28px rgba(13,13,13,.3);
-          transition: transform .15s ease, box-shadow .15s ease;
+          transition: transform .15s ease, background .15s ease;
           -webkit-tap-highlight-color: transparent;
         }
         .plc-launcher:active { transform: scale(.94); }
@@ -360,7 +380,7 @@ export default function ChatWidget() {
           display: flex; align-items: stretch; overflow: hidden;
           max-width: calc(100vw - 32px);
           background: var(--ink); color: #fff;
-          border-radius: 13px; box-shadow: 0 12px 34px rgba(13,13,13,.3);
+          border: 1px solid var(--ink); border-radius: 13px;
           opacity: 0; transform: translateY(8px);
           animation: plcNudgeIn .28s ease forwards;
         }
@@ -484,7 +504,7 @@ export default function ChatWidget() {
                       text-decoration: none; cursor: pointer; transition: border-color .15s, background .15s; }
         .plc-action:hover { border-color: rgba(13,13,13,.35); }
         .plc-action-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-        .plc-action-primary:hover { background: #1c1c1c; border-color: #1c1c1c; }
+        .plc-action-primary:hover { background: #262626; border-color: #262626; }
 
         .plc-label { font-size: 13px; font-weight: 600; color: var(--ink); display: block; margin: 20px 0 8px; }
         .plc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -501,15 +521,17 @@ export default function ChatWidget() {
             width: auto; height: 52px; gap: 9px; padding: 0 20px 0 17px;
           }
           .plc-launcher-label { display: inline; }
-          .plc-launcher:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(13,13,13,.34); }
+          .plc-launcher:hover { background: #262626; border-color: #262626; }
 
           .plc-nudge { right: 20px; bottom: 84px; max-width: 280px; }
 
+          /* Corner panel. A 1px line and the paper fill do the separating —
+             the 60px drop shadow this replaced was the heaviest thing on the
+             page and read as a stock support widget. */
           .plc-panel {
             inset: auto; right: 20px; bottom: 20px;
             width: 384px; height: min(620px, calc(100vh - 40px));
-            border: 1px solid var(--line); border-radius: 18px;
-            box-shadow: 0 20px 60px rgba(13,13,13,.22);
+            border: 1px solid rgba(13,13,13,.18); border-radius: 18px;
             animation: plcIn .2s cubic-bezier(.2,.8,.3,1);
           }
           @keyframes plcIn { from { opacity: 0; transform: translateY(10px) scale(.99) } to { opacity: 1; transform: none } }

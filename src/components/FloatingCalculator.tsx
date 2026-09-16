@@ -20,26 +20,33 @@ import { Calculator, X, ChevronRight } from 'lucide-react'
  * The maths is dilution arithmetic only: mass in, volume in, concentration out.
  * It does not and should not take personal inputs of any kind.
  *
- * STYLING — mobile-first. Base rules describe the phone layout (circular FAB,
- * full-width bottom sheet). The `min-width: 641px` block layers the desktop
- * pill + anchored card on top. Previously this was written desktop-first with
- * a max-width override, which meant phones paid for styles they then undid.
+ * STYLING — mobile-first and flat. Base rules describe the phone layout
+ * (circular FAB, full-width bottom sheet); the `min-width: 641px` block layers
+ * the desktop pill and anchored card on top. Separation comes from borders and
+ * fill contrast rather than drop shadows — there are none in this file.
  */
 
 /** Routes where a floating button is unwelcome — it can overlap the Strabl
  *  checkout UI, and it's a distraction at the point of payment. */
 const HIDDEN_PREFIXES = ['/checkout']
 
-/** Show the nudge bubble once per browsing session, not on every page view. */
-const PROMPT_KEY = 'fc:prompt-seen'
-const PROMPT_DELAY = 2600
-const PROMPT_LIFETIME = 9000
+/* Nudge timing. The bubble RECURS: it hides itself after PROMPT_VISIBLE and
+   returns after PROMPT_REPEAT, up to PROMPT_MAX_SHOWS times. Only an explicit
+   dismissal (the ×) or opening the calculator stops it for the session.
+   Previously one timer hid it for good, so anyone who glanced away during the
+   first few seconds never saw it again. */
+const PROMPT_DISMISS_KEY = 'fc:prompt-dismissed'
+const PROMPT_FIRST_DELAY = 2600
+const PROMPT_VISIBLE = 9000
+const PROMPT_REPEAT = 40000
+const PROMPT_MAX_SHOWS = 4
 
 export default function FloatingCalculator() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [prompt, setPrompt] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
 
   const [mg, setMg] = useState('10')
   const [ml, setMl] = useState('2')
@@ -53,10 +60,11 @@ export default function FloatingCalculator() {
 
   const dismissPrompt = useCallback(() => {
     setPrompt(false)
+    setDismissed(true)
     try {
-      sessionStorage.setItem(PROMPT_KEY, '1')
+      sessionStorage.setItem(PROMPT_DISMISS_KEY, '1')
     } catch {
-      /* private mode — the bubble just shows again next page. No harm. */
+      /* private mode — the bubble just cycles again next page. No harm. */
     }
   }, [])
 
@@ -67,25 +75,41 @@ export default function FloatingCalculator() {
     return () => clearTimeout(t)
   }, [])
 
-  // One-time nudge. Held back until after the FAB has finished animating in,
-  // so it reads as an invitation rather than an interruption.
+  // Read the dismissal client-side — reading storage in a useState initialiser
+  // would break SSR hydration.
   useEffect(() => {
-    if (hidden) return
-    let seen = true
     try {
-      seen = sessionStorage.getItem(PROMPT_KEY) === '1'
-    } catch {
-      seen = false
-    }
-    if (seen) return
+      if (sessionStorage.getItem(PROMPT_DISMISS_KEY) === '1') setDismissed(true)
+    } catch { /* ignore */ }
+  }, [])
 
-    const show = setTimeout(() => setPrompt(true), PROMPT_DELAY)
-    const hide = setTimeout(() => setPrompt(false), PROMPT_DELAY + PROMPT_LIFETIME)
-    return () => {
-      clearTimeout(show)
-      clearTimeout(hide)
+  // Recurring nudge cycle: wait → show → hide → wait → show …
+  useEffect(() => {
+    if (hidden || dismissed) return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+    let shows = 0
+
+    const cycle = (delay: number) => {
+      timer = setTimeout(() => {
+        if (cancelled) return
+        shows += 1
+        setPrompt(true)
+        timer = setTimeout(() => {
+          if (cancelled) return
+          setPrompt(false)
+          if (shows < PROMPT_MAX_SHOWS) cycle(PROMPT_REPEAT)
+        }, PROMPT_VISIBLE)
+      }, delay)
     }
-  }, [hidden])
+
+    cycle(PROMPT_FIRST_DELAY)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+      setPrompt(false)
+    }
+  }, [hidden, dismissed])
 
   // Close whenever the route changes — otherwise the panel stays open on top
   // of a page the visitor has already navigated away from.
@@ -117,15 +141,23 @@ export default function FloatingCalculator() {
     }
   }, [open])
 
-  // Lock the page behind the sheet on phones. Without this, scrolling past the
-  // end of the sheet scrolls the page underneath it.
+  // Lock the page behind the sheet on phones. overflow:hidden alone does not
+  // stop iOS Safari rubber-banding — position-fixed with a scroll restore does.
   useEffect(() => {
     if (!open) return
     if (!window.matchMedia('(max-width: 640px)').matches) return
-    const prev = document.body.style.overflow
+    const y = window.scrollY
+    const { overflow, position, top, width } = document.body.style
     document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${y}px`
+    document.body.style.width = '100%'
     return () => {
-      document.body.style.overflow = prev
+      document.body.style.overflow = overflow
+      document.body.style.position = position
+      document.body.style.top = top
+      document.body.style.width = width
+      window.scrollTo(0, y)
     }
   }, [open])
 
@@ -252,10 +284,10 @@ export default function FloatingCalculator() {
         </div>
       )}
 
-      {/* Nudge bubble. Tapping it opens the calculator; the × dismisses it for
-          the session so it never becomes nagging. */}
+      {/* Nudge bubble. Tapping it opens the calculator; the × stops the cycle
+          for the session so it never becomes nagging. */}
       {prompt && !open && mounted && (
-        <div className={`fc-prompt${mounted ? ' fc-prompt-in' : ''}`} role="status">
+        <div className="fc-prompt" role="status">
           <button
             className="fc-prompt-body"
             onClick={() => {
@@ -304,17 +336,15 @@ export default function FloatingCalculator() {
           width: 58px;
           height: 58px;
           padding: 0;
-          border: none;
+          /* Flat. Contrast against the page does the separating, not a shadow. */
+          border: 1px solid #0d0d0d;
           border-radius: 999px;
-          /* Solid dark fill rather than white-on-white: the old rule set a
-             white background AND white text, so the icon vanished when open. */
           background: #0d0d0d;
           color: #fff;
           cursor: pointer;
-          box-shadow: 0 10px 30px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.08) inset;
           opacity: 0;
           transform: translateY(12px) scale(.94);
-          transition: opacity .35s ease, transform .2s ease, box-shadow .25s ease;
+          transition: opacity .35s ease, transform .2s ease, background .15s ease;
           -webkit-tap-highlight-color: transparent;
         }
         .fc-fab.fc-in { opacity: 1; transform: translateY(0) scale(1); }
@@ -322,8 +352,7 @@ export default function FloatingCalculator() {
         .fc-fab:focus-visible { outline: 2px solid #1A56DB; outline-offset: 3px; }
         .fc-fab-label { display: none; }
 
-        /* Attention ring — pulses only while the nudge is on screen, so it
-           draws the eye once and then leaves the visitor alone. */
+        /* Attention ring — pulses only while the nudge is on screen. */
         .fc-fab.fc-attn::after {
           content: '';
           position: absolute;
@@ -349,8 +378,8 @@ export default function FloatingCalculator() {
           max-width: calc(100vw - 32px);
           background: #0d0d0d;
           color: #fff;
+          border: 1px solid #0d0d0d;
           border-radius: 12px;
-          box-shadow: 0 12px 34px rgba(0,0,0,.3);
           opacity: 0;
           transform: translateY(8px);
           animation: fcPromptIn .3s ease forwards;
@@ -393,11 +422,9 @@ export default function FloatingCalculator() {
           -webkit-overflow-scrolling: touch;
           overscroll-behavior: contain;
           background: #fff;
-          border: 1px solid #e5e7eb;
-          border-bottom: none;
+          border-top: 1px solid #e5e7eb;
           border-radius: 18px 18px 0 0;
           padding: 10px 18px max(18px, env(safe-area-inset-bottom));
-          box-shadow: 0 -12px 40px rgba(0,0,0,.18);
           animation: fcSheetIn .26s cubic-bezier(.32,.72,0,1);
         }
         @keyframes fcSheetIn { from { transform: translateY(100%) } to { transform: translateY(0) } }
@@ -440,11 +467,13 @@ export default function FloatingCalculator() {
           outline: none;
           font-variant-numeric: tabular-nums;
           -moz-appearance: textfield;
-          transition: border-color .15s ease, box-shadow .15s ease;
+          transition: border-color .15s ease;
         }
         .fc-input::-webkit-outer-spin-button,
         .fc-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
-        .fc-input:focus { border-color: #1A56DB; box-shadow: 0 0 0 3px rgba(26,86,219,.12) }
+        /* Focus reads as a colour change on the border — the soft ring it
+           replaced was a box-shadow. */
+        .fc-input:focus { border-color: #1A56DB }
         .fc-suffix {
           position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
           font-size: 12px; font-weight: 600; color: #9ca3af; pointer-events: none;
@@ -482,11 +511,9 @@ export default function FloatingCalculator() {
             letter-spacing: -.01em;
           }
           .fc-fab-label { display: inline }
-          .fc-fab:hover { box-shadow: 0 14px 38px rgba(0,0,0,.4) }
+          .fc-fab:hover { background: #262626; border-color: #262626 }
 
           .fc-prompt { bottom: calc(84px + var(--fc-offset, 0px)); max-width: 260px }
-
-          .fc-backdrop { background: rgba(0,0,0,.2) }
 
           .fc-panel {
             left: 20px;
@@ -497,13 +524,14 @@ export default function FloatingCalculator() {
             border: 1px solid #e5e7eb;
             border-radius: 16px;
             padding: 18px;
-            box-shadow: 0 24px 60px rgba(0,0,0,.18);
             animation: fcCardIn .2s ease;
           }
           @keyframes fcCardIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
           .fc-grabber { display: none }
         }
 
+        /* The backdrop does the work the panel shadow used to: it separates
+           the calculator from the page without any blur. */
         .fc-backdrop {
           position: fixed;
           inset: 0;
@@ -511,6 +539,7 @@ export default function FloatingCalculator() {
           z-index: 44;
           animation: fcFade .2s ease;
         }
+        @media (min-width: 641px) { .fc-backdrop { background: rgba(0,0,0,.2) } }
         @keyframes fcFade { from { opacity: 0 } to { opacity: 1 } }
 
         @media (prefers-reduced-motion: reduce) {
