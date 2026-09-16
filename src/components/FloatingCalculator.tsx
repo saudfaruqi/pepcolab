@@ -1,9 +1,9 @@
 // src/components/FloatingCalculator.tsx
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { Calculator, X } from 'lucide-react'
+import { Calculator, X, ChevronRight } from 'lucide-react'
 
 /**
  * Floating reconstitution calculator — one instance, mounted globally in
@@ -13,24 +13,33 @@ import { Calculator, X } from 'lucide-react'
  * not a "dosage calculator":
  *
  *   1. "Dosage" implies administration to a person, which contradicts the
- *      research-use-only statement on every other surface of the site. It's
- *      the most quotable word on the page for anyone assessing whether the
- *      RUO framing is genuine.
+ *      research-use-only statement on every other surface of the site.
  *   2. "peptide reconstitution calculator" is the term people actually search,
- *      and no UK or UAE supplier ranks for it. "Dosage calculator" has neither
- *      the volume nor the open field.
+ *      and no UK or UAE supplier ranks for it.
  *
- * The maths is identical either way: mass in, volume in, concentration out.
+ * The maths is dilution arithmetic only: mass in, volume in, concentration out.
+ * It does not and should not take personal inputs of any kind.
+ *
+ * STYLING — mobile-first. Base rules describe the phone layout (circular FAB,
+ * full-width bottom sheet). The `min-width: 641px` block layers the desktop
+ * pill + anchored card on top. Previously this was written desktop-first with
+ * a max-width override, which meant phones paid for styles they then undid.
  */
 
 /** Routes where a floating button is unwelcome — it can overlap the Strabl
  *  checkout UI, and it's a distraction at the point of payment. */
 const HIDDEN_PREFIXES = ['/checkout']
 
+/** Show the nudge bubble once per browsing session, not on every page view. */
+const PROMPT_KEY = 'fc:prompt-seen'
+const PROMPT_DELAY = 2600
+const PROMPT_LIFETIME = 9000
+
 export default function FloatingCalculator() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [prompt, setPrompt] = useState(false)
 
   const [mg, setMg] = useState('10')
   const [ml, setMl] = useState('2')
@@ -38,6 +47,18 @@ export default function FloatingCalculator() {
 
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const firstFieldRef = useRef<HTMLInputElement>(null)
+
+  const hidden = HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))
+
+  const dismissPrompt = useCallback(() => {
+    setPrompt(false)
+    try {
+      sessionStorage.setItem(PROMPT_KEY, '1')
+    } catch {
+      /* private mode — the bubble just shows again next page. No harm. */
+    }
+  }, [])
 
   // Defer the first paint by a tick so the button fades in after the page
   // settles rather than competing with LCP.
@@ -45,6 +66,26 @@ export default function FloatingCalculator() {
     const t = setTimeout(() => setMounted(true), 400)
     return () => clearTimeout(t)
   }, [])
+
+  // One-time nudge. Held back until after the FAB has finished animating in,
+  // so it reads as an invitation rather than an interruption.
+  useEffect(() => {
+    if (hidden) return
+    let seen = true
+    try {
+      seen = sessionStorage.getItem(PROMPT_KEY) === '1'
+    } catch {
+      seen = false
+    }
+    if (seen) return
+
+    const show = setTimeout(() => setPrompt(true), PROMPT_DELAY)
+    const hide = setTimeout(() => setPrompt(false), PROMPT_DELAY + PROMPT_LIFETIME)
+    return () => {
+      clearTimeout(show)
+      clearTimeout(hide)
+    }
+  }, [hidden])
 
   // Close whenever the route changes — otherwise the panel stays open on top
   // of a page the visitor has already navigated away from.
@@ -76,6 +117,26 @@ export default function FloatingCalculator() {
     }
   }, [open])
 
+  // Lock the page behind the sheet on phones. Without this, scrolling past the
+  // end of the sheet scrolls the page underneath it.
+  useEffect(() => {
+    if (!open) return
+    if (!window.matchMedia('(max-width: 640px)').matches) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
+  // Focus the first field on open so a keyboard user lands inside the panel,
+  // and phones raise the numeric keypad without an extra tap.
+  useEffect(() => {
+    if (!open) return
+    const t = setTimeout(() => firstFieldRef.current?.focus(), 120)
+    return () => clearTimeout(t)
+  }, [open])
+
   const result = useMemo(() => {
     const mass = parseFloat(mg)
     const volume = parseFloat(ml)
@@ -100,84 +161,42 @@ export default function FloatingCalculator() {
     }
   }, [mg, ml, target])
 
-  if (HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))) return null
+  if (hidden) return null
 
   const field = (
     label: string,
     value: string,
     setValue: (v: string) => void,
     suffix: string,
-    step = '1'
+    step: string,
+    ref?: React.Ref<HTMLInputElement>
   ) => (
-    <label style={{ display: 'block' }}>
-      <span
-        style={{
-          display: 'block',
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: '.1em',
-          textTransform: 'uppercase',
-          color: '#9ca3af',
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ position: 'relative' }}>
+    <label className="fc-field">
+      <span className="fc-label">{label}</span>
+      <div className="fc-input-wrap">
         <input
+          ref={ref}
           type="number"
           inputMode="decimal"
           min="0"
           step={step}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          style={{
-            width: '100%',
-            height: 42,
-            borderRadius: 10,
-            border: '1px solid #e5e7eb',
-            background: '#fff',
-            padding: '0 46px 0 12px',
-            fontSize: 16, // 16px prevents iOS Safari zooming on focus
-            fontWeight: 600,
-            color: '#0d0d0d',
-            outline: 'none',
-            fontVariantNumeric: 'tabular-nums',
-          }}
+          onFocus={(e) => e.currentTarget.select()}
+          className="fc-input"
         />
-        <span
-          style={{
-            position: 'absolute',
-            left: 12,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#9ca3af',
-            pointerEvents: 'none',
-          }}
-        >
-          {suffix}
-        </span>
+        {/* Suffix sits on the right, and the input reserves padding on the
+            right to match. The previous version padded right but drew the
+            suffix on the left, so it overlapped the typed value. */}
+        <span className="fc-suffix">{suffix}</span>
       </div>
     </label>
   )
 
-  const row = (label: string, value: string) => (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        gap: 12,
-        padding: '9px 0',
-        borderBottom: '1px solid #f0f0f0',
-      }}
-    >
-      <span style={{ fontSize: 12.5, color: '#6b7280' }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 700, color: '#0d0d0d', fontVariantNumeric: 'tabular-nums' }}>
-        {value}
-      </span>
+  const row = (label: string, value: string, strong = false) => (
+    <div className="fc-row">
+      <span className="fc-row-label">{label}</span>
+      <span className={`fc-row-value${strong ? ' fc-row-value-strong' : ''}`}>{value}</span>
     </div>
   )
 
@@ -186,178 +205,322 @@ export default function FloatingCalculator() {
       {open && <div className="fc-backdrop" onClick={() => setOpen(false)} />}
 
       {open && (
-        <div ref={panelRef} role="dialog" aria-label="Reconstitution calculator" className="fc-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Reconstitution calculator" className="fc-panel">
+          <div className="fc-grabber" aria-hidden="true" />
+
+          <div className="fc-head">
             <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#0d0d0d', letterSpacing: '-.02em' }}>
-                Reconstitution calculator
-              </div>
-              <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 2 }}>
-                Concentration after adding diluent.
-              </div>
+              <div className="fc-title">Reconstitution calculator</div>
+              <div className="fc-sub">Concentration after adding diluent.</div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close calculator"
-              style={{
-                border: 'none',
-                background: '#f3f4f6',
-                borderRadius: 8,
-                width: 28,
-                height: 28,
-                display: 'grid',
-                placeItems: 'center',
-                cursor: 'pointer',
-                color: '#6b7280',
-                flexShrink: 0,
-              }}
-            >
-              <X size={14} />
+            <button onClick={() => setOpen(false)} aria-label="Close calculator" className="fc-close">
+              <X size={16} />
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-            {field('Vial contents', mg, setMg, 'mg', '0.5')}
+          <div className="fc-grid">
+            {field('Vial contents', mg, setMg, 'mg', '0.5', firstFieldRef)}
             {field('Diluent added', ml, setMl, 'ml', '0.1')}
           </div>
 
-          <div style={{ marginBottom: 14 }}>{field('Target quantity', target, setTarget, 'mcg', '10')}</div>
+          <div className="fc-grid-single">{field('Target quantity', target, setTarget, 'mcg', '10')}</div>
 
           {result ? (
-            <div style={{ background: '#F9FAFB', border: '1px solid #f0f0f0', borderRadius: 12, padding: '4px 14px 10px' }}>
-              {row('Concentration', `${result.mgPerMl.toFixed(2)} mg/ml`)}
-              {row('', `${Math.round(result.mcgPerMl).toLocaleString()} mcg/ml`)}
+            <div className="fc-result">
+              {row('Concentration', `${result.mgPerMl.toFixed(2)} mg/ml`, true)}
+              {row('In micrograms', `${Math.round(result.mcgPerMl).toLocaleString()} mcg/ml`)}
               {row('Per 0.01 ml', `${Math.round(result.mcgPerGraduation).toLocaleString()} mcg`)}
               {result.volumeForTarget != null && (
                 <>
-                  {row(`Volume for ${Number(target).toLocaleString()} mcg`, `${result.volumeForTarget.toFixed(3)} ml`)}
+                  {row(`Volume for ${Number(target).toLocaleString()} mcg`, `${result.volumeForTarget.toFixed(3)} ml`, true)}
                   {row('Graduations (0.01 ml)', result.graduationsForTarget!.toFixed(1))}
                   {result.portions != null && (
-                    <div style={{ paddingTop: 9, fontSize: 12, color: '#6b7280' }}>
-                      Vial yields <strong style={{ color: '#0d0d0d' }}>{Math.floor(result.portions)}</strong> portions at that quantity.
+                    <div className="fc-note">
+                      Vial yields <strong>{Math.floor(result.portions)}</strong> portions at that quantity.
                     </div>
                   )}
                 </>
               )}
             </div>
           ) : (
-            <div
-              style={{
-                background: '#FFFBEB',
-                border: '1px solid #FDE68A',
-                borderRadius: 12,
-                padding: '10px 14px',
-                fontSize: 12.5,
-                color: '#92400E',
-              }}
-            >
-              Enter a vial mass and a diluent volume greater than zero.
-            </div>
+            <div className="fc-warn">Enter a vial mass and a diluent volume greater than zero.</div>
           )}
 
-          <p style={{ fontSize: 10.5, lineHeight: 1.6, color: '#9ca3af', margin: '12px 0 0' }}>
+          <p className="fc-disclaimer">
             For laboratory use only. Figures are dilution arithmetic, not guidance on administration.
           </p>
         </div>
       )}
 
+      {/* Nudge bubble. Tapping it opens the calculator; the × dismisses it for
+          the session so it never becomes nagging. */}
+      {prompt && !open && mounted && (
+        <div className={`fc-prompt${mounted ? ' fc-prompt-in' : ''}`} role="status">
+          <button
+            className="fc-prompt-body"
+            onClick={() => {
+              dismissPrompt()
+              setOpen(true)
+            }}
+          >
+            <span>Work out your vial concentration</span>
+            <ChevronRight size={14} className="fc-prompt-chev" />
+          </button>
+          <button className="fc-prompt-x" onClick={dismissPrompt} aria-label="Dismiss">
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
       <button
         ref={buttonRef}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          dismissPrompt()
+          setOpen((v) => !v)
+        }}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label="Reconstitution calculator"
-        className={`fc-fab${mounted ? ' fc-in' : ''}`}
+        className={`fc-fab${mounted ? ' fc-in' : ''}${prompt && !open ? ' fc-attn' : ''}`}
       >
-        {open ? <X size={20} /> : <Calculator size={20} style={{ color: '#0d0d0d' }} />}
+        {open ? <X size={22} /> : <Calculator size={22} />}
+        <span className="fc-fab-label">Calculator</span>
       </button>
 
       <style>{`
+        /* ---------- MOBILE FIRST: base = phone ---------- */
+
         .fc-fab {
           position: fixed;
-          left: 20px;
+          left: 16px;
           /* --fc-offset lets a page with its own sticky bar (e.g. a mobile
              add-to-cart bar) push the button up without editing this file:
              set --fc-offset on :root or a page wrapper. */
-          bottom: calc(20px + env(safe-area-inset-bottom) + var(--fc-offset, 0px));
+          bottom: calc(16px + env(safe-area-inset-bottom) + var(--fc-offset, 0px));
           z-index: 45;               /* under CartDrawer, over page content */
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          height: 48px;
-          padding: 0 14px 0 14px;
+          justify-content: center;
+          width: 58px;
+          height: 58px;
+          padding: 0;
           border: none;
           border-radius: 999px;
-          background: #fff;
+          /* Solid dark fill rather than white-on-white: the old rule set a
+             white background AND white text, so the icon vanished when open. */
+          background: #0d0d0d;
           color: #fff;
-          font-size: 13.5px;
-          font-weight: 700;
-          letter-spacing: -.01em;
           cursor: pointer;
-          box-shadow: 0 8px 28px rgba(0,0,0,.28);
+          box-shadow: 0 10px 30px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.08) inset;
           opacity: 0;
-          transform: translateY(12px) scale(.96);
-          transition: opacity .35s ease, transform .35s ease, box-shadow .25s ease;
+          transform: translateY(12px) scale(.94);
+          transition: opacity .35s ease, transform .2s ease, box-shadow .25s ease;
+          -webkit-tap-highlight-color: transparent;
         }
         .fc-fab.fc-in { opacity: 1; transform: translateY(0) scale(1); }
-        .fc-fab:hover { box-shadow: 0 12px 34px rgba(0,0,0,.36); }
+        .fc-fab:active { transform: scale(.94); }
         .fc-fab:focus-visible { outline: 2px solid #1A56DB; outline-offset: 3px; }
+        .fc-fab-label { display: none; }
 
+        /* Attention ring — pulses only while the nudge is on screen, so it
+           draws the eye once and then leaves the visitor alone. */
+        .fc-fab.fc-attn::after {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border-radius: 999px;
+          border: 2px solid rgba(26,86,219,.55);
+          animation: fcRing 1.9s ease-out infinite;
+          pointer-events: none;
+        }
+        @keyframes fcRing {
+          0%   { transform: scale(.94); opacity: .9 }
+          70%  { transform: scale(1.22); opacity: 0 }
+          100% { transform: scale(1.22); opacity: 0 }
+        }
+
+        .fc-prompt {
+          position: fixed;
+          left: 16px;
+          bottom: calc(84px + env(safe-area-inset-bottom) + var(--fc-offset, 0px));
+          z-index: 45;
+          display: flex;
+          align-items: stretch;
+          max-width: calc(100vw - 32px);
+          background: #0d0d0d;
+          color: #fff;
+          border-radius: 12px;
+          box-shadow: 0 12px 34px rgba(0,0,0,.3);
+          opacity: 0;
+          transform: translateY(8px);
+          animation: fcPromptIn .3s ease forwards;
+          overflow: hidden;
+        }
+        @keyframes fcPromptIn { to { opacity: 1; transform: translateY(0) } }
+        .fc-prompt-body {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: none;
+          border: none;
+          color: inherit;
+          font: 600 13px/1.3 inherit;
+          text-align: left;
+          padding: 11px 6px 11px 13px;
+          cursor: pointer;
+        }
+        .fc-prompt-chev { flex-shrink: 0; opacity: .7 }
+        .fc-prompt-x {
+          background: none;
+          border: none;
+          border-left: 1px solid rgba(255,255,255,.14);
+          color: rgba(255,255,255,.6);
+          padding: 0 10px;
+          cursor: pointer;
+          display: grid;
+          place-items: center;
+        }
+
+        /* Bottom sheet: a corner-anchored card is unusable one-handed. */
         .fc-panel {
           position: fixed;
-          left: 20px;
-          bottom: calc(84px + env(safe-area-inset-bottom) + var(--fc-offset, 0px));
-          width: 340px;
-          max-height: calc(100vh - 140px);
-          overflow-y: auto;
+          left: 0;
+          right: 0;
+          bottom: 0;
           z-index: 46;
+          max-height: 88vh;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
           background: #fff;
           border: 1px solid #e5e7eb;
-          border-radius: 16px;
-          box-shadow: 0 24px 60px rgba(0,0,0,.18);
-          padding: 18px;
+          border-bottom: none;
+          border-radius: 18px 18px 0 0;
+          padding: 10px 18px max(18px, env(safe-area-inset-bottom));
+          box-shadow: 0 -12px 40px rgba(0,0,0,.18);
+          animation: fcSheetIn .26s cubic-bezier(.32,.72,0,1);
+        }
+        @keyframes fcSheetIn { from { transform: translateY(100%) } to { transform: translateY(0) } }
+
+        .fc-grabber {
+          width: 38px;
+          height: 4px;
+          border-radius: 999px;
+          background: #e5e7eb;
+          margin: 0 auto 12px;
+        }
+
+        .fc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px }
+        .fc-title { font-size: 15px; font-weight: 800; color: #0d0d0d; letter-spacing: -.02em }
+        .fc-sub { font-size: 12px; color: #9ca3af; margin-top: 2px }
+        .fc-close {
+          border: none; background: #f3f4f6; border-radius: 9px;
+          width: 32px; height: 32px; display: grid; place-items: center;
+          cursor: pointer; color: #6b7280; flex-shrink: 0;
+        }
+
+        .fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px }
+        .fc-grid-single { margin-bottom: 14px }
+        .fc-field { display: block }
+        .fc-label {
+          display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em;
+          text-transform: uppercase; color: #9ca3af; margin-bottom: 6px;
+        }
+        .fc-input-wrap { position: relative }
+        .fc-input {
+          width: 100%;
+          height: 46px;
+          border-radius: 10px;
+          border: 1px solid #e5e7eb;
+          background: #fff;
+          padding: 0 42px 0 12px;
+          font-size: 16px;          /* 16px prevents iOS Safari zooming on focus */
+          font-weight: 600;
+          color: #0d0d0d;
+          outline: none;
+          font-variant-numeric: tabular-nums;
+          -moz-appearance: textfield;
+          transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .fc-input::-webkit-outer-spin-button,
+        .fc-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
+        .fc-input:focus { border-color: #1A56DB; box-shadow: 0 0 0 3px rgba(26,86,219,.12) }
+        .fc-suffix {
+          position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+          font-size: 12px; font-weight: 600; color: #9ca3af; pointer-events: none;
+        }
+
+        .fc-result { background: #F9FAFB; border: 1px solid #f0f0f0; border-radius: 12px; padding: 4px 14px 10px }
+        .fc-row {
+          display: flex; justify-content: space-between; align-items: baseline;
+          gap: 12px; padding: 9px 0; border-bottom: 1px solid #f0f0f0;
+        }
+        .fc-row:last-child { border-bottom: none }
+        .fc-row-label { font-size: 12.5px; color: #6b7280 }
+        .fc-row-value { font-size: 14px; font-weight: 700; color: #0d0d0d; font-variant-numeric: tabular-nums; text-align: right }
+        .fc-row-value-strong { font-size: 15.5px }
+        .fc-note { padding-top: 9px; font-size: 12px; color: #6b7280 }
+        .fc-note strong { color: #0d0d0d }
+        .fc-warn {
+          background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px;
+          padding: 10px 14px; font-size: 12.5px; color: #92400E;
+        }
+        .fc-disclaimer { font-size: 10.5px; line-height: 1.6; color: #9ca3af; margin: 12px 0 0 }
+
+        /* ---------- DESKTOP layered on top ---------- */
+
+        @media (min-width: 641px) {
+          .fc-fab {
+            left: 20px;
+            bottom: calc(20px + env(safe-area-inset-bottom) + var(--fc-offset, 0px));
+            width: auto;
+            height: 52px;
+            gap: 9px;
+            padding: 0 20px 0 17px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -.01em;
+          }
+          .fc-fab-label { display: inline }
+          .fc-fab:hover { box-shadow: 0 14px 38px rgba(0,0,0,.4) }
+
+          .fc-prompt { bottom: calc(84px + var(--fc-offset, 0px)); max-width: 260px }
+
+          .fc-backdrop { background: rgba(0,0,0,.2) }
+
+          .fc-panel {
+            left: 20px;
+            right: auto;
+            bottom: calc(84px + var(--fc-offset, 0px));
+            width: 348px;
+            max-height: calc(100vh - 140px);
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 24px 60px rgba(0,0,0,.18);
+            animation: fcCardIn .2s ease;
+          }
+          @keyframes fcCardIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+          .fc-grabber { display: none }
         }
 
         .fc-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,.35);
+          background: rgba(0,0,0,.4);
           z-index: 44;
           animation: fcFade .2s ease;
         }
         @keyframes fcFade { from { opacity: 0 } to { opacity: 1 } }
 
-        @media (max-width: 640px) {
-          /* Icon-only circle on phones — a pill with a label eats real screen
-             width and overlaps content on narrow viewports. */
-          .fc-fab {
-            left: 16px;
-            width: 52px;
-            height: 52px;
-            padding: 0;
-            justify-content: center;
-          }
-          .fc-fab-label { display: none; }
-
-          /* Bottom sheet rather than a floating card: a 340px panel anchored
-             to a corner is unusable one-handed. */
-          .fc-panel {
-            left: 0;
-            left: 0;
-            bottom: 0;
-            width: auto;
-            max-height: 88vh;
-            border-radius: 18px 18px 0 0;
-            padding-bottom: max(18px, env(safe-area-inset-bottom));
-          }
-        }
-
         @media (prefers-reduced-motion: reduce) {
-          .fc-fab { transition: none; opacity: 1; transform: none; }
-          .fc-backdrop { animation: none; }
+          .fc-fab, .fc-panel, .fc-prompt, .fc-backdrop { animation: none !important; transition: none !important }
+          .fc-fab { opacity: 1; transform: none }
+          .fc-fab.fc-attn::after { animation: none; opacity: .8 }
+          .fc-prompt { opacity: 1; transform: none }
         }
 
-        @media print { .fc-fab, .fc-panel, .fc-backdrop { display: none !important; } }
+        @media print { .fc-fab, .fc-panel, .fc-backdrop, .fc-prompt { display: none !important } }
       `}</style>
     </>
   )
