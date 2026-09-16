@@ -4,6 +4,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { Calculator, X, ChevronRight } from 'lucide-react'
+import { claimNudgeSlot, releaseNudgeSlot } from '@/lib/nudgeCoordinator'
 
 /**
  * Floating reconstitution calculator — one instance, mounted globally in
@@ -41,6 +42,10 @@ const PROMPT_VISIBLE = 9000
 const PROMPT_REPEAT = 40000
 const PROMPT_MAX_SHOWS = 4
 
+/** Identity used with nudgeCoordinator so this widget's nudge and the chat
+ *  widget's nudge never show at the same time. */
+const NUDGE_ID = 'reconstitution-calculator'
+
 export default function FloatingCalculator() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -61,6 +66,7 @@ export default function FloatingCalculator() {
   const dismissPrompt = useCallback(() => {
     setPrompt(false)
     setDismissed(true)
+    releaseNudgeSlot(NUDGE_ID)
     try {
       sessionStorage.setItem(PROMPT_DISMISS_KEY, '1')
     } catch {
@@ -83,7 +89,11 @@ export default function FloatingCalculator() {
     } catch { /* ignore */ }
   }, [])
 
-  // Recurring nudge cycle: wait → show → hide → wait → show …
+  // Recurring nudge cycle: wait → show → hide → wait → show … Guarded by
+  // nudgeCoordinator so this bubble and the chat widget's bubble never land
+  // on screen in the same moment — if the slot is taken, this widget backs
+  // off and retries a few times before giving up on that cycle entirely
+  // (rather than showing very late, out of step with its own schedule).
   useEffect(() => {
     if (hidden || dismissed) return
     let cancelled = false
@@ -91,16 +101,27 @@ export default function FloatingCalculator() {
     let shows = 0
 
     const cycle = (delay: number) => {
+      timer = setTimeout(() => attemptShow(4), delay)
+    }
+
+    const attemptShow = (retriesLeft: number) => {
+      if (cancelled) return
+      if (!claimNudgeSlot(NUDGE_ID)) {
+        if (retriesLeft > 0) {
+          timer = setTimeout(() => attemptShow(retriesLeft - 1), 1500)
+        } else if (shows < PROMPT_MAX_SHOWS) {
+          cycle(PROMPT_REPEAT)
+        }
+        return
+      }
+      shows += 1
+      setPrompt(true)
       timer = setTimeout(() => {
+        releaseNudgeSlot(NUDGE_ID)
         if (cancelled) return
-        shows += 1
-        setPrompt(true)
-        timer = setTimeout(() => {
-          if (cancelled) return
-          setPrompt(false)
-          if (shows < PROMPT_MAX_SHOWS) cycle(PROMPT_REPEAT)
-        }, PROMPT_VISIBLE)
-      }, delay)
+        setPrompt(false)
+        if (shows < PROMPT_MAX_SHOWS) cycle(PROMPT_REPEAT)
+      }, PROMPT_VISIBLE)
     }
 
     cycle(PROMPT_FIRST_DELAY)
@@ -108,6 +129,7 @@ export default function FloatingCalculator() {
       cancelled = true
       clearTimeout(timer)
       setPrompt(false)
+      releaseNudgeSlot(NUDGE_ID)
     }
   }, [hidden, dismissed])
 

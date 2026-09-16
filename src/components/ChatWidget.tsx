@@ -42,6 +42,7 @@ import {
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { trackChatHandoff } from '@/lib/analytics'
 import { useCustomer } from '@/lib/customerContext'
+import { claimNudgeSlot, releaseNudgeSlot } from '@/lib/nudgeCoordinator'
 
 const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
 const SUPPORT_EMAIL = 'hello@pepcolab.com'
@@ -54,6 +55,10 @@ const NUDGE_FIRST_DELAY = 6000
 const NUDGE_VISIBLE = 11000
 const NUDGE_REPEAT = 60000
 const NUDGE_MAX_SHOWS = 3
+
+/** Identity used with nudgeCoordinator so this widget's nudge and the
+ *  calculator's nudge never show at the same time. */
+const NUDGE_ID = 'chat-support'
 
 /** Assistant "thinking" beat. Long enough to read as a reply rather than a
  *  lookup, short enough that nobody waits on it. */
@@ -187,6 +192,7 @@ export default function ChatWidget() {
   const dismissNudge = useCallback(() => {
     setNudge(false)
     setNudgeDismissed(true)
+    releaseNudgeSlot(NUDGE_ID)
     try { sessionStorage.setItem(NUDGE_DISMISS_KEY, '1') } catch { /* private mode */ }
   }, [])
 
@@ -196,7 +202,11 @@ export default function ChatWidget() {
     } catch { /* ignore */ }
   }, [])
 
-  // Recurring cycle: wait → show → hide → wait → show …
+  // Recurring cycle: wait → show → hide → wait → show … Guarded by
+  // nudgeCoordinator so this bubble and the calculator's bubble never land on
+  // screen in the same moment — if the slot is taken, this widget backs off
+  // and retries a few times before giving up on that cycle entirely (rather
+  // than showing very late, out of step with its own schedule).
   useEffect(() => {
     if (hidden || nudgeDismissed) return
     let cancelled = false
@@ -204,20 +214,36 @@ export default function ChatWidget() {
     let shows = 0
 
     const cycle = (delay: number) => {
+      timer = setTimeout(() => attemptShow(4), delay)
+    }
+
+    const attemptShow = (retriesLeft: number) => {
+      if (cancelled) return
+      if (!claimNudgeSlot(NUDGE_ID)) {
+        if (retriesLeft > 0) {
+          timer = setTimeout(() => attemptShow(retriesLeft - 1), 1500)
+        } else if (shows < NUDGE_MAX_SHOWS) {
+          cycle(NUDGE_REPEAT)
+        }
+        return
+      }
+      shows += 1
+      setNudge(true)
       timer = setTimeout(() => {
+        releaseNudgeSlot(NUDGE_ID)
         if (cancelled) return
-        shows += 1
-        setNudge(true)
-        timer = setTimeout(() => {
-          if (cancelled) return
-          setNudge(false)
-          if (shows < NUDGE_MAX_SHOWS) cycle(NUDGE_REPEAT)
-        }, NUDGE_VISIBLE)
-      }, delay)
+        setNudge(false)
+        if (shows < NUDGE_MAX_SHOWS) cycle(NUDGE_REPEAT)
+      }, NUDGE_VISIBLE)
     }
 
     cycle(NUDGE_FIRST_DELAY)
-    return () => { cancelled = true; clearTimeout(timer); setNudge(false) }
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+      setNudge(false)
+      releaseNudgeSlot(NUDGE_ID)
+    }
   }, [hidden, nudgeDismissed])
 
   // Focus into the panel on open; return focus to the launcher only on a real
