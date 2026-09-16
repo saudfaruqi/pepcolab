@@ -10,10 +10,15 @@
 // as a proxy — standard practice, just worth knowing it's an estimate, not
 // a true delivery-confirmed trigger.
 import { NextRequest, NextResponse } from 'next/server'
-import { getCompletedOrdersInWindow, saveOrderRecord } from '@/lib/orderStore'
+import { getCompletedOrdersInWindow, saveOrderRecord, isPaidOrder } from '@/lib/orderStore'
+import { isMarketingSuppressed } from '@/lib/emailPreferences'
 import { sendReviewRequestEmail } from '@/lib/orderEmails'
 
-const DELAY_DAYS = Number(process.env.REVIEW_REQUEST_DELAY_DAYS) || 5
+// Default moved from 5 to 10 days (Sep 2026): the "Did your order arrive
+// safely?" check-in (cron: customer-care) now goes out around day 4–6, and
+// two emails in the same week reads as pestering. Day 10 also gives the
+// customer time to actually open and use what they received.
+const DELAY_DAYS = Number(process.env.REVIEW_REQUEST_DELAY_DAYS) || 10
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export async function GET(req: NextRequest) {
@@ -33,10 +38,13 @@ export async function GET(req: NextRequest) {
   const windowStart = windowEnd - 2 * DAY_MS
 
   const orders = await getCompletedOrdersInWindow(windowStart, windowEnd)
-  const eligible = orders.filter((o) => !o.reviewRequestSentAt && o.email && o.products.length > 0)
+  // Refunded / charged-back / failed orders stay in the completed index after
+  // their status changes, so status must be re-checked here.
+  const eligible = orders.filter((o) => !o.reviewRequestSentAt && o.email && o.products.length > 0 && isPaidOrder(o))
 
   let sent = 0
   for (const order of eligible) {
+    if (await isMarketingSuppressed(order.email)) continue
     try {
       await sendReviewRequestEmail({
         to: order.email,

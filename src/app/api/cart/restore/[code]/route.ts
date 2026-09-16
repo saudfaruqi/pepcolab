@@ -4,14 +4,18 @@
 // Given an order short code, returns just enough to rebuild a real
 // Storefront cart client-side: variant GIDs + quantities.
 //
-// Deliberately narrow: only serves records whose status is still
-// 'abandoned' (someone poking at an old completed-order code gets nothing
-// back, same as an expired link), and only returns variantId/quantity —
-// not email, phone, address, or anything else in the record. This is meant
-// to be safe to call from an unauthenticated client-side fetch off a link
-// that could end up in a forwarded email or a browser history entry.
+// Also backs "order again" links (reorder reminder, win-back) since Sep
+// 2026 — those previously pointed at this JSON route directly and showed the
+// customer raw data.
+//
+// Deliberately narrow: only serves abandoned checkouts and paid orders
+// (failed/refunded/charged-back codes get nothing back), and only returns
+// variantId/quantity — not email, phone, address, or anything else in the
+// record. This is meant to be safe to call from an unauthenticated
+// client-side fetch off a link that could end up in a forwarded email or a
+// browser history entry.
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrderRecord } from '@/lib/orderStore'
+import { getOrderRecord, isPaidOrder } from '@/lib/orderStore'
 
 export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
   const code = (params.code || '').trim()
@@ -24,7 +28,10 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
   // Same response for "not found" and "not abandoned" — don't let this
   // endpoint be used to probe which order codes exist or what state
   // they're in.
-  if (!record || record.status !== 'abandoned') {
+  // Abandoned checkouts (recovery emails) AND paid orders (reorder reminder,
+  // win-back). Only product variant IDs and quantities are returned — no
+  // address, email or price — so exposing a paid order's lines by code is safe.
+  if (!record || (record.status !== 'abandoned' && !isPaidOrder(record))) {
     return NextResponse.json({ items: [], currency: 'AED' })
   }
 

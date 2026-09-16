@@ -31,6 +31,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import AccountTabs from '@/components/AccountTabs'
 import { useCart } from '@/lib/cartContext'
+import { productHref } from '@/lib/utils'
 import { Loader2, Package, RotateCw, ExternalLink, LogOut, FileText } from 'lucide-react'
 
 interface AccountOrder {
@@ -55,6 +56,18 @@ interface AccountOrder {
   }[]
 }
 
+// GLP is sold through STRABL payment links (lib/restrictedCheckout.ts), so
+// its order lines have no Shopify variant and can't be rebuilt in the cart.
+// Those orders get an "Order again" link to the product page instead of a
+// disabled Reorder button. Kept in step with lib/lifecycleEmails.ts.
+const PAYMENT_LINK_PRODUCT_HANDLE = 'retatrutide-uae'
+const PAYMENT_LINK_TITLE_RE = /\b(glp|retatrutide|reta)\b/i
+
+function paymentLinkOrderPath(products: AccountOrder['products']): string | null {
+  if (products.some(p => p.variantId)) return null
+  return products.some(p => PAYMENT_LINK_TITLE_RE.test(p.title)) ? productHref(PAYMENT_LINK_PRODUCT_HANDLE) : null
+}
+
 const INK = '#0D0D0D'
 const PAPER = '#F7F5F1'
 const BORDER = 'rgba(13,13,13,.08)'
@@ -69,7 +82,8 @@ const BORDER = 'rgba(13,13,13,.08)'
  *  detail that costs a customer's trust exactly once. No tracking logged
  *  means the order reads as Confirmed, which remains true either way. */
 function statusLabel(o: AccountOrder): { label: string; color: string; tint: string } {
-  if (o.trackingNumber) return { label: 'Shipped', color: '#0A7B45', tint: 'rgba(10,123,69,.1)' }
+  const paid = ['created', 'updated', 'processing', 'awaiting_payment_mark'].includes(o.status)
+  if (paid && (o.shippedAt || o.trackingNumber)) return { label: 'Dispatched', color: '#0A7B45', tint: 'rgba(10,123,69,.1)' }
   switch (o.status) {
     case 'created':
     case 'updated':
@@ -207,6 +221,7 @@ export default function AccountPage() {
               {orders.map(order => {
                 const s = statusLabel(order)
                 const canReorder = order.products.some(p => p.variantId)
+                const orderAgainPath = canReorder ? null : paymentLinkOrderPath(order.products)
                 return (
                   <div key={order.orderShortCode}
                        style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 18, padding: 'clamp(18px,3vw,24px)' }}>
@@ -253,6 +268,16 @@ export default function AccountPage() {
                       </div>
                     )}
 
+                    {order.shippedAt && !order.trackingNumber && (
+                      <div style={{
+                        background: PAPER, border: `1px solid ${BORDER}`, borderRadius: 12,
+                        padding: '12px 14px', marginBottom: 14, fontSize: 13, lineHeight: 1.6, color: 'rgba(13,13,13,.6)',
+                      }}>
+                        Dispatched {new Date(order.shippedAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
+                        {' '}&middot; most orders arrive the next working day.
+                      </div>
+                    )}
+
                     {order.trackingNumber && (
                       <div style={{
                         background: PAPER, border: `1px solid ${BORDER}`, borderRadius: 12,
@@ -281,23 +306,35 @@ export default function AccountPage() {
                     )}
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      <button
-                        onClick={() => reorder(order)}
-                        disabled={!canReorder || reordering === order.orderShortCode}
-                        title={canReorder ? undefined : 'This order was placed through a payment link and can\u2019t be rebuilt automatically'}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '0 20px',
-                          borderRadius: 999, border: 'none',
-                          background: canReorder ? INK : 'rgba(13,13,13,.12)',
-                          color: canReorder ? '#fff' : 'rgba(13,13,13,.4)',
-                          fontSize: 13.5, fontWeight: 700,
-                          cursor: canReorder && reordering !== order.orderShortCode ? 'pointer' : 'not-allowed',
-                        }}>
-                        {reordering === order.orderShortCode
-                          ? <Loader2 size={15} className="animate-spin" aria-hidden="true" />
-                          : <RotateCw size={15} aria-hidden="true" />}
-                        Reorder
-                      </button>
+                      {orderAgainPath ? (
+                        <Link href={orderAgainPath}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '0 20px',
+                            borderRadius: 999, background: INK, color: '#fff',
+                            fontSize: 13.5, fontWeight: 700, textDecoration: 'none',
+                          }}>
+                          <RotateCw size={15} aria-hidden="true" />
+                          Order again
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => reorder(order)}
+                          disabled={!canReorder || reordering === order.orderShortCode}
+                          title={canReorder ? undefined : 'This order was placed through a payment link and can\u2019t be rebuilt automatically'}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '0 20px',
+                            borderRadius: 999, border: 'none',
+                            background: canReorder ? INK : 'rgba(13,13,13,.12)',
+                            color: canReorder ? '#fff' : 'rgba(13,13,13,.4)',
+                            fontSize: 13.5, fontWeight: 700,
+                            cursor: canReorder && reordering !== order.orderShortCode ? 'pointer' : 'not-allowed',
+                          }}>
+                          {reordering === order.orderShortCode
+                            ? <Loader2 size={15} className="animate-spin" aria-hidden="true" />
+                            : <RotateCw size={15} aria-hidden="true" />}
+                          Reorder
+                        </button>
+                      )}
 
                       {/* Links straight to the certificate for a line we can
                           resolve; falls back to the library only when we

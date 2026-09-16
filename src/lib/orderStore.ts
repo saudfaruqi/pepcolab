@@ -75,14 +75,15 @@ export interface OrderRecord {
   // every consumer sees the same tidy record instead of each one guessing.
   shippingAddress?: CleanAddress
 
-  // SHIPMENT TRACKING (Sep 2026)
+  // DISPATCH & TRACKING (Sep 2026)
   //
   // Set by POST /api/admin/tracking when you hand a parcel to the courier.
-  // These exist so the customer can see where their order is; they do NOT
-  // trigger any email. That separation is deliberate — an automatic dispatch
-  // email fires from a state that must always be maintained, whereas
-  // tracking degrades gracefully: an order with no tracking simply shows as
-  // Confirmed, which is true.
+  // shippedAt is always set; trackingNumber/carrier/trackingUrl only when the
+  // courier actually provided them (most don't — ~90% of orders arrive the
+  // next working day without one).
+  // Saving these never emails anyone by itself: the dispatch email is only
+  // sent when the admin ticks "Email the customer" (sent once, see
+  // shippedEmailSentAt).
   //
   // shippedAt is what makes an order "shipped" for display purposes. Nothing
   // downstream is timed off it — the reorder cron keys off createdAt, so a
@@ -92,6 +93,26 @@ export interface OrderRecord {
   trackingUrl?: string
   carrier?: string
   reorderReminderSentAt?: string // set once the reorder prompt has gone out — prevents the cron re-sending every run
+  // AFTER-ORDER CARE (Sep 2026)
+  shippedEmailSentAt?: string   // set when the admin marks the order dispatched with "email the customer" ticked — sent at most once
+  aftercareEmailSentAt?: string // set once the "did it arrive OK?" check-in has gone out
+  crossSellEmailSentAt?: string // set once the day-18 "more from your research area" email has gone out (or was skipped for having nothing to suggest)
+}
+
+/**
+ * Statuses that mean the customer paid and the order is going ahead.
+ * Anything else (failed, abandoned, refunded, chargeback) must never receive
+ * post-purchase emails.
+ */
+export const PAID_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set<OrderStatus>([
+  'created',
+  'updated',
+  'awaiting_payment_mark',
+  'processing',
+])
+
+export function isPaidOrder(order: Pick<OrderRecord, 'status'>): boolean {
+  return PAID_ORDER_STATUSES.has(order.status)
 }
 
 const KEY_PREFIX = 'order-lookup:'

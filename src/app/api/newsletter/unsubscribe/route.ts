@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { redis } from '@/lib/redis'
 import { verifyUnsubscribeToken } from '@/lib/unsubscribeToken'
+import { suppressMarketingEmail } from '@/lib/emailPreferences'
 
 const SUBSCRIBERS_KEY = 'newsletter:subscribers'
 
@@ -32,6 +33,9 @@ export async function POST(req: NextRequest) {
 
   try {
     await redis.zrem(SUBSCRIBERS_KEY, email)
+    // Also stops reorder reminders, review requests, aftercare check-ins and
+    // win-back emails — every one of those links here for its opt-out.
+    await suppressMarketingEmail(email)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[newsletter unsubscribe] Failed:', err)

@@ -224,17 +224,17 @@ function CartPageInner() {
         )}
         {restoreStatus === 'done' && (
           <div className="bg-emerald-50 border border-emerald-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-emerald-700">
-            Welcome back — we've restored your saved cart.
+            Welcome back — your items are in the cart.
           </div>
         )}
         {restoreStatus === 'partial' && (
           <div className="bg-amber-50 border border-amber-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-amber-700">
-            We've restored what we could — one or more items from your saved cart are no longer available and need to be re-added manually.
+            We've added what we could — one or more of those items are no longer available and need to be re-added manually.
           </div>
         )}
         {restoreStatus === 'empty' && (
           <div className="bg-amber-50 border border-amber-200/60 rounded-xl px-5 py-3 mb-6 text-sm text-amber-700">
-            That saved cart link has expired. Feel free to re-add your items below.
+            That link has expired. Feel free to re-add your items below.
           </div>
         )}
         {restoreStatus === 'error' && (

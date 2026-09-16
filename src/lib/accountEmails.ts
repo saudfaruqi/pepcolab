@@ -32,6 +32,7 @@
 // so it cannot be read as one.
 
 import { sendMailSafe } from '@/lib/mailer'
+import { escapeHtml } from '@/lib/lifecycleEmails'
 import {
   emailShell, primaryButton, productRows, trustStrip, preheader,
   INK, INK_60, INK_40, GOLD_TEXT, GOLD_TINT,
@@ -88,18 +89,33 @@ export async function sendReorderReminderEmail(params: {
   products: { title: string; price: number; quantity: number }[]
   currency: string
   reorderUrl: string
+  /** false for GLP payment-link orders, which can't be rebuilt in the cart — the button opens the product page instead. */
+  rebuildsCart?: boolean
+  /** Optional personalised "you might also like" block (lib/lifecycleEmails.ts relatedProductsSection). */
+  related?: { html: string; text: string }
   unsubscribeUrl?: string
 }) {
   const { to, customerName, orderShortCode, products, currency, reorderUrl, unsubscribeUrl } = params
-  const greeting = customerName ? `Hi ${customerName},` : 'Hi,'
+  const rebuildsCart = params.rebuildsCart !== false
+  const plainFirstName = (customerName || '').trim().split(/\s+/)[0]
+  const greeting = plainFirstName ? `Hi ${escapeHtml(plainFirstName)},` : 'Hi,'
+  const plainGreeting = plainFirstName ? `Hi ${plainFirstName},` : 'Hi,'
+  const safeProducts = products.map((p) => ({ ...p, title: escapeHtml(p.title) }))
+  const howItWorks = rebuildsCart
+    ? 'One tap rebuilds your last order in the cart \u2014 same compounds, same formats. The batch you receive will be a current lot with its own certificate.'
+    : 'Tap below to pick your strength and quantity \u2014 checkout takes under a minute. The batch you receive will be a current lot with its own certificate.'
+  const buttonLabel = rebuildsCart ? 'Reorder these items' : 'Choose strength & quantity'
 
   const html = emailShell(`
     ${pill('Reorder', GOLD_TEXT, GOLD_TINT)}
     ${h1('Running low?')}
     ${para(`${greeting} it has been about four weeks since your last order. Reconstituted material is documented for use within 28 days at 2\u20138\u00a0\u00b0C, so this is roughly when researchers tend to need the next batch.`)}
-    ${para('One tap rebuilds your last order in the cart \u2014 same compounds, same formats. The batch you receive will be a current lot with its own certificate.')}
-    ${productRows(products, currency)}
-    ${primaryButton('Reorder these items', reorderUrl, 16)}
+    ${para(howItWorks)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+      ${productRows(safeProducts, currency)}
+    </table>
+    ${primaryButton(buttonLabel, reorderUrl, 16)}
+    ${params.related?.html ?? ''}
     ${trustStrip()}
     ${footNote(
       `Sent because you ordered from us (${orderShortCode}). ${RUO}` +
@@ -111,8 +127,10 @@ export async function sendReorderReminderEmail(params: {
     to,
     subject: 'Time for a fresh batch?',
     text:
-      `${greeting}\n\nIt has been about four weeks since order ${orderShortCode}. Reconstituted material is documented for use within 28 days at 2-8 C, so this is roughly when a next batch tends to be needed.\n\n` +
-      `Reorder the same items in one tap: ${reorderUrl}\n\n${RUO}` +
+      `${plainGreeting}\n\nIt has been about four weeks since order ${orderShortCode}. Reconstituted material is documented for use within 28 days at 2-8 C, so this is roughly when a next batch tends to be needed.\n\n` +
+      `${rebuildsCart ? 'Reorder the same items in one tap' : 'Choose your strength and quantity'}: ${reorderUrl}\n\n` +
+      (params.related?.text ? `${params.related.text}\n\n` : '') +
+      `${RUO}` +
       (unsubscribeUrl ? `\n\nStop reorder reminders: ${unsubscribeUrl}` : ''),
     html,
   })

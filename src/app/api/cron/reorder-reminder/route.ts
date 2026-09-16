@@ -24,16 +24,29 @@
 // so a re-run cannot double-send. Orders that were refunded, charged back or
 // failed are excluded — prompting someone to reorder something they sent
 // back is the kind of email that loses a customer permanently.
+//
+// FIXES (Sep 2026)
+//  - The button linked to /api/cart/restore/<code>, a JSON endpoint, so
+//    customers landed on raw data. It now uses buildOrderAgainUrl(): the cart
+//    (?restore=) for normal orders, the GLP product page for payment-link
+//    orders, which can't be rebuilt in the cart.
+//  - Opted-out addresses (lib/emailPreferences.ts) are skipped. Previously the
+//    email's own "Stop reorder reminders" link had no effect.
+//  - Customers who have already ordered again since are not reminded.
+
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrdersDueForReorderReminder, saveOrderRecord } from '@/lib/orderStore'
+import { getOrdersDueForReorderReminder, getOrdersForEmail, saveOrderRecord, isPaidOrder } from '@/lib/orderStore'
 import { sendReorderReminderEmail } from '@/lib/accountEmails'
+import { buildOrderAgainUrl, relatedProductsSection } from '@/lib/lifecycleEmails'
+import { loadCatalogue, buildJourney, type CatalogueItem } from '@/lib/customerJourney'
+import { isMarketingSuppressed } from '@/lib/emailPreferences'
 import { buildUnsubscribeUrl } from '@/lib/unsubscribeToken'
+
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const REMINDER_DAYS = Number(process.env.REORDER_REMINDER_DAYS) || 28
 const DAY_MS = 24 * 60 * 60 * 1000
-const SITE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com'
-
-const EXCLUDED_STATUSES = new Set(['refunded', 'chargeback', 'failed', 'abandoned'])
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -42,9 +55,6 @@ export async function GET(req: NextRequest) {
   }
 
   const now = Date.now()
-  // A generous window rather than a single day, so an order doesn't fall
-  // through the gap if a scheduled run is missed — same approach as the
-  // review-request cron.
   const windowStart = now - (REMINDER_DAYS + 4) * DAY_MS
   const windowEnd = now - REMINDER_DAYS * DAY_MS
 
@@ -52,46 +62,67 @@ export async function GET(req: NextRequest) {
 
   let sent = 0
   let skipped = 0
+  const catalogues = new Map<string, Promise<CatalogueItem[]>>()
+  const catalogueFor = (currency: string) => {
+    const key = (currency || 'AED').toUpperCase()
+    if (!catalogues.has(key)) catalogues.set(key, loadCatalogue(key))
+    return catalogues.get(key)!
+  }
 
   for (const order of candidates) {
-    if (EXCLUDED_STATUSES.has(order.status)) { skipped++; continue }
+    if (!isPaidOrder(order)) { skipped++; continue }
     if (!order.email || !order.products?.length) { skipped++; continue }
 
-    // getOrdersDueForReorderReminder already bounded this by the completed
-    // index (order date), so the window check is done. This is just a guard
-    // against a record with an unparseable createdAt.
     const orderedMs = new Date(order.createdAt).getTime()
     if (!orderedMs || now - orderedMs < REMINDER_DAYS * DAY_MS) { skipped++; continue }
 
-    // Reuses the existing abandoned-cart restore route: one link that
-    // rebuilds the exact cart and drops the customer straight into it.
-    const reorderUrl = `${SITE_URL}/api/cart/restore/${encodeURIComponent(order.orderShortCode)}`
+    if (await isMarketingSuppressed(order.email)) { skipped++; continue }
+
+    // Already ordered again since this one? Then a reminder is noise.
+    const history = await getOrdersForEmail(order.email, 20)
+    const reorderedSince = history.some(
+      (o) => o.orderShortCode !== order.orderShortCode && isPaidOrder(o) && new Date(o.createdAt).getTime() > orderedMs
+    )
+    if (reorderedSince) {
+      await saveOrderRecord({ ...order, reorderReminderSentAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      skipped++
+      continue
+    }
+
+    const again = buildOrderAgainUrl(order)
 
     let unsubscribeUrl: string | undefined
     try {
       unsubscribeUrl = buildUnsubscribeUrl(order.email)
     } catch {
-      // Unsubscribe secret not configured — send without the link rather
-      // than dropping the email entirely.
       unsubscribeUrl = undefined
     }
 
-    await sendReorderReminderEmail({
-      to: order.email,
-      customerName: order.customerName,
-      orderShortCode: order.orderShortCode,
-      products: order.products,
-      currency: order.currency,
-      reorderUrl,
-      unsubscribeUrl,
-    })
+    try {
+      await sendReorderReminderEmail({
+        to: order.email,
+        customerName: order.customerName,
+        orderShortCode: order.orderShortCode,
+        products: order.products,
+        currency: order.currency,
+        reorderUrl: again.url,
+        rebuildsCart: again.kind === 'cart',
+        related: relatedProductsSection(
+          buildJourney(order, await catalogueFor(order.currency), 'reorder'),
+          'Also worth adding'
+        ),
+        unsubscribeUrl,
+      })
 
-    await saveOrderRecord({
-      ...order,
-      reorderReminderSentAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-    sent++
+      await saveOrderRecord({
+        ...order,
+        reorderReminderSentAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      sent++
+    } catch (err) {
+      console.error(`[reorder-reminder] Failed for ${order.orderShortCode}:`, err)
+    }
   }
 
   return NextResponse.json({ success: true, candidates: candidates.length, sent, skipped })

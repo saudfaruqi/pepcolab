@@ -21,6 +21,10 @@ export const dynamic = 'force-dynamic'
 function categorise(subject: string): string {
   const s = subject.toLowerCase()
   if (s.includes('order confirmed')) return 'Order confirmation'
+  if (s.includes('on its way')) return 'Dispatch'
+  if (s.includes('arrive safely')) return 'Arrival check-in'
+  if (s.includes('anything we could do better')) return 'Win-back'
+  if (s.includes('more from') || s.includes('picked for your next order')) return 'Cross-sell'
   if (s.includes('sign-in link')) return 'Sign-in link'
   if (s.includes('back in stock')) return 'Back in stock'
   if (s.includes('uk launch')) return 'UK launch interest'
