@@ -2,13 +2,14 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
 import WishlistButton from '@/components/WishlistButton'
 import { useCart } from '@/lib/cartContext'
 import { formatPrice, stripLeadingName, productHref } from '@/lib/utils'
 import NotifyMeModal from '@/components/NotifyMeModal'
-import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
+import { isPaymentLinkOnlyProduct } from '@/lib/restrictedCheckout'
 import type { Product } from '@/app/data'
 
 interface Props {
@@ -27,6 +28,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
   const [added,   setAdded]   = useState(false)
   const [hovered, setHovered] = useState(false)
   const { addItem } = useCart()
+  const router = useRouter()
 
   // Use the currency code embedded in the product by normaliseProduct,
   // falling back to "AED" for backwards-compatibility with older cached data.
@@ -38,17 +40,17 @@ export default function ProductCard({ product: p, featured = false }: Props) {
   // hovering just keeps showing the primary image as before.
   const hoverImage: string | undefined = (p as any).images?.[1]?.url
 
-  // RETA (GLP) — hardcoded exception: sold via a direct payment
-  // link, not the normal cart. See lib/restrictedCheckout.ts.
+  // RETA (GLP) — hardcoded exception: sold via fixed STRABL payment links
+  // (one per strength AND quantity), not the cart. A card can't know which
+  // strength/format/quantity the buyer wants, so it sends them to the
+  // product page to choose. See lib/restrictedCheckout.ts.
   const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
-  const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(p.mg) : null
-  const paymentLinkIsPlaceholder = paymentLink ? isPlaceholderLink(paymentLink) : false
 
   const handleAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (paymentLinkOnly) {
-      if (!paymentLinkIsPlaceholder) window.open(paymentLink!, '_blank', 'noopener,noreferrer')
+      router.push(productHref(p.slug))
       return
     }
     if (!p.inStock || added) return
@@ -347,12 +349,13 @@ export default function ProductCard({ product: p, featured = false }: Props) {
           ) : (
           <button
             onClick={handleAdd}
-            disabled={paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock}
+            disabled={!paymentLinkOnly && !p.inStock}
             aria-label={
               paymentLinkOnly
-                ? 'Order via payment link'
+                ? `Choose strength and quantity for ${p.name}`
                 : added ? 'Added to cart' : `Add ${p.name} to cart`
             }
+            title={paymentLinkOnly ? 'Choose strength and quantity' : undefined}
             style={{
               width: 40,
               height: 40,
@@ -361,11 +364,11 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               border: 'none',
               background: added
                 ? '#0A7B45'
-                : (paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock)
+                : (!paymentLinkOnly && !p.inStock)
                 ? 'rgba(13,13,13,.08)'
                 : '#0d0d0d',
-              color: (paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock) ? 'rgba(13,13,13,.25)' : '#fff',
-              cursor: (paymentLinkOnly ? paymentLinkIsPlaceholder : !p.inStock) ? 'not-allowed' : 'pointer',
+              color: (!paymentLinkOnly && !p.inStock) ? 'rgba(13,13,13,.25)' : '#fff',
+              cursor: (!paymentLinkOnly && !p.inStock) ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

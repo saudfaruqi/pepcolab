@@ -6,7 +6,13 @@ import { resolveLocalCoa } from '@/lib/coaIndex'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { formatPrice } from '@/lib/utils'
-import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from '@/lib/restrictedCheckout'
+import {
+  isPaymentLinkOnlyProduct,
+  getPaymentLinkForVariant,
+  getAvailableRetaQuantities,
+  getRetaTotalAED,
+  isPlaceholderLink,
+} from '@/lib/restrictedCheckout'
 import { isWhatsAppConfigured, whatsAppProductLink } from '@/lib/whatsapp'
 import NotifyMeForm from '@/components/NotifyMeForm'
 import type { Product } from '@/app/data'
@@ -15,18 +21,18 @@ interface Props {
   product: Product
   // Controlled from ProductVariantView.tsx, which also owns the main
   // product image — lifted up so selecting a strength here can update the
-  // displayed image there. Previously this component managed
-  // selectedVariantId entirely on its own, which is why the image never
-  // changed when you picked Pen / Nasal Spray / Vial: nothing outside this
-  // component could see that the selection had changed.
+  // displayed image there.
   selectedVariantId: string
   onSelectVariant: (variantId: string) => void
 }
 
 const TABS = ['Overview', 'Technical Specs', 'Storage', 'Certificate', 'Disclaimer']
 // Index of the Certificate tab within TABS, used by the "COA" quick-action
-// button above to jump straight there instead of navigating off the page.
+// button to jump straight there instead of navigating off the page.
 const CERT_TAB_INDEX = TABS.indexOf('Certificate')
+
+// Upper bound for the normal cart quantity stepper.
+const CART_MAX_QTY = 10
 
 export default function ProductActions({ product: initialProduct, selectedVariantId, onSelectVariant }: Props) {
   const [added,     setAdded]     = useState(false)
@@ -54,11 +60,41 @@ export default function ProductActions({ product: initialProduct, selectedVarian
     }
   }, [p, selectedVariantId, currencyCode])
 
+  // ── RETA (GLP) — payment-link-only product ─────────────────────────────
+  // Sold via fixed-amount STRABL payment links (one link per strength AND
+  // quantity) instead of the cart. See lib/restrictedCheckout.ts.
+  const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
+
+  // Quantities that currently have a live, correctly-priced link for the
+  // selected strength. The stepper only moves between these values.
+  const retaQuantities = useMemo(
+    () => (paymentLinkOnly ? getAvailableRetaQuantities(selectedVariant.title) : []),
+    [paymentLinkOnly, selectedVariant.title]
+  )
+
+  // Never trust `quantity` blindly for RETA: if it isn't one of the linked
+  // quantities (e.g. just switched strength), use the first one that is.
+  const retaQty = retaQuantities.includes(quantity) ? quantity : (retaQuantities[0] ?? 1)
+  const retaQtyIndex = retaQuantities.indexOf(retaQty)
+
+  const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(selectedVariant.title, retaQty) : null
+  const paymentLinkIsPlaceholder = paymentLink ? isPlaceholderLink(paymentLink) : false
+  const retaTotal = paymentLinkOnly ? getRetaTotalAED(selectedVariant.title, retaQty) : null
+
+  // Guard against Shopify and the STRABL link amounts drifting apart.
+  useEffect(() => {
+    if (!paymentLinkOnly || retaTotal == null || process.env.NODE_ENV === 'production') return
+    const shopifyTotal = Number(selectedVariant.price) * retaQty
+    if (Math.abs(shopifyTotal - retaTotal) > 0.01) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[ProductActions] RETA price mismatch for "${selectedVariant.title}" × ${retaQty}: Shopify ${shopifyTotal} vs payment link ${retaTotal}. Update RETA_UNIT_PRICE_AED and the STRABL links.`
+      )
+    }
+  }, [paymentLinkOnly, retaTotal, retaQty, selectedVariant.price, selectedVariant.title])
+
   // Re-syncs the selected variant if it's ever missing from p.variants
   // (e.g. a stale variant id from a previous render of this product).
-  // Left in place even though `p` is now static — cheap safety net, no
-  // longer tied to a country-driven data swap now that there's only one
-  // market (see the removed live-refetch effect above).
   useEffect(() => {
     const stillValid = p.variants?.some((v) => v.id === selectedVariantId)
     if (!stillValid) {
@@ -67,37 +103,48 @@ export default function ProductActions({ product: initialProduct, selectedVarian
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p])
 
-  // Reset scroll position on the tab body whenever the active tab changes,
-  // so switching tabs never leaves you mid-scroll on the new content.
+  // Reset scroll position on the tab body whenever the active tab changes.
   useEffect(() => {
     const el = document.getElementById('pp-tab-panel')
     if (el) el.scrollTop = 0
   }, [activeTab])
 
-  // Quantity shouldn't carry over when switching strength/format — a
-  // leftover "x3" on a variant someone only glanced at is more likely to
-  // cause an accidental bulk order than to be intentional.
+  // Quantity shouldn't carry over when switching strength/format. For RETA
+  // it resets to the lowest quantity that has a payment link.
   useEffect(() => {
-    setQuantity(1)
+    setQuantity(paymentLinkOnly ? (retaQuantities[0] ?? 1) : 1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVariantId])
-
-  // RETA (GLP) — hardcoded exception: sold via a direct payment
-  // link instead of the normal STRABL cart flow. See lib/restrictedCheckout.ts.
-  const paymentLinkOnly = isPaymentLinkOnlyProduct(p.slug)
-  const paymentLink = paymentLinkOnly ? getPaymentLinkForVariant(selectedVariant.title) : null
-  const paymentLinkIsPlaceholder = paymentLink ? isPlaceholderLink(paymentLink) : false
 
   const whatsAppEnabled = isWhatsAppConfigured()
   const whatsAppHref = whatsAppEnabled ? whatsAppProductLink(p.name, selectedVariant.title) : undefined
+
+  // ── Quantity stepper (shared by cart + RETA) ───────────────────────────
+  const qtyValue    = paymentLinkOnly ? retaQty : quantity
+  const canDecrease = paymentLinkOnly ? retaQtyIndex > 0 : quantity > 1
+  const canIncrease = paymentLinkOnly
+    ? retaQtyIndex >= 0 && retaQtyIndex < retaQuantities.length - 1
+    : quantity < CART_MAX_QTY
+  const showQuantity = paymentLinkOnly ? retaQuantities.length > 0 : selectedVariant.availableForSale
+
+  const decreaseQty = () => {
+    if (!canDecrease) return
+    if (paymentLinkOnly) setQuantity(retaQuantities[retaQtyIndex - 1])
+    else setQuantity((q) => Math.max(1, q - 1))
+  }
+
+  const increaseQty = () => {
+    if (!canIncrease) return
+    if (paymentLinkOnly) setQuantity(retaQuantities[retaQtyIndex + 1])
+    else setQuantity((q) => Math.min(CART_MAX_QTY, q + 1))
+  }
 
   const handleAdd = async () => {
     if (paymentLinkOnly || !selectedVariant.availableForSale || added) return
     setAdded(true)
     // cartContext.addItem always adds exactly 1 unit, incrementing the
     // existing line if the variant's already in the cart — looping N times
-    // reuses that proven logic (and its error handling/optimistic update)
-    // rather than adding a second "add with quantity" code path in the cart
-    // context for what's a rare bulk-add action.
+    // reuses that proven logic rather than adding a second code path.
     for (let i = 0; i < quantity; i++) {
       await addItem(
         selectedVariant.id || `gid://shopify/ProductVariant/${p.id}`,
@@ -114,16 +161,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
   const tabContent = () => {
     switch (activeTab) {
 
-      case 0: // Overview — render Shopify descriptionHtml, then the
-              // `long_desc` metafield underneath. normaliseProduct() in
-              // shopify.ts was already pulling this metafield into
-              // `longDesc` on every product — it just wasn't being
-              // rendered anywhere. This is the field to write real,
-              // unique, keyword-relevant per-product copy into (research
-              // context, what the COA verifies, etc.) for long-tail
-              // ranking on individual compound names — far more
-              // SEO-valuable than the short Shopify `description` field
-              // most storefronts default to.
+      case 0: // Overview — Shopify descriptionHtml, then the `long_desc` metafield.
         return (
           <>
             {p.descriptionHtml ? (
@@ -217,17 +255,9 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           </div>
         )
 
-      case 3: { // Certificate — this batch's real purity/lot/test-date data
-                // (already fetched for Technical Specs above) plus a direct
-                // link to the published COA document. `p.coaUrl` comes from
-                // the "pepcolab.coa_url" Shopify metafield (see shopify.ts);
-                // if a batch hasn't had one attached yet, this falls back to
-                // the searchable /certificates library pre-filtered to this
-                // product's lot number instead of a dead end.
-        // Real Shopify metafield wins if set; otherwise fall back to the
-        // combined local PDF, resolved against whichever strength is
-        // currently selected (selectedVariant.title) so switching Pen /
-        // Vial / mg strength re-points at the right page.
+      case 3: { // Certificate — batch purity/lot/test-date plus the COA document.
+        // Shopify metafield wins if set; otherwise the local COA resolved
+        // against the currently selected strength.
         const localCoa = p.coaUrl ? undefined : resolveLocalCoa(p.name, selectedVariant.title)
         const coaHref = p.coaUrl || localCoa?.url || `/certificates?lot=${encodeURIComponent(p.lot ?? '')}`
         const hasDirectCoa = Boolean(p.coaUrl || localCoa)
@@ -355,6 +385,9 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.04em', color: '#0D0F14', lineHeight: 1 }}>
             {formatPrice(selectedVariant.price, selectedVariant.currencyCode ?? currencyCode)}
           </span>
+          {paymentLinkOnly && (
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#AAB3C8' }}>each</span>
+          )}
         </div>
         {selectedVariant.availableForSale ? (
           <span style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999, background: '#EAF3DE', color: '#3B6D11' }}>
@@ -367,45 +400,60 @@ export default function ProductActions({ product: initialProduct, selectedVarian
         )}
       </div>
 
-      {/* Quantity — only shown once the variant is actually purchasable
-          through the normal cart flow. RETA's payment-link-only route
-          doesn't have a concept of cart quantity, so it's hidden there. */}
-      {!paymentLinkOnly && selectedVariant.availableForSale && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#AAB3C8', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-            Qty
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #DDE3F0', borderRadius: 10, overflow: 'hidden' }}>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={quantity <= 1}
-              aria-label="Decrease quantity"
-              style={{
-                width: 34, height: 34, border: 'none', background: '#fff',
-                fontSize: 16, fontWeight: 600, color: quantity <= 1 ? '#DDE3F0' : '#0D0F14',
-                cursor: quantity <= 1 ? 'default' : 'pointer',
-              }}
-            >
-              −
-            </button>
-            <span style={{ width: 36, textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#0D0F14' }}>
-              {quantity}
+      {/* Quantity — normal cart products step 1–10. RETA steps only through
+          quantities that have their own STRABL payment link. */}
+      {showQuantity && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#AAB3C8', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+              Qty
             </span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-              disabled={quantity >= 10}
-              aria-label="Increase quantity"
-              style={{
-                width: 34, height: 34, border: 'none', background: '#fff',
-                fontSize: 16, fontWeight: 600, color: quantity >= 10 ? '#DDE3F0' : '#0D0F14',
-                cursor: quantity >= 10 ? 'default' : 'pointer',
-              }}
-            >
-              +
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #DDE3F0', borderRadius: 10, overflow: 'hidden' }}>
+              <button
+                type="button"
+                onClick={decreaseQty}
+                disabled={!canDecrease}
+                aria-label="Decrease quantity"
+                style={{
+                  width: 34, height: 34, border: 'none', background: '#fff',
+                  fontSize: 16, fontWeight: 600, color: canDecrease ? '#0D0F14' : '#DDE3F0',
+                  cursor: canDecrease ? 'pointer' : 'default',
+                }}
+              >
+                −
+              </button>
+              <span
+                aria-live="polite"
+                style={{ width: 36, textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#0D0F14' }}
+              >
+                {qtyValue}
+              </span>
+              <button
+                type="button"
+                onClick={increaseQty}
+                disabled={!canIncrease}
+                aria-label="Increase quantity"
+                style={{
+                  width: 34, height: 34, border: 'none', background: '#fff',
+                  fontSize: 16, fontWeight: 600, color: canIncrease ? '#0D0F14' : '#DDE3F0',
+                  cursor: canIncrease ? 'pointer' : 'default',
+                }}
+              >
+                +
+              </button>
+            </div>
+            {paymentLinkOnly && retaTotal != null && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0D0F14' }}>
+                Total {formatPrice(retaTotal, currencyCode)}
+              </span>
+            )}
           </div>
+          {paymentLinkOnly && retaQuantities[0] > 1 && (
+            <p style={{ fontSize: 11.5, color: '#AAB3C8', margin: '8px 0 0' }}>
+              This strength is currently available in quantities of {retaQuantities[0]}
+              {retaQuantities.length > 1 ? `–${retaQuantities[retaQuantities.length - 1]}` : ''}.
+            </p>
+          )}
         </div>
       )}
 
@@ -432,7 +480,11 @@ export default function ProductActions({ product: initialProduct, selectedVarian
             }}
           >
             <CreditCard size={16} />
-            {paymentLinkIsPlaceholder ? 'Payment link coming soon' : 'Order via Payment Link'}
+            {paymentLinkIsPlaceholder
+              ? 'Payment link coming soon'
+              : retaTotal != null
+                ? `Pay ${formatPrice(retaTotal, currencyCode)}`
+                : 'Order via Payment Link'}
           </a>
         ) : (
           <button
@@ -472,16 +524,12 @@ export default function ProductActions({ product: initialProduct, selectedVarian
         </button>
       </div>
 
-      {/* Back-in-stock capture — replaces the disabled cart button as the
-          primary action once a variant is unavailable, so an out-of-stock
-          page still converts (an email address today) instead of dead-ending. */}
+      {/* Back-in-stock capture for unavailable cart products. */}
       {!paymentLinkOnly && !selectedVariant.availableForSale && (
         <NotifyMeForm productSlug={p.slug} productName={`${p.name} (${selectedVariant.title})`} />
       )}
 
-      {/* WhatsApp ordering — available alongside cart/payment-link checkout,
-          not just as a RETA fallback. Renders nothing if no number is
-          configured yet (see lib/whatsapp.ts). */}
+      {/* WhatsApp ordering — renders nothing if no number is configured. */}
       {whatsAppEnabled && (
         <a
           href={whatsAppHref}
@@ -502,15 +550,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
 
       {/* Tabs */}
       <div style={{ borderTop: '1px solid #F0F0F0', paddingTop: 20 }}>
-        {/*
-          Tab bar: this row itself scrolls HORIZONTALLY on narrow screens
-          (overflowX: auto) if there isn't room for all 4 labels — that's
-          intentional and is likely what was reading as "overflow-y
-          scrolling" if the labels wrapped onto a second line instead.
-          `whiteSpace: nowrap` + `flexShrink: 0` on each tab button below
-          stops that wrap so the row scrolls sideways instead of growing
-          taller.
-        */}
+        {/* Tab bar scrolls horizontally on narrow screens instead of wrapping. */}
         <div style={{
           display: 'flex', gap: 0, marginBottom: 18,
           borderBottom: '1px solid #F0F0F0',
@@ -538,19 +578,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           ))}
         </div>
 
-        {/*
-          Tab panel: previously `minHeight: 60` with no explicit height or
-          overflow rule. That's normally fine, but if this component ever
-          renders inside a flex/grid ancestor with a fixed or percentage
-          height (it does — .pp-info-col sits in a CSS grid row next to a
-          `position: sticky` image column), a bare block with no `height:
-          auto` can inherit a stretched, size-constrained box from the
-          grid and clip its own content, producing an internal vertical
-          scrollbar around the Overview/Specs/Storage/Disclaimer copy
-          instead of letting the page itself grow and scroll normally.
-          Making height/overflow explicit here forces this panel to size
-          to its content and pushes any scrolling back up to the page.
-        */}
+        {/* Tab panel sizes to its content so the page, not the panel, scrolls. */}
         <div
           id="pp-tab-panel"
           style={{
