@@ -3,34 +3,33 @@
 //
 // PepcoLab support assistant — visual rebuild, September 2026.
 //
-// WHAT WAS WRONG WITH THE PREVIOUS VERSION
-// It worked and it was accessible, but it looked like a generic support
-// widget bolted onto the site, and on a phone it was worse than that. Six
-// concrete faults, all fixed here:
-//
-//   1. iOS ZOOM BUG. The composer input was 14px. Safari zooms the entire
-//      page when a focused input is under 16px, so tapping the field threw
-//      the layout off-centre on every iPhone. Now 16px.
-//   2. height:100% ON MOBILE. When the keyboard opened, the composer went
-//      off-screen — you could not see what you were typing. Now 100dvh,
-//      which tracks the visual viewport.
-//   3. NO SAFE-AREA INSETS. Full-screen on a notched phone put the header
-//      under the status bar and the composer under the home indicator.
-//   4. FOUR CONTROLS IN THE HEADER at 380px wide: back, title, "Talk to us",
-//      close. Cramped and unreadable. The human route is now its own bar
-//      under the header — more prominent AND less crowded.
-//   5. BACKGROUND SCROLLED behind the open sheet on mobile.
-//   6. EVERY SUGGESTION A FULL-WIDTH BUTTON, which read as a form rather
-//      than a conversation. They are inline chips now.
-//
 // VISUAL DIRECTION
 // Taken from the site rather than invented: ink #0D0D0D, paper #F7F5F1, the
 // gold #C8992A hairline that already runs across the emails and checkout
 // pages. Messages are set as a TRANSCRIPT rather than two-colour chat
 // bubbles — assistant replies sit unbubbled on paper, the visitor's own words
 // sit in a small ink pill. That reads as a record of an exchange, which suits
-// a brand whose whole argument is documentation, and it avoids the generic
-// messaging-app look the previous version had.
+// a brand whose whole argument is documentation.
+//
+// CHANGES IN THIS PASS
+//   1. FOCUS WAS STOLEN ON PAGE LOAD. The focus effect ran on first mount
+//      with open=false, so the launcher grabbed focus the moment the page
+//      hydrated — jumping the viewport to the bottom-right corner. It now
+//      only restores focus on an actual close.
+//   2. NO FOCUS TRAP. Tab walked straight out of an open dialog into the
+//      page behind it. Trapped now, with aria-modal set.
+//   3. LAUNCHER WAS A LOPSIDED PILL. It carried pill padding, a font size
+//      and a gap but rendered an icon alone. It's a circle on phones and a
+//      labelled pill from 561px up, which also makes it far easier to spot.
+//   4. iOS SCROLL LOCK DIDN'T LOCK. overflow:hidden on body does not stop
+//      Safari rubber-banding. Position-fixed with scroll restore does.
+//   5. SINGLE-LINE COMPOSER. Long questions scrolled sideways inside a
+//      44px box. Auto-growing textarea, Enter sends, Shift+Enter newlines.
+//      (.plc-foot was already align-items:flex-end for exactly this.)
+//   6. INSTANT REPLIES read as a lookup table rather than a conversation.
+//      Short typing indicator before each assistant turn.
+//   7. CSS WAS DESKTOP-FIRST with a max-width override undoing it. Base is
+//      the phone layout now; 561px+ layers the corner panel on top.
 //
 // All copy lives in lib/chatContent.ts. This file only renders it.
 
@@ -50,11 +49,23 @@ import { useCustomer } from '@/lib/customerContext'
 const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
 const SUPPORT_EMAIL = 'hello@pepcolab.com'
 
+/** Proactive nudge — once per session, never on a repeat page view. */
+const NUDGE_KEY = 'plc:nudged'
+const NUDGE_DELAY = 6000
+const NUDGE_LIFETIME = 12000
+
+/** Assistant "thinking" beat. Long enough to read as a reply rather than a
+ *  lookup, short enough that nobody waits on it. */
+const TYPING_MS = 420
+
 type Bubble = { id: string; role: 'bot' | 'user'; text: string; links?: { label: string; href: string }[] }
 type Screen = 'chat' | 'topics' | 'handoff'
 
 let seq = 0
 const nextId = () => `b${++seq}`
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export default function ChatWidget() {
   const pathname = usePathname() || '/'
@@ -64,39 +75,67 @@ export default function ChatWidget() {
   const [screen, setScreen] = useState<Screen>('chat')
   const [bubbles, setBubbles] = useState<Bubble[]>([])
   const [suggestions, setSuggestions] = useState<Faq[]>([])
+  const [typing, setTyping] = useState(false)
   const [input, setInput] = useState('')
   const [activeTopic, setActiveTopic] = useState<TopicId | null>(null)
   const [handoffState, setHandoffState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [contactEmail, setContactEmail] = useState('')
   const { email: customerEmail, firstName } = useCustomer()
   const [announce, setAnnounce] = useState('')
+  const [nudge, setNudge] = useState(false)
 
   const panelRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
+  const composerRef = useRef<HTMLTextAreaElement>(null)
   const startedRef = useRef(false)
+  const wasOpenRef = useRef(false)
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const hidden = HIDDEN_ON.some(p => pathname.startsWith(p))
 
+  // Every deferred reply is tracked so navigating away or closing mid-"typing"
+  // can't push a bubble into an unmounted tree.
+  useEffect(() => () => { timersRef.current.forEach(clearTimeout) }, [])
+
+  const later = useCallback((fn: () => void, ms: number) => {
+    const t = setTimeout(fn, ms)
+    timersRef.current.push(t)
+    return t
+  }, [])
+
   /* ── conversation ─────────────────────────────────────────────────────── */
 
-  const pushBot = useCallback((lines: string[], links?: Bubble['links']) => {
-    setBubbles(prev => [...prev, ...lines.map((text, i) => ({
-      id: nextId(), role: 'bot' as const, text,
-      links: i === lines.length - 1 ? links : undefined,
-    }))])
-    setAnnounce(lines.join(' '))
-  }, [])
+  const pushBot = useCallback((lines: string[], links?: Bubble['links'], after?: () => void) => {
+    setTyping(true)
+    later(() => {
+      setTyping(false)
+      setBubbles(prev => [...prev, ...lines.map((text, i) => ({
+        id: nextId(), role: 'bot' as const, text,
+        links: i === lines.length - 1 ? links : undefined,
+      }))])
+      setAnnounce(lines.join(' '))
+      after?.()
+    }, prefersReducedMotion() ? 0 : TYPING_MS)
+  }, [later])
 
   const pushUser = useCallback((text: string) => {
     setBubbles(prev => [...prev, { id: nextId(), role: 'user', text }])
   }, [])
 
   const answerFaq = useCallback((faq: Faq) => {
-    if (faq.id === 'contact-human') { pushBot(faq.answer); setScreen('handoff'); return }
-    pushBot(faq.answer, faq.links)
-    const related = (faq.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)
-    setSuggestions(related.length ? related : context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean))
+    // Clear stale chips immediately — leaving the previous answer's
+    // suggestions on screen while a new reply types out is confusing.
+    setSuggestions([])
+
+    if (faq.id === 'contact-human') {
+      pushBot(faq.answer, undefined, () => setScreen('handoff'))
+      return
+    }
+    pushBot(faq.answer, faq.links, () => {
+      const related = (faq.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)
+      setSuggestions(related.length ? related : context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean))
+    })
   }, [pushBot, context.suggested])
 
   const handleSelect = useCallback((faq: Faq) => { pushUser(faq.question); answerFaq(faq) }, [pushUser, answerFaq])
@@ -106,27 +145,27 @@ export default function ChatWidget() {
     if (!text) return
     pushUser(text)
     setInput('')
+    setSuggestions([])
+    if (composerRef.current) composerRef.current.style.height = 'auto'
+
     const result = matchFaq(text)
     if (result.kind === 'blocked') {
-      pushBot(REFUSAL_ANSWER)
-      setSuggestions([FAQ_BY_ID['coa-what'], FAQ_BY_ID['handling-storage'], FAQ_BY_ID['contact-human']].filter(Boolean))
+      pushBot(REFUSAL_ANSWER, undefined, () =>
+        setSuggestions([FAQ_BY_ID['coa-what'], FAQ_BY_ID['handling-storage'], FAQ_BY_ID['contact-human']].filter(Boolean)))
       return
     }
     if (result.kind === 'match') { answerFaq(result.faq); return }
     if (result.kind === 'ambiguous') {
-      pushBot(['A few things could match that — which did you mean?'])
-      setSuggestions(result.faqs)
+      pushBot(['A few things could match that — which did you mean?'], undefined, () => setSuggestions(result.faqs))
       return
     }
-    pushBot(NO_MATCH_ANSWER)
-    setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean))
+    pushBot(NO_MATCH_ANSWER, undefined, () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
   }, [pushUser, pushBot, answerFaq])
 
   /* ── open / close ─────────────────────────────────────────────────────── */
 
-  // AUTOFILL (Sep 2026): a signed-in customer should never retype the
-  // address we emailed their order to. Only fills an untouched field, so it
-  // can't stamp over something they typed.
+  // AUTOFILL: a signed-in customer should never retype the address we emailed
+  // their order to. Only fills an untouched field.
   useEffect(() => {
     if (customerEmail && !contactEmail) setContactEmail(customerEmail)
   }, [customerEmail, contactEmail])
@@ -136,38 +175,104 @@ export default function ChatWidget() {
     startedRef.current = true
     // Greet a known customer by name — the assistant should not act like a
     // stranger to someone whose orders it can already see.
-    pushBot([firstName ? `${firstName} — ${context.greeting.charAt(0).toLowerCase()}${context.greeting.slice(1)}` : context.greeting])
-    setSuggestions(context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean))
-  }, [open, context, pushBot])
+    pushBot([firstName
+      ? `${firstName} — ${context.greeting.charAt(0).toLowerCase()}${context.greeting.slice(1)}`
+      : context.greeting],
+      undefined,
+      () => setSuggestions(context.suggested.map(id => FAQ_BY_ID[id]).filter(Boolean)))
+  }, [open, context, firstName, pushBot])
+
+  // Proactive nudge. Held until the visitor has actually settled on a page,
+  // dismissible, and capped at once per session so it never nags.
+  const dismissNudge = useCallback(() => {
+    setNudge(false)
+    try { sessionStorage.setItem(NUDGE_KEY, '1') } catch { /* private mode */ }
+  }, [])
 
   useEffect(() => {
+    if (hidden) return
+    let seen = true
+    try { seen = sessionStorage.getItem(NUDGE_KEY) === '1' } catch { seen = false }
+    if (seen) return
+    const show = later(() => setNudge(true), NUDGE_DELAY)
+    const hide = later(() => setNudge(false), NUDGE_DELAY + NUDGE_LIFETIME)
+    return () => { clearTimeout(show); clearTimeout(hide) }
+  }, [hidden, later])
+
+  // Focus into the panel on open; return focus to the launcher only on a real
+  // close. Previously this ran on first mount and stole focus at hydration.
+  useEffect(() => {
     if (open) {
+      wasOpenRef.current = true
       const t = setTimeout(() => panelRef.current?.focus(), 30)
       return () => clearTimeout(t)
     }
-    launcherRef.current?.focus()
+    if (wasOpenRef.current) {
+      wasOpenRef.current = false
+      launcherRef.current?.focus()
+    }
   }, [open])
 
-  // Lock the page behind the sheet on mobile only. On desktop the panel is a
-  // corner overlay and locking the page would be obstructive.
+  // Keep Tab inside the dialog while it's open.
+  useEffect(() => {
+    if (!open) return
+    const onTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !panelRef.current) return
+      const items = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || active === panelRef.current)) {
+        e.preventDefault(); last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault(); first.focus()
+      }
+    }
+    document.addEventListener('keydown', onTab)
+    return () => document.removeEventListener('keydown', onTab)
+  }, [open])
+
+  // Lock the page behind the sheet on mobile only. overflow:hidden alone does
+  // not stop iOS Safari — position-fixed with a scroll restore does.
   useEffect(() => {
     if (!open) return
     if (!window.matchMedia('(max-width: 560px)').matches) return
-    const prev = document.body.style.overflow
+    const y = window.scrollY
+    const { overflow, position, top, width } = document.body.style
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${y}px`
+    document.body.style.width = '100%'
+    return () => {
+      document.body.style.overflow = overflow
+      document.body.style.position = position
+      document.body.style.top = top
+      document.body.style.width = width
+      window.scrollTo(0, y)
+    }
   }, [open])
 
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) } }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        if (screen !== 'chat') { setScreen('chat'); setActiveTopic(null) } else setOpen(false)
+      }
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [open, screen])
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [bubbles, suggestions, screen])
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    })
+  }, [bubbles, suggestions, typing, screen])
 
   /* ── handoff ──────────────────────────────────────────────────────────── */
 
@@ -206,6 +311,8 @@ export default function ChatWidget() {
   const waConfigured = isWhatsAppConfigured()
   const topicFaqs = activeTopic ? FAQS.filter(f => f.topic === activeTopic) : []
 
+  const openPanel = () => { dismissNudge(); setOpen(true) }
+
   return (
     <>
       <style>{`
@@ -218,32 +325,70 @@ export default function ChatWidget() {
           --muted: rgba(13,13,13,.55);
           font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
         }
+
+        /* ---------- MOBILE FIRST: base = phone ---------- */
+
         .plc-launcher {
-          position: fixed; right: 20px; z-index: 900;
-          bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-          display: flex; align-items: center; gap: 9px;
-          height: 52px; padding: 0 20px 0 17px;
+          position: fixed; right: 16px; z-index: 900;
+          bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+          display: flex; align-items: center; justify-content: center;
+          width: 58px; height: 58px; padding: 0;
           border: none; border-radius: 999px; cursor: pointer;
           background: var(--ink); color: #fff;
-          font-size: 14.5px; font-weight: 600; letter-spacing: -.01em;
-          box-shadow: 0 6px 24px rgba(13,13,13,.26);
+          font-family: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: -.01em;
+          box-shadow: 0 8px 28px rgba(13,13,13,.3);
           transition: transform .15s ease, box-shadow .15s ease;
+          -webkit-tap-highlight-color: transparent;
         }
-        .plc-launcher:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(13,13,13,.3); }
-        .plc-launcher:active { transform: translateY(0); }
+        .plc-launcher:active { transform: scale(.94); }
+        .plc-launcher-label { display: none; }
 
+        /* Attention ring, shown only while the nudge is up. */
+        .plc-launcher.plc-attn::after {
+          content: ''; position: absolute; inset: -4px; border-radius: 999px;
+          border: 2px solid rgba(200,153,42,.6); pointer-events: none;
+          animation: plcRing 2s ease-out infinite;
+        }
+        @keyframes plcRing {
+          0% { transform: scale(.95); opacity: .9 }
+          70%, 100% { transform: scale(1.22); opacity: 0 }
+        }
+
+        .plc-nudge {
+          position: fixed; right: 16px; z-index: 900;
+          bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+          display: flex; align-items: stretch; overflow: hidden;
+          max-width: calc(100vw - 32px);
+          background: var(--ink); color: #fff;
+          border-radius: 13px; box-shadow: 0 12px 34px rgba(13,13,13,.3);
+          opacity: 0; transform: translateY(8px);
+          animation: plcNudgeIn .28s ease forwards;
+        }
+        @keyframes plcNudgeIn { to { opacity: 1; transform: none } }
+        .plc-nudge-body {
+          background: none; border: none; color: inherit; cursor: pointer;
+          font-family: inherit; font-size: 13.5px; font-weight: 600; line-height: 1.35;
+          text-align: left; padding: 11px 12px 11px 14px;
+        }
+        .plc-nudge-x {
+          background: none; border: none; border-left: 1px solid rgba(255,255,255,.14);
+          color: rgba(255,255,255,.6); padding: 0 10px; cursor: pointer;
+          display: grid; place-items: center;
+        }
+
+        /* Full-height sheet. dvh tracks the visual viewport, so the composer
+           stays visible when the keyboard opens — height:100% pushed it off. */
         .plc-panel {
-          position: fixed; right: 20px; bottom: 20px; z-index: 950;
-          width: 384px; height: min(600px, calc(100vh - 40px));
+          position: fixed; inset: 0; z-index: 950;
+          width: 100%; height: 100dvh;
           display: flex; flex-direction: column; overflow: hidden;
           background: var(--paper);
-          border: 1px solid var(--line); border-radius: 18px;
-          box-shadow: 0 20px 60px rgba(13,13,13,.22);
-          animation: plcIn .2s cubic-bezier(.2,.8,.3,1);
+          animation: plcUp .22s cubic-bezier(.2,.8,.3,1);
         }
-        @keyframes plcIn { from { opacity: 0; transform: translateY(10px) scale(.99) } to { opacity: 1; transform: none } }
+        @keyframes plcUp { from { transform: translateY(100%) } to { transform: none } }
 
-        .plc-head { flex-shrink: 0; background: var(--ink); color: #fff; padding: 14px 14px 13px 16px; }
+        .plc-head { flex-shrink: 0; background: var(--ink); color: #fff;
+                    padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 13px 16px; }
         .plc-head-row { display: flex; align-items: center; gap: 10px; }
         .plc-title { font-size: 15px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
         .plc-where { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 1px;
@@ -251,7 +396,7 @@ export default function ChatWidget() {
         .plc-rule { height: 2px; background: var(--gold); flex-shrink: 0; }
 
         .plc-icon { display: flex; align-items: center; justify-content: center;
-                    width: 34px; height: 34px; flex-shrink: 0;
+                    width: 38px; height: 38px; flex-shrink: 0;
                     background: none; border: none; border-radius: 9px;
                     color: rgba(255,255,255,.7); cursor: pointer; transition: background .15s, color .15s; }
         .plc-icon:hover { background: rgba(255,255,255,.1); color: #fff; }
@@ -259,24 +404,35 @@ export default function ChatWidget() {
         /* The route to a person gets its own bar, so it never competes with
            the title for width on a narrow screen. */
         .plc-human { flex-shrink: 0; display: flex; align-items: center; gap: 8px; width: 100%;
-                     padding: 11px 16px; border: none; border-bottom: 1px solid var(--line);
+                     padding: 12px 16px; border: none; border-bottom: 1px solid var(--line);
                      background: #fff; color: var(--ink); cursor: pointer;
-                     font-size: 13.5px; font-weight: 600; text-align: left; transition: background .15s; }
+                     font-family: inherit; font-size: 13.5px; font-weight: 600;
+                     text-align: left; transition: background .15s; }
         .plc-human:hover { background: #FBFAF7; }
         .plc-human span { color: var(--muted); font-weight: 400; }
 
-        .plc-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 18px 16px 20px; }
+        .plc-body { flex: 1; overflow-y: auto; overscroll-behavior: contain;
+                    -webkit-overflow-scrolling: touch; padding: 18px 18px 24px; }
 
         /* Transcript, not chat bubbles. */
-        .plc-bot { font-size: 14.5px; line-height: 1.6; color: var(--ink);
-                   margin: 0 0 14px; max-width: 92%; letter-spacing: -.005em; }
+        .plc-bot { font-size: 15px; line-height: 1.6; color: var(--ink);
+                   margin: 0 0 14px; max-width: 100%; letter-spacing: -.005em; }
         .plc-user { display: block; margin: 0 0 16px auto; width: fit-content; max-width: 85%;
                     padding: 9px 14px; border-radius: 16px 16px 4px 16px;
-                    background: var(--ink); color: #fff; font-size: 14px; line-height: 1.5; }
+                    background: var(--ink); color: #fff; font-size: 14px; line-height: 1.5;
+                    overflow-wrap: anywhere; }
+
+        .plc-typing { display: flex; gap: 4px; align-items: center; height: 22px; margin: 0 0 14px; }
+        .plc-typing i { width: 6px; height: 6px; border-radius: 50%; background: rgba(13,13,13,.3);
+                        animation: plcDot 1.1s ease-in-out infinite; }
+        .plc-typing i:nth-child(2) { animation-delay: .15s }
+        .plc-typing i:nth-child(3) { animation-delay: .3s }
+        @keyframes plcDot { 0%, 60%, 100% { opacity: .25; transform: none }
+                            30% { opacity: 1; transform: translateY(-3px) } }
 
         .plc-links { display: flex; flex-direction: column; gap: 6px; margin: -6px 0 16px; }
         .plc-link { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-                    min-height: 42px; padding: 0 14px; border-radius: 11px;
+                    min-height: 44px; padding: 0 14px; border-radius: 11px;
                     border: 1px solid var(--line); background: #fff;
                     font-size: 13.5px; font-weight: 600; color: var(--ink); text-decoration: none;
                     transition: border-color .15s; }
@@ -284,7 +440,7 @@ export default function ChatWidget() {
 
         /* Suggestions as inline chips, not stacked form buttons. */
         .plc-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
-        .plc-chip { min-height: 36px; padding: 8px 14px; border-radius: 999px;
+        .plc-chip { min-height: 38px; padding: 8px 14px; border-radius: 999px;
                     border: 1px solid rgba(13,13,13,.16); background: transparent;
                     font-family: inherit; font-size: 13.5px; line-height: 1.35; color: var(--ink);
                     cursor: pointer; text-align: left; transition: background .15s, border-color .15s; }
@@ -300,14 +456,15 @@ export default function ChatWidget() {
         .plc-topic span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
 
         .plc-foot { flex-shrink: 0; display: flex; gap: 8px; align-items: flex-end;
-                    padding: 12px; border-top: 1px solid var(--line); background: #fff; }
+                    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+                    border-top: 1px solid var(--line); background: #fff; }
         /* 16px is not a style choice: Safari zooms the whole page when a
-           focused input is smaller, which was throwing the layout off-centre
-           on every iPhone. */
-        .plc-input { flex: 1; min-height: 44px; padding: 11px 14px; font-size: 16px;
-                     font-family: inherit; color: var(--ink);
+           focused input is smaller, which threw the layout off-centre on
+           every iPhone. */
+        .plc-input { flex: 1; min-height: 44px; max-height: 120px; padding: 11px 14px;
+                     font-size: 16px; font-family: inherit; line-height: 1.4; color: var(--ink);
                      border: 1px solid var(--line); border-radius: 12px; background: var(--paper);
-                     outline: none; transition: border-color .15s; }
+                     outline: none; resize: none; transition: border-color .15s; }
         .plc-input:focus { border-color: rgba(13,13,13,.4); }
         .plc-send { display: flex; align-items: center; justify-content: center; flex-shrink: 0;
                     width: 44px; height: 44px; border: none; border-radius: 12px;
@@ -336,34 +493,65 @@ export default function ChatWidget() {
         .plc :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
         .plc-head :focus-visible, .plc-action-primary:focus-visible { outline-color: #fff; }
 
-        /* Mobile: a full-height sheet. dvh tracks the visual viewport, so the
-           composer stays visible when the keyboard opens — height:100% pushed
-           it off-screen. */
-        @media (max-width: 560px) {
-          .plc-panel { inset: 0; width: 100%; height: 100dvh; max-height: none;
-                       border: none; border-radius: 0; animation: plcUp .22s cubic-bezier(.2,.8,.3,1); }
-          .plc-head { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
-          .plc-body { padding: 18px 18px 24px; }
-          .plc-bot { font-size: 15px; max-width: 100%; }
-          .plc-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
-          .plc-launcher { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+        /* ---------- DESKTOP layered on top ---------- */
+
+        @media (min-width: 561px) {
+          .plc-launcher {
+            right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+            width: auto; height: 52px; gap: 9px; padding: 0 20px 0 17px;
+          }
+          .plc-launcher-label { display: inline; }
+          .plc-launcher:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(13,13,13,.34); }
+
+          .plc-nudge { right: 20px; bottom: 84px; max-width: 280px; }
+
+          .plc-panel {
+            inset: auto; right: 20px; bottom: 20px;
+            width: 384px; height: min(620px, calc(100vh - 40px));
+            border: 1px solid var(--line); border-radius: 18px;
+            box-shadow: 0 20px 60px rgba(13,13,13,.22);
+            animation: plcIn .2s cubic-bezier(.2,.8,.3,1);
+          }
+          @keyframes plcIn { from { opacity: 0; transform: translateY(10px) scale(.99) } to { opacity: 1; transform: none } }
+          .plc-head { padding-top: 14px; }
+          .plc-body { padding: 18px 16px 20px; }
+          .plc-bot { font-size: 14.5px; max-width: 92%; }
+          .plc-foot { padding-bottom: 12px; }
         }
-        @keyframes plcUp { from { transform: translateY(100%) } to { transform: none } }
 
         @media (prefers-reduced-motion: reduce) {
-          .plc-panel { animation: none }
+          .plc-panel, .plc-nudge, .plc-launcher::after, .plc-typing i { animation: none !important }
+          .plc-nudge { opacity: 1; transform: none }
           .plc * { transition: none !important }
         }
       `}</style>
 
+      {!open && nudge && (
+        <div className="plc plc-nudge" role="status">
+          <button className="plc-nudge-body" onClick={openPanel}>
+            Questions about COAs, shipping or an order? Ask here.
+          </button>
+          <button className="plc-nudge-x" onClick={dismissNudge} aria-label="Dismiss">
+            <X size={13} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
       {!open && (
-        <button ref={launcherRef} className="plc plc-launcher" onClick={() => setOpen(true)} aria-label="Open support chat">
-          <MessageCircle size={18} aria-hidden="true" />
+        <button
+          ref={launcherRef}
+          className={`plc plc-launcher${nudge ? ' plc-attn' : ''}`}
+          onClick={openPanel}
+          aria-label="Open support chat"
+        >
+          <MessageCircle size={20} aria-hidden="true" />
+          <span className="plc-launcher-label">Support</span>
         </button>
       )}
 
       {open && (
-        <div ref={panelRef} className="plc plc-panel" role="dialog" aria-label="PepcoLab support" tabIndex={-1}>
+        <div ref={panelRef} className="plc plc-panel" role="dialog" aria-modal="true"
+             aria-label="PepcoLab support" tabIndex={-1}>
           <div className="plc-head">
             <div className="plc-head-row">
               {screen !== 'chat' && (
@@ -426,6 +614,8 @@ export default function ChatWidget() {
                   <>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input id="plc-email" className="plc-input" type="email" value={contactEmail}
+                             inputMode="email" autoComplete="email"
+                             style={{ maxHeight: 44 }}
                              onChange={e => setContactEmail(e.target.value)} placeholder="you@lab.com" />
                       <button className="plc-send" aria-label="Send"
                               onClick={() => { trackChatHandoff('callback', pathname); sendTranscript('requested_callback') }}
@@ -474,7 +664,11 @@ export default function ChatWidget() {
                     )
                 ))}
 
-                {suggestions.length > 0 && (
+                {typing && (
+                  <div className="plc-typing" aria-hidden="true"><i /><i /><i /></div>
+                )}
+
+                {suggestions.length > 0 && !typing && (
                   <div className="plc-chips">
                     {suggestions.map(f => (
                       <button key={f.id} className="plc-chip" onClick={() => handleSelect(f)}>{f.question}</button>
@@ -489,8 +683,19 @@ export default function ChatWidget() {
           {screen === 'chat' && (
             <form className="plc-foot" onSubmit={e => { e.preventDefault(); handleSubmit(input) }}>
               <label htmlFor="plc-input" className="plc-sr">Type your question</label>
-              <input id="plc-input" className="plc-input" value={input} autoComplete="off"
-                     onChange={e => setInput(e.target.value)} placeholder="Ask a question…" />
+              <textarea
+                id="plc-input" ref={composerRef} className="plc-input" rows={1}
+                value={input} autoComplete="off" placeholder="Ask a question…"
+                onChange={e => {
+                  setInput(e.target.value)
+                  // Auto-grow to the CSS max-height, then scroll internally.
+                  e.target.style.height = 'auto'
+                  e.target.style.height = `${e.target.scrollHeight}px`
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(input) }
+                }}
+              />
               <button type="submit" className="plc-send" aria-label="Send question" disabled={!input.trim()}>
                 <ArrowUp size={18} aria-hidden="true" />
               </button>
