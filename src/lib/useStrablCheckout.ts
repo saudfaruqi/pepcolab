@@ -2,6 +2,7 @@
 'use client'
 
 import { trackBeginCheckout, lineToItem } from '@/lib/analytics'
+import { computeBundleSavings } from '@/lib/bundles'
 import { useEffect, useState } from 'react'
 import type { CartLine } from '@/lib/cartContext'
 
@@ -124,6 +125,14 @@ export function useStrablCheckout() {
     detectedCountry?: string | null,
     appliedDiscount?: { code: string; discountAmount: number } | null
   ) => {
+    // BUNDLE SAVINGS (Sep 2026): complete bundle sets in the cart earn their
+    // bundle discount (lib/bundles.ts) wherever checkout is started from —
+    // cart page or drawer. Combined with any discount code into the single
+    // reduction applied to line prices below.
+    const bundleSavings = computeBundleSavings(lines)
+    const codeAmount = appliedDiscount?.discountAmount ?? 0
+    const totalDiscount = Math.round((bundleSavings.amount + codeAmount) * 100) / 100
+    const discountCode = appliedDiscount?.code
     if (lines.length === 0) return
 
     setCheckingOut(true)
@@ -181,7 +190,7 @@ export function useStrablCheckout() {
       // attribute revenue client-side. See lib/analytics.ts.
       trackBeginCheckout(
         lines.map(l => lineToItem(l)),
-        appliedDiscount?.code
+        discountCode
       )
 
       // HONESTY NOTE: STRABL's checkoutWithRedirect has no dedicated
@@ -197,7 +206,7 @@ export function useStrablCheckout() {
       // with how price/quantity have always reached STRABL in this
       // integration. It just means "validated" isn't the same guarantee
       // as "enforced" — worth knowing, not worth blocking on.
-      if (appliedDiscount && appliedDiscount.discountAmount > 0) {
+      if (totalDiscount > 0) {
         const rawSubtotal = strablLineItems.reduce((sum, li) => sum + li.price * li.quantity, 0)
         if (rawSubtotal > 0) {
           // Price floor: the checkout payload later drops any line with
@@ -211,7 +220,7 @@ export function useStrablCheckout() {
             (sum, li) => sum + Math.max(0, li.price - MIN_LINE_PRICE) * li.quantity,
             0
           )
-          let remaining = Math.min(appliedDiscount.discountAmount, rawSubtotal, maxDiscountable)
+          let remaining = Math.min(totalDiscount, rawSubtotal, maxDiscountable)
           strablLineItems = strablLineItems.map((li, idx) => {
             const lineTotal = li.price * li.quantity
             const lineFloor = MIN_LINE_PRICE * li.quantity
@@ -219,7 +228,7 @@ export function useStrablCheckout() {
             const isLast = idx === strablLineItems.length - 1
             const share = isLast
               ? Math.min(remaining, lineCapacity)
-              : Math.min(remaining, lineCapacity, Math.round((lineTotal / rawSubtotal) * appliedDiscount.discountAmount * 100) / 100)
+              : Math.min(remaining, lineCapacity, Math.round((lineTotal / rawSubtotal) * totalDiscount * 100) / 100)
             remaining = Math.max(0, remaining - share)
             const newLineTotal = Math.max(lineFloor, lineTotal - share)
             return { ...li, price: Math.round((newLineTotal / li.quantity) * 100) / 100 }
@@ -235,7 +244,10 @@ export function useStrablCheckout() {
         // shape observed in real STRABL webhook payloads — see
         // webhook route.ts). Used to attribute/increment redemption counts
         // after a real order is created, not just at validate time.
-        extra: appliedDiscount ? { discountCode: appliedDiscount.code } : {},
+        extra: {
+          ...(discountCode ? { discountCode } : {}),
+          ...(bundleSavings.bundles.length ? { bundles: bundleSavings.bundles.map(b => `${b.id}x${b.sets}`).join(',') } : {}),
+        },
         merchantUrls: {
           successUrl: `${baseUrl}/checkout/success`,
           failureUrl: `${baseUrl}/checkout/failure`,

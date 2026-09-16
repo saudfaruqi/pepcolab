@@ -1,7 +1,8 @@
 // src/components/CartDrawer.tsx
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
+import { computeBundleSavings } from '@/lib/bundles'
 import Link from 'next/link'
 import {
   X, Minus, Plus, ArrowRight, ShoppingBag, Trash2, MessageCircle,
@@ -51,6 +52,11 @@ export default function CartDrawer() {
   // the standalone /cart page share one implementation. See that file for
   // the full history/verification notes on the integration.
   const handleCheckout = () => strablCheckout(lines, displayCurrency, detectedCountry)
+
+  // Bundle saving is applied inside useStrablCheckout; shown here so the
+  // drawer total matches what STRABL will charge.
+  const bundleSavings = useMemo(() => computeBundleSavings(lines), [lines])
+  const drawerTotal = Math.max(0, Math.round((subtotal - bundleSavings.amount) * 100) / 100)
 
   const whatsAppEnabled = isWhatsAppConfigured()
 
@@ -232,23 +238,29 @@ export default function CartDrawer() {
         {/* Footer */}
         {lines.length > 0 && (
           <div className="bg-white/95 backdrop-blur-md border-t border-gray-100 px-4 pt-4 pb-6 flex-shrink-0">
+            {bundleSavings.bundles.map((b) => (
+              <div key={b.id} className="flex justify-between text-xs text-emerald-700 mb-2">
+                <span>{b.name} saving{b.sets > 1 ? ` ×${b.sets}` : ''}</span>
+                <span className="font-semibold">−{formatPrice(b.amount, displayCurrency)}</span>
+              </div>
+            ))}
             <div className="flex justify-between items-baseline mb-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Subtotal
+                  {bundleSavings.amount > 0 ? 'Total' : 'Subtotal'}
                 </div>
                 <div className="text-[10px] text-emerald-600 font-medium">
                   Free shipping included
                 </div>
               </div>
               <strong className="text-2xl font-bold text-gray-900 tracking-tight">
-                {formatPrice(subtotal, displayCurrency)}
+                {formatPrice(drawerTotal, displayCurrency)}
               </strong>
             </div>
 
-            {chargeNotice(displayedTotalToAed(subtotal, detectedCountry), detectedCountry) && (
+            {chargeNotice(displayedTotalToAed(drawerTotal, detectedCountry), detectedCountry) && (
               <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-2 mb-4 leading-relaxed">
-                {chargeNotice(displayedTotalToAed(subtotal, detectedCountry), detectedCountry)}
+                {chargeNotice(displayedTotalToAed(drawerTotal, detectedCountry), detectedCountry)}
               </p>
             )}
 

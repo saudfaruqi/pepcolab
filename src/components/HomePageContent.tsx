@@ -10,7 +10,7 @@ import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { BUNDLES as CURATED_BUNDLES } from "@/app/data";
+import { BUNDLE_DEFS, MAX_BUNDLE_DISCOUNT, resolveBundle } from "@/lib/bundles";
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from "@/lib/restrictedCheckout";
 
 
@@ -70,6 +70,7 @@ type NormalisedProduct = {
   purity?: number; lot?: string; sequence?: string; longDesc?: string;
   color: ProductColor;
   metafields?: Record<string, string | number | boolean | null>;
+  variants?: { id: string; title: string; price: number; availableForSale: boolean }[];
 };
 
 // ─── Static data ──────────────────────────────────────────────────────────────
@@ -427,41 +428,46 @@ export default function PepcoLabPage({
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
   }, [addItem]);
 
+  // Bundles: exact variants, live prices and a saving the cart actually
+  // applies — see lib/bundles.ts. Incomplete bundles (missing product,
+  // variant or stock) are not shown.
   const BUNDLES = useMemo(() => {
-    return CURATED_BUNDLES.map((bundle) => {
-      const bp = bundle.products
-        .map((slug) => products.find(p => p.slug === slug))
-        .filter((p): p is NormalisedProduct => Boolean(p))
-        .map(p => ({ ...p, from: p.color?.vialFrom ?? "#3b82f6", to: p.color?.vialTo ?? "#8b5cf6" }))
-
-      if (bp.length === 0) return null
-
-      const staticTotal = bundle.price + bundle.save
-      const discountRatio = staticTotal > 0 ? bundle.save / staticTotal : 0
-      const liveTotal = bp.length === bundle.products.length
-        ? bp.reduce((s, p) => s + p.price, 0)
-        : null
-      const discounted = liveTotal != null
-        ? Math.round(liveTotal * (1 - discountRatio) * 100) / 100
-        : bundle.price
-      const total = liveTotal ?? staticTotal
-
-      return {
-        id: bundle.id,
-        name: bundle.name,
-        desc: bundle.desc,
-        price: discounted,
-        originalPrice: Math.round(total * 100) / 100,
-        products: bp,
-      }
-    }).filter((b): b is NonNullable<typeof b> => b !== null)
+    if (products.length === 0) return []
+    return BUNDLE_DEFS
+      .map((def) => resolveBundle(def, products))
+      .filter((b) => b.complete)
+      .map((b) => ({
+        id: b.def.id,
+        name: b.def.name,
+        desc: b.def.desc,
+        price: b.price,
+        originalPrice: b.total,
+        discountPercent: b.def.discountPercent,
+        lines: b.lines,
+        products: b.lines.map((l) => ({
+          ...l.product,
+          id: `${l.product.id}-${l.variantId}`,
+          shortName: l.item.label,
+          mg: l.variantTitle === 'Default Title' ? '' : l.variantTitle,
+          from: l.product.color?.vialFrom ?? "#3b82f6",
+          to: l.product.color?.vialTo ?? "#8b5cf6",
+        })),
+      }))
   }, [products]);
 
-  const addBundleToCart = useCallback((bundle: typeof BUNDLES[0]) => {
-    bundle.products
-      .filter(p => !isPaymentLinkOnlyProduct(p.slug)) // RETA can't go through the cart
-      .forEach(p => addItem(p.variantId, p.title, p.mg ?? "5mg", p.price, p.slug, p.image));
-  }, [addItem]);
+  const [addingBundleId, setAddingBundleId] = useState<string | null>(null);
+  const addBundleToCart = useCallback(async (bundle: typeof BUNDLES[number]) => {
+    if (addingBundleId) return
+    setAddingBundleId(bundle.id)
+    try {
+      // Sequential: addItem does optimistic updates that race if fired in parallel.
+      for (const l of bundle.lines) {
+        await addItem(l.variantId, l.product.title, l.variantTitle, l.price, l.product.slug, l.product.image)
+      }
+    } finally {
+      setAddingBundleId(null)
+    }
+  }, [addItem, addingBundleId]);
 
   // FIX (Sep 2026): the featured pull-quote picked the highest-rated review —
   // which, with only one or two reviews, is a review the section has ALREADY
@@ -701,7 +707,7 @@ export default function PepcoLabPage({
             <p style={TYPOGRAPHY.subheadingLight}>
               Curated combinations of research compounds, bundled for specific study objectives.
               <span style={{ display: "block", color: "rgba(255,255,255,0.2)", fontSize: "0.9em", marginTop: 4 }}>
-                Save 10% vs. individual pricing
+                Save {MAX_BUNDLE_DISCOUNT}% vs. individual pricing — applied automatically in your cart
               </span>
             </p>
           </div>
@@ -875,12 +881,13 @@ export default function PepcoLabPage({
                           fontSize: "10px",
                           color: "rgba(255,255,255,0.2)",
                         }}>
-                          {b.products.length} compounds · COA included
+                          {b.products.length} compounds · save {b.discountPercent}% in cart
                         </span>
                       </div>
 
                       <button
                         onClick={() => addBundleToCart(b)}
+                        disabled={addingBundleId === b.id}
                         style={{
                           height: "36px",
                           padding: "0 18px",
@@ -905,7 +912,7 @@ export default function PepcoLabPage({
                           e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
                         }}
                       >
-                        Add Stack
+                        {addingBundleId === b.id ? "Adding…" : "Add Stack"}
                         <svg
                           width="12"
                           height="12"

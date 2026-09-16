@@ -1,7 +1,8 @@
 // src/app/cart/page.tsx
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
+import { computeBundleSavings } from '@/lib/bundles'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
@@ -94,6 +95,12 @@ function CartPageInner() {
   // off on the UAE market and 10 GBP off on the UK market. Fine for
   // percent-only codes; worth knowing before creating fixed-value codes
   // for a multi-currency launch.
+  // Bundle saving (lib/bundles.ts) — applied automatically whenever a
+  // complete bundle is in the cart. Discount codes are validated against the
+  // amount after this saving, so the two never overlap on the same money.
+  const bundleSavings = useMemo(() => computeBundleSavings(lines), [lines])
+  const subtotalAfterBundles = Math.max(0, Math.round((subtotal - bundleSavings.amount) * 100) / 100)
+
   const [discountCode, setDiscountCode] = useState('')
   const [discountApplying, setDiscountApplying] = useState(false)
   const [discountError, setDiscountError] = useState<string | null>(null)
@@ -129,7 +136,7 @@ function CartPageInner() {
       const res = await fetch('/api/discounts/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, subtotal }),
+        body: JSON.stringify({ code, subtotal: subtotalAfterBundles }),
       })
       const data = await res.json()
       if (!res.ok || !data.valid) {
@@ -175,7 +182,7 @@ function CartPageInner() {
         const res = await fetch('/api/discounts/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: appliedDiscount.code, subtotal }),
+          body: JSON.stringify({ code: appliedDiscount.code, subtotal: subtotalAfterBundles }),
         })
         const data = await res.json()
         if (cancelled) return
@@ -201,9 +208,11 @@ function CartPageInner() {
     // to react to subtotal changes for an already-applied discount, not to
     // re-fire every time it sets appliedDiscount itself (that would loop).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotal])
+  }, [subtotalAfterBundles])
 
-  const total = appliedDiscount ? Math.max(0, subtotal - appliedDiscount.discountAmount) : subtotal
+  const total = appliedDiscount
+    ? Math.max(0, subtotalAfterBundles - appliedDiscount.discountAmount)
+    : subtotalAfterBundles
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -367,6 +376,14 @@ function CartPageInner() {
                 <span>Items ({totalQuantity})</span>
                 <span>{formatPrice(subtotal, displayCurrency)}</span>
               </div>
+              {bundleSavings.bundles.map((b) => (
+                <div key={b.id} className="flex justify-between text-sm text-emerald-700 mb-2">
+                  <span>
+                    {b.name} saving{b.sets > 1 ? ` ×${b.sets}` : ''}
+                  </span>
+                  <span className="font-medium">−{formatPrice(b.amount, displayCurrency)}</span>
+                </div>
+              ))}
               <div className="flex justify-between text-sm text-gray-600 mb-4">
                 <span>Shipping</span>
                 <span className="text-emerald-600 font-medium">Free</span>
@@ -420,7 +437,7 @@ function CartPageInner() {
 
               <div className="border-t border-gray-100 pt-4 flex justify-between items-baseline mb-1">
                 <span className="text-sm font-semibold text-gray-900">
-                  {appliedDiscount ? 'Total' : 'Subtotal'}
+                  {appliedDiscount || bundleSavings.amount > 0 ? 'Total' : 'Subtotal'}
                 </span>
                 <strong className="text-2xl font-bold text-gray-900 tracking-tight">
                   {formatPrice(total, displayCurrency)}

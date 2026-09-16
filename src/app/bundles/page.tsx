@@ -5,6 +5,7 @@ import AnnouncementBar from '@/components/AnnouncementBar'
 import Nav from '@/components/Nav'
 import BundlesSection from '@/components/BundlesSection'
 import Footer from '@/components/Footer'
+import { MAX_BUNDLE_DISCOUNT } from '@/lib/bundles'
 
 export default function BundlesPage() {
   return (
@@ -17,7 +18,7 @@ export default function BundlesPage() {
             <div className="text-[11px] font-medium tracking-[1.2px] uppercase text-steel-light mb-2">Stacks</div>
             <h1 className="font-serif text-[44px] tracking-[-1.5px] text-ink">Research Bundles</h1>
             <p className="text-[15px] text-steel font-light mt-2 max-w-xl">
-              Pre-matched peptide combinations curated for common research protocols. Save up to 15%.
+              Pre-matched peptide combinations curated for common research protocols. Save {MAX_BUNDLE_DISCOUNT}% when you buy a bundle — applied automatically in your cart.
             </p>
           </div>
         </div>
