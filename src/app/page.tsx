@@ -74,6 +74,15 @@ function pickCardFields(p: any) {
     currencyCode: p.currencyCode ?? 'AED',
     variantId: p.variantId,
     variantCount: p.variantCount,
+    // Compact variant list — needed by the homepage bundles
+    // (lib/bundles.ts matches exact strengths/formats such as "10mg" or
+    // "Vial"). Without it every multi-variant bundle was hidden.
+    variants: (p.variants ?? []).map((v: any) => ({
+      id: v.id,
+      title: v.title,
+      price: v.price,
+      availableForSale: v.availableForSale,
+    })),
     inStock: p.inStock,
 
     purity: p.purity,

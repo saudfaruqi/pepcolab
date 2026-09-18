@@ -14,7 +14,10 @@ export default function robots(): MetadataRoute.Robots {
           '/checkout',
           '/checkout/',
           '/cart',
-          '/_next/',
+          // '/_next/' is deliberately NOT blocked (Sep 2026): it holds the
+          // CSS, JavaScript and optimised images (/_next/image) Google needs
+          // to render pages and index product photos. Blocking it made pages
+          // look broken to Googlebot and kept images out of image search.
           '/admin',
           '/admin/',
           // Personal, and a signed-out crawler would only ever see the login
