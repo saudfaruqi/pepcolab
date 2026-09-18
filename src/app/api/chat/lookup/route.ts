@@ -18,7 +18,7 @@
 // same generic message whether the order does not exist or the email is
 // wrong — so this cannot be used to discover which order codes are real.
 import { NextRequest, NextResponse } from 'next/server'
-import { resolveLookup } from '@/lib/chatLookup'
+import { resolveLookup, type ResolvableIntent } from '@/lib/chatLookup'
 import { verifySessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/customerAuth'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
@@ -30,7 +30,7 @@ const GENERAL_MAX = 40
 const ORDER_MAX = 10
 const WINDOW_MS = 10 * 60 * 1000
 
-const VALID_INTENTS = new Set(['product', 'lot', 'order'])
+const VALID_INTENTS = new Set(['product', 'lot', 'order', 'search', 'add-to-cart', 'reorder'])
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
@@ -42,17 +42,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const payload = body as { intent?: unknown; query?: unknown; email?: unknown }
+  const payload = body as {
+    intent?: unknown; query?: unknown; email?: unknown
+    filters?: unknown; quantity?: unknown
+  }
   const intent = String(payload.intent ?? '')
   const query = String(payload.query ?? '').trim().slice(0, 120)
   const providedEmail = payload.email ? String(payload.email).trim().toLowerCase().slice(0, 254) : null
+  const quantity = Math.min(Math.max(Number(payload.quantity) || 1, 1), 5)
 
-  if (!VALID_INTENTS.has(intent) || !query) {
+  // Search and reorder carry no product term, so only the others require one.
+  const needsQuery = intent === 'product' || intent === 'lot' || intent === 'order' || intent === 'add-to-cart'
+  if (!VALID_INTENTS.has(intent) || (needsQuery && !query)) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const bucket = intent === 'order' ? 'chat-lookup-order' : 'chat-lookup'
-  const max = intent === 'order' ? ORDER_MAX : GENERAL_MAX
+  // Only the shape we use, and only from a fixed set of keys — a filter
+  // object is attacker-controlled input like anything else.
+  const rawFilters = (payload.filters ?? {}) as Record<string, unknown>
+  const filters = {
+    category: rawFilters.category ? String(rawFilters.category).slice(0, 40) : undefined,
+    format: rawFilters.format ? String(rawFilters.format).slice(0, 40) : undefined,
+    maxPrice: Number(rawFilters.maxPrice) > 0 ? Number(rawFilters.maxPrice) : undefined,
+    cheapest: rawFilters.cheapest === true ? true : undefined,
+    term: rawFilters.term ? String(rawFilters.term).slice(0, 60) : undefined,
+  }
+
+  const identityBound = intent === 'order' || intent === 'reorder'
+  const bucket = identityBound ? 'chat-lookup-order' : 'chat-lookup'
+  const max = identityBound ? ORDER_MAX : GENERAL_MAX
   if (isRateLimited(bucket, ip, max, WINDOW_MS)) {
     return NextResponse.json(
       {
@@ -76,9 +94,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const answer = await resolveLookup(intent as 'product' | 'lot' | 'order', query, {
+    const answer = await resolveLookup(intent as ResolvableIntent, query, {
       sessionEmail,
       providedEmail,
+      filters,
+      quantity,
     })
     return NextResponse.json({ answer })
   } catch (err) {

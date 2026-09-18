@@ -62,6 +62,10 @@
 // D. FREE TEXT NOW TOLERATES TYPOS. "bacteriostaic" and "purtiy" matched
 //    nothing before.
 
+import { detectAction, type ActionRequest } from '@/lib/chatActions'
+
+export type { ActionRequest } from '@/lib/chatActions'
+
 export interface ChatLink {
   label: string
   href: string
@@ -740,6 +744,7 @@ export function resolvePageContext(pathname: string): PageContext & { productSlu
 
 export type MatchResult =
   | { kind: 'blocked' }
+  | { kind: 'action'; request: ActionRequest }
   | { kind: 'lookup'; request: LookupRequest }
   | { kind: 'match'; faq: Faq }
   | { kind: 'ambiguous'; faqs: Faq[] }
@@ -835,6 +840,13 @@ export function matchFaq(input: string): MatchResult {
   // Safety first, and it cannot be bypassed by dressing a dosing question up
   // as a storage question.
   if (isBlocked(q)) return { kind: 'blocked' }
+
+  // Things the visitor wants DONE — search, add to cart, show the cart,
+  // reorder. Checked before lookups because "add BPC-157 to cart" and "do you
+  // have BPC-157?" both name a product, and only one of them is a question.
+  // Safety still runs first, above.
+  const action = detectAction(input)
+  if (action) return { kind: 'action', request: action }
 
   // Questions that need real data rather than written copy.
   const lookup = detectLookup(input)

@@ -37,11 +37,14 @@ import { MessageCircle, X, ArrowLeft, ArrowUp, Headset, Mail, Check, Loader2 } f
 import {
   FAQS, FAQ_BY_ID, TOPICS, resolvePageContext, matchFaq,
   REFUSAL_ANSWER, NO_MATCH_ANSWER, LOOKUP_PENDING_ANSWER, LOOKUP_ERROR_ANSWER,
-  type Faq, type TopicId, type LookupRequest,
+  type Faq, type TopicId, type LookupRequest, type ActionRequest,
 } from '@/lib/chatContent'
+import type { ProductCard } from '@/lib/chatLookup'
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { trackChatHandoff } from '@/lib/analytics'
 import { useCustomer } from '@/lib/customerContext'
+import { useCart } from '@/lib/cartContext'
+import { formatPrice } from '@/lib/utils'
 import { claimNudgeSlot, releaseNudgeSlot } from '@/lib/nudgeCoordinator'
 
 const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
@@ -64,7 +67,16 @@ const NUDGE_ID = 'chat-support'
  *  lookup, short enough that nobody waits on it. */
 const TYPING_MS = 420
 
-type Bubble = { id: string; role: 'bot' | 'user'; text: string; links?: { label: string; href: string }[] }
+type Bubble = {
+  id: string
+  role: 'bot' | 'user'
+  text: string
+  links?: { label: string; href: string }[]
+  /** Product cards with an Add button — see the commerce block below. */
+  cards?: ProductCard[]
+  /** Units the Add button will add. */
+  quantity?: number
+}
 type Screen = 'chat' | 'topics' | 'handoff'
 
 let seq = 0
@@ -87,6 +99,7 @@ export default function ChatWidget() {
   const [handoffState, setHandoffState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [contactEmail, setContactEmail] = useState('')
   const { email: customerEmail, firstName } = useCustomer()
+  const { addItem, openCart, lines: cartLines, subtotal, currencyCode, totalQuantity } = useCart()
   const [announce, setAnnounce] = useState('')
   const [nudge, setNudge] = useState(false)
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
@@ -113,13 +126,22 @@ export default function ChatWidget() {
 
   /* ── conversation ─────────────────────────────────────────────────────── */
 
-  const pushBot = useCallback((lines: string[], links?: Bubble['links'], after?: () => void) => {
+  const pushBot = useCallback((
+    lines: string[],
+    links?: Bubble['links'],
+    after?: () => void,
+    extras?: { cards?: ProductCard[]; quantity?: number },
+  ) => {
     setTyping(true)
     later(() => {
       setTyping(false)
       setBubbles(prev => [...prev, ...lines.map((text, i) => ({
         id: nextId(), role: 'bot' as const, text,
+        // Links and cards hang off the LAST line so they read as the reply's
+        // conclusion rather than interrupting it.
         links: i === lines.length - 1 ? links : undefined,
+        cards: i === lines.length - 1 ? extras?.cards : undefined,
+        quantity: i === lines.length - 1 ? extras?.quantity : undefined,
       }))])
       setAnnounce(lines.join(' '))
       after?.()
@@ -168,7 +190,14 @@ export default function ChatWidget() {
       })
       const data = await res.json().catch(() => null)
       const answer = data?.answer as
-        | { lines?: string[]; links?: { label: string; href: string }[]; related?: string[]; needsEmail?: boolean }
+        | {
+            lines?: string[]
+            links?: { label: string; href: string }[]
+            related?: string[]
+            needsEmail?: boolean
+            cards?: ProductCard[]
+            quantity?: number
+          }
         | undefined
 
       if (!answer?.lines?.length) {
@@ -179,14 +208,121 @@ export default function ChatWidget() {
       }
 
       setPendingLookup(answer.needsEmail ? request : null)
-      pushBot(answer.lines, answer.links, () =>
-        setSuggestions((answer.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)))
+      pushBot(
+        answer.lines,
+        answer.links,
+        () => setSuggestions((answer.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)),
+        { cards: answer.cards, quantity: answer.quantity },
+      )
     } catch {
       setPendingLookup(null)
       pushBot(LOOKUP_ERROR_ANSWER, undefined, () =>
         setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
     }
   }, [pushBot])
+
+  /* ── COMMERCE ACTIONS (Sep 2026) ──────────────────────────────────────
+   *
+   * The assistant can now search the catalogue, put things in the cart, show
+   * what is in it, and pull up a previous order.
+   *
+   * NOTHING IS ADDED WITHOUT A CLICK. A typed sentence only ever produces a
+   * product card; the Add button on that card is the confirmation, and the
+   * customer presses it. And the assistant never checks out — it can fill a
+   * basket and open it, but paying stays a deliberate act on the checkout
+   * page. See the rules at the top of lib/chatActions.ts.
+   */
+  const [adding, setAdding] = useState<string | null>(null)
+
+  const addVariant = useCallback(async (card: ProductCard, variantId: string, qty: number) => {
+    const variant = card.variants.find(v => v.id === variantId)
+    if (!variant || !variant.available || adding) return
+    setAdding(variantId)
+    const units = Math.min(Math.max(qty || 1, 1), 5)
+    try {
+      // addItem adds a single unit and increments an existing line, so N
+      // sequential calls reuse that proven path rather than adding a second
+      // quantity-aware branch to the cart context.
+      for (let i = 0; i < units; i++) {
+        await addItem(variant.id, card.title, variant.title, variant.price, card.handle.replace(/-uae$/i, ''), card.image)
+      }
+      pushUser(`Add ${card.title} \u00b7 ${variant.title}${units > 1 ? ` \u00d7 ${units}` : ''}`)
+      pushBot(
+        [
+          `Added \u2014 ${card.title}, ${variant.title}${units > 1 ? `, \u00d7${units}` : ''}.`,
+          'Anything else, or shall I open your cart?',
+        ],
+        [{ label: 'View cart', href: '/cart' }],
+        () => setSuggestions([FAQ_BY_ID['order-bundles'], FAQ_BY_ID['shipping-times'], FAQ_BY_ID['contact-human']].filter(Boolean)),
+      )
+    } catch {
+      pushBot([
+        'That didn\u2019t go into the cart \u2014 which is on us, not you.',
+        `You can add it from the ${card.title} page, or I\u2019ll get a person to take the order directly.`,
+      ], [{ label: `Open ${card.title}`, href: card.href }],
+        () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+    } finally {
+      setAdding(null)
+    }
+  }, [addItem, adding, pushBot, pushUser])
+
+  const describeCart = useCallback(() => {
+    if (!cartLines || cartLines.length === 0) {
+      pushBot(
+        ['Your cart is empty at the moment.', 'Tell me what you\u2019re after \u2014 a compound name, or something like "show me recovery pens" \u2014 and I\u2019ll pull it up.'],
+        [{ label: 'Browse the catalogue', href: '/products' }],
+        () => setSuggestions([FAQ_BY_ID['order-bundles'], FAQ_BY_ID['coa-what']].filter(Boolean)),
+      )
+      return
+    }
+    const items = cartLines.map(l => `${l.title}${l.variantTitle && l.variantTitle !== 'Default Title' ? ` \u00b7 ${l.variantTitle}` : ''}${l.quantity > 1 ? ` \u00d7 ${l.quantity}` : ''}`)
+    pushBot(
+      [
+        `${totalQuantity} item${totalQuantity === 1 ? '' : 's'} in your cart: ${items.join(', ')}.`,
+        `Subtotal ${formatPrice(subtotal, currencyCode || 'AED')}. Bundle savings, if any, are applied in the cart itself.`,
+      ],
+      [{ label: 'Open cart', href: '/cart' }],
+      () => setSuggestions([FAQ_BY_ID['order-bundles'], FAQ_BY_ID['shipping-times'], FAQ_BY_ID['order-payment']].filter(Boolean)),
+    )
+  }, [cartLines, totalQuantity, subtotal, currencyCode, pushBot])
+
+  const runAction = useCallback(async (request: ActionRequest) => {
+    if (request.kind === 'view-cart') { describeCart(); openCart(); return }
+
+    const payload =
+      request.kind === 'search'
+        ? { intent: 'search', query: '', filters: request.filters ?? {} }
+        : request.kind === 'reorder'
+          ? { intent: 'reorder', query: '', email: customerEmail || null }
+          : { intent: 'add-to-cart', query: request.query, quantity: request.quantity ?? 1 }
+
+    pushBot([LOOKUP_PENDING_ANSWER])
+    try {
+      const res = await fetch('/api/chat/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => null)
+      const answer = data?.answer as
+        | { lines?: string[]; links?: { label: string; href: string }[]; related?: string[]; cards?: ProductCard[]; quantity?: number }
+        | undefined
+      if (!answer?.lines?.length) {
+        pushBot(LOOKUP_ERROR_ANSWER, undefined, () =>
+          setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+        return
+      }
+      pushBot(
+        answer.lines,
+        answer.links,
+        () => setSuggestions((answer.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)),
+        { cards: answer.cards, quantity: answer.quantity ?? request.quantity },
+      )
+    } catch {
+      pushBot(LOOKUP_ERROR_ANSWER, undefined, () =>
+        setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+    }
+  }, [describeCart, openCart, customerEmail, pushBot])
 
   const handleSelect = useCallback((faq: Faq) => { pushUser(faq.question); answerFaq(faq) }, [pushUser, answerFaq])
 
@@ -211,6 +347,7 @@ export default function ChatWidget() {
         setSuggestions([FAQ_BY_ID['coa-what'], FAQ_BY_ID['handling-storage'], FAQ_BY_ID['contact-human']].filter(Boolean)))
       return
     }
+    if (result.kind === 'action') { void runAction(result.request); return }
     if (result.kind === 'lookup') { void runLookup(result.request, customerEmail || undefined); return }
     if (result.kind === 'match') { answerFaq(result.faq); return }
     if (result.kind === 'ambiguous') {
@@ -218,7 +355,7 @@ export default function ChatWidget() {
       return
     }
     pushBot(NO_MATCH_ANSWER, undefined, () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
-  }, [pushUser, pushBot, answerFaq, pendingLookup, runLookup, customerEmail])
+  }, [pushUser, pushBot, answerFaq, pendingLookup, runLookup, runAction, customerEmail])
 
   /* ── open / close ─────────────────────────────────────────────────────── */
 
@@ -535,6 +672,28 @@ export default function ChatWidget() {
                     transition: border-color .15s; }
         .plc-link:hover { border-color: rgba(13,13,13,.3); }
 
+        /* Product cards — the surface that turns an answer into an order. */
+        .plc-cards { display: flex; flex-direction: column; gap: 8px; margin: -4px 0 16px; }
+        .plc-card { border: 1px solid var(--line); border-radius: 13px; background: #fff; padding: 10px 12px; }
+        .plc-card-top { display: flex; align-items: center; gap: 10px; }
+        .plc-card-img { width: 40px; height: 40px; border-radius: 8px; background: var(--paper);
+                        object-fit: contain; flex-shrink: 0; }
+        .plc-card-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--ink);
+                         text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .plc-card-price { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+        .plc-card-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+        .plc-add { min-height: 36px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--ink);
+                   background: var(--ink); color: #fff; font-family: inherit; font-size: 12.5px;
+                   font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+                   transition: opacity .15s; }
+        .plc-add:hover { opacity: .86; }
+        .plc-add[disabled] { opacity: .45; cursor: not-allowed; }
+        .plc-add-quiet { background: transparent; color: var(--ink); border-color: rgba(13,13,13,.2); font-weight: 600; }
+        .plc-card-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+        .plc-spin { animation: plcSpin .9s linear infinite; }
+        @keyframes plcSpin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .plc-spin { animation: none; } }
+
         /* Suggestions as inline chips, not stacked form buttons. */
         .plc-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
         .plc-chip { min-height: 38px; padding: 8px 14px; border-radius: 999px;
@@ -749,6 +908,73 @@ export default function ChatWidget() {
                     : (
                       <div key={b.id}>
                         <p className="plc-bot">{b.text}</p>
+                        {b.cards && b.cards.length > 0 && (
+                          <div className="plc-cards">
+                            {b.cards.map(card => {
+                              const sellable = card.variants.filter(v => v.available)
+                              const qty = b.quantity ?? 1
+                              return (
+                                <div key={card.handle} className="plc-card">
+                                  <div className="plc-card-top">
+                                    {card.image && (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img className="plc-card-img" src={card.image} alt="" aria-hidden="true" />
+                                    )}
+                                    <Link className="plc-card-name" href={card.href} onClick={() => setOpen(false)}>
+                                      {card.title}
+                                    </Link>
+                                    {sellable.length > 0 && (
+                                      <span className="plc-card-price">
+                                        {sellable.length > 1 ? 'from ' : ''}
+                                        {formatPrice(Math.min(...sellable.map(v => v.price)), card.currency)}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {card.paymentLinkOnly ? (
+                                    <>
+                                      <div className="plc-card-actions">
+                                        <Link className="plc-add plc-add-quiet" href={card.href} onClick={() => setOpen(false)}>
+                                          Choose strength &amp; quantity
+                                        </Link>
+                                      </div>
+                                      <p className="plc-card-note">
+                                        Sold on a fixed payment link, so it can&rsquo;t go through the cart.
+                                      </p>
+                                    </>
+                                  ) : !card.inStock || sellable.length === 0 ? (
+                                    <>
+                                      <div className="plc-card-actions">
+                                        <Link className="plc-add plc-add-quiet" href={card.href} onClick={() => setOpen(false)}>
+                                          Notify me when back
+                                        </Link>
+                                      </div>
+                                      <p className="plc-card-note">Out of stock at the moment.</p>
+                                    </>
+                                  ) : (
+                                    <div className="plc-card-actions">
+                                      {sellable.map(v => (
+                                        <button
+                                          key={v.id}
+                                          className="plc-add"
+                                          disabled={adding === v.id}
+                                          onClick={() => addVariant(card, v.id, qty)}
+                                        >
+                                          {adding === v.id
+                                            ? <Loader2 size={13} className="plc-spin" aria-hidden="true" />
+                                            : <Check size={13} aria-hidden="true" />}
+                                          {sellable.length > 1
+                                            ? `${v.title}${qty > 1 ? ` \u00d7${qty}` : ''}`
+                                            : `Add to cart${qty > 1 ? ` \u00d7${qty}` : ''}`}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                         {b.links && b.links.length > 0 && (
                           <div className="plc-links">
                             {b.links.map(l => (
