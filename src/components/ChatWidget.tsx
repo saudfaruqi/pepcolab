@@ -36,8 +36,8 @@ import Link from 'next/link'
 import { MessageCircle, X, ArrowLeft, ArrowUp, Headset, Mail, Check, Loader2 } from 'lucide-react'
 import {
   FAQS, FAQ_BY_ID, TOPICS, resolvePageContext, matchFaq,
-  REFUSAL_ANSWER, NO_MATCH_ANSWER,
-  type Faq, type TopicId,
+  REFUSAL_ANSWER, NO_MATCH_ANSWER, LOOKUP_PENDING_ANSWER, LOOKUP_ERROR_ANSWER,
+  type Faq, type TopicId, type LookupRequest,
 } from '@/lib/chatContent'
 import { whatsAppChatHandoffLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { trackChatHandoff } from '@/lib/analytics'
@@ -145,6 +145,49 @@ export default function ChatWidget() {
     })
   }, [pushBot, context.suggested])
 
+  /**
+   * LIVE LOOKUPS (Sep 2026).
+   *
+   * Stock, price, batch certificates and order status come from the server
+   * rather than from written copy — see lib/chatLookup.ts. The answer is
+   * still a fixed template; only the values in it are live.
+   *
+   * An order lookup that needs an email parks the request here, so the next
+   * thing the customer types can be just the address rather than the whole
+   * question again.
+   */
+  const [pendingLookup, setPendingLookup] = useState<LookupRequest | null>(null)
+
+  const runLookup = useCallback(async (request: LookupRequest, email?: string) => {
+    pushBot([LOOKUP_PENDING_ANSWER])
+    try {
+      const res = await fetch('/api/chat/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intent: request.intent, query: request.query, email: email ?? null }),
+      })
+      const data = await res.json().catch(() => null)
+      const answer = data?.answer as
+        | { lines?: string[]; links?: { label: string; href: string }[]; related?: string[]; needsEmail?: boolean }
+        | undefined
+
+      if (!answer?.lines?.length) {
+        setPendingLookup(null)
+        pushBot(LOOKUP_ERROR_ANSWER, undefined, () =>
+          setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+        return
+      }
+
+      setPendingLookup(answer.needsEmail ? request : null)
+      pushBot(answer.lines, answer.links, () =>
+        setSuggestions((answer.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)))
+    } catch {
+      setPendingLookup(null)
+      pushBot(LOOKUP_ERROR_ANSWER, undefined, () =>
+        setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+    }
+  }, [pushBot])
+
   const handleSelect = useCallback((faq: Faq) => { pushUser(faq.question); answerFaq(faq) }, [pushUser, answerFaq])
 
   const handleSubmit = useCallback((raw: string) => {
@@ -155,19 +198,27 @@ export default function ChatWidget() {
     setSuggestions([])
     if (composerRef.current) composerRef.current.style.height = 'auto'
 
+    // Answering the "what email was it placed with?" question — retry the
+    // parked lookup instead of treating the address as a fresh question.
+    if (pendingLookup && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(text)) {
+      void runLookup(pendingLookup, text)
+      return
+    }
+
     const result = matchFaq(text)
     if (result.kind === 'blocked') {
       pushBot(REFUSAL_ANSWER, undefined, () =>
         setSuggestions([FAQ_BY_ID['coa-what'], FAQ_BY_ID['handling-storage'], FAQ_BY_ID['contact-human']].filter(Boolean)))
       return
     }
+    if (result.kind === 'lookup') { void runLookup(result.request, customerEmail || undefined); return }
     if (result.kind === 'match') { answerFaq(result.faq); return }
     if (result.kind === 'ambiguous') {
       pushBot(['A few things could match that — which did you mean?'], undefined, () => setSuggestions(result.faqs))
       return
     }
     pushBot(NO_MATCH_ANSWER, undefined, () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
-  }, [pushUser, pushBot, answerFaq])
+  }, [pushUser, pushBot, answerFaq, pendingLookup, runLookup, customerEmail])
 
   /* ── open / close ─────────────────────────────────────────────────────── */
 
