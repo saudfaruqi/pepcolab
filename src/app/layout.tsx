@@ -16,6 +16,23 @@ import ChatWidget from '@/components/ChatWidget'
 
 const siteUrl = 'https://www.pepcolab.com'
 
+/**
+ * Social profiles, for the Organization schema's `sameAs` (Sep 2026).
+ *
+ * `sameAs` is how Google ties these accounts to the PepcoLab brand entity
+ * rather than treating them as unrelated pages that happen to share a name.
+ * Brand queries are already this site's strongest cluster, so making the
+ * entity unambiguous is worth the four lines.
+ *
+ * Keep in step with SOCIALS in components/Footer.tsx — the footer renders the
+ * same profiles, and a link in one place but not the other is the thing that
+ * quietly drifts.
+ */
+const SOCIAL_PROFILES = [
+  'https://www.instagram.com/pepcolab/',
+  'https://www.youtube.com/@pepcolab',
+]
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -188,6 +205,7 @@ export default function RootLayout({
               description:
                 'Supplier of research-grade peptides and laboratory compounds for in-vitro research use, with independently tested, batch-matched certificates of analysis.',
               email: 'hello@pepcolab.com',
+              sameAs: SOCIAL_PROFILES,
               areaServed: [
                 { '@type': 'Country', name: 'United Arab Emirates' },
                 { '@type': 'Country', name: 'United Kingdom' },
