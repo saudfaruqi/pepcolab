@@ -78,6 +78,12 @@ const nextConfig = {
       { source: '/products/tb-500-10mg', destination: '/products/category/recovery', permanent: true },
       { source: '/products/glp-1-tera-5mg', destination: '/products/category/metabolic', permanent: true },
 
+      { source: '/products/bac-water-30ml',  destination: '/products/bacteriostatic-water', permanent: true },
+      { source: '/products/bac-water',       destination: '/products/bacteriostatic-water', permanent: true },
+      { source: '/products/pharma-bac-water', destination: '/products/pharma-grade-bac-water', permanent: true },
+      { source: '/products/tesamorelin-2mg', destination: '/products/tesamorelin', permanent: true },
+      { source: '/products/dihexa-5mg',      destination: '/products/dihexa', permanent: true },      
+
       // Catch-all safety net for the old "-Nmg" slug pattern.
       //
       // Verified against the live catalogue before keeping this: no current

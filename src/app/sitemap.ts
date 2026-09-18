@@ -53,7 +53,17 @@ const STATIC_ROUTES: StaticRoute[] = [
   // /search removed from the sitemap (Sep 2026): a search interface has
   // nothing unique to index, and on a domain that is already being
   // crawl-rationed it competes with pages that do.
-  { path: '/reviews/write', changeFrequency: 'monthly', priority: 0.4 },
+  // '/reviews/write' removed (Sep 2026): it is a submission form with no
+  // content a searcher could land on usefully, and it is now noindexed via
+  // app/reviews/write/layout.tsx. A sitemap should only list URLs we want
+  // indexed — a noindexed URL in here is a contradictory signal.
+  //
+  // NOTE ON CRAWL BUDGET: Search Console reports several pages (/terms,
+  // /bulk-orders, /dubai, /research/*) as "Discovered — currently not
+  // indexed" with no crawl attempted at all. Trimming the sitemap does not
+  // fix that. Google rations crawl by site authority, and this domain is
+  // young; those pages get crawled as the site earns links and traffic, not
+  // by re-submitting or reshuffling priorities.
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },
