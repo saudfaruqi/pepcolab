@@ -14,6 +14,7 @@ import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 import { stripLeadingName, toNeutralSlug, toShopifyHandle, productHref } from '@/lib/utils'
 import { relatedContentForProduct } from '@/lib/contentLinks'
+import { buildProductTitle, buildProductDescription } from '@/lib/productMeta'
 import { getApprovedReviewsStatic, type Review } from '@/lib/reviewStore'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -91,19 +92,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const canonical = productHref(product.handle)
 
-  // Factual and compound-focused. No effects, benefits, outcomes or
+  // Factual and supply-focused. No effects, benefits, outcomes or
   // indications — the meta description is the most screenshotted surface on
   // the site and the easiest thing for a regulator to quote back.
-  const description =
-    `${product.title} — research-grade compound with published certificate of analysis` +
-    (product.purity ? `, ${product.purity}% HPLC-verified purity` : '') +
-    (product.lot ? `, batch ${product.lot}` : '') +
-    '. Cold-chain dispatch. For in-vitro research use only.'
+  //
+  // SEO FIX (Sep 2026): both of these used to be one template with the
+  // product name slotted in, so all 37 product pages shared a single search
+  // snippet. Search Console showed 216 non-brand page-1 impressions
+  // returning 2 clicks, with the bacteriostatic-water pages alone at 169
+  // page-1 impressions and none. They are now built per product from
+  // structured fields only — size, formats, price, dispatch market — which
+  // keeps the no-claims guarantee above intact while making every snippet
+  // distinct and useful. See lib/productMeta.ts.
+  const description = buildProductDescription(product)
+  const title = buildProductTitle(product)
 
   const ogImage = product.images?.[0]?.url
 
   return {
-    title: `${product.title} | Research Grade, COA Published`,
+    title,
     description,
     // SEO FIX: sitewide hreflang was missing entirely (audit finding —
     // "no hreflang tags sitewide despite dual-market intent"). There's one
