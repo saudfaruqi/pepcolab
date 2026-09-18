@@ -289,6 +289,21 @@ export default function ChatWidget() {
   const runAction = useCallback(async (request: ActionRequest) => {
     if (request.kind === 'view-cart') { describeCart(); openCart(); return }
 
+    // "add" with nothing after it. Asking what to add keeps the conversation
+    // going; sending an empty query to the server would only earn a 400.
+    if (request.kind === 'add-to-cart' && !request.query) {
+      pushBot(
+        [
+          'Happy to — what would you like me to add?',
+          'Give me a name and I’ll pull up the options, or browse the catalogue and I’ll add whatever you pick.',
+        ],
+        [{ label: 'Browse the catalogue', href: '/products' }],
+        () => setSuggestions((['order-bundles', 'contact-human'] as const)
+          .map(id => FAQ_BY_ID[id]).filter(Boolean)),
+      )
+      return
+    }
+
     const payload =
       request.kind === 'search'
         ? { intent: 'search', query: '', filters: request.filters ?? {} }
@@ -322,7 +337,7 @@ export default function ChatWidget() {
       pushBot(LOOKUP_ERROR_ANSWER, undefined, () =>
         setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
     }
-  }, [describeCart, openCart, customerEmail, pushBot])
+  }, [describeCart, openCart, customerEmail, pushBot, setSuggestions])
 
   const handleSelect = useCallback((faq: Faq) => { pushUser(faq.question); answerFaq(faq) }, [pushUser, answerFaq])
 
@@ -349,6 +364,11 @@ export default function ChatWidget() {
     }
     if (result.kind === 'action') { void runAction(result.request); return }
     if (result.kind === 'lookup') { void runLookup(result.request, customerEmail || undefined); return }
+    if (result.kind === 'smalltalk') {
+      pushBot(result.lines, undefined, () =>
+        setSuggestions([FAQ_BY_ID['order-how'], FAQ_BY_ID['coa-what'], FAQ_BY_ID['shipping-times']].filter(Boolean)))
+      return
+    }
     if (result.kind === 'match') { answerFaq(result.faq); return }
     if (result.kind === 'ambiguous') {
       pushBot(['A few things could match that — which did you mean?'], undefined, () => setSuggestions(result.faqs))

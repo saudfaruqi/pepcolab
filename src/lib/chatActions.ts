@@ -88,7 +88,17 @@ const FORMATS: Record<string, string> = {
   powders: 'powder',
 }
 
-const ADD_RE = /\b(add|put|chuck|stick)\b[^]*?\b(to|in|into)\b\s*(my\s+)?(cart|basket|bag|order)\b|\b(add to cart|buy)\b/i
+/**
+ * Adding covers three shapes:
+ *   "add BPC-157 to my cart"  — verb, product, destination
+ *   "buy BPC-157"             — a buy verb anywhere
+ *   "add BPC-157"             — a bare imperative at the start
+ *
+ * The third was missing, and it is what people actually type. Only "add" is
+ * allowed to lead, deliberately: "get" and "order" would swallow "get my
+ * order status" and "order tracking", which belong to the lookup matcher.
+ */
+const ADD_RE = /\b(add|put|chuck|stick)\b[^]*?\b(to|in|into)\b\s*(my\s+)?(cart|basket|bag|order)\b|\b(add to cart|buy)\b|^\s*(?:please\s+)?add\b/i
 const VIEW_CART_RE = /\b(what'?s in my|show( me)? my|view|see|check|open)\s+(cart|basket|bag)\b|\bmy (cart|basket)\b|\bcart total\b/i
 const REORDER_RE = /\b(reorder|re-order|order again|same as (last time|before)|repeat (my )?(last )?order|buy again)\b/i
 const SEARCH_RE =
@@ -159,9 +169,10 @@ export function detectAction(input: string): ActionRequest | null {
     const qtyMatch = raw.match(QTY_RE)
     const quantity = qtyMatch ? Math.min(Math.max(parseInt(qtyMatch[1], 10), 1), MAX_ADD_QTY) : 1
     const query = stripNoise(raw.replace(QTY_RE, ' '))
-    // "add to cart" with nothing else is not actionable — there is no product
-    // in it. Let the FAQ matcher explain how ordering works instead.
-    if (query.length < 2) return null
+    // "add" or "add to cart" on its own names no product. That is still an
+    // add intent — the widget answers it by asking what to add, which is a
+    // conversation, rather than the dead end it used to be. An empty query is
+    // never sent to the server; see ChatWidget.runAction.
     return { kind: 'add-to-cart', query, quantity }
   }
 

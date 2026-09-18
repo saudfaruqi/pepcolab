@@ -208,7 +208,14 @@ export const REFUSAL_ANSWER: string[] = [
 /* LIVE LOOKUPS                                                                */
 /* -------------------------------------------------------------------------- */
 
-export type LookupIntent = 'product' | 'lot' | 'order'
+/**
+ * 'product-guess' is a speculative product lookup, used as the last thing
+ * tried before giving up on a message. It resolves exactly like 'product',
+ * but a miss returns the ordinary "I don't have an answer for that, here is a
+ * person" reply instead of 'I couldn't find "why is shipping slow" in the
+ * catalogue'. Because a miss costs nothing, the matcher can afford to guess.
+ */
+export type LookupIntent = 'product' | 'lot' | 'order' | 'product-guess'
 
 export interface LookupRequest {
   intent: LookupIntent
@@ -748,6 +755,8 @@ export type MatchResult =
   | { kind: 'lookup'; request: LookupRequest }
   | { kind: 'match'; faq: Faq }
   | { kind: 'ambiguous'; faqs: Faq[] }
+  /** A greeting or a thank-you — answered in the widget, no lookup. */
+  | { kind: 'smalltalk'; lines: string[] }
   | { kind: 'none' }
 
 /**
@@ -833,6 +842,101 @@ const LOW_VALUE_WORDS = new Set(['water', 'order', 'test', 'grade', 'lab', 'keep
  * Guessing wrong is worse than asking. A visitor who gets a confidently
  * irrelevant answer stops trusting the whole widget.
  */
+/**
+ * Small talk. "hi" and "thanks" are not questions, and answering them with
+ * "I don't have a pre-written answer for that one" is a bad first impression
+ * from something that opens with "Ask me anything".
+ *
+ * Only a message that is ENTIRELY small talk qualifies — "hi, do you have
+ * BPC-157?" is a product question with a greeting attached, and goes through
+ * the normal path.
+ */
+// Split into "core" and "filler" so a message has to carry a real greeting or
+// thank-you word to qualify. Without that split, a lone "good" or "you" —
+// filler that only exists for "good morning" and "thank you" — was enough to
+// trigger a cheery reply to nothing.
+const GREETING_CORE = new Set([
+  'hi', 'hii', 'hiya', 'hello', 'helo', 'hey', 'heya', 'yo', 'sup',
+  'salam', 'salaam', 'assalamualaikum', 'morning', 'afternoon', 'evening',
+])
+const THANKS_CORE = new Set([
+  'thanks', 'thank', 'thankyou', 'thx', 'tnx', 'ty', 'cheers', 'appreciate', 'appreciated',
+  'ok', 'okay', 'great', 'perfect', 'nice', 'awesome', 'cool', 'brilliant', 'lovely',
+])
+const SMALL_TALK_FILLER = new Set([
+  'good', 'there', 'everyone', 'you', 'very', 'much', 'mate', 'so', 'a', 'lot',
+  'one', 'all', 'man', 'bro', 'sir',
+])
+
+const GREETING_REPLY = [
+  'Hello — good to have you here.',
+  'Ask me what’s in stock, what something costs, or anything about testing, formats, shipping and bundles. I can also add things to your cart for you.',
+]
+const THANKS_REPLY = [
+  'You’re very welcome.',
+  'Anything else you want to check — stock, prices, a certificate, an order — just say.',
+]
+
+function detectSmallTalk(input: string): string[] | null {
+  const words = (input || '')
+    .toLowerCase()
+    .replace(/[^a-z]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (words.length === 0 || words.length > 4) return null
+
+  const allKnown = words.every(
+    w => GREETING_CORE.has(w) || THANKS_CORE.has(w) || SMALL_TALK_FILLER.has(w)
+  )
+  if (!allKnown) return null
+
+  if (words.some(w => GREETING_CORE.has(w))) return GREETING_REPLY
+  if (words.some(w => THANKS_CORE.has(w))) return THANKS_REPLY
+  return null
+}
+
+/**
+ * Words that never name a product, so a phrase made only of these is not
+ * worth a speculative lookup.
+ */
+const GUESS_NOISE = new Set([
+  'a', 'an', 'the', 'my', 'me', 'i', 'you', 'your', 'we', 'us', 'it', 'is', 'are',
+  'do', 'does', 'did', 'have', 'has', 'can', 'could', 'would', 'will', 'should',
+  'what', 'whats', 'why', 'how', 'when', 'where', 'who', 'which', 'and', 'or',
+  'of', 'for', 'to', 'in', 'on', 'at', 'about', 'please', 'hi', 'hello', 'hey',
+  'thanks', 'thank', 'ok', 'okay', 'yes', 'no', 'help', 'tell', 'need', 'want',
+])
+
+/**
+ * The last thing tried before admitting defeat.
+ *
+ * A bare product name is the single most common thing typed into a support
+ * box — "GLP", "BPC-157", "semax" — and until now every one of them fell
+ * through to "I don't have a pre-written answer for that one", which is a
+ * terrible reply to the name of something we sell.
+ *
+ * The guess is cheap because a miss is handled gracefully server-side (see
+ * 'product-guess' on LookupIntent), so the only real constraint is length: a
+ * long sentence that matched no FAQ is a genuine question for a person, not a
+ * mistyped product name.
+ */
+function productGuess(input: string): MatchResult {
+  const words = (input || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9+\-\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+
+  const meaningful = words.filter(w => !GUESS_NOISE.has(w))
+  if (meaningful.length === 0 || meaningful.length > 4) return { kind: 'none' }
+
+  const query = meaningful.join(' ')
+  if (query.replace(/[^a-z0-9]/g, '').length < 2) return { kind: 'none' }
+
+  return { kind: 'lookup', request: { intent: 'product-guess', query } }
+}
+
 export function matchFaq(input: string): MatchResult {
   const q = (input || '').toLowerCase().trim()
   if (!q) return { kind: 'none' }
@@ -840,6 +944,9 @@ export function matchFaq(input: string): MatchResult {
   // Safety first, and it cannot be bypassed by dressing a dosing question up
   // as a storage question.
   if (isBlocked(q)) return { kind: 'blocked' }
+
+  const smallTalk = detectSmallTalk(input)
+  if (smallTalk) return { kind: 'smalltalk', lines: smallTalk }
 
   // Things the visitor wants DONE — search, add to cart, show the cart,
   // reorder. Checked before lookups because "add BPC-157 to cart" and "do you
@@ -873,11 +980,11 @@ export function matchFaq(input: string): MatchResult {
     .filter(x => x.score > 0)
     .sort((a, b) => b.score - a.score)
 
-  if (scored.length === 0) return { kind: 'none' }
+  if (scored.length === 0) return productGuess(input)
 
   // A single weak signal — one short, generic keyword — is not an answer.
   // Better to admit it and offer a person than to confidently misfire.
-  if (scored[0].score < 1.6) return { kind: 'none' }
+  if (scored[0].score < 1.6) return productGuess(input)
 
   if (scored.length === 1 || scored[0].score >= scored[1].score * 1.5) {
     return { kind: 'match', faq: scored[0].faq }

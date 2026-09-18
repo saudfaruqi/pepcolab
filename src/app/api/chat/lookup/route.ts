@@ -30,7 +30,9 @@ const GENERAL_MAX = 40
 const ORDER_MAX = 10
 const WINDOW_MS = 10 * 60 * 1000
 
-const VALID_INTENTS = new Set(['product', 'lot', 'order', 'search', 'add-to-cart', 'reorder'])
+const VALID_INTENTS = new Set([
+  'product', 'product-guess', 'lot', 'order', 'search', 'add-to-cart', 'reorder',
+])
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
@@ -52,7 +54,9 @@ export async function POST(req: NextRequest) {
   const quantity = Math.min(Math.max(Number(payload.quantity) || 1, 1), 5)
 
   // Search and reorder carry no product term, so only the others require one.
-  const needsQuery = intent === 'product' || intent === 'lot' || intent === 'order' || intent === 'add-to-cart'
+  const needsQuery =
+    intent === 'product' || intent === 'product-guess' ||
+    intent === 'lot' || intent === 'order' || intent === 'add-to-cart'
   if (!VALID_INTENTS.has(intent) || (needsQuery && !query)) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }

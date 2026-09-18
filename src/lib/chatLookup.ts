@@ -30,7 +30,8 @@ import { getProducts } from '@/lib/shopify'
 import { getOrderRecord, getOrdersForEmail, type OrderRecord } from '@/lib/orderStore'
 import { COA_BATCHES } from '@/app/coaData'
 import { isPaymentLinkOnlyProduct } from '@/lib/restrictedCheckout'
-import type { LookupIntent } from '@/lib/chatContent'
+// chatContent.ts imports only chatActions.ts, so this does not create a cycle.
+import { NO_MATCH_ANSWER, type LookupIntent } from '@/lib/chatContent'
 import type { SearchFilters } from '@/lib/chatActions'
 
 export interface LookupAnswer {
@@ -627,6 +628,16 @@ export const ORDER_NEEDS_EMAIL: LookupAnswer = {
  */
 export type ResolvableIntent = LookupIntent | 'search' | 'add-to-cart' | 'reorder'
 
+/**
+ * The reply when a speculative product lookup finds nothing. Word for word
+ * the widget's own no-match copy, so a failed guess is invisible to the
+ * customer — they simply get the honest "I don't know, here is a person".
+ */
+const GUESS_MISSED: LookupAnswer = {
+  lines: [...NO_MATCH_ANSWER],
+  related: ['contact-human'],
+}
+
 export async function resolveLookup(
   intent: ResolvableIntent,
   query: string,
@@ -637,10 +648,14 @@ export async function resolveLookup(
     quantity?: number
   } = {}
 ): Promise<LookupAnswer> {
-  if (intent === 'product' || intent === 'search' || intent === 'add-to-cart') {
+  if (intent === 'product' || intent === 'product-guess' || intent === 'search' || intent === 'add-to-cart') {
     const catalogue = (await getProducts(100, 'AE')) as unknown as CatalogueEntry[]
     if (intent === 'search') return answerSearch(opts.filters ?? {}, catalogue)
     if (intent === 'add-to-cart') return answerAddToCart(query, opts.quantity ?? 1, catalogue)
+    // A guess only speaks up when it actually found something. A miss must
+    // not tell the customer we don't stock "why is shipping slow" — it hands
+    // back the ordinary no-answer reply, exactly as if nothing had matched.
+    if (intent === 'product-guess' && !resolveProduct(query, catalogue)) return GUESS_MISSED
     return answerProduct(query, catalogue)
   }
 
