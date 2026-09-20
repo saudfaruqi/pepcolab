@@ -6,6 +6,8 @@ import { GUIDES } from '@/lib/guides-data'
 import { ARTICLES } from '@/lib/research-data'
 import { LEGAL_NOTES } from '@/lib/legal-data'
 import { COMPARISONS } from '@/lib/comparisons-data'
+import { COA_BATCHES } from '@/app/coaData'
+import { lotSlug } from '@/lib/coaLookup'
 import { toNeutralSlug } from '@/lib/utils'
 
 const BASE_URL = 'https://www.pepcolab.com'
@@ -27,6 +29,7 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/',             changeFrequency: 'weekly',  priority: 1.0 },
   { path: '/products',     changeFrequency: 'daily',   priority: 0.9 },
   { path: '/certificates', changeFrequency: 'daily',   priority: 0.9 },
+  { path: '/verify',       changeFrequency: 'daily',   priority: 0.9 },
   { path: '/bundles',      changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/research',     changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/guides',       changeFrequency: 'weekly',  priority: 0.8 },
@@ -53,17 +56,7 @@ const STATIC_ROUTES: StaticRoute[] = [
   // /search removed from the sitemap (Sep 2026): a search interface has
   // nothing unique to index, and on a domain that is already being
   // crawl-rationed it competes with pages that do.
-  // '/reviews/write' removed (Sep 2026): it is a submission form with no
-  // content a searcher could land on usefully, and it is now noindexed via
-  // app/reviews/write/layout.tsx. A sitemap should only list URLs we want
-  // indexed — a noindexed URL in here is a contradictory signal.
-  //
-  // NOTE ON CRAWL BUDGET: Search Console reports several pages (/terms,
-  // /bulk-orders, /dubai, /research/*) as "Discovered — currently not
-  // indexed" with no crawl attempted at all. Trimming the sitemap does not
-  // fix that. Google rations crawl by site authority, and this domain is
-  // young; those pages get crawled as the site earns links and traffic, not
-  // by re-submitting or reshuffling priorities.
+  { path: '/reviews/write', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },
@@ -166,5 +159,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }))
 
-  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries]
+  // One entry per published batch. These are the pages that can rank for
+  // "<compound> coa" — a single /certificates page cannot compete for
+  // "kpv coa", "epithalon coa" and "ahk-cu coa" simultaneously, but a page
+  // carrying one compound, one lot and one measured purity can.
+  const verifyEntries: MetadataRoute.Sitemap = COA_BATCHES.map((b) => ({
+    url: `${BASE_URL}/verify/${lotSlug(b.lot)}`,
+    lastModified: new Date(),
+    changeFrequency: 'yearly' as const,
+    // A certificate never changes once reported — it is a dated record.
+    priority: 0.7,
+  }))
+
+  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries, ...verifyEntries]
 }
