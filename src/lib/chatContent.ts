@@ -243,7 +243,7 @@ const PRODUCT_INTENT_RE =
  */
 const CONCEPT_TERMS = new Set([
   'click', 'clicks', 'shipping', 'delivery', 'postage', 'vat', 'tax', 'duty',
-  'refund', 'returns', 'bundle', 'bundles', 'referral', 'discount', 'tracking',
+  'refund', 'returns', 'bundle', 'bundles', 'affiliate', 'discount', 'tracking',
 ])
 
 const STOPWORDS = new Set([
@@ -384,12 +384,12 @@ export const FAQS: Faq[] = [
     question: 'Are there bundles or discounts?',
     answer: [
       'Bundles combine commonly paired compounds at 10% off the individual prices. The discount is applied automatically in your cart once both items are in it — you don’t need a code.',
-      'There is also a referral programme: share your link, your contact gets 15% off their first order, and you get 20% credit on yours.',
+      'There is also an affiliate programme: share your link, your contact gets 15% off their first order, and you get 20% credit on yours.',
     ],
-    keywords: ['bundle', 'stack', 'discount', 'offer', 'deal', 'promo', 'code', 'coupon', 'referral', 'refer', 'cheaper', 'save'],
+    keywords: ['bundle', 'stack', 'discount', 'offer', 'deal', 'promo', 'code', 'coupon', 'affiliate', 'refer', 'cheaper', 'save'],
     links: [
       { label: 'See bundles', href: '/bundles' },
-      { label: 'Referral programme', href: '/referrals' },
+      { label: 'Affiliate programme', href: '/affiliates' },
     ],
   },
 

@@ -6,10 +6,9 @@
 // because they are the same conversation at different stages: apply, then
 // come back and check what you have earned.
 //
-// No login. Same constraint as the referral programme — the dashboard is
-// keyed on the email the person applied with, and a miss returns the same
-// message as a wrong address so the endpoint cannot be used to find out who
-// our affiliates are.
+// No login, deliberately: the dashboard is keyed on the email the person
+// applied with, and a miss returns the same message as a wrong address so
+// the endpoint cannot be used to find out who our affiliates are.
 
 import { useState, useCallback } from 'react'
 

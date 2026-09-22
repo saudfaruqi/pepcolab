@@ -105,21 +105,29 @@ function CartPageInner() {
   const [discountApplying, setDiscountApplying] = useState(false)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null)
-  const [referralPrefill, setReferralPrefill] = useState<string | null>(null)
+  const [refPrefill, setRefPrefill] = useState<string | null>(null)
 
-  // Referrals: ReferralWidget stashes an incoming ?ref= code in localStorage
-  // (see components/ReferralWidget.tsx) when a visitor lands via a friend's
-  // link. If they haven't already typed a code by the time they reach the
-  // cart, pre-fill it here so the discount isn't left on the table — the
-  // referral code IS a regular discount code under the hood (see
-  // lib/referralStore.ts), so this needs no changes to applyDiscount().
+  // AFFILIATE LINKS (Sep 2026). This used to read 'pepcolab_referral',
+  // written by components/ReferralWidget.tsx — both the widget and the
+  // referral programme are gone, so nothing had written that key since,
+  // and this silently did nothing.
+  //
+  // It now reads the key AffiliateCapture writes when someone arrives on
+  // /?ref=CODE. An affiliate code IS an ordinary discount code underneath
+  // (affiliateStore mints it through createDiscountCode on approval), so
+  // applyDiscount needs no changes.
+  //
+  // Pre-filled, never auto-applied: the customer still presses Apply. A
+  // code that silently attaches itself is one the customer never agreed
+  // to, and it would also let any link quietly overwrite a better code
+  // they had already typed.
   useEffect(() => {
     if (discountCode || appliedDiscount) return
     try {
-      const stored = localStorage.getItem('pepcolab_referral')
+      const stored = localStorage.getItem('pepcolab_ref')
       if (stored) {
         setDiscountCode(stored)
-        setReferralPrefill(stored)
+        setRefPrefill(stored)
       }
     } catch {
       // localStorage can throw in private/incognito contexts — non-critical
@@ -429,8 +437,8 @@ function CartPageInner() {
                   {discountError && (
                     <p className="text-xs text-red-600 mt-1.5">{discountError}</p>
                   )}
-                  {referralPrefill && discountCode === referralPrefill && !discountError && (
-                    <p className="text-xs text-gray-500 mt-1.5">Referral code applied from your link — hit Apply to use it.</p>
+                  {refPrefill && discountCode === refPrefill && !discountError && (
+                    <p className="text-xs text-gray-500 mt-1.5">Discount code filled in from your link — hit Apply to use it.</p>
                   )}
                 </div>
               )}

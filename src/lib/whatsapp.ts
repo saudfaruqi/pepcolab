@@ -97,12 +97,16 @@ export function whatsAppChatHandoffLink(summary: string, contactName?: string): 
   return buildLink(message.slice(0, 900))
 }
 
-// Referral program → WhatsApp share. Deliberately NOT using buildLink()
-// above — that always addresses PepcoLab's own number, which is right for
-// "customer contacts us" CTAs but wrong here: a referrer sharing their code
-// needs to message THEIR friends, not us. Omitting the number from wa.me
-// opens WhatsApp's own contact picker instead.
-export function whatsAppReferralShareLink(referralUrl: string, discountPercent: number): string {
-  const message = `Hey! I've been ordering research peptides from PepcoLab — here's ${discountPercent}% off your first order with my link: ${referralUrl}`
+// Affiliate link → WhatsApp share. Deliberately NOT using buildLink() above
+// — that always addresses PepcoLab's own number, which is right for
+// "customer contacts us" CTAs but wrong here: an affiliate sharing their
+// link needs to message THEIR audience, not us. Omitting the number from
+// wa.me opens WhatsApp's own contact picker instead.
+//
+// Renamed from whatsAppReferralShareLink (Sep 2026) when the referral
+// programme was retired. The wording is the affiliate's to send, so it
+// stays plain and makes no claim about the compounds themselves.
+export function whatsAppAffiliateShareLink(affiliateUrl: string, discountPercent: number): string {
+  const message = `PepcoLab supply research-grade peptides with a published certificate of analysis for every batch. Here's ${discountPercent}% off with my link: ${affiliateUrl}`
   return `https://wa.me/?text=${encodeURIComponent(message)}`
 }

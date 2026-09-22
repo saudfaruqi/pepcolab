@@ -77,7 +77,7 @@ export async function listDiscountCodes(): Promise<DiscountCode[]> {
 // BUG FIX: previously read the whole DiscountCode object, incremented
 // `.redemptions` in memory, and wrote the whole object back — a classic
 // read-modify-write race. Two redemptions of the same code landing close
-// together (very plausible for a popular referral code, since this fires
+// together (very plausible for a popular affiliate code, since this fires
 // from the webhook handler and STRABL retries can overlap in time) could
 // both read the same starting count and each write count+1, permanently
 // losing one increment. A maxRedemptions-limited code could then be

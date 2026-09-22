@@ -63,10 +63,9 @@ export default function AffiliatesPage() {
       </p>
 
       <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(13,13,13,.55)', maxWidth: 680, margin: '0 0 36px' }}>
-        This is separate from our customer referral offer. That one rewards
-        people who buy from us for bringing a friend, and pays in discounts off
-        their next order. This one is for people promoting us who may never
-        order at all.
+        You do not need to have ordered from us, and you never have to. This
+        pays in money rather than credit against a future purchase, so it is
+        worth something whether or not you are a customer yourself.
       </p>
 
       <section style={{ marginBottom: 48 }}>

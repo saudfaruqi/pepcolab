@@ -44,6 +44,12 @@ const STATIC_ROUTES: StaticRoute[] = [
   // us in the SERPs shows and we don't — worth its own indexable URL rather
   // than only existing scattered across product pages.
   { path: '/reviews',      changeFrequency: 'weekly',  priority: 0.7  },
+  // Affiliate programme (Sep 2026), replacing the retired customer referral
+  // scheme. Indexable because recruitment is an acquisition channel in its
+  // own right — "<niche> affiliate programme" is how people with an audience
+  // go looking, and four of seven competitors run one. It is a recruiting
+  // page, not a buying page, so it sits below the commercial hubs.
+  { path: '/affiliates',   changeFrequency: 'monthly', priority: 0.6  },
   // New reference and market pages (Sep 2026). /storage and /testing target
   // high-intent informational queries the catalogue cannot rank for; /dubai
   // defends the geography no competitor is contesting; /bulk-orders opens a

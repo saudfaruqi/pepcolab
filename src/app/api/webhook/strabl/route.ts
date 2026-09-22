@@ -19,8 +19,11 @@ import { normaliseAddress } from '@/lib/addressNormalise'
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
-import { recordReferralRedemption, REFERRER_REWARD_PERCENT } from '@/lib/referralStore'
-import { sendReferralRewardEmail } from '@/lib/referralEmails'
+import {
+  recordAffiliateSale,
+  getAffiliateByCode,
+  AFFILIATE_HOLD_DAYS,
+} from '@/lib/affiliateStore'
 import { redis } from '@/lib/redis'
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
@@ -653,28 +656,55 @@ Please create this order manually in Shopify and mark it paid. The customer has 
             console.error('[webhook] Failed to increment discount redemption:', err)
           }
 
-          // Referral reward — no-ops silently if discountCode isn't a
-          // referral code (a normal promo code just returns null here).
-          // Best-effort, same as everything else in this block: a failed
-          // reward email should never fail the webhook or the real order,
-          // which is already booked either way.
+          // AFFILIATE COMMISSION (Sep 2026, replacing the referral reward
+          // that used to sit here — the referral programme is retired).
+          //
+          // No-ops silently when discountCode isn't an affiliate code: an
+          // ordinary promo code, or an affiliate who is pending or
+          // suspended, returns null and nothing is recorded.
+          //
+          // COMMISSION IS ON GOODS, NOT ON THE ORDER TOTAL. record.total
+          // includes shipping, and an affiliate has not earned a percentage
+          // of a courier fee. The subtotal is rebuilt from the line items
+          // so the basis is always the goods actually sold.
+          //
+          // DOUBLE-PAY SAFETY. This block already only runs on
+          // 'order_created', but STRABL retries, and a retried webhook
+          // paying commission twice is real money gone. recordAffiliateSale
+          // claims a per-order lock before writing, so a retry returns null
+          // having changed nothing. The short code is the lock key because
+          // it is stable across retries.
+          //
+          // Best-effort, like everything else here: a failed commission
+          // record must never fail the webhook or the order, which is
+          // already booked and paid either way.
           try {
-            const result = await recordReferralRedemption(discountCode)
-            if (result) {
-              await sendReferralRewardEmail({
-                to: result.profile.ownerEmail,
-                name: result.profile.ownerName,
-                rewardCode: result.rewardCode,
-                rewardPercent: REFERRER_REWARD_PERCENT,
-              })
+            const goodsSubtotal = record.products.reduce(
+              (sum, p) => sum + (Number(p.price) || 0) * (Number(p.quantity) || 0),
+              0
+            )
+            const sale = await recordAffiliateSale(
+              discountCode,
+              record.orderShortCode,
+              goodsSubtotal,
+              record.currency
+            )
+            if (sale) {
+              const affiliate = await getAffiliateByCode(discountCode)
               await sendMailSafe({
                 to: ALERT_EMAIL,
-                subject: `🔁 Referral redeemed — ${result.profile.code}`,
-                text: `${result.profile.ownerName} (${result.profile.ownerEmail})'s referral code ${result.profile.code} was just used on order ${shopifyOrder.name || shopifyOrder.id}.\n\nTotal referrals for this code: ${result.profile.referralCount}\nReward code issued to them: ${result.rewardCode}`,
+                subject: `💸 Affiliate sale — ${discountCode.toUpperCase()}`,
+                text:
+                  `${affiliate?.name ?? 'An affiliate'} (${affiliate?.email ?? 'unknown email'}) ` +
+                  `earned commission on order ${record.orderShortCode}.\n\n` +
+                  `Code: ${discountCode.toUpperCase()}\n` +
+                  `Goods subtotal: ${sale.currency} ${sale.subtotal.toFixed(2)}\n` +
+                  `Commission at ${affiliate?.commissionPercent ?? '?'}%: ${sale.currency} ${sale.commission.toFixed(2)}\n` +
+                  `Status: ${sale.status} — payable after the ${AFFILIATE_HOLD_DAYS}-day refund hold.`,
               })
             }
           } catch (err) {
-            console.error('[webhook] Failed to process referral redemption:', err)
+            console.error('[webhook] Failed to record affiliate sale:', err)
           }
         }
       } catch (err: any) {

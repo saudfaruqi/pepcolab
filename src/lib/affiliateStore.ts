@@ -3,26 +3,26 @@
 // AFFILIATE PROGRAMME — commission on revenue, for people who send us
 // customers they don't personally know.
 //
-// HOW THIS DIFFERS FROM referralStore.ts, AND WHY BOTH EXIST
+// THIS IS THE ONLY PARTNER PROGRAMME. The old "give 15%, get 20%" customer
+// referral scheme (lib/referralStore.ts, components/ReferralWidget.tsx,
+// /referrals, lib/referralEmails.ts) was retired in September 2026 and every
+// one of those files is deleted. If you are here looking for referral logic,
+// there is none — this replaced it outright.
 //
-// The referral programme ("give 15%, get 20%") rewards a CUSTOMER for
-// bringing a friend, and it pays in discount codes off their own next order.
-// That only works if the referrer buys again — useless to someone who is
-// promoting us but has no intention of ordering.
-//
-// Competitor audit, September 2026: four of seven suppliers run a genuine
-// affiliate programme (UAE Peptide Research runs a dedicated portal at
-// join.uaepeptideresearch.com, NOVA Labs uses tracked referral links,
-// UKPeptides and MY PEPTIDES both have one). PepcoLab had only the customer
-// referral offer. In a market where almost nobody has real social reach, the
-// affiliates ARE the distribution.
+// Why it was replaced: the referral scheme paid in discount codes off the
+// referrer's OWN next order, so it was worth nothing to anyone promoting us
+// who had no intention of buying again. Competitor audit, September 2026:
+// four of seven suppliers run a real affiliate programme (UAE Peptide
+// Research has a dedicated portal, NOVA Labs uses tracked links, UKPeptides
+// and MY PEPTIDES both have one). In a market where almost nobody has real
+// social reach, the affiliates ARE the distribution.
 //
 // So: an affiliate gets a code, their audience gets a discount for using it,
 // and the affiliate earns a percentage of what those orders are worth, paid
 // in money rather than credit.
 //
-// TWO CORRECTNESS RULES, both learned from bugs already fixed in
-// referralStore.ts:
+// TWO CORRECTNESS RULES, both learned from bugs that had to be fixed in the
+// retired referral store — do not undo either of them:
 //
 // 1. NEVER READ-MODIFY-WRITE A TOTAL. Two orders completing close together
 //    would each read the same starting figure and write their own increment
@@ -270,7 +270,7 @@ export async function recordAffiliateClick(code: string): Promise<void> {
 /**
  * Called from the payment webhook when an order completes on an affiliate
  * code. Returns null when the code is not an affiliate code, so the caller
- * can fall through to referral handling.
+ * can carry on without treating it as an error.
  *
  * IDEMPOTENT PER ORDER. The SET NX below is the whole safety mechanism: the
  * first call for an order claims the lock and records the sale, and every

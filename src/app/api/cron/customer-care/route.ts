@@ -30,6 +30,7 @@ import { loadCatalogue, buildJourney, workingDaysSince, type CatalogueItem } fro
 import { isMarketingSuppressed } from '@/lib/emailPreferences'
 import { buildUnsubscribeUrl } from '@/lib/unsubscribeToken'
 import { redis } from '@/lib/redis'
+import { sweepAffiliateHolds } from '@/lib/affiliateStore'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -186,5 +187,17 @@ export async function GET(req: NextRequest) {
   const crossSell = await runCrossSell(now, catalogueFor)
   const winback = await runWinback(now, catalogueFor)
 
-  return NextResponse.json({ success: true, aftercare, crossSell, winback })
+  // Affiliate commission leaves its refund hold here rather than being
+  // recomputed on every dashboard read, so the pending → approved move
+  // happens once and is recorded in the ledger. Isolated from the email
+  // runs above: a failure here must not cost anyone their aftercare email,
+  // and the sweep is safely repeatable on the next run.
+  let affiliateHolds = 0
+  try {
+    affiliateHolds = await sweepAffiliateHolds()
+  } catch (err) {
+    console.error('[customer-care] Affiliate hold sweep failed:', err)
+  }
+
+  return NextResponse.json({ success: true, aftercare, crossSell, winback, affiliateHolds })
 }

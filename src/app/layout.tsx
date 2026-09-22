@@ -13,6 +13,7 @@ import AgeLocationGate from '@/components/AgeLocationGate'
 import FloatingCalculator from '@/components/FloatingCalculator'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import ChatWidget from '@/components/ChatWidget'
+import AffiliateCapture from '@/components/AffiliateCapture'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -302,6 +303,10 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
 
+        {/* Catches ?ref= on any landing page, for affiliate links. Renders
+            nothing; sits above the providers because it depends on none of
+            them. Replaces the deleted ReferralWidget. */}
+        <AffiliateCapture />
         <CountryProvider>
           {/* Signed-in state, available to Nav and every page beneath it. One
               fetch per load, shared — see lib/customerContext.tsx. */}

@@ -165,7 +165,7 @@ export default function Nav() {
         { label: 'FAQ',           href: '/faq',      sub: 'Common questions'         },
         { label: 'Contact Us',    href: '/contact',  sub: 'Get in touch'             },
         { label: 'Shipping Info', href: '/shipping', sub: 'Delivery & tracking'      },
-        { label: 'Refer & Earn',  href: '/referrals', sub: 'Give 15%, get 20%'       },
+        { label: 'Affiliate Programme',  href: '/affiliates', sub: 'Earn commissions'       },
       ] as { label: string; href: string; sub?: string }[],
     },
   ]
