@@ -405,7 +405,7 @@ export default function Footer() {
           {/* Brand + newsletter */}
           <div className="footer-brand">
             <div>
-              <img src="/pepcologo.png" alt="PepcoLab" className="lg:h-16 h-10 w-auto invert" />
+              <img src="/pepcologo.png" alt="PepcoLab" className="lg:h-16 h-10 w-auto invert mb-4" />
             </div>
             <p className="footer-tagline">
               Research-grade compounds with full analytical transparency. Every batch independently verified, documented, and published.
