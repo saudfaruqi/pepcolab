@@ -173,7 +173,10 @@ export default function BestSellersSection({
                   >
                     <span
                       style={{
-                        fontSize: 7.5,
+                        // Was 7.5px — measured as the smallest text on the
+                        // whole site. Uppercase at .06em tracking needs more
+                        // than that to be read at arm's length on a phone.
+                        fontSize: 10.5,
                         fontWeight: 800,
                         letterSpacing: '.06em',
                         textTransform: 'uppercase',
@@ -230,10 +233,13 @@ export default function BestSellersSection({
                           backdropFilter: 'blur(8px)',
                         }}
                       >
-                        <div style={{ fontSize: 5.5, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', fontWeight: 700 }}>
+                        {/* Was 5.5px over 9px. Purity is the number the
+                            whole brand rests on, and it was the least
+                            legible thing on the card. */}
+                        <div style={{ fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', fontWeight: 700 }}>
                           Purity
                         </div>
-                        <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>
                           {p.purity}%
                         </div>
                       </div>
@@ -267,7 +273,7 @@ export default function BestSellersSection({
 
                     <p
                       style={{
-                        fontSize: 'clamp(10px, 0.8vw, 12px)',
+                        fontSize: 'clamp(12.5px, 0.8vw, 13px)',
                         lineHeight: 1.4,
                         color: 'rgba(255,255,255,.4)',
                         margin: '0 0 10px',
@@ -288,7 +294,7 @@ export default function BestSellersSection({
                       </span>
                       <span
                         style={{
-                          fontSize: 'clamp(8.5px, 0.7vw, 10px)',
+                          fontSize: 'clamp(11px, 0.7vw, 12px)',
                           fontWeight: 700,
                           color: p.inStock === false ? 'rgba(255,255,255,.3)' : '#4ADE80',
                           whiteSpace: 'nowrap',

@@ -633,3 +633,21 @@ h1, h2, h3, h4, h5 {
     margin: -6px 0 8px;
   }
 }
+
+/* 6. FOOTER LINKS — the single biggest systematic failure on the site.
+   Measured 169x17 on every page: 22 links, 32 pages. 17px tall is half
+   the minimum and they sit close together, so on a phone the footer is a
+   column of near-misses. The font size is fine; only the hit area is not,
+   so this pads rather than resizes and nothing moves visually — the
+   negative margin absorbs the padding it adds. */
+@media (hover: none) and (pointer: coarse) {
+  .footer-link {
+    display: block;
+    /* 13px font on a ~17px line box, so 14px top and bottom clears 44
+       with a pixel to spare. 13px landed on exactly 43 — measured, not
+       assumed. The matching negative margin means the footer's spacing
+       is unchanged; only the hit area grows. */
+    padding: 14px 0;
+    margin: -14px 0;
+  }
+}

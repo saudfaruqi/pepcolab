@@ -660,6 +660,7 @@ export default function PepcoLabPage({
           </p>
           <Link
             href="/contact?subject=Institutional%20%2F%20Bulk%20Order"
+            className="tap-44"
             style={{
               flexShrink: 0, fontSize: 13, fontWeight: 600, color: "#0D0D0D",
               background: "#fff", padding: "10px 20px", borderRadius: 999,
@@ -927,6 +928,7 @@ export default function PepcoLabPage({
 
                       <button
                         onClick={() => addBundleToCart(b)}
+                        className="tap-44"
                         style={{
                           height: "36px",
                           padding: "0 18px",
@@ -1299,6 +1301,7 @@ export default function PepcoLabPage({
                 <button
                   onClick={() => addToCart(p)}
                   disabled={!p.inStock}
+                  className="tap-44"
                   style={{
                     height: "clamp(32px, 3vw, 36px)",
                     padding: "0 clamp(12px, 1.5vw, 18px)",
@@ -1636,7 +1639,7 @@ export default function PepcoLabPage({
                     lineHeight: 1.5 
                   }}>
                     {emailError ?? (
-                      <>No spam. <Link href="/unsubscribe" style={{ color: "rgba(255,255,255,.35)", textDecoration: "underline" }}>Unsubscribe anytime.</Link></>
+                      <>No spam. <Link href="/unsubscribe" className="tap-44" style={{ color: "rgba(255,255,255,.35)", textDecoration: "underline" }}>Unsubscribe anytime.</Link></>
                     )}
                   </div>
                 </div>
