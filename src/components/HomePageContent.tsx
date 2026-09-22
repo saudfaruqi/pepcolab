@@ -119,7 +119,7 @@ type NormalisedProduct = {
 const TRUST_ITEMS = [
   "HPLC-Verified Purity", "Freedom Diagnostics Tested", "Cold-Chain Dispatch",
   "Batch COA Published", "Verify Any Lot Number", "Lot-Traced to the Vial",
-  "Usually Next Working Day (UAE)", "Free Tracked Shipping Over AED80",
+  "Usually Next Working Day", "Free Shipping", "UK Dispatch Launching Soon",
 ];
 
 interface RealReview {
