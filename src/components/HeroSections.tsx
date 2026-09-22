@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 export default function HeroCinematic() {
@@ -12,6 +12,32 @@ export default function HeroCinematic() {
   // failed the build (`This comparison appears to be unintentional...`).
   // Hardcoding the one market countryContext.tsx actually supports.
   const dispatchLabel = 'UAE Dispatch'
+
+  // MOBILE VIDEO (Sep 2026). Measured on an iPhone 13: pepcovideo2.webm
+  // (1.43 MB) was fetched TWICE on the homepage — roughly 2.9 MB of a
+  // background loop, on phones, in a market where mobile data is the norm.
+  //
+  // The element already carried preload="none", and the comment below said
+  // that kept it off the critical path. It does not: `autoPlay` requires
+  // the media, so the browser fetches it regardless. The two attributes
+  // contradict each other and autoplay wins.
+  //
+  // CSS cannot fix this either — a display:none <video autoplay> still
+  // downloads. The only reliable way not to spend 1.4 MB on a phone is not
+  // to render the element, so below 768px the poster frame is shown as a
+  // plain image instead. It is the same first frame, so visually nothing
+  // changes; it just costs ~60 KB rather than ~2.9 MB.
+  //
+  // Starts false so the server render and the first client paint agree —
+  // no hydration mismatch — then upgrades on desktop after mount.
+  const [showVideo, setShowVideo] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const sync = () => setShowVideo(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
 
   useEffect(() => {
     ;(async () => {
@@ -409,24 +435,40 @@ export default function HeroCinematic() {
                 REQUIRED FILES in /public: pepcovideo2.mp4, pepcovideo2.webm,
                 pepcovideo-poster.jpg — all three are supplied with this fix.
               */}
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="none"
-                poster="/pepcovideo-poster.jpg"
-                aria-label="PepcoLab research vials"
-                style={{
-                  width: '100%',
-                  height: '400px',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              >
-                <source src="/pepcovideo2.webm" type="video/webm" />
-                <source src="/pepcovideo2.mp4" type="video/mp4" />
-              </video>
+              {showVideo ? (
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  poster="/pepcovideo-poster.jpg"
+                  aria-label="PepcoLab research vials"
+                  style={{
+                    width: '100%',
+                    height: '400px',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                >
+                  <source src="/pepcovideo2.webm" type="video/webm" />
+                  <source src="/pepcovideo2.mp4" type="video/mp4" />
+                </video>
+              ) : (
+                /* Phones get the poster frame and nothing else. Decorative,
+                   so it carries an empty alt rather than describing itself
+                   twice over the heading beside it. */
+                <img
+                  src="/pepcovideo-poster.jpg"
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    width: '100%',
+                    height: '400px',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              )}
 
               <div
                 style={{

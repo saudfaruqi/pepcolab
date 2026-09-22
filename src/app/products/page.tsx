@@ -76,10 +76,17 @@ export default async function ProductsPage() {
         .pp-hero-bg {
           position: absolute;
           inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
           opacity: .18;
+          /* Decorative only, and only from tablet up — see the note in the
+             markup. Mobile never requests this file. */
+          background: none;
+        }
+        @media (min-width: 769px) {
+          .pp-hero-bg {
+            background-image: url('${IMGS.hero}');
+            background-size: cover;
+            background-position: center;
+          }
         }
         .pp-hero-grad {
           position: absolute;
@@ -168,6 +175,64 @@ export default async function ProductsPage() {
         }
         @media(max-width: 640px) {
           .pp-trust-inner { grid-template-columns: 1fr; }
+        }
+
+        /* ── MOBILE HERO (Sep 2026) ──────────────────────────────────────
+           Measured on an iPhone 13: the hero was 611px of a 664px viewport
+           and the first product sat 1,391px down — 2.1 full screens of
+           scrolling on a CATALOGUE page before anything buyable appears.
+
+           On a phone this hero was costing more than it returned: a
+           full-screen restatement of the page title, a paragraph nobody
+           scrolling a catalogue stops to read, and a "Browse Catalogue"
+           button that scrolled to content 600px below it.
+
+           The h1 stays — it is the page's only one and it carries the
+           ranking — but it is now a compact page header rather than a
+           landing screen. Desktop is untouched. */
+        @media (max-width: 768px) {
+          .pp-hero {
+            min-height: 0;
+            padding: 26px 16px 22px;
+            align-items: flex-start;
+          }
+          .pp-hero-grad { display: none; }
+          .pp-hero-body,
+          .pp-hero-btns { display: none; }
+          .pp-hero-eyebrow {
+            font-size: 11px;
+            letter-spacing: .18em;
+            margin-bottom: 8px;
+          }
+          .pp-hero-h1 {
+            font-size: 34px;
+            line-height: 1.02;
+            letter-spacing: -.03em;
+            margin-bottom: 0;
+          }
+          /* The <br> stays. Hiding it ran the words together as
+             "ResearchPeptides" — display:none removes the break without
+             leaving whitespace behind. Two lines at 34px is ~70px and
+             reads correctly. */
+
+          /* The trust strip stacks to three full-width blocks on a phone,
+             adding 371px between the title and the first product. Same
+             three claims, one compact row each. */
+          .pp-trust-item {
+            padding: 13px 16px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            column-gap: 10px;
+            align-items: baseline;
+          }
+          .pp-trust-n { grid-row: 1; align-self: center; }
+          .pp-trust-title { grid-column: 2; font-size: 14px; }
+          .pp-trust-desc {
+            grid-column: 2;
+            font-size: 12.5px;
+            line-height: 1.5;
+            margin-top: 2px;
+          }
         }
         .pp-trust-item {
           padding: clamp(20px,3vw,32px) clamp(16px,3vw,32px);
@@ -315,13 +380,18 @@ export default async function ProductsPage() {
 
         {/* ── Hero ── */}
         <section className="pp-hero">
-          {/* SEO/CWV FIX: this is the single largest image on the page and
-              sits at the very top of the viewport — almost certainly the
-              LCP element for /products. `.pp-hero` (below) is already the
-              position:relative box `fill` needs. next.config.js now
-              allow-lists images.unsplash.com so this can load through
-              Next's optimizer (AVIF/WebP) instead of the raw source. */}
-          <Image className="pp-hero-bg" src={IMGS.hero} alt="" fill sizes="100vw" priority />
+          {/* MOBILE (Sep 2026): this was a next/image with `priority`, and it
+              was the LCP element for /products. Measured on an iPhone 13 it
+              was a 390x260 source stretched to 390x611 — a 2.35x upscale —
+              rendered at 18% opacity over a near-black background. A blurry,
+              barely-visible texture was deciding the page's LCP.
+
+              It is purely decorative (alt=""), so it moved to a CSS
+              background applied only from 769px up. A hidden <Image> would
+              still have been downloaded; a background-image inside a media
+              query is never requested at all. Phones now fetch zero bytes
+              for it, and desktop is unchanged. */}
+          <div className="pp-hero-bg" aria-hidden="true" />
           <div className="pp-hero-grad" />
           <div className="pp-hero-content">
             <div style={{ maxWidth: 700 }}>
