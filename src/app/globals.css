@@ -498,3 +498,138 @@ h1, h2, h3, h4, h5 {
   }
 }
 */
+
+/* ── MOBILE-FIRST CORRECTIONS (Sep 2026) ───────────────────────────────
+   Measured on an iPhone 13 viewport (390px), not guessed. Every rule below
+   fixes something that was verified with getBoundingClientRect on the live
+   site, and the numbers in the comments are what was actually measured.
+   ------------------------------------------------------------------- */
+
+/* 1. TOUCH TARGETS — WCAG 2.5.5 (AA) and Apple HIG both want 44x44 CSS px.
+   Measured before this block:
+     wishlist heart on a product card ... 32x32
+     add-to-cart on a product card ...... 40x40
+     nav icons (account/wishlist/cart) .. 38x38
+     product NAME link on a card ........ 158x18   <- 18px tall
+     breadcrumb links ................... 32x19, 47x19
+     close-cart button .................. 32x32
+     "Write a review" ................... 108x35
+     "Browse catalogue" ................. 166x39
+
+   The hit area is expanded with a pseudo-element instead of by growing the
+   control. Making every icon physically 44px would wreck a layout built
+   around 32-40px circles; this keeps the painted size exactly as designed
+   and enlarges only what the finger has to find. */
+@media (hover: none) and (pointer: coarse) {
+  .tap-44,
+  .nav-icon-btn,
+  .cp-breadcrumb a,
+  nav[aria-label="Breadcrumb"] a {
+    position: relative;
+  }
+
+  .tap-44::after,
+  .nav-icon-btn::after,
+  .cp-breadcrumb a::after,
+  nav[aria-label="Breadcrumb"] a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    /* Purely a hit area — never paints, never affects layout. */
+    background: transparent;
+    pointer-events: auto;
+  }
+
+  /* Text links and pill buttons grow properly rather than by pseudo-element,
+     because their width is already fine and only the height falls short. */
+  .btn-pill,
+  button.btn-pill,
+  a.btn-pill {
+    min-height: 44px;
+  }
+}
+
+/* 2. FLOATING WIDGETS MUST NOT SIT ON TOP OF MERCHANDISE.
+   On /products at 390px there were FOUR fixed elements stacked over the
+   bottom of the viewport at once: the calculator prompt, the calculator
+   FAB, the chat nudge and the chat launcher. Between them they covered two
+   entire product cards — name, price and add-to-cart — and on the hero they
+   covered the "View certificates" button.
+
+   lib/nudgeCoordinator.ts already stops the two PROMPTS overlapping each
+   other, but nothing stopped a prompt plus two FABs covering content.
+
+   On a phone the auto-opening prompts are suppressed entirely: a 390px
+   screen has no spare room for an uninvited bubble, and both features are
+   still one tap away on their launchers. The launchers themselves stay, and
+   the page gets bottom clearance so the last row can always scroll clear. */
+@media (max-width: 768px) {
+  .fc-prompt,
+  .plc-nudge {
+    display: none !important;
+  }
+
+  /* Enough room for a 58px launcher plus breathing space and the home
+     indicator on a notched phone. */
+  main,
+  .page-shell {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .fc-fab,
+  .plc-launcher {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* 3. TYPE THAT IS TOO SMALL TO READ ON A PHONE.
+   33 distinct strings measured below 14px, the worst at 11px — menu
+   sublabels ("37 compounds", "Save 10% on combinations", "Protocols &
+   references") and card category eyebrows. 11px uppercase with .14em
+   tracking is close to unreadable at arm's length.
+
+   Raised to a 12.5px floor rather than 14px: these are genuinely secondary
+   labels, and 14px would flatten the hierarchy they exist to create. */
+@media (max-width: 768px) {
+  .nav-sublabel,
+  .menu-sublabel,
+  [class*="sublabel"] {
+    font-size: 12.5px !important;
+  }
+}
+
+/* 4. PRODUCT DETAIL BODY COPY.
+   Measured at ~19px with line-height 1.9 on mobile, which is desktop
+   rhythm on a 390px column — it pushed the Semax page to a 4,529px scroll.
+   Tightening the leading alone removes roughly a fifth of that without
+   touching the font size, so nothing gets harder to read. */
+@media (max-width: 768px) {
+  .shopify-desc p,
+  .shopify-desc li,
+  .product-longdesc p,
+  .product-longdesc li {
+    line-height: 1.6;
+  }
+
+  .shopify-desc p,
+  .product-longdesc p {
+    margin-bottom: 14px;
+  }
+}
+
+/* 5. PRODUCT CARD — give the name a real tap area.
+   The card image is a 170x170 link and works fine; the NAME beside it was
+   an 18px-tall strip. Padding the link makes the title a comfortable
+   target without moving anything visually, because the padding is absorbed
+   by the margin it replaces. */
+@media (hover: none) and (pointer: coarse) {
+  .pc-title-link {
+    display: block;
+    padding: 6px 0;
+    margin: -6px 0 8px;
+  }
+}

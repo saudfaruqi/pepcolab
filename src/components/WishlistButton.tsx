@@ -33,6 +33,7 @@ export default function WishlistButton({ item, variant = 'overlay', size = 16 }:
         type="button"
         onClick={handleClick}
         aria-pressed={saved}
+        className="tap-44"
         aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -55,6 +56,7 @@ export default function WishlistButton({ item, variant = 'overlay', size = 16 }:
         type="button"
         onClick={handleClick}
         aria-pressed={saved}
+        className="tap-44"
         aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
         style={{
           width: 38, height: 38, borderRadius: 10,
@@ -74,6 +76,7 @@ export default function WishlistButton({ item, variant = 'overlay', size = 16 }:
       type="button"
       onClick={handleClick}
       aria-pressed={saved}
+      className="tap-44"
       aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'}
       style={{
         position: 'absolute',

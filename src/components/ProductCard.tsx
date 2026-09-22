@@ -277,7 +277,11 @@ export default function ProductCard({ product: p, featured = false }: Props) {
         </div>
 
         {/* Name */}
-        <Link href={productHref(p.slug)} style={{ textDecoration: 'none' }}>
+        {/* pc-title-link: the name was a 158x18 tap target on a phone —
+            the smallest thing on the card and the one that opens it. The
+            class pads the hit area on touch devices only; see globals.css.
+            The h3's bottom margin moves onto the link so nothing shifts. */}
+        <Link href={productHref(p.slug)} className="pc-title-link" style={{ textDecoration: 'none' }}>
           <h3 style={{
             fontSize: 'clamp(16px, 3.5vw, 22px)',
             lineHeight: 1.1,
@@ -336,6 +340,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNotifyOpen(true) }}
               aria-label={`Notify me when ${p.name} is back in stock`}
+              className="tap-44"
               title="Notify me when back in stock"
               style={{
                 minHeight: 40, padding: '0 16px', borderRadius: 999,
@@ -356,6 +361,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
                 : added ? 'Added to cart' : `Add ${p.name} to cart`
             }
             title={paymentLinkOnly ? 'Choose strength and quantity' : undefined}
+            className="tap-44"
             style={{
               width: 40,
               height: 40,
