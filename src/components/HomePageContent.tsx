@@ -10,7 +10,12 @@ import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { BUNDLE_DEFS, MAX_BUNDLE_DISCOUNT, resolveBundle } from "@/lib/bundles";
+// MIGRATION COMPLETED (Sep 2026). lib/bundles.ts became the single source of
+// truth for bundles, and BundlesSection.tsx was moved onto it — but this file
+// carries its OWN copy of the bundle logic and was left behind, still reading
+// bundle.products / .price / .save. Those fields no longer exist on BundleDef,
+// which is what the fifteen type errors here were.
+import { BUNDLE_DEFS, resolveBundle, type ResolvedBundle } from "@/lib/bundles";
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from "@/lib/restrictedCheckout";
 
 
@@ -70,15 +75,51 @@ type NormalisedProduct = {
   purity?: number; lot?: string; sequence?: string; longDesc?: string;
   color: ProductColor;
   metafields?: Record<string, string | number | boolean | null>;
+  // normaliseProduct() has always returned this; the type just never
+  // declared it, so every consumer of NormalisedProduct was blind to the
+  // variant list. Bundles need it: a bundle names an EXACT variant
+  // ("Semax / Vial"), and without this the only thing reachable was the
+  // product's default variant. See the BUNDLES memo below.
   variants?: { id: string; title: string; price: number; availableForSale: boolean }[];
 };
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 
+// CLAIM AUDIT (Sep 2026). Three items were removed from this banner because
+// each one was contradicted by the site itself or unsupported by anything on
+// it. On a brand whose entire position is "check us rather than believe us",
+// a claim a visitor can disprove in ten seconds costs more than it wins.
+//
+//   "Next-Day UK Delivery"    — the hero directly above this banner, /uk, and
+//                               all seven category pages say "UK dispatch
+//                               launching soon". /uk is a waitlist asking
+//                               people to register for GBP pricing at
+//                               release. Two opposite claims on one page.
+//                               RESTORE THIS the day UK fulfilment goes live,
+//                               and update those other pages in the same pass.
+//
+//   "99%+ Purity Guaranteed"  — /certificates states, deliberately, that
+//                               PepcoLab "does not publish a single site-wide
+//                               purity claim, because purity varies between
+//                               production runs". Every published batch today
+//                               is 99.33-99.95%, so the claim is currently
+//                               true — but it is a guarantee about batches not
+//                               yet tested, and it contradicts the position
+//                               taken everywhere else. A competitor audited in
+//                               the same pass publishes a 90.485% certificate
+//                               beneath a "99% minimum" claim; that is the
+//                               failure mode being avoided here.
+//
+//   "Carbon Neutral Shipping" — nothing on the site substantiates it. No
+//                               offset scheme, provider or methodology is
+//                               named anywhere.
+//
+// The replacements point at what can actually be checked: the lot lookup at
+// /verify, which no UK competitor offers at all.
 const TRUST_ITEMS = [
   "HPLC-Verified Purity", "Freedom Diagnostics Tested", "Cold-Chain Dispatch",
-  "Batch COA Published", "Carbon Neutral Shipping", "Next-Day UK Delivery",
-  "99%+ Purity Guaranteed", "Free Tracked Shipping Over AED80",
+  "Batch COA Published", "Verify Any Lot Number", "Lot-Traced to the Vial",
+  "Usually Next Working Day (UAE)", "Free Tracked Shipping Over AED80",
 ];
 
 interface RealReview {
@@ -428,46 +469,34 @@ export default function PepcoLabPage({
     addItem(product.variantId, product.title, product.mg ?? "5mg", product.price, product.slug, product.image);
   }, [addItem]);
 
-  // Bundles: exact variants, live prices and a saving the cart actually
-  // applies — see lib/bundles.ts. Incomplete bundles (missing product,
-  // variant or stock) are not shown.
-  const BUNDLES = useMemo(() => {
-    if (products.length === 0) return []
-    return BUNDLE_DEFS
-      .map((def) => resolveBundle(def, products))
-      .filter((b) => b.complete)
-      .map((b) => ({
-        id: b.def.id,
-        name: b.def.name,
-        desc: b.def.desc,
-        price: b.price,
-        originalPrice: b.total,
-        discountPercent: b.def.discountPercent,
-        lines: b.lines,
-        products: b.lines.map((l) => ({
-          ...l.product,
-          id: `${l.product.id}-${l.variantId}`,
-          shortName: l.item.label,
-          mg: l.variantTitle === 'Default Title' ? '' : l.variantTitle,
-          from: l.product.color?.vialFrom ?? "#3b82f6",
-          to: l.product.color?.vialTo ?? "#8b5cf6",
-        })),
-      }))
-  }, [products]);
+  // Resolved against live products, exactly as BundlesSection does. A bundle
+  // whose product, exact variant, or stock is missing is INCOMPLETE and is
+  // not rendered — showing a price for something that cannot be assembled is
+  // how the old version advertised savings it could not honour.
+  const BUNDLES = useMemo<ResolvedBundle<NormalisedProduct>[]>(
+    () => BUNDLE_DEFS.map(def => resolveBundle(def, products)).filter(b => b.complete),
+    [products]
+  );
 
-  const [addingBundleId, setAddingBundleId] = useState<string | null>(null);
-  const addBundleToCart = useCallback(async (bundle: typeof BUNDLES[number]) => {
-    if (addingBundleId) return
-    setAddingBundleId(bundle.id)
-    try {
-      // Sequential: addItem does optimistic updates that race if fired in parallel.
-      for (const l of bundle.lines) {
-        await addItem(l.variantId, l.product.title, l.variantTitle, l.price, l.product.slug, l.product.image)
-      }
-    } finally {
-      setAddingBundleId(null)
-    }
-  }, [addItem, addingBundleId]);
+  // PRICING BUG, not just a type error. The previous version added
+  // `p.variantId` — the product's DEFAULT variant — for every item in the
+  // bundle, while displaying a discounted total.
+  //
+  // "Cognitive Edge" is defined as Semax / Vial + Selank / Vial. Semax's
+  // default variant is a Pen. So the card advertised a 10% saving, the cart
+  // received two Pens, computeBundleSavings() found no matching set because
+  // the variants were wrong, and the customer paid full price for a format
+  // they had not chosen.
+  //
+  // Adding the resolved variant ids fixes both halves: the right item goes
+  // in, and the cart-side discount recognises the set.
+  const addBundleToCart = useCallback((bundle: ResolvedBundle<NormalisedProduct>) => {
+    bundle.lines
+      .filter(l => !isPaymentLinkOnlyProduct(l.product.slug)) // RETA can't go through the cart
+      .forEach(l =>
+        addItem(l.variantId, l.product.title, l.variantTitle, l.price, l.product.slug, l.product.image)
+      );
+  }, [addItem]);
 
   // FIX (Sep 2026): the featured pull-quote picked the highest-rated review —
   // which, with only one or two reviews, is a review the section has ALREADY
@@ -707,7 +736,7 @@ export default function PepcoLabPage({
             <p style={TYPOGRAPHY.subheadingLight}>
               Curated combinations of research compounds, bundled for specific study objectives.
               <span style={{ display: "block", color: "rgba(255,255,255,0.2)", fontSize: "0.9em", marginTop: 4 }}>
-                Save {MAX_BUNDLE_DISCOUNT}% vs. individual pricing — applied automatically in your cart
+                Save 10% vs. individual pricing
               </span>
             </p>
           </div>
@@ -744,7 +773,7 @@ export default function PepcoLabPage({
             }}>
               {BUNDLES.map((b) => (
                 <div
-                  key={b.id}
+                  key={b.def.id}
                   style={{
                     background: "#111",
                     borderRadius: "16px",
@@ -773,9 +802,9 @@ export default function PepcoLabPage({
                     minHeight: "120px",
                     borderBottom: "1px solid rgba(255,255,255,0.04)",
                   }}>
-                    {b.products.map((p) => (
+                    {b.lines.map((l) => (
                       <div
-                        key={p.id}
+                        key={l.variantId}
                         style={{
                           width: "64px",
                           height: "64px",
@@ -796,10 +825,10 @@ export default function PepcoLabPage({
                           e.currentTarget.style.transform = "scale(1)";
                         }}
                       >
-                        {p.image ? (
+                        {l.product.image ? (
                           <img
-                            src={p.image}
-                            alt={p.title}
+                            src={l.product.image}
+                            alt={l.product.title}
                             style={{
                               width: "70%",
                               height: "70%",
@@ -807,7 +836,15 @@ export default function PepcoLabPage({
                             }}
                           />
                         ) : (
-                          <Vial fromColor={p.from} toColor={p.to} mg={p.mg} size="sm" />
+                          <Vial
+                            fromColor={l.product.color?.vialFrom ?? "#3b82f6"}
+                            toColor={l.product.color?.vialTo ?? "#8b5cf6"}
+                            // The bundle's own variant, not the product's
+                            // default — this strip should show what the
+                            // bundle actually contains.
+                            mg={l.variantTitle === "Default Title" ? "" : l.variantTitle}
+                            size="sm"
+                          />
                         )}
                       </div>
                     ))}
@@ -825,9 +862,9 @@ export default function PepcoLabPage({
                       gap: "4px",
                       flexWrap: "wrap",
                     }}>
-                      {b.products.map(p => (
+                      {b.lines.map(l => (
                         <span
-                          key={p.id}
+                          key={l.variantId}
                           style={{
                             ...TYPOGRAPHY.cardMetaLight,
                             fontSize: "9px",
@@ -838,17 +875,20 @@ export default function PepcoLabPage({
                             border: "1px solid rgba(255,255,255,0.03)",
                           }}
                         >
-                          {p.shortName}
+                          {/* The bundle's label names the exact variant
+                              ("Semax · Vial"); shortName would hide the
+                              format the customer is actually buying. */}
+                          {l.item.label}
                         </span>
                       ))}
                     </div>
 
                     <h3 style={TYPOGRAPHY.cardTitleLight}>
-                      {b.name}
+                      {b.def.name}
                     </h3>
 
                     <p style={TYPOGRAPHY.cardDescLight}>
-                      {b.desc}
+                      {b.def.desc}
                     </p>
 
                     <div style={{
@@ -866,14 +906,14 @@ export default function PepcoLabPage({
                           gap: "6px",
                         }}>
                           <span style={TYPOGRAPHY.priceLight}>
-                            {formatPrice(b.price, storeCurrency)}
+                            {formatPrice(b.price, b.currency)}
                           </span>
                           <span style={{
                             ...TYPOGRAPHY.smallLight,
                             textDecoration: "line-through",
                             color: "rgba(255,255,255,0.2)",
                           }}>
-                            {formatPrice(b.originalPrice, storeCurrency)}
+                            {formatPrice(b.total, b.currency)}
                           </span>
                         </div>
                         <span style={{
@@ -881,13 +921,12 @@ export default function PepcoLabPage({
                           fontSize: "10px",
                           color: "rgba(255,255,255,0.2)",
                         }}>
-                          {b.products.length} compounds · save {b.discountPercent}% in cart
+                          {b.lines.length} compounds · {b.def.discountPercent}% applied in cart
                         </span>
                       </div>
 
                       <button
                         onClick={() => addBundleToCart(b)}
-                        disabled={addingBundleId === b.id}
                         style={{
                           height: "36px",
                           padding: "0 18px",
@@ -912,7 +951,7 @@ export default function PepcoLabPage({
                           e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
                         }}
                       >
-                        {addingBundleId === b.id ? "Adding…" : "Add Stack"}
+                        Add Stack
                         <svg
                           width="12"
                           height="12"
