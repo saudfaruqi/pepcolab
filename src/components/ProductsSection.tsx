@@ -255,7 +255,15 @@ export default function ProductsSection({ showAll = false, initialProducts, init
       <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 clamp(16px, 4vw, 64px)' }}>
 
         {/* Header */}
-        <div ref={headRef} style={{ marginBottom: 28 }}>
+        {/* ps-head: on /products with showAll, this h2 reads "Research
+            Peptides" — word for word the same as the page's h1 in the hero
+            directly above it. On a phone the two sat about 200px apart and
+            the page appeared to announce itself twice before showing a
+            single product. Hidden on mobile via globals.css; the h1 keeps
+            the ranking and this block is pure duplication there. On desktop
+            the hero is a full screen away, so it still reads as a section
+            header and stays. */}
+        <div ref={headRef} className={showAll ? 'ps-head ps-head-dup' : 'ps-head'} style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
             <div>
               {!showAll && (

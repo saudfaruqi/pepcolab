@@ -215,9 +215,25 @@ export default async function ProductsPage() {
              leaving whitespace behind. Two lines at 34px is ~70px and
              reads correctly. */
 
-          /* The trust strip stacks to three full-width blocks on a phone,
-             adding 371px between the title and the first product. Same
-             three claims, one compact row each. */
+          /* ORDER. The trust strip is supporting copy, not a gate — three
+             claims should not stand between someone opening a CATALOGUE and
+             seeing a product. Flex ordering moves it below the grid on
+             phones without touching the markup or the desktop layout.
+
+             "main > *" is given order 3 first so that any section not named
+             below keeps its source position AFTER these three, rather than
+             defaulting to order 0 and jumping to the top. */
+          main { display: flex; flex-direction: column; }
+          main > * { order: 3; }
+          .pp-hero { order: 0; }
+          .pp-products { order: 1; }
+          .pp-trust { order: 2; }
+
+          /* The duplicate "Research Peptides" header inside the grid — see
+             the note in ProductsSection.tsx. */
+          .ps-head-dup { display: none; }
+
+          /* Same three claims, one compact row each. */
           .pp-trust-item {
             padding: 13px 16px;
             display: grid;
