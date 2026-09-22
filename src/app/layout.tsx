@@ -102,12 +102,38 @@ export const metadata: Metadata = {
     google: 'iSuNTQTsMQf9PHYe4l-b3sXHGl8F3qQ59OGo9qnTn18',
   },
 
+  // FAVICON (Sep 2026). Square tile carrying the stacked "Pepco Lab."
+  // wordmark, replacing the rectangular logo.
+  //
+  // TWO THINGS WORTH KNOWING BEFORE EDITING THESE.
+  //
+  // 1. EACH SIZE IS ITS OWN ARTWORK, not one master downscaled. At 32px a
+  //    naive reduction of the 512 turns the wordmark to grey mush; the
+  //    shipped 32 and 16 are drawn with tighter padding, a larger "Lab."
+  //    relative to "Pepco", and both lines bold. Re-exporting every size
+  //    from one source will quietly undo that.
+  //
+  // 2. LIGHT AND DARK ARE NOT A STYLE CHOICE, they are a contrast one. A
+  //    white tile vanishes against the light browser chrome most people
+  //    run, and a black tile muddies into dark chrome. So the DARK tile is
+  //    the default and is served to light-mode browsers, and the LIGHT tile
+  //    is served only to dark-mode ones. Each appears where it has contrast.
+  //    The bare entries without `media` are the fallback for browsers that
+  //    ignore the query.
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
-      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon-dark-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon-dark-16.png', type: 'image/png', sizes: '16x16' },
+
+      { url: '/icon-dark-32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: light)' },
+      { url: '/icon-dark-16.png', type: 'image/png', sizes: '16x16', media: '(prefers-color-scheme: light)' },
+
+      { url: '/icon-light-32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: dark)' },
+      { url: '/icon-light-16.png', type: 'image/png', sizes: '16x16', media: '(prefers-color-scheme: dark)' },
     ],
+    // iOS masks the corners and composites onto the user's wallpaper, so
+    // this must be opaque and must not depend on a white background.
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
     shortcut: ['/favicon.ico'],
   },
