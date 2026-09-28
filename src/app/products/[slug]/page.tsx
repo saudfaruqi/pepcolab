@@ -239,15 +239,83 @@ function buildJsonLd(product: any, reviews: Review[] = []) {
   // GBP display conversion — Google surfaces this price in search results and
   // it has to match what the customer is actually billed.
   if (product.price != null) {
+    const currency = product.currencyCode ?? 'AED'
+
     productLd.offers = {
       '@type': 'Offer',
       url,
-      priceCurrency: product.currencyCode ?? 'AED',
+      priceCurrency: currency,
       price: String(product.price),
       availability: product.inStock === false
         ? 'https://schema.org/OutOfStock'
         : 'https://schema.org/InStock',
       seller: { '@type': 'Organization', name: 'PepcoLab' },
+
+      // RETURN POLICY (Sep 2026, answering Search Console's
+      // "Missing field hasMerchantReturnPolicy").
+      //
+      // MerchantReturnNotPermitted is the honest category, and it is chosen
+      // deliberately over a short return window. /refund-policy states that
+      // "cold-chain research compounds cannot be returned once dispatched,
+      // except where damaged or defective" — so general returns genuinely
+      // are not accepted. The 48-hour window on that page is for DAMAGED,
+      // DEFECTIVE OR INCORRECT claims, which is not a return right and
+      // must not be marked up as one.
+      //
+      // Declaring a return window we do not offer would put a "returns
+      // accepted" annotation on the search result, send customers here
+      // expecting something they cannot have, and create exactly the
+      // mismatch between structured data and page content that Google
+      // issues manual actions for.
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'AE',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+        merchantReturnLink: `${SITE_URL}/refund-policy`,
+      },
+    }
+
+    // SHIPPING DETAILS (Sep 2026, answering "Missing field shippingDetails").
+    //
+    // Only asserted where it is actually true. Free tracked shipping applies
+    // OVER AED 80, so this is attached only to products priced above that —
+    // at or below the threshold the field is omitted rather than claiming a
+    // rate that isn't offered. Every product Search Console flagged (KLOW,
+    // GLOW, Selank, Wolverine Stack) is far above it.
+    //
+    // handlingTime comes from /shipping: "Most orders are processed and
+    // dispatched within 1 business day following payment confirmation".
+    // transitTime is 1-2 days because couriers here do not return tracking
+    // events, so a single-day promise is not something we can stand behind.
+    const FREE_SHIPPING_OVER = 80
+    if (currency === 'AED' && Number(product.price) > FREE_SHIPPING_OVER) {
+      productLd.offers.shippingDetails = {
+        '@type': 'OfferShippingDetails',
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: 0,
+          currency: 'AED',
+        },
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: 'AE',
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 0,
+            maxValue: 1,
+            unitCode: 'DAY',
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 1,
+            maxValue: 2,
+            unitCode: 'DAY',
+          },
+        },
+      }
     }
   }
 

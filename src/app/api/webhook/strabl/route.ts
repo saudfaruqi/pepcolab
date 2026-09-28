@@ -19,6 +19,8 @@ import { normaliseAddress } from '@/lib/addressNormalise'
 import { sendMailSafe } from '@/lib/mailer'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
+import { getProducts } from '@/lib/shopify'
+import { resolveVariantFromTitle, toNumericVariantId } from '@/lib/variantResolver'
 import {
   recordAffiliateSale,
   getAffiliateByCode,
@@ -458,26 +460,69 @@ export async function POST(req: NextRequest) {
     const { email, phone, firstName, lastName, address1, address2, city, postalCode, countryCode } =
       resolvedCustomer
 
-    const lineItems: AdminLineItemInput[] = resolvedProducts
-      .map((item: any) => {
-        let variantId = item.externalVariantId || item.externalProductId || ''
-        if (variantId.includes('gid://')) {
-          const match = variantId.match(/(\d+)$/)
-          if (match) variantId = match[1]
+    // PAYMENT LINK ORDERS (Sep 2026, after SOR-GNRKNV).
+    //
+    // STRABL sends externalVariantId/externalProductId for cart checkouts
+    // but NEITHER for a Payment Link — only its own productUuid and a
+    // title like "GLP 40mg Pen". Every GLP sale is a Payment Link, so the
+    // highest-value product in the catalogue was always landing as a
+    // custom line item: no catalogue link, and no automatic stock
+    // decrement.
+    //
+    // The catalogue is only fetched when a line item actually needs it, so
+    // ordinary cart orders pay nothing for this. A failure here must never
+    // fail the webhook — the order is already paid — so it falls back to
+    // exactly the old behaviour.
+    let catalogue: any[] | null = null
+    const catalogueOnce = async () => {
+      if (catalogue === null) {
+        try {
+          catalogue = (await getProducts(250, 'AE')) as any[]
+        } catch (err) {
+          console.error('[webhook] Could not load catalogue for variant resolution:', err)
+          catalogue = []
         }
-        const price = Number(item.price)
-        const li: AdminLineItemInput = {
-          quantity: item.quantity || 1,
-          price: Number.isFinite(price) ? price.toFixed(2) : '0.00',
-          title: item.title || 'Product',
+      }
+      return catalogue
+    }
+
+    const lineItems: AdminLineItemInput[] = []
+    for (const item of resolvedProducts as any[]) {
+      let variantId = item.externalVariantId || item.externalProductId || ''
+      if (variantId.includes('gid://')) {
+        const match = variantId.match(/(\d+)$/)
+        if (match) variantId = match[1]
+      }
+
+      const price = Number(item.price)
+
+      // Only when STRABL gave us nothing to go on. The title proposes a
+      // variant and the PRICE confirms it — see lib/variantResolver.ts for
+      // why a wrong match is worse than no match.
+      if (!variantId && item.title && Number.isFinite(price) && price > 0) {
+        const match = resolveVariantFromTitle(item.title, price, await catalogueOnce())
+        if (match) {
+          variantId = toNumericVariantId(match.variantId)
+          console.log(
+            `[webhook] Payment Link line item "${item.title}" @${price} resolved to ` +
+            `${match.productTitle} / ${match.variantTitle} (variant ${variantId})`
+          )
         }
-        if (variantId) li.variant_id = variantId
-        return li
-      })
-      // price must be a real positive number — that's the one thing
-      // Shopify genuinely can't create a line item without, catalogue
-      // link or not.
-      .filter((li: AdminLineItemInput) => Number(li.price) > 0 && li.quantity > 0)
+      }
+
+      const li: AdminLineItemInput = {
+        quantity: item.quantity || 1,
+        price: Number.isFinite(price) ? price.toFixed(2) : '0.00',
+        title: item.title || 'Product',
+      }
+      if (variantId) li.variant_id = variantId
+
+      // Price must be a real positive number — that's the one thing
+      // Shopify genuinely can't create a line item without, catalogue link
+      // or not. Previously a .filter() on the mapped array; now a guard in
+      // the loop, so the check still happens exactly once per item.
+      if (Number(li.price) > 0 && li.quantity > 0) lineItems.push(li)
+    }
 
     const hasCustomLineItem = lineItems.some((li) => !li.variant_id)
 
