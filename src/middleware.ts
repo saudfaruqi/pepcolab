@@ -63,7 +63,7 @@ const DEFAULT_COUNTRY = 'AE'
    Nobody can reach the checkout UI anyway, since every page is gated, so
    leaving the API surface up costs nothing and avoids losing a paid order.
    ───────────────────────────────────────────────────────────────────── */
-const MAINTENANCE_ON = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'on'
+const MAINTENANCE_ON = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'off'
 
 /** Set this in the environment. Visiting /?preview=<key> grants access. */
 const BYPASS_KEY = process.env.MAINTENANCE_BYPASS_KEY || ''
