@@ -23,12 +23,16 @@ const KIND_TINT: Record<SearchKind, string> = {
   certificate: 'rgba(10,123,69,.10)',
   guide: 'rgba(200,153,42,.12)',
   research: 'rgba(13,13,13,.06)',
+  comparison: 'rgba(59,91,219,.10)',
+  legal: 'rgba(153,27,27,.10)',
 }
 const KIND_COLOR: Record<SearchKind, string> = {
   product: 'rgba(13,13,13,.6)',
   certificate: '#0A7B45',
   guide: '#8A6A1E',
   research: 'rgba(13,13,13,.6)',
+  comparison: '#3B5BDB',
+  legal: '#991B1B',
 }
 
 function SearchInner() {
@@ -73,7 +77,10 @@ function SearchInner() {
     (acc[hit.kind] ||= []).push(hit)
     return acc
   }, {})
-  const order: SearchKind[] = ['product', 'certificate', 'guide', 'research']
+  // Comparisons sit after guides: a visitor searching a compound name wants the
+  // product first and the reference material after it. Any kind omitted here
+  // renders nothing, so this array must list every member of SearchKind.
+  const order: SearchKind[] = ['product', 'certificate', 'legal', 'guide', 'comparison', 'research']
 
   return (
     <>

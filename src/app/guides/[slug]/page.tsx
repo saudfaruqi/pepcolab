@@ -13,8 +13,9 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ContentBlocks from '@/components/ContentBlocks'
+import FaqSection, { buildFaqJsonLd } from '@/components/FaqSection'
 import { GUIDES, CATEGORY_COLORS, getGuideBySlug } from '@/lib/guides-data'
-import { relatedProductsForGuideCategory, crossHubLinkForGuide } from '@/lib/contentLinks'
+import { productsForGuide, crossHubLinkForGuide } from '@/lib/contentLinks'
 import { Clock, ArrowLeft, ChevronRight } from 'lucide-react'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -49,6 +50,7 @@ export function generateMetadata({ params }: Props): Metadata {
       url: `${SITE_URL}${canonical}`,
       type: 'article',
       publishedTime: guide.publishedISO,
+      ...(guide.updatedISO ? { modifiedTime: guide.updatedISO } : {}),
     },
     twitter: {
       card: 'summary_large_image',
@@ -67,7 +69,10 @@ function buildJsonLd(guide: NonNullable<ReturnType<typeof getGuideBySlug>>) {
     headline: guide.title,
     description: guide.metaDescription,
     datePublished: guide.publishedISO,
-    dateModified: guide.publishedISO,
+    // Only differs from datePublished on a guide that has actually been
+    // revised — see Guide.updatedISO in lib/guides-data.ts for why a
+    // blanket "today" here is counter-productive.
+    dateModified: guide.updatedISO || guide.publishedISO,
     author: { '@type': 'Organization', name: 'PepcoLab' },
     publisher: {
       '@type': 'Organization',
@@ -87,7 +92,13 @@ function buildJsonLd(guide: NonNullable<ReturnType<typeof getGuideBySlug>>) {
     ],
   }
 
-  return [articleLd, breadcrumbLd]
+  // FAQPage is emitted only when the guide actually has a visible Q&A block
+  // (buildFaqJsonLd returns null otherwise). An FAQPage with an empty
+  // mainEntity is a Search Console error, and every guide without questions
+  // would report one.
+  const faqLd = buildFaqJsonLd(guide.faq, url)
+
+  return faqLd ? [articleLd, breadcrumbLd, faqLd] : [articleLd, breadcrumbLd]
 }
 
 export default function GuideDetailPage({ params }: Props) {
@@ -96,7 +107,9 @@ export default function GuideDetailPage({ params }: Props) {
 
   const cat = CATEGORY_COLORS[guide.category] || { bg: '#f5f5f5', color: '#444' }
   const jsonLd = buildJsonLd(guide)
-  const relatedProducts = relatedProductsForGuideCategory(guide.category)
+  // Guide-specific products where the guide is about a thing we sell (the two
+  // bacteriostatic-water guides), otherwise the category mapping.
+  const relatedProducts = productsForGuide(guide.id, guide.category)
   const crossHubLink = crossHubLinkForGuide(guide.id)
 
   // Same-category guides first, then anything else, capped at 3 — keeps
@@ -138,6 +151,15 @@ export default function GuideDetailPage({ params }: Props) {
               <Clock size={12} /> {guide.readTime} read
             </span>
             <span style={{ fontSize: 12, color: 'rgba(13,13,13,.35)' }}>{guide.publishedAt}</span>
+            {guide.updatedISO && (
+              // Visible revision date on a substantially rewritten guide. The
+              // JSON-LD dateModified is the machine-readable half; this is the
+              // half a human weighing whether the page is current actually
+              // reads, which matters on regulatory and stability topics.
+              <span style={{ fontSize: 12, color: 'rgba(13,13,13,.45)', fontWeight: 600 }}>
+                Updated {new Date(guide.updatedISO).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+              </span>
+            )}
           </div>
 
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(26px,3.5vw,38px)', lineHeight: 1.2, letterSpacing: '-.03em', marginBottom: 16, color: '#0d0d0d' }}>
@@ -156,6 +178,11 @@ export default function GuideDetailPage({ params }: Props) {
         {/* Body */}
         <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 40px' }}>
           <ContentBlocks content={guide.content} />
+
+          {/* Sits inside the article body, above the compliance footnote, so
+              the answers are part of the main content block Google reads for
+              the FAQPage markup rather than a detached module after it. */}
+          <FaqSection faq={guide.faq} />
 
           {(guide.category === 'Legality & Compliance') && (
             <p style={{ fontSize: 12.5, lineHeight: 1.7, color: 'rgba(13,13,13,.45)', marginTop: 12, paddingTop: 18, borderTop: '1px solid rgba(13,13,13,.08)' }}>

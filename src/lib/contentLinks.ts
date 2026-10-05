@@ -51,6 +51,13 @@ const RESEARCH_TO_GUIDE: Record<string, ContentLink> = {
 const GUIDE_TO_RESEARCH: Record<string, ContentLink> = {
   'storage-conditions': { href: '/research/peptide-storage', label: 'Research: The Chemistry of Peptide Degradation' },
   'peptide-reconstitution': { href: '/research/reconstitution-guide', label: 'Research: Solvent Selection Chemistry' },
+  // Oct 2026 additions. Same principle as the two pairs above: the guide
+  // carries the practical answer, the research note carries the underlying
+  // chemistry, and each should point at the other rather than competing for
+  // the same query.
+  'how-long-do-peptides-last': { href: '/research/peptide-storage', label: 'Research: The Chemistry of Peptide Degradation' },
+  'how-to-spot-fake-peptides': { href: '/research/peptide-quality-failures', label: 'Research: How Peptide Vials Fail QC' },
+  'hplc-vs-mass-spectrometry': { href: '/research/peptide-quality-failures', label: 'Research: How Peptide Vials Fail QC' },
 }
 
 /** For the two duplicate-topic pairs, the matching page in the other content hub. */
@@ -82,18 +89,49 @@ export function relatedContentForProduct(title: string, categorySlug?: string): 
     links.push({ href: `/research/${researchMatch.id}`, label: `Research: ${researchMatch.title}` })
   }
 
+  // Oct 2026: bacteriostatic water and the pharma-grade presentation are
+  // diluents, not compounds, and the generic compound links below are close to
+  // useless on them. They get the three pages that answer what someone buying
+  // a diluent is actually asking — placed before the generic set so they
+  // survive the slice(0, 4).
+  if (/bacteriostatic|bac\s*water/i.test(title)) {
+    links.push({ href: '/guides/bacteriostatic-water-shelf-life', label: 'Shelf life, storage & reuse' })
+    links.push({ href: '/guides/bacteriostatic-water-vs-sterile-water', label: 'Bacteriostatic vs sterile water' })
+    links.push({ href: '/guides/how-much-bacteriostatic-water-to-add', label: 'How much to add' })
+  }
+
   // Quality verification leads, because it is the page that makes PepcoLab's
   // own batch documentation legible — and it is where the briefs specify an
   // inbound link from every product page's quality section.
   links.push({ href: '/research/peptide-quality-failures', label: 'How peptide vials fail QC' })
   links.push({ href: '/guides/coa-interpretation', label: 'How to read this COA' })
+  // Oct 2026: replaces the second reconstitution link with the verification
+  // checklist. Every product page already links the reconstitution guide via
+  // the storage/handling block, and "how do I know this is real" is the
+  // question a first-time buyer on a product page is actually holding — it is
+  // the most searched question in this category and the only one where our
+  // public lot verification is the answer.
+  links.push({ href: '/guides/how-to-spot-fake-peptides', label: 'How to verify this is genuine' })
+  links.push({ href: '/guides/how-long-do-peptides-last', label: 'How long it lasts' })
   links.push({ href: '/guides/peptide-reconstitution', label: 'Reconstitution guide' })
   links.push({ href: '/guides/storage-conditions', label: 'Storage guide' })
 
   return links.slice(0, 4)
 }
 
-/** Given a guide's category, return the product category page(s) it should link to. */
+/**
+ * Given a guide's category, return the product category page(s) it should
+ * link to.
+ *
+ * Documentation, Legality & Compliance and Buying Guide are deliberately
+ * empty and should stay that way: a page about regulatory status or about how
+ * to audit a supplier loses its credibility the moment it ends in a row of
+ * buy buttons, and that credibility is the whole reason those pages can rank
+ * on queries where every competing result is transparently commercial.
+ * Guide-specific links on those pages are written into the body copy instead,
+ * where they are contextual — see GUIDE_SPECIFIC_PRODUCTS below for the one
+ * exception.
+ */
 export function relatedProductsForGuideCategory(category: string): ContentLink[] {
   const map: Record<string, string[]> = {
     'Lab Basics': ['metabolic', 'recovery'],
@@ -108,6 +146,34 @@ export function relatedProductsForGuideCategory(category: string): ContentLink[]
   return slugs
     .filter((s) => CATEGORY_LABEL[s])
     .map((s) => ({ href: `/products/category/${s}`, label: `Shop ${CATEGORY_LABEL[s]} compounds` }))
+}
+
+/**
+ * Per-guide product links, overriding the category mapping above where a
+ * guide is about a specific thing we sell rather than about a category.
+ *
+ * Verified against the live sitemap — both handles resolve. The two
+ * bacteriostatic-water guides are the only genuine cases: the reader of
+ * "how long does an opened vial last" is holding the product the page is
+ * about, which is a different situation from the reader of a storage guide.
+ */
+const GUIDE_SPECIFIC_PRODUCTS: Record<string, ContentLink[]> = {
+  'bacteriostatic-water-shelf-life': [
+    { href: '/products/bacteriostatic-water', label: 'Bacteriostatic Water' },
+    { href: '/products/pharma-grade-bac-water', label: 'Pharma-Grade Bacteriostatic Water' },
+  ],
+  'bacteriostatic-water-vs-sterile-water': [
+    { href: '/products/bacteriostatic-water', label: 'Bacteriostatic Water' },
+    { href: '/products/pharma-grade-bac-water', label: 'Pharma-Grade Bacteriostatic Water' },
+  ],
+}
+
+/**
+ * The product links to show on a specific guide. Falls back to the category
+ * mapping when the guide has no specific products of its own.
+ */
+export function productsForGuide(guideId: string, category: string): ContentLink[] {
+  return GUIDE_SPECIFIC_PRODUCTS[guideId] ?? relatedProductsForGuideCategory(category)
 }
 
 /** Given a research article's id, return the specific product(s) it discusses. */
