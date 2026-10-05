@@ -202,7 +202,7 @@ export function middleware(request: NextRequest) {
 
   // 0. MAINTENANCE GATE — before everything else, so no redirect or cookie
   //    work happens for a visitor who is only going to get the notice.
-  if (MAINTENANCE_ON) {
+  if (MAINTENANCE_ON) { 
     const offered = request.nextUrl.searchParams.get('preview')
 
     // Granting the bypass: /?preview=<key> sets the cookie and bounces to
