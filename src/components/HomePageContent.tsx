@@ -4,6 +4,7 @@
 import Nav from "@/components/Nav";
 import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react";
 import HeroCinematic from "@/components/HeroSections";
+import BrandFilm from "@/components/BrandFilm";
 import ProductCard from "@/components/ProductCard";
 import { getProducts as DATA_PRODUCTS } from "@/lib/shopify";
 import { useCart } from "@/lib/cartContext";
@@ -636,6 +637,16 @@ export default function PepcoLabPage({
 
       <Nav />
       <HeroCinematic />
+
+      {/* ── Brand film ──
+         Sits here, between the hero and the first product row, because it is
+         a finished 12s film with its own wordmark and tagline rather than a
+         background texture — it needs full width at its native aspect ratio,
+         which the hero's two-column card cannot give it (see the geometry
+         recorded in BrandFilm.tsx). Placing it directly under the hero also
+         puts its "independently tested / lot-traced" claim immediately before
+         the products it is making that claim about. */}
+      <BrandFilm />
 
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
