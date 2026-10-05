@@ -62,10 +62,46 @@ const DEFAULT_COUNTRY = 'AE'
 
    Nobody can reach the checkout UI anyway, since every page is gated, so
    leaving the API surface up costs nothing and avoids losing a paid order.
-   ───────────────────────────────────────────────────────────────────── */
-const MAINTENANCE_ON = 'off'
 
-/** Set this in the environment. Visiting /?preview=<key> grants access. */
+   ⚠️  CURRENT STATE: MAINTENANCE IS HARD-DISABLED (6 Oct 2026)
+   The flag below is a literal `false`, deliberately NOT read from the
+   environment. That is so the site cannot be taken down by an environment
+   variable left set in Vercel — turning this back on now requires editing
+   this file, which means it goes through review and through the build.
+
+   WHAT HAPPENED, SO IT DOES NOT HAPPEN AGAIN
+   On 5 Oct 2026 this line read:
+
+       const MAINTENANCE_ON = 'off'
+
+   written in an attempt to switch maintenance off. Every non-empty string is
+   truthy in JavaScript, so `if (MAINTENANCE_ON)` was permanently true and the
+   whole site served 503 on every page. Trying to switch it off is what
+   switched it on, and nothing failed loudly because the type was never
+   constrained.
+
+   TO TURN MAINTENANCE BACK ON LATER
+   Change the line below to `true`, or restore environment control with:
+
+       const MAINTENANCE_ON: boolean = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'on'
+
+   Either way keep the `: boolean` annotation. It is load-bearing, not
+   decoration: it turns the exact mistake above into a compile error
+   ("Type 'string' is not assignable to type 'boolean'") so `npm run build`
+   catches it instead of production. And if you do turn it on, set
+   MAINTENANCE_BYPASS_KEY in the same change — see the note below for why.
+   ───────────────────────────────────────────────────────────────────── */
+const MAINTENANCE_ON: boolean = false
+
+/**
+ * Set MAINTENANCE_BYPASS_KEY in the environment. Visiting /?preview=<key>
+ * grants access.
+ *
+ * NOTE: with no key set, BYPASS_KEY is '' and `Boolean(BYPASS_KEY)` is false,
+ * so the bypass below can never match and NOBODY can view the site while
+ * maintenance is on — including whoever turned it on. If you enable
+ * maintenance, set this variable in the same change.
+ */
 const BYPASS_KEY = process.env.MAINTENANCE_BYPASS_KEY || ''
 const BYPASS_COOKIE = 'pepcolab_preview'
 const BYPASS_MAX_AGE = 60 * 60 * 24 * 7 // a week, matching the expected outage
