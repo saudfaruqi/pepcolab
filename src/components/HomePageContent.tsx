@@ -638,16 +638,6 @@ export default function PepcoLabPage({
       <Nav />
       <HeroCinematic />
 
-      {/* ── Brand film ──
-         Sits here, between the hero and the first product row, because it is
-         a finished 12s film with its own wordmark and tagline rather than a
-         background texture — it needs full width at its native aspect ratio,
-         which the hero's two-column card cannot give it (see the geometry
-         recorded in BrandFilm.tsx). Placing it directly under the hero also
-         puts its "independently tested / lot-traced" claim immediately before
-         the products it is making that claim about. */}
-      <BrandFilm />
-
       {/* ── Products ── */}
       <BestSellersSection products={products} loading={!loaded} />
 
@@ -723,6 +713,29 @@ export default function PepcoLabPage({
         </div>
       </section>
 
+      {/* ── Brand film ──
+         MOVED HERE (Oct 2026). It was directly under the hero, which put two
+         videos back to back — the hero already carries its own loop in the
+         right-hand card, and the two together were too much above the fold.
+
+         This is the better home for it on both counts that matter:
+
+         CONTRAST. The film is full-bleed black. "Why Researchers Choose
+         Pepco" above it is #F7F5F1 cream, so the film cuts in hard instead of
+         merging. The two spots directly after the hero could not do that —
+         BestSellersSection is #141414 and Research Stacks is #0A0A0A, and a
+         black band against either is just a darker black band.
+
+         SEQUENCE. The section above makes the claim ("standards you…"); the
+         film is the evidence for it — real vials, real lot numbers, and a
+         Verify a batch link straight into /verify. Claim then proof reads far
+         better than proof before the visitor has seen a single product.
+
+         Keep it full-bleed and keep it between a LIGHT section and a dark
+         one. The reason it cannot live inside a column is recorded in
+         BrandFilm.tsx: both cuts carry baked-in type and any crop eats the
+         wordmark first. */}
+      <BrandFilm />
 
       {/* ── Research Stacks ── */}
       <section style={{
