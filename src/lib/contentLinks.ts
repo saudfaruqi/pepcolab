@@ -97,7 +97,6 @@ export function relatedContentForProduct(title: string, categorySlug?: string): 
   if (/bacteriostatic|bac\s*water/i.test(title)) {
     links.push({ href: '/guides/bacteriostatic-water-shelf-life', label: 'Shelf life, storage & reuse' })
     links.push({ href: '/guides/bacteriostatic-water-vs-sterile-water', label: 'Bacteriostatic vs sterile water' })
-    links.push({ href: '/guides/how-much-bacteriostatic-water-to-add', label: 'How much to add' })
   }
 
   // Quality verification leads, because it is the page that makes PepcoLab's

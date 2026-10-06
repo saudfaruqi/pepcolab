@@ -149,10 +149,26 @@ export default function Nav() {
     {
       label: 'Research', href: '/research', hasDrop: true,
       items: [
-        { label: 'Research Hub',        href: '/research',      sub: 'Protocols & references'  },
-        { label: 'Guides',              href: '/guides',        sub: 'In-depth usage guides'   },
+        // COMPLIANCE (Oct 2026 content audit, Critical). These four labels
+        // appear in the header of EVERY page, which made them the highest-
+        // reach copy on the site — and three of them read as human-use
+        // instructions rather than laboratory reference:
+        //
+        //   'Protocols & references'  -> "protocol" is a usage word
+        //   'In-depth usage guides'   -> "usage" is the exact signal the MHRA
+        //                                cites when disregarding a
+        //                                "research use only" label
+        //   'Dosage calculator tool'  -> "dosage" on every page of the site
+        //
+        // Regulators judge the whole presentation of a product, not the
+        // disclaimer alone, so sitewide navigation carries more weight than
+        // any single page's wording. Replacements below describe what the
+        // pages are (handling, reference, concentration) with no use framing.
+        // Do not reintroduce "dosage", "usage", "protocol" or "dose" here.
+        { label: 'Research Hub',        href: '/research',      sub: 'Research library'        },
+        { label: 'Guides',              href: '/guides',        sub: 'Lab handling guides'     },
         { label: 'Lab Certificates',    href: '/certificates',  sub: 'Batch COAs & testing'    },
-        { label: 'Reconstitution Calc', href: '/tools',         sub: 'Dosage calculator tool'  },
+        { label: 'Concentration Calc',  href: '/tools',         sub: 'Concentration calculator' },
       ] as { label: string; href: string; sub?: string }[],
     },
     {

@@ -10,15 +10,29 @@
 
 import type { Metadata } from 'next'
 
+// COMPLIANCE (Oct 2026 content audit, Critical). This metadata previously
+// read "Peptide Reconstitution & Dosage Calculator", with a description
+// offering to "work out ... dosage per vial". That is the page title search
+// engines showed, the text shared on social, and the single clearest
+// human-use signal on the site — on the one page whose whole purpose could
+// otherwise be read as laboratory arithmetic.
+//
+// The tool itself was already fine: it computes concentration (mg/mL) and
+// solves V = amount / concentration, which is ordinary dilution maths. Only
+// the framing was wrong, so only the framing changed.
+//
+// Keep this page's copy in terms of CONCENTRATION and VOLUME. Do not
+// reintroduce "dosage", "dose", "per vial" or any per-administration
+// framing here or in components/ToolWidgets.tsx.
 export const metadata: Metadata = {
-  title: 'Peptide Reconstitution & Dosage Calculator',
+  title: 'Peptide Concentration Calculator (mg/mL)',
   description:
-    'Free peptide reconstitution calculator: work out bacteriostatic water volume, concentration and dosage per vial for any research peptide, with unit conversions built in.',
+    'Free peptide concentration calculator: work out solvent volume and the resulting concentration in mg/mL for a lyophilised research peptide, with unit conversions built in.',
   alternates: { canonical: '/tools' },
   openGraph: {
-    title: 'Peptide Reconstitution & Dosage Calculator | PepcoLab',
+    title: 'Peptide Concentration Calculator (mg/mL) | PepcoLab',
     description:
-      'Free peptide reconstitution calculator: work out bacteriostatic water volume, concentration and dosage per vial.',
+      'Work out solvent volume and the resulting concentration in mg/mL for a lyophilised research peptide.',
     type: 'website',
   },
 }

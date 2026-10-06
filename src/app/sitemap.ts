@@ -90,9 +90,18 @@ export const revalidate = 3600 // regenerate hourly so new products appear
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
+  // lastModified is deliberately OMITTED for static routes (Oct 2026 content
+  // audit). It previously stamped `now` on every one of them, and because
+  // this file regenerates hourly that meant 69 of 134 URLs claimed to have
+  // changed today, every day. Telling Google "everything changed, every hour"
+  // gets the freshness signal discounted rather than trusted, and it buries
+  // the pages that genuinely did change.
+  //
+  // The field is optional in the sitemap protocol, so leaving it off is
+  // honest: no claim is better than a false one. Content routes below still
+  // carry real per-item dates.
   const staticEntries: MetadataRoute.Sitemap = [...STATIC_ROUTES, ...CATEGORY_ROUTES].map((route) => ({
     url: `${BASE_URL}${route.path}`,
-    lastModified: now,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }))
@@ -137,9 +146,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // metadata/schema already (see app/guides/[slug]/page.tsx and
   // app/research/[slug]/page.tsx) — they just never appeared here, so
   // Google had no path to discover them beyond an unlinked crawl.
-  const guideEntries: MetadataRoute.Sitemap = GUIDES.map((g) => ({
+  // Noindexed guides are excluded: listing a noindex URL in a sitemap is a
+  // contradictory instruction and Search Console flags it as an error.
+  const guideEntries: MetadataRoute.Sitemap = GUIDES.filter((g) => !g.noindex).map((g) => ({
     url: `${BASE_URL}/guides/${g.id}`,
-    lastModified: g.publishedISO ? new Date(g.publishedISO) : now,
+    lastModified: g.updatedISO ? new Date(g.updatedISO) : g.publishedISO ? new Date(g.publishedISO) : now,
     changeFrequency: 'monthly' as const,
     priority: 0.65,
   }))
@@ -151,16 +162,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }))
 
+  // No date field on these records, so no lastModified claim — same reasoning
+  // as the static routes above.
   const legalEntries: MetadataRoute.Sitemap = LEGAL_NOTES.map((n) => ({
     url: `${BASE_URL}/legal/${n.slug}`,
-    lastModified: now,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }))
 
   const comparisonEntries: MetadataRoute.Sitemap = COMPARISONS.map((c) => ({
     url: `${BASE_URL}/compare/${c.slug}`,
-    lastModified: now,
     changeFrequency: 'monthly' as const,
     priority: 0.65,
   }))
@@ -171,7 +182,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // carrying one compound, one lot and one measured purity can.
   const verifyEntries: MetadataRoute.Sitemap = COA_BATCHES.map((b) => ({
     url: `${BASE_URL}/verify/${lotSlug(b.lot)}`,
-    lastModified: new Date(),
+    // A certificate is a dated record and never changes once reported, so
+    // this must not restamp itself on every regeneration.
+    lastModified: b.reported ? new Date(b.reported) : now,
     changeFrequency: 'yearly' as const,
     // A certificate never changes once reported — it is a dated record.
     priority: 0.7,

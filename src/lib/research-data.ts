@@ -31,8 +31,8 @@ export const ARTICLES: Article[] = [
   {
     id: 'bpc-157',
     title: 'BPC-157: Mechanisms of Action and Research Applications',
-    date: 'May 2025',
-    dateISO: '2025-05-15',
+    date: 'May 2026',
+    dateISO: '2026-05-15',
     metaDescription: 'BPC-157\'s proposed mechanisms, musculoskeletal and GI research findings, and the key limitations of current preclinical evidence.',
     tag: 'Recovery',
     readTime: '8 min',
@@ -91,7 +91,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The peptide\'s gastric origins predict its potent effects on GI tissue. In NSAID-induced ulceration models, BPC-157 administered at doses as low as 10 ng/kg demonstrated statistically significant reductions in ulcer index scores, outperforming omeprazole and misoprostol in head-to-head comparisons for tissue regeneration endpoints (though not for acid suppression, which remains omeprazole\'s primary mechanism). The compound also shows promise in inflammatory bowel disease models, reducing TNF-α and IL-6 expression in colonic tissue.',
+        text: 'The peptide\'s gastric origins predict its potent effects on GI tissue. In NSAID-induced ulceration models, BPC-157 has been reported to produce statistically significant reductions in ulcer index scores, outperforming omeprazole and misoprostol in head-to-head comparisons for tissue regeneration endpoints (though not for acid suppression, which remains omeprazole\'s primary mechanism). The compound also shows promise in inflammatory bowel disease models, reducing TNF-α and IL-6 expression in colonic tissue.',
       },
       {
         type: 'heading',
@@ -118,8 +118,8 @@ export const ARTICLES: Article[] = [
   {
     id: 'glp1',
     title: 'Understanding GLP-1 Receptor Agonists in Metabolic Research',
-    date: 'Apr 2025',
-    dateISO: '2025-04-20',
+    date: 'Apr 2026',
+    dateISO: '2026-04-20',
     metaDescription: 'How GLP-1 receptor agonists work in metabolic research, key preclinical findings, and the distinction between research compounds and approved medicines.',
     tag: 'Metabolic',
     readTime: '12 min',
@@ -192,8 +192,8 @@ export const ARTICLES: Article[] = [
   {
     id: 'peptide-storage',
     title: 'The Chemistry of Peptide Degradation: Why Storage Conditions Matter',
-    date: 'Apr 2025',
-    dateISO: '2025-04-10',
+    date: 'Apr 2026',
+    dateISO: '2026-04-10',
     metaDescription: 'The degradation chemistry behind peptide instability — oxidation, deamidation, aggregation and hydrolysis kinetics — and what the evidence says about storage variables.',
     tag: 'Longevity',
     readTime: '6 min',
@@ -254,8 +254,8 @@ export const ARTICLES: Article[] = [
   {
     id: 'epithalon',
     title: 'Epithalon and Telomere Biology: A Research Overview',
-    date: 'Mar 2025',
-    dateISO: '2025-03-18',
+    date: 'Mar 2026',
+    dateISO: '2026-03-18',
     metaDescription: 'Epithalon\'s proposed role in telomerase activity and pineal gland research, and what current preclinical evidence does and doesn\'t show.',
     tag: 'Longevity',
     readTime: '10 min',
@@ -312,8 +312,8 @@ export const ARTICLES: Article[] = [
   {
     id: 'semax',
     title: 'Semax and Cognitive Enhancement Research',
-    date: 'Mar 2025',
-    dateISO: '2025-03-05',
+    date: 'Mar 2026',
+    dateISO: '2026-03-05',
     metaDescription: 'Semax\'s history as a nootropic research compound, proposed BDNF-related mechanisms, and the current state of cognitive research evidence.',
     tag: 'Cognitive',
     readTime: '9 min',
@@ -379,8 +379,8 @@ export const ARTICLES: Article[] = [
   {
     id: 'reconstitution-guide',
     title: 'Solvent Selection Chemistry: Why Peptide Polarity Dictates Reconstitution',
-    date: 'Feb 2025',
-    dateISO: '2025-02-22',
+    date: 'Feb 2026',
+    dateISO: '2026-02-22',
     metaDescription: 'The physicochemical logic behind peptide solvent selection — charge, hydrophobicity, and isoelectric point — and what the research literature says about solubility failure modes.',
     tag: 'Longevity',
     readTime: '6 min',
@@ -481,11 +481,11 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'A 1996 pilot Phase I study by Dorr and colleagues, published in Life Sciences, administered subcutaneous MT-II to three healthy male volunteers at the University of Arizona, starting at 0.01 mg/kg and escalating every other weekday over two weeks. Two of the three subjects developed increased facial, upper-body, and buttock pigmentation. The 0.03 mg/kg dose produced Grade II somnolence and fatigue in one subject, and researchers documented spontaneous erections lasting one to five hours accompanied by a stretching-and-yawning complex — an off-target finding that would go on to define a second, entirely separate branch of melanocortin research.',
+        text: 'The earliest human work on MT-II was a 1996 pilot Phase I study by Dorr and colleagues, published in Life Sciences — a small, open-label, dose-escalating investigation in a handful of healthy volunteers at the University of Arizona. Its design is the historically significant part: it was an exploratory tolerability study, not a controlled efficacy trial, and it is the point at which an unrelated central effect was first noted alongside the pigmentary one. That incidental observation went on to define a second, entirely separate branch of melanocortin research. Specific administered quantities and individual participant findings are deliberately not reproduced here.',
       },
       {
         type: 'paragraph',
-        text: 'That second branch was formalized in a 1998 double-blind, placebo-controlled crossover study by Wessells and colleagues in the Journal of Urology, which tested MT-II in men with psychogenic erectile dysfunction and reported a 75% response rate — comparable to apomorphine, an active comparator used in that era of research. The "stretching-yawning syndrome" observed alongside these central effects has since been documented across multiple mammalian species tested with melanocortin agonists, including rabbits, cats, rats, mice, and monkeys — a cross-species consistency that researchers have used as supporting evidence for a conserved central mechanism.',
+        text: 'That second branch was formalized in a 1998 double-blind, placebo-controlled crossover study by Wessells and colleagues in the Journal of Urology, which tested MT-II against placebo with an active comparator used in that era of research. The trial is cited here for its design and its place in the literature; its reported outcome figures are not reproduced. The "stretching-yawning syndrome" observed alongside these central effects has since been documented across multiple mammalian species tested with melanocortin agonists, including rabbits, cats, rats, mice, and monkeys — a cross-species consistency that researchers have used as supporting evidence for a conserved central mechanism.',
       },
       {
         type: 'callout',

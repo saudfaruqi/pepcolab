@@ -37,8 +37,14 @@ export function generateMetadata({ params }: Props): Metadata {
   const canonical = `/guides/${guide.id}`
 
   return {
-    title: guide.title,
+    // seoTitle when set — see Guide.seoTitle for why the H1 and the
+    // <title> are allowed to differ.
+    title: guide.seoTitle || guide.title,
     description: guide.metaDescription,
+    // noindex,follow for pages held out of the index (see Guide.noindex).
+    // follow is deliberate — outbound links keep passing signal and the page
+    // stays reachable; this is a visibility decision, not a takedown.
+    ...(guide.noindex ? { robots: { index: false, follow: true } } : {}),
     // Same-URL dual-market rationale as app/layout.tsx / app/products/[slug]/page.tsx.
     alternates: {
       canonical,

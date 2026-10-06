@@ -19,7 +19,18 @@ export type ContentBlock =
 
 export type Guide = {
   id: string
+  /** The H1. Written for the reader; may run past 60 characters. */
   title: string
+  /**
+   * Optional short <title> for search results, used instead of `title` when
+   * present. Google truncates around 60 characters INCLUDING the " | PepcoLab"
+   * suffix, and the Oct 2026 audit found 36 of 38 content pages over that
+   * limit (longest 102) — a truncated title loses whatever was at the end,
+   * which is usually the distinguishing part.
+   *
+   * Keep to about 48 characters so the suffix fits.
+   */
+  seoTitle?: string
   category: string
   readTime: string
   excerpt: string
@@ -50,9 +61,276 @@ export type Guide = {
    * syndicated text on the site once they win question boxes.
    */
   faq?: { q: string; a: string }[]
+  /**
+   * Keep the page reachable but out of the index.
+   *
+   * Emits robots noindex,follow in generateMetadata and drops the URL from
+   * sitemap.ts. "follow" is deliberate: the page's own outbound links keep
+   * passing signal, and anyone already holding the URL still gets the
+   * content — this is a search-visibility decision, not a takedown.
+   *
+   * Used (Oct 2026 content audit) for the reconstitution/bacteriostatic-water
+   * cluster, which the audit identifies as the clearest "human use" signal on
+   * the site. Noindexing is the reversible half of that decision while the
+   * cluster's future is reviewed; nothing is deleted.
+   */
+  noindex?: boolean
 }
 
 export const GUIDES: Guide[] = [
+  {
+    // PILLAR (Oct 2026). Supplied written, with a publishing brief; this is
+    // that brief implemented rather than a rewrite.
+    //
+    // Placed FIRST in the array deliberately — the /guides hub renders in
+    // array order, and the brief calls for this pinned as the first card. It
+    // is the top-of-funnel entry point: "what are peptides" searches rose
+    // sharply over the past year and the site had no beginner page at all,
+    // so every visitor arrived mid-conversation.
+    //
+    // Compliance note: this article is pure chemistry and identity. No
+    // outcome claims, no administration, no quantities. Compound names appear
+    // only as SIZE EXAMPLES in the residue-count table. Keep it that way — it
+    // is the most linkable page on the site precisely because it promises
+    // nothing.
+    id: 'what-are-peptides',
+    title: 'What Are Peptides? Peptides vs Proteins vs Amino Acids, Explained',
+    seoTitle: 'What Are Peptides? Peptides vs Proteins Explained',
+    category: 'Fundamentals',
+    readTime: '9 min',
+    excerpt:
+      'What a peptide actually is, how it differs from an amino acid and a protein, how research peptides are made, and how you can tell what is really inside a vial.',
+    publishedAt: 'October 6, 2026',
+    publishedISO: '2026-10-06',
+    metaDescription:
+      'What are peptides? A plain-English guide to amino acids, peptide bonds, how peptides differ from proteins, and how research peptides are made and tested.',
+    content: [
+      {
+        type: 'intro',
+        text: 'Searches for what are peptides have climbed sharply over the past year, and most of the answers online jump straight to claims about what a particular compound supposedly does. This guide does something more useful. It explains what a peptide actually is, how it differs from an amino acid and a protein, how peptides are made in a laboratory, and how you can tell what is really inside a vial. No hype, no promises, just the chemistry.',
+      },
+      {
+        type: 'callout',
+        text: 'Quick answer: a peptide is a short chain of amino acids joined end to end by peptide bonds. Chains of roughly 2 to 50 amino acids are usually called peptides; longer chains that fold into a stable three-dimensional shape are called proteins. A peptide’s identity is set by its exact sequence: change one amino acid and you have a different molecule.',
+      },
+      { type: 'heading', text: 'What is a peptide?' },
+      {
+        type: 'paragraph',
+        text: 'A peptide is a molecule made of amino acids linked in a line. Each link is a peptide bond, a covalent bond formed between the carboxyl group of one amino acid and the amino group of the next. When that bond forms, a molecule of water is released, which is why chemists call it a condensation reaction.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Every peptide chain therefore has a direction. One end carries a free amino group (the N-terminus) and the other carries a free carboxyl group (the C-terminus). Sequences are always written from N to C, so GHK means glycine, then histidine, then lysine, in that order. Read the same letters backwards and you describe a different molecule.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That is the single most important idea in this guide: a peptide is defined by its sequence. Two vials can hold white powder that looks identical, weighs the same and dissolves the same way, yet contain different molecules. Appearance tells you almost nothing; sequence tells you everything.',
+      },
+      { type: 'heading', text: 'What are peptides made of? Amino acids' },
+      {
+        type: 'paragraph',
+        text: 'Amino acids are small organic molecules, each built around the same backbone (an amino group, a carboxyl group and a central carbon) with a different side chain. Twenty standard amino acids are encoded by the genetic code. Their side chains differ in size, charge and how much they like water, and those differences decide how a finished chain behaves: whether it dissolves easily, how it folds and how quickly it breaks down.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Laboratory peptides can also include building blocks that never appear in natural proteins, such as D-amino acids (mirror-image versions) or chemically modified residues. These are deliberate design choices, usually made to change how stable a molecule is, and they are part of the molecule’s identity just as much as the sequence.',
+      },
+      { type: 'heading', text: 'Peptides vs proteins: where is the line?' },
+      {
+        type: 'paragraph',
+        text: 'There is no hard chemical boundary between a peptide and a protein. By convention, chains of up to about 50 amino acids are called peptides and longer chains are called proteins. The more meaningful difference is structural: proteins typically fold into a stable three-dimensional shape that their function depends on, while most short peptides are flexible.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The list below puts familiar names on the same scale. Residue count and molecular weight are identity facts: they describe what the molecule is, not what it does.',
+      },
+      {
+        type: 'list',
+        items: [
+          'GHK-Cu — 3 amino acids, 340.38 Da (403.9 as the copper complex) — peptide (tripeptide)',
+          'Epitalon — 4 amino acids, 390.35 Da — peptide',
+          'TB-500 — 7 amino acids, about 889 Da — peptide (fragment of a 43-residue protein)',
+          'Oxytocin — 9 amino acids, about 1,007 Da — peptide hormone',
+          'BPC-157 — 15 amino acids, 1,419.56 Da — peptide',
+          'CJC-1295 (with DAC) — 30 amino acids, about 3,647 Da — peptide',
+          'Insulin — 51 amino acids across two chains, about 5,808 Da — on the boundary',
+          'IGF-1 LR3 — 83 amino acids, about 9,111 Da — protein-sized',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Insulin is the classic boundary case. It has 51 amino acids across two chains held together by disulfide bonds, and it is often described as both a peptide hormone and a small protein. In 1955 it became the first protein whose full amino acid sequence was determined, work that earned Frederick Sanger the 1958 Nobel Prize in Chemistry.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Side by side: an amino acid is a single building block of roughly 75 to 204 Da, defined by its side chain. A peptide is a short chain of about 2 to 50 units, usually flexible, defined by its exact sequence. A protein is a longer chain of more than about 50 units that folds into a stable three-dimensional shape, defined by its sequence and its fold.',
+      },
+      { type: 'heading', text: 'Dipeptides, tripeptides, oligopeptides and polypeptides' },
+      {
+        type: 'list',
+        items: [
+          'Dipeptide: two amino acids joined by one peptide bond.',
+          'Tripeptide: three amino acids, for example GHK.',
+          'Oligopeptide: a short chain, usually up to about 20 amino acids.',
+          'Polypeptide: a longer single chain; one or more folded polypeptides make up a protein.',
+        ],
+      },
+      { type: 'heading', text: 'Where peptides show up' },
+      {
+        type: 'paragraph',
+        text: 'Peptides are everywhere in biology and industry, which is part of why the word is so confusing. The same term covers very different things:',
+      },
+      {
+        type: 'list',
+        items: [
+          'In the body: many hormones and signalling molecules are peptides. Oxytocin has nine amino acids; insulin has 51.',
+          'In medicine: a number of licensed medicines are peptides, from insulin (first used therapeutically in 1922) to the GLP-1 class of prescription drugs. These are regulated medicines made and tested under pharmaceutical controls.',
+          'In skincare: cosmetic peptides such as copper tripeptide-1 (GHK-Cu), palmitoyl pentapeptide-4 (sold as Matrixyl) and acetyl hexapeptide-8 (sold as Argireline) appear on ingredient lists. They are regulated as cosmetic ingredients, not medicines.',
+          'In food: collagen peptides are proteins broken into fragments by hydrolysis.',
+          'In the laboratory: research peptides are synthesised to a defined sequence for in vitro and preclinical study.',
+        ],
+      },
+      { type: 'heading', text: 'What are peptides used for in the laboratory?' },
+      {
+        type: 'paragraph',
+        text: 'Research peptides are tools. Because each one is a precisely defined sequence, scientists use them where a known, reproducible molecule is needed. Common laboratory uses include:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Reference standards: a confirmed sequence of known purity is used to calibrate instruments and to check other samples against.',
+          'Receptor and binding studies: short sequences let researchers study how one region of a larger protein interacts with its target in vitro.',
+          'Structure-activity work: making a series of peptides that differ by a single amino acid shows which positions in a sequence matter.',
+          'Assay and method development: peptides are used to build and validate analytical methods, including the HPLC and mass spectrometry methods used to test other peptides.',
+          'Stability research: studying how defined sequences degrade under heat, light and moisture informs storage and formulation science.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'In every one of these uses the value of the peptide depends on knowing exactly what it is. A reagent of uncertain identity does not just waste money; it undermines every result built on it.',
+      },
+      { type: 'heading', text: 'Collagen peptides vs research peptides' },
+      {
+        type: 'paragraph',
+        text: '“Collagen peptides” is one of the most searched peptide terms, and it describes something quite different from a research peptide. Collagen peptides are made by breaking a large protein into many fragments of varying lengths. The result is a mixture with no single sequence, described by its source and average molecular weight.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A research peptide is the opposite: one defined sequence, built residue by residue, with a specific molecular weight that can be confirmed by mass spectrometry. That is why the testing questions that matter for research peptides (is it the right molecule, and how much of it is there?) do not really apply to collagen powders, and vice versa.',
+      },
+      { type: 'heading', text: 'How are peptides made?' },
+      {
+        type: 'paragraph',
+        text: 'Almost every research peptide today is made by solid-phase peptide synthesis (SPPS), a method developed by Bruce Merrifield in 1963 that earned him the 1984 Nobel Prize in Chemistry. Instead of growing peptides in cells, chemists build them one amino acid at a time on a tiny resin bead.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Anchor: the first amino acid is attached to the resin by its C-terminus.',
+          'Deprotect and couple: a protecting group is removed and the next amino acid is bonded on. This cycle repeats once per residue.',
+          'Cleave: the finished chain is cut free from the resin, giving a crude mixture that includes shortened and faulty chains.',
+          'Purify: preparative HPLC separates the target molecule from those by-products.',
+          'Lyophilise: the purified solution is freeze-dried into the stable powder you see in a vial.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Each coupling step is very efficient but never perfect, so longer sequences accumulate more faulty chains. That is one reason purification and testing matter more as peptides get longer, and why a supplier’s documentation is not a formality.',
+      },
+      { type: 'heading', text: 'How do you know what is in a vial?' },
+      {
+        type: 'paragraph',
+        text: 'Because peptides look alike, the only way to know what a vial contains is analytical testing. Three measurements do most of the work, and our guide to [reading a certificate of analysis](/guides/coa-interpretation) covers each one in depth.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Purity (HPLC): how much of the sample is one compound. It does not tell you which compound. See [HPLC vs mass spectrometry](/guides/hplc-vs-mass-spectrometry).',
+          'Identity (mass spectrometry): whether the molecular weight matches the expected sequence. This is the test that confirms you have the right molecule.',
+          'Net peptide content: how much of the powder’s weight is actually peptide, as opposed to counterions and residual water. A 10 mg vial never contains 10 mg of pure peptide; see [net peptide content explained](/guides/net-peptide-content).',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'The certificate also has to describe your batch. A genuine certificate for a different lot tells you nothing about the vial in your hand. At PepcoLab every batch is tested by an independent third-party laboratory, and you can type the lot number from your vial into our [batch lookup](/verify) to see the certificate for that exact batch. For a wider checklist, read [how to tell if research peptides are real](/guides/how-to-spot-fake-peptides).',
+      },
+      { type: 'heading', text: 'Why peptides are fragile' },
+      {
+        type: 'paragraph',
+        text: 'Peptide bonds are stable enough to make useful molecules, but they are not indestructible. Three chemical routes cause most degradation:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Hydrolysis: water slowly breaks peptide bonds, which is why moisture is the enemy of stored powder.',
+          'Oxidation: air and heat attack vulnerable residues, particularly methionine, cysteine and tryptophan.',
+          'Deamidation: asparagine and glutamine residues change chemically over time, faster when warm.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Freeze-dried peptides are comparatively robust because most of the water has been removed; once reconstituted, the clock runs much faster. Our guide to [how long research peptides last](/guides/how-long-do-peptides-last) sets out stability by state and temperature.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The same chemistry explains why the digestive system treats peptides like any other protein. Enzymes such as pepsin, and the proteases that follow it, exist precisely to cut peptide bonds, breaking chains back down into their amino acids.',
+      },
+      { type: 'heading', text: 'What “research use only” means' },
+      {
+        type: 'paragraph',
+        text: 'Research peptides are sold as laboratory reagents for in vitro and preclinical study. They are not licensed medicines, they have not been approved for human or veterinary use, and nothing about them should be read as a treatment claim. In 2026 regulators in both the UK and the UAE have made clear that they judge sellers by the whole presentation of a product, not by the disclaimer alone.',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you are buying for a laboratory, the practical questions are the ones in this guide: is the molecule the one on the label, how much of it is there, and is the paperwork for your batch? For the legal detail in each market, read our guides to [research peptides in the UK](/guides/research-peptides-legal-status-uk) and [buying research peptides in the UAE](/guides/research-peptides-legal-status-uae).',
+      },
+      { type: 'heading', text: 'So, what are peptides? The short version' },
+      {
+        type: 'list',
+        items: [
+          'Peptides are short chains of amino acids joined by peptide bonds, written from the N-terminus to the C-terminus.',
+          'The line between peptides and proteins sits at roughly 50 amino acids and is a convention, not a law.',
+          'A peptide is defined by its sequence; molecules that look identical can be completely different.',
+          'Research peptides are built by solid-phase synthesis, purified by HPLC and freeze-dried.',
+          'Only testing tells you what is in a vial: purity by HPLC, identity by mass spectrometry, and a certificate that matches your lot.',
+        ],
+      },
+      {
+        type: 'callout',
+        text: 'See the certificate for your batch. Every PepcoLab lot is independently tested — enter the lot number from your vial at [/verify](/verify).',
+      },
+      {
+        type: 'paragraph',
+        text: 'For research use only. Not for human or veterinary consumption. This article is educational and describes chemistry; it makes no claims about the effects of any compound.',
+      },
+    ],
+    faq: [
+      {
+        q: 'What is a peptide in simple terms?',
+        a: 'A peptide is a short chain of amino acids joined end to end by peptide bonds. Its exact sequence of amino acids determines what molecule it is.',
+      },
+      {
+        q: 'How many amino acids are in a peptide?',
+        a: 'By convention, peptides contain roughly 2 to 50 amino acids. Longer chains that fold into a stable structure are generally called proteins, though the boundary is a convention rather than a strict rule.',
+      },
+      {
+        q: 'What is the difference between a peptide and a protein?',
+        a: 'Size and structure. Peptides are shorter and usually flexible; proteins are longer and typically fold into a defined three-dimensional shape. Insulin, at 51 amino acids, sits on the boundary.',
+      },
+      {
+        q: 'Are collagen peptides the same as research peptides?',
+        a: 'No. Collagen peptides are a mixture of fragments made by breaking down collagen protein. A research peptide is a single, defined sequence synthesised residue by residue and confirmed by testing.',
+      },
+      {
+        q: 'How are research peptides made?',
+        a: 'Mostly by solid-phase peptide synthesis: amino acids are added one at a time to a chain anchored on a resin bead, then the chain is cleaved, purified by HPLC and freeze-dried.',
+      },
+      {
+        q: 'How can I check a peptide is what the label says?',
+        a: 'Ask for a certificate that matches your vial’s lot number and includes both HPLC purity and mass spectrometry identity. You can enter the lot number into our [batch lookup](/verify) to see that batch’s certificate.',
+      },
+    ],
+  },
   {
     id: 'peptide-reconstitution',
     title: 'Peptide Reconstitution: Complete Step-by-Step Guide',
@@ -60,8 +338,8 @@ export const GUIDES: Guide[] = [
     readTime: '3 min',
     excerpt:
       'Proper reconstitution techniques to maintain peptide stability and research integrity.',
-    publishedAt: 'June 2, 2025',
-    publishedISO: '2025-06-02',
+    publishedAt: 'June 2, 2026',
+    publishedISO: '2026-06-02',
     metaDescription: 'How to safely reconstitute lyophilized research peptides: solvent selection, sterile technique, dissolution checks and storage after mixing.',
     content: [
       {
@@ -163,7 +441,7 @@ export const GUIDES: Guide[] = [
           'Using the wrong solvent based on assumed solubility rather than checking the COA',
           'Vortexing aggressively instead of gentle swirling',
           'Opening lyophilized vials while still cold',
-          'Storing reconstituted solutions in the same vial repeatedly used for dosing',
+          'Storing reconstituted solutions in the same vial drawn from repeatedly',
           'Failing to record exact concentration and preparation date',
         ],
       },
@@ -183,8 +461,8 @@ export const GUIDES: Guide[] = [
     category: 'Storage',
     readTime: '4 min',
     excerpt: 'Temperature control, freeze-thaw cycles, and long-term preservation best practices.',
-    publishedAt: 'May 28, 2025',
-    publishedISO: '2025-05-28',
+    publishedAt: 'May 28, 2026',
+    publishedISO: '2026-05-28',
     metaDescription: 'Temperature, humidity and light guidance for storing lyophilized and reconstituted research peptides, plus a quick-reference storage table.',
     content: [
       {
@@ -313,8 +591,8 @@ export const GUIDES: Guide[] = [
     category: 'Lab Basics',
     readTime: '2 min',
     excerpt: 'Minimizing contamination risk during peptide preparation and handling.',
-    publishedAt: 'May 20, 2025',
-    publishedISO: '2025-05-20',
+    publishedAt: 'May 20, 2026',
+    publishedISO: '2026-05-20',
     metaDescription: 'Sterile technique for peptide research handling: PPE, workspace prep, needle/syringe procedure and documentation for reproducible results.',
     content: [
       {
@@ -385,14 +663,29 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    id: 'dosage-calculations',
-    title: 'Dosage Calculation Principles for In Vitro Research',
+    // COMPLIANCE (Oct 2026 content audit, Critical). This page was
+    // 'Dosage Calculation Principles for In Vitro Research' at
+    // /guides/molarity-and-dilution-calculations.
+    //
+    // The CONTENT was never the problem — it is unit conversion, C1V1=C2V2,
+    // serial dilution and pipetting accuracy, which is ordinary bench
+    // chemistry with nothing human-facing in it. The title, slug and meta
+    // description were the problem: "dosage" in a URL and an H1 is precisely
+    // what regulators point to when they disregard a "research use only"
+    // label, and it was indexed under that name.
+    //
+    // So the material is kept and only the framing changed. The old slug is
+    // 301'd in next.config.js — see the redirect block there. "concentration-response"
+    // in the body became "concentration-response", which is the same standard
+    // in-vitro term without the word.
+    id: 'molarity-and-dilution-calculations',
+    title: 'Molarity and Dilution Maths for In Vitro Assays',
     category: 'Calculations',
     readTime: '2 min',
-    excerpt: 'Understanding concentration, dilution, and measurement accuracy.',
-    publishedAt: 'May 12, 2025',
-    publishedISO: '2025-05-12',
-    metaDescription: 'Concentration units, the C1V1=C2V2 dilution formula, serial dilutions and purity-adjusted dosage calculations for peptide research.',
+    excerpt: 'Concentration units, the dilution formula, and why pipetting error compounds across a series.',
+    publishedAt: 'May 12, 2026',
+    publishedISO: '2026-05-12',
+    metaDescription: 'Concentration units, the C1V1=C2V2 dilution formula, serial dilutions and purity-adjusted concentration maths for in vitro peptide work.',
     content: [
       {
         type: 'intro',
@@ -437,7 +730,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'For dose-response experiments, serial dilutions are more accurate than individual dilutions for each concentration. Each step uses the previous concentration as the source, maintaining equal dilution factor across the series.',
+        text: 'For concentration-response experiments, serial dilutions are more accurate than individual dilutions for each concentration. Each step uses the previous concentration as the source, maintaining equal dilution factor across the series.',
       },
       {
         type: 'paragraph',
@@ -477,8 +770,8 @@ export const GUIDES: Guide[] = [
     category: 'Pharmacology',
     readTime: '2 min',
     excerpt: 'How peptide stability impacts experimental outcomes and data interpretation.',
-    publishedAt: 'May 5, 2025',
-    publishedISO: '2025-05-05',
+    publishedAt: 'May 5, 2026',
+    publishedISO: '2026-05-05',
     metaDescription: 'How biological half-life affects peptide research design, from degradation pathways to modifications that extend stability in vivo.',
     content: [
       {
@@ -546,11 +839,11 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'For cell-based assays with expected short half-lives, consider refreshing compound in the media every few hours rather than dosing once. For longer treatments, evaluate whether degradation products might be bioactive — some peptide fragments retain partial activity or have independent effects.',
+        text: 'For cell-based assays with expected short half-lives, consider refreshing compound in the media every few hours rather than treating once. For longer treatments, evaluate whether degradation products might be bioactive — some peptide fragments retain partial activity or have independent effects.',
       },
       {
         type: 'paragraph',
-        text: 'When reporting dose-response data, note the dosing interval relative to estimated half-life. Two studies using the same compound at the same nominal dose but different dosing intervals may produce meaningfully different results.',
+        text: 'When reporting concentration-response data, note the treatment interval relative to estimated half-life. Two studies using the same compound at the same nominal concentration but different treatment intervals may produce meaningfully different results.',
       },
       {
         type: 'heading',
@@ -558,7 +851,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Unexplained plateau effects, non-linear dose responses, and time-dependent loss of effect are often attributable to in-experiment degradation rather than biological ceiling effects. Before concluding a compound has reached maximum efficacy, evaluate whether declining concentration may explain the data.',
+        text: 'Unexplained plateau effects, non-linear concentration responses, and time-dependent loss of effect are often attributable to in-experiment degradation rather than biological ceiling effects. Before concluding a compound has reached maximum efficacy, evaluate whether declining concentration may explain the data.',
       },
     ],
   },
@@ -568,8 +861,8 @@ export const GUIDES: Guide[] = [
     category: 'Documentation',
     readTime: '5 min',
     excerpt: 'How to read, verify, and cross-check a Certificate of Analysis or batch report properly.',
-    publishedAt: 'April 28, 2025',
-    publishedISO: '2025-04-28',
+    publishedAt: 'April 28, 2026',
+    publishedISO: '2026-04-28',
     metaDescription: 'How to read an HPLC and mass spec Certificate of Analysis: what a legitimate COA must show, and how to cross-check it before trusting a supplier.',
     content: [
       {
@@ -1106,8 +1399,8 @@ export const GUIDES: Guide[] = [
     category: 'Documentation',
     readTime: '3 min',
     excerpt: 'HPLC purity and net peptide content answer different questions — and mixing them up leads to under- or over-estimated stock concentrations.',
-    publishedAt: 'August 3, 2025',
-    publishedISO: '2025-08-03',
+    publishedAt: 'August 3, 2026',
+    publishedISO: '2026-08-03',
     metaDescription: 'What net peptide content (NPC) means, how it differs from HPLC purity, and why it matters for accurate stock concentration calculations.',
     content: [
       {
@@ -1140,7 +1433,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'If you weigh out 1 mg of lyophilised material and reconstitute assuming 100% NPC, your actual stock concentration will be lower than intended — proportionally, by the gap between the assumed and true NPC. For experiments sensitive to absolute concentration (dose-response curves, binding assays with defined Kd targets), this gap can meaningfully shift results.',
+        text: 'If you weigh out 1 mg of lyophilised material and reconstitute assuming 100% NPC, your actual stock concentration will be lower than intended — proportionally, by the gap between the assumed and true NPC. For experiments sensitive to absolute concentration (concentration-response curves, binding assays with defined Kd targets), this gap can meaningfully shift results.',
       },
       {
         type: 'list',
@@ -1160,7 +1453,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Where this bites in practice is reconstitution arithmetic: the mass printed on the vial is the starting point of every concentration calculation, and if it overstates the peptide present then every figure downstream inherits the error. [How much bacteriostatic water to add](/guides/how-much-bacteriostatic-water-to-add) covers the arithmetic, and [dosage calculation principles](/guides/dosage-calculations) covers how to carry the correction through.',
+        text: 'Where this bites in practice is reconstitution arithmetic: the mass printed on the vial is the starting point of every concentration calculation, and if it overstates the peptide present then every figure downstream inherits the error. [How much bacteriostatic water to add](/guides/how-much-bacteriostatic-water-to-add) covers the arithmetic, and [molarity and dilution maths](/guides/molarity-and-dilution-calculations) covers how to carry the correction through.',
       },
     ],
     // EXPANSION (Oct 2026): the page holding position 1 for this topic is a
@@ -1187,7 +1480,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: 'Does net peptide content affect my calculations?',
-        a: 'Only if you need the concentration to be known rather than approximated — in which case yes, directly, because the vial\'s nominal mass is the input to every concentration figure downstream. For work where an approximation is acceptable it can be ignored. The arithmetic is in [dosage calculation principles](/guides/dosage-calculations).',
+        a: 'Only if you need the concentration to be known rather than approximated — in which case yes, directly, because the vial\'s nominal mass is the input to every concentration figure downstream. For work where an approximation is acceptable it can be ignored. The arithmetic is in [molarity and dilution maths](/guides/molarity-and-dilution-calculations).',
       },
       {
         q: 'What if a certificate only reports purity and not net peptide content?',
@@ -1201,8 +1494,8 @@ export const GUIDES: Guide[] = [
     category: 'Lab Basics',
     readTime: '4 min',
     excerpt: 'The two most common reconstitution diluents solve different problems — mixing them up affects both sterility and multi-use stability.',
-    publishedAt: 'August 5, 2025',
-    publishedISO: '2025-08-05',
+    publishedAt: 'August 5, 2026',
+    publishedISO: '2026-08-05',
     metaDescription: 'The difference between bacteriostatic water and sterile (non-bacteriostatic) water for peptide reconstitution, and which applies to which use case.',
     content: [
       {
@@ -1761,6 +2054,18 @@ export const GUIDES: Guide[] = [
     // sequence-agnostic and genuinely what the maths is. There is no mg-per-
     // administration content, no unit conversion to syringe graduations, and
     // no worked example tied to a body weight. Do not add any.
+    // NOINDEX (Oct 2026 content audit). This is the one page in the
+    // reconstitution cluster that performs volume arithmetic, and the audit
+    // names that cluster as the clearest human-use signal on the site. The
+    // page already refuses compound-specific volume tables and frames
+    // everything as target concentration — but the audit's point is that the
+    // CLUSTER is the signal, not any single page's care, and this is the page
+    // at the centre of it.
+    //
+    // Noindexed rather than deleted: reversible, nothing lost, and the page
+    // stays reachable for anyone who already has the URL. Remove this flag
+    // only after a regulatory view on the cluster as a whole.
+    noindex: true,
     id: 'how-much-bacteriostatic-water-to-add',
     title: 'How Much Bacteriostatic Water to Add: Volume, Concentration and the Arithmetic',
     category: 'Calculations',
@@ -1827,7 +2132,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'For many research purposes an approximation is fine and this can be ignored. Where the concentration needs to be known rather than estimated, it cannot. The distinction between purity and net peptide content, and how to find both on a certificate, is set out in [net peptide content explained](/guides/net-peptide-content) — and how to account for it in a calculation is in [dosage calculation principles](/guides/dosage-calculations).',
+        text: 'For many research purposes an approximation is fine and this can be ignored. Where the concentration needs to be known rather than estimated, it cannot. The distinction between purity and net peptide content, and how to find both on a certificate, is set out in [net peptide content explained](/guides/net-peptide-content) — and how to account for it in a calculation is in [molarity and dilution maths](/guides/molarity-and-dilution-calculations).',
       },
       {
         type: 'heading',
@@ -2507,10 +2812,11 @@ export const GUIDES: Guide[] = [
   },
 ]
 
-export const CATEGORIES = ['All', 'Lab Basics', 'Storage', 'Calculations', 'Pharmacology', 'Documentation', 'Legality & Compliance', 'Buying Guide']
+export const CATEGORIES = ['All', 'Fundamentals', 'Lab Basics', 'Storage', 'Calculations', 'Pharmacology', 'Documentation', 'Legality & Compliance', 'Buying Guide']
 
 // ─── CATEGORY BADGE COLORS ─────────────────────────────────────────────────────
 export const CATEGORY_COLORS: Record<string, { bg: string; color: string }> = {
+  'Fundamentals':          { bg: '#f0fdf4', color: '#166534' },
   'Lab Basics':            { bg: '#eef2ff', color: '#3730a3' },
   'Storage':               { bg: '#ecfdf5', color: '#065f46' },
   'Calculations':          { bg: '#fff7ed', color: '#9a3412' },

@@ -51,6 +51,27 @@ const nextConfig = {
   // ---------------------------------------------------------------------
   async redirects() {
     return [
+      // ── CONTENT ROUTES (Oct 2026 content audit) ──────────────────────────
+      //
+      // /blog has never existed on this site; the editorial content lives in
+      // /guides and /research. It was returning a 404 that rendered with the
+      // HOMEPAGE title, so anything linking to /blog — and people do guess it
+      // — hit a dead end that looked like a broken homepage. /guides is the
+      // closest equivalent and is where the new pillar lives.
+      { source: '/blog', destination: '/guides', permanent: true },
+      { source: '/blog/:slug*', destination: '/guides', permanent: true },
+
+      // /guides/dosage-calculations was renamed. The page's CONTENT was fine
+      // (unit conversion, C1V1, serial dilution) but "dosage" in an indexed
+      // URL and H1 is the exact signal regulators cite when disregarding a
+      // "research use only" label. Content kept, framing changed, old URL
+      // redirected so the existing links and any ranking are preserved.
+      {
+        source: '/guides/dosage-calculations',
+        destination: '/guides/molarity-and-dilution-calculations',
+        permanent: true,
+      },
+
       // Confirmed indexed and ranking — highest priority
       { source: '/products/semax-2mg', destination: '/products/semax', permanent: true },
       { source: '/products/ghk-cu-5mg', destination: '/products/ghk-cu', permanent: true },
