@@ -311,7 +311,7 @@ export const ARTICLES: Article[] = [
   },
   {
     id: 'semax',
-    title: 'Semax and Cognitive Enhancement Research',
+    title: 'Semax: Structure and Receptor Studies',
     date: 'Mar 2026',
     dateISO: '2026-03-05',
     metaDescription: 'Semax\'s history as a nootropic research compound, proposed BDNF-related mechanisms, and the current state of cognitive research evidence.',
@@ -377,141 +377,8 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    id: 'reconstitution-guide',
-    title: 'Solvent Selection Chemistry: Why Peptide Polarity Dictates Reconstitution',
-    date: 'Feb 2026',
-    dateISO: '2026-02-22',
-    metaDescription: 'The physicochemical logic behind peptide solvent selection — charge, hydrophobicity, and isoelectric point — and what the research literature says about solubility failure modes.',
-    tag: 'Longevity',
-    readTime: '6 min',
-    excerpt:
-      'Why solvent choice for peptide reconstitution isn\'t arbitrary: the charge, hydrophobicity, and isoelectric-point chemistry that determines which solvent a given sequence needs.',
-    image: 'guide',
-    content: [
-      {
-        type: 'intro',
-        text: 'Reconstitution guidance is usually presented as a lookup table — hydrophilic peptides get water, basic peptides get dilute acid, hydrophobic peptides get DMSO. That table is useful, but it obscures the underlying physical chemistry, and understanding that chemistry is what lets a researcher reason correctly about a novel or poorly characterized sequence rather than just following a rule. This article covers the solubility physics; for the procedural walk-through of measuring, mixing, and aliquoting, see our companion Peptide Reconstitution guide.',
-      },
-      {
-        type: 'heading',
-        text: 'Isoelectric Point and Aqueous Solubility',
-      },
-      {
-        type: 'paragraph',
-        text: 'Every peptide has an isoelectric point (pI) — the pH at which its net charge is zero. Near the pI, a peptide has minimal electrostatic self-repulsion, which makes it more prone to aggregation and precipitation in solution, since there\'s no charge barrier keeping molecules apart. This is the mechanistic reason solvent pH matters: choosing a solvent pH well above or below a peptide\'s pI maximizes net charge and, with it, aqueous solubility and colloidal stability. Basic peptides (rich in lysine, arginine, histidine) have a high pI and solubilize better in mildly acidic solvent; acidic peptides (rich in aspartate, glutamate) have a low pI and solubilize better in mildly basic or neutral solvent.',
-      },
-      {
-        type: 'heading',
-        text: 'Hydrophobicity and the Role of DMSO',
-      },
-      {
-        type: 'paragraph',
-        text: 'Peptides with a high proportion of nonpolar residues (leucine, isoleucine, valine, phenylalanine) resist hydration by water\'s polar solvent shell, and pure aqueous solvent may fail to disrupt the intermolecular forces holding the lyophilized cake together at all. DMSO works as a co-solvent because it can hydrogen-bond with both polar and nonpolar peptide surfaces, effectively bridging the compound into an aqueous-compatible state once diluted further. The practical constraint researchers work within is DMSO\'s own biological activity — it doesn\'t stay chemically inert past around 0.1% final concentration in cell-based assay systems, which is why hydrophobic-peptide protocols specify wetting with a small DMSO volume before diluting the bulk of the way with aqueous buffer, rather than using DMSO as the final solvent.',
-      },
-      {
-        type: 'heading',
-        text: 'Why Benzyl Alcohol Preservative Matters for Multi-Draw Use',
-      },
-      {
-        type: 'paragraph',
-        text: 'Bacteriostatic water\'s 0.9% benzyl alcohol content exists specifically to allow repeated draws from a single vial without microbial contamination accumulating between uses — a meaningful research-logistics consideration for a stock solution used across many experimental sessions. The trade-off is that benzyl alcohol is itself a bioactive small molecule with documented effects in some in vitro systems, which is why protocols for cell-based assays (where the benzyl alcohol itself could confound results) generally specify preservative-free sterile water for injection instead, accepting the shorter usable window of an unpreserved solution in exchange for assay purity.',
-      },
-      {
-        type: 'callout',
-        text: 'A solubility failure — persistent turbidity after full solvent addition — is diagnostic information, not just an obstacle to work around. It typically indicates either a pI/solvent-pH mismatch or an underestimated hydrophobic character, and researchers troubleshooting an unfamiliar sequence can use the pattern of failure to infer which physicochemical property was misjudged, rather than defaulting to arbitrary solvent substitution.',
-      },
-      {
-        type: 'heading',
-        text: 'For the Full Reconstitution Protocol',
-      },
-      {
-        type: 'paragraph',
-        text: 'This article explains why particular solvents are chosen; it isn\'t a materials list or step sequence. For calculating target volumes, aseptic technique, and aliquoting practice, see the Peptide Reconstitution: Complete Step-by-Step Guide in our Guides section.',
-      },
-    ],
-  },
-  {
-    id: 'melanotan-ii',
-    title: 'Melanotan II: Melanocortin Receptor Pharmacology and Research History',
-    date: 'Aug 2026',
-    dateISO: '2026-08-19',
-    metaDescription: 'Melanotan II\u2019s origins at the University of Arizona, its non-selective MC1R\u2013MC5R activity, and what the published early-phase human studies actually found.',
-    tag: 'Aesthetic',
-    readTime: '7 min',
-    excerpt:
-      'How a 1980s photoprotection research programme at the University of Arizona produced one of the most-studied non-selective melanocortin agonists — and eventually led, via a more selective descendant, to an FDA-approved drug.',
-    image: 'aesthetic',
-    content: [
-      {
-        type: 'intro',
-        text: 'Melanotan II (MT-II) is a synthetic, non-selective melanocortin receptor agonist first developed at the University of Arizona in the late 1980s as a stabilized cyclic analog of alpha-melanocyte-stimulating hormone (α-MSH). Unlike the receptor-selective compounds that followed it, MT-II activates MC1R, MC3R, MC4R, and MC5R simultaneously — the property that made it a foundational research tool for mapping the melanocortin system, and also the reason its own clinical development was eventually set aside in favor of more selective successors.',
-      },
-      {
-        type: 'heading',
-        text: 'Origins and Structure',
-      },
-      {
-        type: 'paragraph',
-        text: 'MT-II traces back to a 1980 paper by Sawyer, Sanfilippo, Hruby, and Hadley describing [Nle4,D-Phe7]-α-MSH, a linear analog roughly 26 times more potent than native α-MSH in early receptor assays. Researchers at Arizona subsequently cyclized this sequence with a lactam bridge — the structure typically written as Ac-Nle4-Asp5-His6-D-Phe7-Arg8-Trp9-Lys10-NH2 — producing a compound substantially more resistant to enzymatic degradation than its linear precursor, with a longer receptor residence time. The original research rationale was chemopreventive: could controlled, UV-independent induction of melanogenesis reduce the population burden of sun-induced skin cancer?',
-      },
-      {
-        type: 'heading',
-        text: 'Mechanism of Action: Why "Non-Selective" Matters',
-      },
-      {
-        type: 'paragraph',
-        text: 'The melanocortin system comprises five receptor subtypes (MC1R–MC5R) with distinct tissue distributions and functions. MT-II binds four of them with meaningful affinity:',
-      },
-      {
-        type: 'list',
-        items: [
-          'MC1R — expressed on melanocytes; activation drives eumelanin synthesis, the pathway underlying MT-II\u2019s pigmentary research applications.',
-          'MC3R and MC4R — expressed centrally; implicated in energy homeostasis and, separately, in autonomic pathways linked to sexual arousal.',
-          'MC5R — peripheral, exocrine-associated; comparatively less characterized in the MT-II literature.',
-          'MC2R — notably not meaningfully engaged, distinguishing MT-II\u2019s profile from ACTH-driven adrenal pathways.',
-        ],
-      },
-      {
-        type: 'paragraph',
-        text: 'This breadth is precisely what made MT-II useful as an early pharmacological tool for probing the melanocortin system before selective agonists existed — and precisely what limits its interpretability as a model for any single receptor pathway in isolation.',
-      },
-      {
-        type: 'heading',
-        text: 'What Did the Early Human Studies Find?',
-      },
-      {
-        type: 'paragraph',
-        text: 'The earliest human work on MT-II was a 1996 pilot Phase I study by Dorr and colleagues, published in Life Sciences — a small, open-label, dose-escalating investigation in a handful of healthy volunteers at the University of Arizona. Its design is the historically significant part: it was an exploratory tolerability study, not a controlled efficacy trial, and it is the point at which an unrelated central effect was first noted alongside the pigmentary one. That incidental observation went on to define a second, entirely separate branch of melanocortin research. Specific administered quantities and individual participant findings are deliberately not reproduced here.',
-      },
-      {
-        type: 'paragraph',
-        text: 'That second branch was formalized in a 1998 double-blind, placebo-controlled crossover study by Wessells and colleagues in the Journal of Urology, which tested MT-II against placebo with an active comparator used in that era of research. The trial is cited here for its design and its place in the literature; its reported outcome figures are not reproduced. The "stretching-yawning syndrome" observed alongside these central effects has since been documented across multiple mammalian species tested with melanocortin agonists, including rabbits, cats, rats, mice, and monkeys — a cross-species consistency that researchers have used as supporting evidence for a conserved central mechanism.',
-      },
-      {
-        type: 'callout',
-        text: 'MT-II\u2019s non-selectivity is both its historical value and its central limitation. Because it engages multiple receptor subtypes at once, the compound cannot cleanly isolate any single melanocortin pathway — which is exactly why later research moved toward selective analogs. MT-II itself never progressed through a full registration pathway to approval for any indication; the studies referenced above are early-phase, small-cohort investigations, not evidence of safety or efficacy for any human use. This article describes published research findings only and does not constitute guidance for human use.',
-      },
-      {
-        type: 'heading',
-        text: 'From MT-II to an Approved Drug: The Bremelanotide Story',
-      },
-      {
-        type: 'paragraph',
-        text: 'The central MC4R activity documented in the Wessells study informed the development of a more receptor-selective descendant, PT-141 (bremelanotide), by Palatin Technologies. Unlike MT-II, bremelanotide was carried through full clinical development and received FDA approval in 2019, marketed as Vyleesi, for hypoactive sexual desire disorder. This lineage — a non-selective research tool giving rise to a selective, approved therapeutic — is a useful case study in structure-activity relationship research: MT-II\u2019s broad receptor profile helped identify which pathway mattered, and later chemistry narrowed in on it.',
-      },
-      {
-        type: 'heading',
-        text: 'Why Researchers Still Use Non-Selective Agonists Like MT-II',
-      },
-      {
-        type: 'paragraph',
-        text: 'Despite the existence of newer, more selective compounds, non-selective agonists remain useful as comparator tools — establishing an upper bound of melanocortin pathway activation against which selective agonists can be benchmarked, and supporting receptor-mapping work where the research question is the system as a whole rather than one subtype. As with any pharmacological tool compound, interpretation depends on controlling for the fact that observed effects may reflect contributions from multiple receptors rather than one.',
-      },
-    ],
-  },
-  {
     id: 'tesamorelin',
-    title: 'Tesamorelin: GHRH Analog Research in Metabolic and Visceral Fat Studies',
+    title: 'Tesamorelin: A GHRH Analogue Explained',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
     metaDescription: 'Tesamorelin\'s mechanism as a GHRH analog, its research history in visceral adipose tissue and metabolic studies, and open questions on GH-axis pulsatility.',
@@ -573,7 +440,7 @@ export const ARTICLES: Article[] = [
   },
   {
     id: 'igf-1-lr3',
-    title: 'IGF-1 LR3: Extended Half-Life Analog in Tissue Growth Research',
+    title: 'IGF-1 LR3: Structure of an 83-Residue Analogue',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
     metaDescription: 'IGF-1 LR3\'s engineered mutations, its use as an extended-half-life research tool for IGF-1 receptor signaling, and evidence on hyperplasia versus hypertrophy.',
@@ -635,7 +502,7 @@ export const ARTICLES: Article[] = [
   },
   {
     id: 'ghk-cu',
-    title: 'GHK-Cu: Copper-Binding Tripeptide Research in Skin and Wound Biology',
+    title: 'GHK-Cu: The Copper-Binding Tripeptide Explained',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
     metaDescription: 'GHK-Cu\'s copper-chelation chemistry, its research history in dermal remodeling and wound healing, and gene-expression findings from microarray studies.',
@@ -698,7 +565,7 @@ export const ARTICLES: Article[] = [
   },
   {
     id: 'tb-500',
-    title: 'TB-500: The Thymosin Beta-4 Actin-Binding Fragment in Repair Research',
+    title: 'TB-500: The Thymosin Beta-4 Fragment Explained',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
     metaDescription: 'TB-500\'s relationship to the naturally occurring protein Thymosin Beta-4, its actin-binding mechanism, and research findings on cell migration and tissue repair.',
@@ -886,7 +753,7 @@ export const ARTICLES: Article[] = [
   },
   {
     id: 'research-peptide-cost',
-    title: 'What Research Peptides Actually Cost — And Why Price Per Milligram Tells You Almost Nothing',
+    title: 'Peptide Prices: Why Price per mg Misleads',
     date: 'Sep 2026',
     dateISO: '2026-09-14',
     metaDescription: 'Peptide prices vary fourfold for the same labelled milligrams. Synthesis length, purification passes, endotoxin testing and net peptide content explain the gap.',
@@ -1022,8 +889,456 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
+    id: 'cold-chain-customs-uk-uae',
+    title: 'Do Research Peptides Need Refrigeration? Cold Chain, Customs and Carriers',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'What the published stability data actually say about shipping lyophilised peptides, why dry ice is the wrong coolant, and how UK and UAE customs treat peptides.',
+    tag: 'Guide',
+    readTime: '11 min',
+    excerpt:
+      'The published stability data say lyophilised material is far more robust in transit than the ice packs imply, the real thermal risk sits in customs hold rather than scheduled transit, and dry ice is more dangerous to material in solution than an ambient excursion is.',
+    image: 'guide',
+    content: [
+      {
+        type: 'intro',
+        text: 'Two questions dominate every enquiry about research peptide supply: will it clear customs, and will it survive the journey. Behind the second sits a narrower one — do research peptides need refrigeration in transit at all, or is the ice pack theatre? The honest answers are more interesting than the marketing. One of them contradicts an industry convention that almost every supplier repeats, this one included.',
+      },
+      { type: 'heading', text: 'The Stability Science' },
+      {
+        type: 'paragraph',
+        text: 'The best-characterised published data point comes from a 2026 study of thermally stressed solid-state semaglutide. Using FT-IR, circular dichroism, modulated DSC, RP-HPLC and LC-HRMS, the authors found the material retains its native α-helical conformation up to 60 °C, with helical content falling from 49.07% to 43.75% at 60 °C and collapsing to 0.2% at 80 °C. The amorphous solid has a glass transition temperature of 169 °C.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That figure is the crux. Below its glass transition the matrix is a rigid glass, and molecular mobility — and therefore the hydrolysis, deamidation and aggregation that destroy peptides — is kinetically suppressed. A parcel sitting at 35 °C in a Dubai delivery van is roughly 134 °C below Tg. The temperature that genuinely threatens a lyophilised peptide is not shipping ambient; it is the 60–80 °C range where secondary structure collapses. The same paper still reports temperature-dependent degradation, so robust does not mean unaffected — but the order of magnitude is not what cold-chain marketing implies.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The mechanism is chemistry rather than folklore: deamidation, the dominant degradation route for peptides containing asparagine or glutamine, is water-mediated. Lyophilisation removes the reactant. A dry cake is slow, not inert.',
+      },
+      { type: 'heading', text: 'What the Innovators\u2019 Own Labels Permit' },
+      {
+        type: 'paragraph',
+        text: 'The most persuasive evidence is what manufacturers submitted to regulators about their own products. Ozempic\u2019s FDA label §16 states that after first use the pen can be stored for 56 days at controlled room temperature, 15–30 °C. Mounjaro, per its SmPC, may be stored unrefrigerated for up to 30 days at a temperature not above 30 °C after first use.',
+      },
+      {
+        type: 'paragraph',
+        text: 'These are aqueous, preservative-containing solutions — the physically less stable form — and the regulatory dossier permits a month at 30 °C. They are in-use allowances following an unbroken cold chain, not licence to ship warm, but they establish the scale. A two to four day air transit at ambient is not the event that degrades the molecule.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A useful real-world analogue: a 2021 PLOS ONE study placed insulin under temperature profiles logged in a refugee camp in northern Kenya, oscillating between 25 °C and 37 °C. Weekly HPLC showed conformity to pharmacopoeial guidelines across four weeks, and bioactivity in hepatic cells was identical to material held at 2–8 °C.',
+      },
+      { type: 'heading', text: 'The Asymmetry That Actually Matters: Do Not Freeze' },
+      {
+        type: 'paragraph',
+        text: 'Both labels above carry the same instruction, and it points the opposite way to intuition: do not freeze, and do not use if it has been frozen. Freezing damages peptide solutions through ice-interface denaturation and freeze-concentration.',
+      },
+      {
+        type: 'callout',
+        text: 'This produces the most counter-intuitive conclusion in this article: for any peptide shipped in solution rather than as a lyophilised solid, dry ice poses a greater risk to the material than an ambient excursion does.',
+      },
+      {
+        type: 'paragraph',
+        text: 'For context on what the industry considers a punishing thermal challenge, ICH Q1A(R2) sets the accelerated stability condition at 40 °C and 75% relative humidity for six months. A 72-hour transit is not in the same universe. ICH also supplies the right tool for assessing an excursion — mean kinetic temperature, weighted by the Arrhenius equation — and published modelling shows excursions consume a stability budget rather than producing a binary pass or fail.',
+      },
+      { type: 'heading', text: 'So What Does Cold-Chain Dispatch Actually Buy' },
+      {
+        type: 'list',
+        items: [
+          'Protection against tail risk. Not the scheduled transit, but the parcel forgotten in a sorting hub or standing on a Gulf tarmac where surface temperatures reach the range that does matter.',
+          'Documentary evidence of controlled conditions. A quality-system artefact under Good Distribution Practice, which is a real and separate value.',
+          'Signal — which is legitimate, provided it is not dressed as the first two.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'What it does not buy, on any evidence located: preserved potency that would otherwise be lost over 48–72 hours of ambient transit in a lyophilised product. The genuine dividing line is solid versus solution, not cold versus warm. Lyophilised powder in short transit is a minor thermal event; its real risks are moisture ingress — a stopper and seal problem, not an ice pack problem — and sustained heat above 60 °C. In solution, water is present, degradation chemistry proceeds, and freezing becomes a distinct failure mode. That is where controlled 2–8 °C storage genuinely earns its place: in qualified cold storage at the receiving facility, not in the carrier\u2019s network.',
+      },
+      { type: 'heading', text: 'Standards and Carriers' },
+      {
+        type: 'paragraph',
+        text: 'EU Good Distribution Practice (2013/C 343/01), Chapter 9 governs transport and is applied by the MHRA. Its principle: regardless of mode, it should be possible to demonstrate that the medicines have not been exposed to conditions that may compromise their quality and integrity. Three requirements are worth quoting because they are frequently ignored — container selection must account for the estimated maximum time for transportation including transit storage at customs; monitoring equipment must be calibrated at least once a year; and if cool-packs are used in insulated boxes they must be located so the product does not come into direct contact with the cool-pack.',
+      },
+      {
+        type: 'paragraph',
+        text: 'WHO TRS 961 Annex 9 sets container qualification expectations: a qualified passive system must demonstrate it can hold the required range, documenting the packaging assembly, conditioning regime and the minimum and maximum shipping volume and thermal mass it accommodates. Data loggers should be accurate to ±0.5 °C, recording at least six times per hour. On excursions, affected product is to be quarantined and evaluated, not automatically discarded. ISTA 7E profiles, developed from real-world data across 82 shipping lanes, are published in 72-hour and 144-hour variants.',
+      },
+      {
+        type: 'callout',
+        text: 'One gap worth stating: no neutral, non-commercial source publishes comparative hold times for gel packs versus dry ice versus phase-change materials. Every such figure originates from a packaging manufacturer marketing its own product. WHO TRS 961 treats coolants as ancillary packaging with no independent duration requirement — performance is only ever established by qualifying the complete system.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Dry ice is a regulatory event. Under IATA Packing Instruction 954 it is UN 1845, Class 9 dangerous goods: packaging must vent to prevent pressure build-up, the outer must be marked with UN 1845, the proper shipping name and net weight in kilograms and carry a Class 9 label, the air waybill needs a specific entry, and shippers require IATA or DOT training renewed every two years. Combined with the freezing prohibition above, the conclusion is clean: dry ice is the wrong coolant for peptide product in almost every commercial scenario. It adds a dangerous-goods burden and introduces a failure mode.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A caution on carriers: none of the major integrators publishes a pharmaceutical acceptance rule. DHL routes such questions to a restricted commodities team; UPS accepts certain categories on a contractual basis only. Acceptance here is a commercial relationship, not a public standard.',
+      },
+      { type: 'heading', text: 'The UK Border' },
+      {
+        type: 'paragraph',
+        text: 'The classification framework — the two-limb medicinal product test under the Human Medicines Regulations 2012, the supply prohibitions in regulations 46 and 255, and the penalties in regulation 47 — is covered in full in our UK legal status guide. Two points specific to physically moving goods across the border are worth adding, because both are routinely reported wrongly.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Customs classification saves nothing fiscally. Duty on peptide hormones into the UK is zero. Commodity heading 2937 — which expressly covers chain modified polypeptides used primarily as hormones — attracts 0.00% third-country duty and 20% import VAT. Laboratory reagents under 3822 also attract 0% duty and 20% VAT. Declaring under a reagent code therefore changes no tax outcome whatsoever; the only variable it moves is the regulatory flag attached to the commodity code, which makes misclassification a customs exposure rather than a tax strategy. Separately, VAT liability shifts at £135 consignment value.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The controlled-drug trap. Most research peptides — BPC-157, TB-500, ipamorelin, CJC-1295, sermorelin, tesamorelin, melanotan — are not controlled under the Misuse of Drugs Act 1971. But somatropin, somatotropin, somatrem and human chorionic gonadotrophin are Class C controlled drugs, added by the 1996 Modification Order. There is no simple possession offence for Schedule 4 Part II drugs, but a 2012 amendment narrowed the import exemption to importation carried out in person for administration to that person. A courier parcel is not "in person". Mail-ordering somatropin or hCG into the UK is therefore an importation offence, not merely a medicines-regulation breach — a change made in 2012 and still reported incorrectly across most of the industry.',
+      },
+      { type: 'heading', text: 'The UAE Border' },
+      {
+        type: 'paragraph',
+        text: 'A free zone sits outside the import perimeter by definition. The governing law defines import as bringing products from outside the country or its free zones to the mainland. A free-zone entity can therefore hold and re-export stock without it ever having been imported; the regulatory event occurs at the moment goods cross into the mainland, which requires marketing approval and an import permit. A free-zone licence is not market access, and it is not a workaround for product registration. Note also that the scope of licensable establishments expressly includes research entities, contract research organisations, pharmaceutical laboratories and biobanks — describing an activity as research does not remove it from the licensing regime, it places it inside a different part of it.',
+      },
+      {
+        type: 'paragraph',
+        text: 'On customs specifically: Abu Dhabi Customs lists pharmaceutical preparations and medicines, medical devices, accessories, laboratory solutions and sterilization devices as restricted and requiring health-ministry approval — the closest official UAE text to research-reagent classification, and notable because it routes lab solutions through the health regulator by default rather than a general chemicals regime. Dubai Customs applies 5% duty on CIF value and prohibits bulk quantities for personal use without special permission.',
+      },
+      { type: 'heading', text: 'What This Adds Up To' },
+      {
+        type: 'paragraph',
+        text: 'Transit duration is not the binding constraint on a UK–UAE lane. Against in-use ambient allowances measured in weeks and a solid-state glass transition at 169 °C, a two to four day express transit is thermally trivial. The binding constraints are customs hold time — unbounded, and expressly called out in EU GDP as a factor in container selection — and peak temperature in sorting hubs and on tarmac, neither of which is a function of how fast the plane flies.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The regulatory constraints are the real ones, and they are not symmetrical: the UK question is medicines classification and the controlled-drug carve-outs; the UAE question is mainland entry, registration and the free-zone boundary. Neither is solved by a label, and neither is solved by an ice pack.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. This article addresses material handling and regulatory logistics; it is not guidance on administration, and a research-use designation does not authorise human use.',
+      },
+    ],
+  },
+]
+
+/* ──────────────────────────────────────────────────────────────────────────
+   HELD FOR REGULATORY REVIEW — NOT PUBLISHED
+   ──────────────────────────────────────────────────────────────────────────
+   This article is complete and ready. It is deliberately NOT spread into
+   ARTICLES above, so it does not render, does not appear in /research, is not
+   in the sitemap, and is not indexed.
+
+   WHY IT IS GATED
+   Its own editorial brief flagged it as the one of the five to hold if only
+   one is held, and the reasons are specific rather than theoretical:
+
+     - MHRA named retatrutide in three separate seizure announcements across
+       2025–26, the most recent involving arrests under the Human Medicines
+       Regulations 2012.
+     - The UAE's Emirates Drug Establishment ran a July 2026 campaign naming
+       retatrutide as unapproved, acting against 71 sources and referring 14
+       influencers to the media authority. That is PepcoLab's primary market.
+     - FDA warning letters establish that intended use is inferred from the
+       TOTALITY of a site's copy — mechanism claims, outcome claims, vial
+       sizing, selling bacteriostatic water alongside — and that a
+       "research use only" disclaimer does not cure it.
+     - Eli Lilly filed suit against six companies in August 2026 over
+       retatrutide sales. Civil litigation risk on top of regulatory risk.
+
+   The decisive fact is that PepcoLab SELLS retatrutide. A page reporting
+   human weight-loss percentages at named dose levels, on the same domain as a
+   purchase path for that compound, is precisely the adjacency the FDA's
+   totality-of-copy test is designed to catch. The article itself is written
+   defensibly — published data only, explicit unapproved status, no
+   administration guidance, no CTA — but whether to publish it at all is a
+   commercial risk judgement, not a copywriting one.
+
+   TO PUBLISH: move this object into the ARTICLES array above. Nothing else
+   needs to change. Do NOT link it from product pages, and do not add Product
+   or Offer schema to it.
+   ────────────────────────────────────────────────────────────────────────── */
+export const HELD_FOR_REVIEW_ARTICLES: Article[] = [
+  // UNPUBLISHED (Oct 2026). Melanotan II was on the site's own excluded-topics
+  // list from the start — legal-data.ts deliberately omits it because the MHRA
+  // has run sustained enforcement against it, treating "research use only" as
+  // a fig leaf for tanning use. The Oct 2026 content audit recommended
+  // unpublishing it, and PepcoLab does not sell it. Its numeric dose figures
+  // were already stripped; this removes the page itself. /research/melanotan-ii
+  // 301s to /research (next.config.js). Moving it back into ARTICLES
+  // republishes it — get a compliance view first.
+  {
+    id: 'reconstitution-guide',
+    title: 'Solvent Selection Chemistry: Why Peptide Polarity Dictates Reconstitution',
+    date: 'Feb 2026',
+    dateISO: '2026-02-22',
+    metaDescription: 'The physicochemical logic behind peptide solvent selection — charge, hydrophobicity, and isoelectric point — and what the research literature says about solubility failure modes.',
+    tag: 'Longevity',
+    readTime: '6 min',
+    excerpt:
+      'Why solvent choice for peptide reconstitution isn\'t arbitrary: the charge, hydrophobicity, and isoelectric-point chemistry that determines which solvent a given sequence needs.',
+    image: 'guide',
+    content: [
+      {
+        type: 'intro',
+        text: 'Reconstitution guidance is usually presented as a lookup table — hydrophilic peptides get water, basic peptides get dilute acid, hydrophobic peptides get DMSO. That table is useful, but it obscures the underlying physical chemistry, and understanding that chemistry is what lets a researcher reason correctly about a novel or poorly characterized sequence rather than just following a rule. This article covers the solubility physics; for the procedural walk-through of measuring, mixing, and aliquoting, see our companion Peptide Reconstitution guide.',
+      },
+      {
+        type: 'heading',
+        text: 'Isoelectric Point and Aqueous Solubility',
+      },
+      {
+        type: 'paragraph',
+        text: 'Every peptide has an isoelectric point (pI) — the pH at which its net charge is zero. Near the pI, a peptide has minimal electrostatic self-repulsion, which makes it more prone to aggregation and precipitation in solution, since there\'s no charge barrier keeping molecules apart. This is the mechanistic reason solvent pH matters: choosing a solvent pH well above or below a peptide\'s pI maximizes net charge and, with it, aqueous solubility and colloidal stability. Basic peptides (rich in lysine, arginine, histidine) have a high pI and solubilize better in mildly acidic solvent; acidic peptides (rich in aspartate, glutamate) have a low pI and solubilize better in mildly basic or neutral solvent.',
+      },
+      {
+        type: 'heading',
+        text: 'Hydrophobicity and the Role of DMSO',
+      },
+      {
+        type: 'paragraph',
+        text: 'Peptides with a high proportion of nonpolar residues (leucine, isoleucine, valine, phenylalanine) resist hydration by water\'s polar solvent shell, and pure aqueous solvent may fail to disrupt the intermolecular forces holding the lyophilized cake together at all. DMSO works as a co-solvent because it can hydrogen-bond with both polar and nonpolar peptide surfaces, effectively bridging the compound into an aqueous-compatible state once diluted further. The practical constraint researchers work within is DMSO\'s own biological activity — it doesn\'t stay chemically inert past around 0.1% final concentration in cell-based assay systems, which is why hydrophobic-peptide protocols specify wetting with a small DMSO volume before diluting the bulk of the way with aqueous buffer, rather than using DMSO as the final solvent.',
+      },
+      {
+        type: 'heading',
+        text: 'Why Benzyl Alcohol Preservative Matters for Multi-Draw Use',
+      },
+      {
+        type: 'paragraph',
+        text: 'Bacteriostatic water\'s 0.9% benzyl alcohol content exists specifically to allow repeated draws from a single vial without microbial contamination accumulating between uses — a meaningful research-logistics consideration for a stock solution used across many experimental sessions. The trade-off is that benzyl alcohol is itself a bioactive small molecule with documented effects in some in vitro systems, which is why protocols for cell-based assays (where the benzyl alcohol itself could confound results) generally specify preservative-free sterile water for injection instead, accepting the shorter usable window of an unpreserved solution in exchange for assay purity.',
+      },
+      {
+        type: 'callout',
+        text: 'A solubility failure — persistent turbidity after full solvent addition — is diagnostic information, not just an obstacle to work around. It typically indicates either a pI/solvent-pH mismatch or an underestimated hydrophobic character, and researchers troubleshooting an unfamiliar sequence can use the pattern of failure to infer which physicochemical property was misjudged, rather than defaulting to arbitrary solvent substitution.',
+      },
+      {
+        type: 'heading',
+        text: 'For the Full Reconstitution Protocol',
+      },
+      {
+        type: 'paragraph',
+        text: 'This article explains why particular solvents are chosen; it isn\'t a materials list or step sequence. For calculating target volumes, aseptic technique, and aliquoting practice, see the Peptide Reconstitution: Complete Step-by-Step Guide in our Guides section.',
+      },
+    ],
+  },
+  {
+    id: 'melanotan-ii',
+    title: 'Melanotan II: Melanocortin Receptor Pharmacology and Research History',
+    date: 'Aug 2026',
+    dateISO: '2026-08-19',
+    metaDescription: 'Melanotan II\u2019s origins at the University of Arizona, its non-selective MC1R\u2013MC5R activity, and what the published early-phase human studies actually found.',
+    tag: 'Aesthetic',
+    readTime: '7 min',
+    excerpt:
+      'How a 1980s photoprotection research programme at the University of Arizona produced one of the most-studied non-selective melanocortin agonists — and eventually led, via a more selective descendant, to an FDA-approved drug.',
+    image: 'aesthetic',
+    content: [
+      {
+        type: 'intro',
+        text: 'Melanotan II (MT-II) is a synthetic, non-selective melanocortin receptor agonist first developed at the University of Arizona in the late 1980s as a stabilized cyclic analog of alpha-melanocyte-stimulating hormone (α-MSH). Unlike the receptor-selective compounds that followed it, MT-II activates MC1R, MC3R, MC4R, and MC5R simultaneously — the property that made it a foundational research tool for mapping the melanocortin system, and also the reason its own clinical development was eventually set aside in favor of more selective successors.',
+      },
+      {
+        type: 'heading',
+        text: 'Origins and Structure',
+      },
+      {
+        type: 'paragraph',
+        text: 'MT-II traces back to a 1980 paper by Sawyer, Sanfilippo, Hruby, and Hadley describing [Nle4,D-Phe7]-α-MSH, a linear analog roughly 26 times more potent than native α-MSH in early receptor assays. Researchers at Arizona subsequently cyclized this sequence with a lactam bridge — the structure typically written as Ac-Nle4-Asp5-His6-D-Phe7-Arg8-Trp9-Lys10-NH2 — producing a compound substantially more resistant to enzymatic degradation than its linear precursor, with a longer receptor residence time. The original research rationale was chemopreventive: could controlled, UV-independent induction of melanogenesis reduce the population burden of sun-induced skin cancer?',
+      },
+      {
+        type: 'heading',
+        text: 'Mechanism of Action: Why "Non-Selective" Matters',
+      },
+      {
+        type: 'paragraph',
+        text: 'The melanocortin system comprises five receptor subtypes (MC1R–MC5R) with distinct tissue distributions and functions. MT-II binds four of them with meaningful affinity:',
+      },
+      {
+        type: 'list',
+        items: [
+          'MC1R — expressed on melanocytes; activation drives eumelanin synthesis, the pathway underlying MT-II\u2019s pigmentary research applications.',
+          'MC3R and MC4R — expressed centrally; implicated in energy homeostasis and, separately, in autonomic pathways linked to sexual arousal.',
+          'MC5R — peripheral, exocrine-associated; comparatively less characterized in the MT-II literature.',
+          'MC2R — notably not meaningfully engaged, distinguishing MT-II\u2019s profile from ACTH-driven adrenal pathways.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'This breadth is precisely what made MT-II useful as an early pharmacological tool for probing the melanocortin system before selective agonists existed — and precisely what limits its interpretability as a model for any single receptor pathway in isolation.',
+      },
+      {
+        type: 'heading',
+        text: 'What Did the Early Human Studies Find?',
+      },
+      {
+        type: 'paragraph',
+        text: 'The earliest human work on MT-II was a 1996 pilot Phase I study by Dorr and colleagues, published in Life Sciences — a small, open-label, dose-escalating investigation in a handful of healthy volunteers at the University of Arizona. Its design is the historically significant part: it was an exploratory tolerability study, not a controlled efficacy trial, and it is the point at which an unrelated central effect was first noted alongside the pigmentary one. That incidental observation went on to define a second, entirely separate branch of melanocortin research. Specific administered quantities and individual participant findings are deliberately not reproduced here.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That second branch was formalized in a 1998 double-blind, placebo-controlled crossover study by Wessells and colleagues in the Journal of Urology, which tested MT-II against placebo with an active comparator used in that era of research. The trial is cited here for its design and its place in the literature; its reported outcome figures are not reproduced. The "stretching-yawning syndrome" observed alongside these central effects has since been documented across multiple mammalian species tested with melanocortin agonists, including rabbits, cats, rats, mice, and monkeys — a cross-species consistency that researchers have used as supporting evidence for a conserved central mechanism.',
+      },
+      {
+        type: 'callout',
+        text: 'MT-II\u2019s non-selectivity is both its historical value and its central limitation. Because it engages multiple receptor subtypes at once, the compound cannot cleanly isolate any single melanocortin pathway — which is exactly why later research moved toward selective analogs. MT-II itself never progressed through a full registration pathway to approval for any indication; the studies referenced above are early-phase, small-cohort investigations, not evidence of safety or efficacy for any human use. This article describes published research findings only and does not constitute guidance for human use.',
+      },
+      {
+        type: 'heading',
+        text: 'From MT-II to an Approved Drug: The Bremelanotide Story',
+      },
+      {
+        type: 'paragraph',
+        text: 'The central MC4R activity documented in the Wessells study informed the development of a more receptor-selective descendant, PT-141 (bremelanotide), by Palatin Technologies. Unlike MT-II, bremelanotide was carried through full clinical development and received FDA approval in 2019, marketed as Vyleesi, for hypoactive sexual desire disorder. This lineage — a non-selective research tool giving rise to a selective, approved therapeutic — is a useful case study in structure-activity relationship research: MT-II\u2019s broad receptor profile helped identify which pathway mattered, and later chemistry narrowed in on it.',
+      },
+      {
+        type: 'heading',
+        text: 'Why Researchers Still Use Non-Selective Agonists Like MT-II',
+      },
+      {
+        type: 'paragraph',
+        text: 'Despite the existence of newer, more selective compounds, non-selective agonists remain useful as comparator tools — establishing an upper bound of melanocortin pathway activation against which selective agonists can be benchmarked, and supporting receptor-mapping work where the research question is the system as a whole rather than one subtype. As with any pharmacological tool compound, interpretation depends on controlling for the fact that observed effects may reflect contributions from multiple receptors rather than one.',
+      },
+    ],
+  },
+  {
+    id: 'glp1-receptor-agonists-compared',
+    title: 'Retatrutide vs Tirzepatide vs Semaglutide — Pharmacology, Trial Evidence and Regulatory Reality',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'Mono-, dual- and triple-agonist pharmacology, TRIUMPH and SURMOUNT trial data, and the September 2026 regulatory position in the UK and UAE.',
+    tag: 'Metabolic',
+    readTime: '12 min',
+    excerpt:
+      'One is a GLP-1 mono-agonist, one a GIP/GLP-1 dual agonist, one a triple agonist adding glucagon. Two are licensed medicines in the UK; one is approved nowhere on earth.',
+    image: 'metabolic',
+    content: [
+      {
+        type: 'intro',
+        text: 'The incretin class has expanded faster than almost any area of modern pharmacology, and the naming has not helped. Semaglutide, tirzepatide and retatrutide are structurally related, share a synthetic lineage, and are frequently discussed as a progression — as though each were simply a more powerful version of the last. They are meaningfully different molecules with different receptor profiles, and, critically, different legal statuses.',
+      },
+      { type: 'heading', text: 'Receptor Pharmacology' },
+      {
+        type: 'paragraph',
+        text: 'Semaglutide is a GLP-1 receptor mono-agonist built on the human GLP-1(7-37) backbone, 31 amino acids, 4113.58 Da. An α-aminoisobutyric acid substitution at position 8 blocks DPP-4 cleavage; lysine 26 carries a C18 fatty diacid attached through a γ-glutamate and two hydrophilic spacers, driving albumin binding — and an arginine substitution at position 34 exists specifically to ensure only one diacid attaches. Published potency: GLP-1 receptor EC50 of 6.2 pM, binding IC50 of 0.38 nM without albumin rising to 357 nM in 2% albumin, a 940-fold shift that is itself the protraction mechanism. Half-life approximately one week.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Tirzepatide is a 39-residue GIP/GLP-1 dual agonist, 4813.53 Da, C-terminally amidated, with Aib at positions 2 and 13 and a C20 diacid on lysine 20 via an AEEA₂–γGlu linker. Its agonism is deliberately imbalanced: binding and stimulation at the GIP receptor is similar to native GIP, whereas activity at the GLP-1 receptor is less than native GLP-1. Half-life approximately five days.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Retatrutide is a 39-residue triple agonist at GIP, GLP-1 and glucagon receptors, 4731 Da, built on a GIP peptide backbone, with Aib at positions 2 and 20, α-methyl-leucine at 13, and a γGlu-linked long-chain fatty diacid on lysine 17. Half-life approximately six days. In-vitro EC50 values against human receptors, from Coskun and colleagues in Cell Metab (2022): GIP receptor 0.0643 nM, GLP-1 receptor 0.775 nM, glucagon receptor 5.79 nM — characterised in that paper as balanced GCGR and GLP-1R activity but more GIPR activity. Secondary sources frequently invert the direction of the derived potency ratios.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Cagrilintide sits outside this lineage entirely: a 37-residue long-acting acylated amylin analogue derived from pramlintide, 4409 Da, agonist at both amylin and calcitonin receptors, half-life roughly seven to eight days. Two substitutions — N14E and V17R — form an intramolecular salt bridge that blocks amyloid fibril formation, amylin\u2019s defining pharmaceutical problem.',
+      },
+      { type: 'heading', text: 'What the Trials Reported' },
+      {
+        type: 'paragraph',
+        text: 'A note before the numbers, because cross-compound comparison is exactly where this goes wrong: these trials report under different estimands, and figures are not interchangeable between them.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Semaglutide: STEP 1 (NEJM 2021, n = 1,961, 68 weeks) reported mean weight change of −14.9% against −2.4% on placebo. SELECT (NEJM 2023, n = 17,604) reported a primary MACE hazard ratio of 0.80. SUSTAIN-6 carried a safety signal: diabetic retinopathy complications at 3.0% versus 1.8%, p = 0.02.',
+          'Tirzepatide: SURMOUNT-1 (NEJM 2022, n = 2,539, 72 weeks) reported −15.0%, −19.5% and −20.9% at 5, 10 and 15 mg against −3.1% placebo. SURMOUNT-5, head-to-head against semaglutide (NEJM 2025, n = 751), reported −20.2% versus −13.7%.',
+          'Retatrutide: Phase 2 (NEJM 2023, n = 338, 48 weeks) reported −8.7%, −17.1%, −22.8% and −24.2% at 1, 4, 8 and 12 mg against −2.1% placebo. The Phase 3 TRIUMPH programme has since read out: TRIUMPH-1 (May 2026, n = 2,339, 80 wk) −28.3% at 12 mg; TRIUMPH-4 (Dec 2025, n = 445) −28.7%; TRIUMPH-2 (Jul 2026, n = 1,152) up to −20.8%; TRIUMPH-3 (Jul 2026, n = 1,949) up to −22.6%.',
+          'CagriSema: REDEFINE 1 (NEJM 2025, n = 3,417, 68 weeks) reported −20.4% against −3.0% placebo on the treatment-policy estimand.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Adverse events across the class are predominantly gastrointestinal, dose-related and concentrated during escalation. Retatrutide carries two signals that distinguish it: dose-dependent heart rate increases peaking around week 24 before declining, attributable to glucagon receptor agonism, and dysesthesia reported at 12.5% on 12 mg against 0.9% on placebo in TRIUMPH-1. Discontinuation for adverse events rose with dose, reaching 11.3% at 12 mg.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. Trial doses are reported here as published experimental parameters. Nothing in this article constitutes guidance on administration, and a research-use designation does not authorise human use.',
+      },
+      { type: 'heading', text: 'Regulatory Status, September 2026' },
+      {
+        type: 'paragraph',
+        text: 'United Kingdom: semaglutide is licensed as Wegovy for weight management and as Ozempic and Rybelsus for type 2 diabetes. Tirzepatide is licensed as Mounjaro for both indications. Retatrutide, cagrilintide and CagriSema hold no UK marketing authorisation. Eli Lilly has stated it plans to submit a New Drug Application for retatrutide to the FDA in Q1 2027 — meaning that as of today, retatrutide is not approved in any jurisdiction on earth and no application has been filed anywhere.',
+      },
+      {
+        type: 'paragraph',
+        text: 'United Arab Emirates: oral semaglutide was approved by the Emirates Drug Establishment on 1 June 2026, launching 3 June — the first country outside the US. Orforglipron was approved in April 2026. Retatrutide and cagrilintide are not approved. Note that the UAE\u2019s regulator changed: Federal Decree-Law No. 38 of 2024 came into force on 2 January 2025, transferring federal responsibility for medical product approvals from MoHAP to the Emirates Drug Establishment. Any guidance referring to MoHAP as the current federal gate is out of date.',
+      },
+      { type: 'heading', text: 'The Enforcement Position' },
+      {
+        type: 'paragraph',
+        text: 'The FDA has stated that a research-use label is not a defence. Its guidance page, last updated 1 September 2026, refers specifically to illegally sold unapproved drugs containing semaglutide, tirzepatide, retatrutide, survodutide or mazdutide that are falsely labeled for research purposes or not for human consumption, and states that retatrutide and cagrilintide cannot be used in compounding under federal law.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The agency\u2019s warning letters make the mechanism explicit. In a February 2025 letter: despite statements such as research use only, not for human consumption, lab purposes only, evidence obtained from the website establishes that certain products offered for sale are drugs intended for human use. Intended use is determined from the totality of website and marketing copy — mechanism claims, outcome claims, reconstitution instructions, vial sizing, the sale of bacteriostatic water alongside. The disclaimer does not cure it.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The MHRA has named retatrutide in three separate seizure announcements. In October 2025, a Northampton warehouse raid recovered over 2,000 unlicensed retatrutide and tirzepatide pens. In February 2026, a second facility was disrupted across Lincolnshire and Nottinghamshire. On 28 May 2026 the agency\u2019s largest-ever seizure of unlicensed weight-loss medicines recovered approximately 12,000 doses near Northampton, with two men arrested on suspicion of offences under the Human Medicines Regulations 2012. MHRA\u2019s 2025 annual figures: almost £45 million street value, nearly 20 million doses, over 1,500 websites and social accounts disrupted.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The UAE regulator has run the same campaign. On 25 July 2026 the Emirates Drug Establishment reported action against 71 sources marketing or selling unapproved peptide-based weight-loss products, referred 14 social media influencers to the national media authority, and implicated 14 registered establishments. Retatrutide was named specifically as unapproved and still in clinical trials. Notably, no unapproved peptides were found in licensed pharmaceutical warehouses — the illicit supply sits entirely outside the licensed distribution chain.',
+      },
+      { type: 'heading', text: 'Why Impurity Profiles Matter More for This Class' },
+      {
+        type: 'paragraph',
+        text: 'Acylated long-acting analogues are amphiphilic by design — a hydrophobic C18 or C20 diacid grafted onto a hydrophilic peptide. That hydrophobicity drives the intended albumin binding and also unintended self-association. Aggregate control is therefore a potency-relevant specification, not a cosmetic one — and aggregates are largely invisible to analytical RP-HPLC.',
+      },
+      {
+        type: 'paragraph',
+        text: 'More subtly, the acyl group is hydrolytically labile. Losing the fatty diacid produces a des-acyl impurity that is still an intact, receptor-active peptide — but with native-GLP-1-like pharmacokinetics measured in minutes rather than days. It will not appear as missing peptide in a content assay. Only a resolving related-substances method separates it. Mis-acylation regiochemistry is a structurally anticipated failure mode: semaglutide\u2019s Arg34 substitution exists precisely to prevent a second diacid attaching.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A final note on specifications: there is no pharmacopoeial standard establishing 98% or 99% purity for these compounds outside an approved drug substance monograph. Every such figure in circulation is a market convention. A single area-percent number says nothing about which impurities are present, their identity, or counterion content.',
+      },
+    ],
+  },
+]
+
+
+// FIX: counts (18, 24, 12, 15 in the original) were hardcoded placeholders
+// that never matched the real 6-article catalogue above — a visitor
+// filtering by "Recovery" would see "18" in the pill and find one article.
+// Derived from ARTICLES instead, so the number shown always matches reality.
+export const TAG_COLOR: Record<string, string> = {
+  Recovery: '#22c55e',
+  Metabolic: '#f97316',
+  Cognitive: '#8b5cf6',
+  Longevity: '#3b82f6',
+  Aesthetic: '#ec4899',
+  Guide: '#64748b',
+}
+
+export const CATEGORIES = Array.from(new Set(ARTICLES.map((a) => a.tag))).map((title) => ({
+  title,
+  count: ARTICLES.filter((a) => a.tag === title).length,
+  color: TAG_COLOR[title] ?? '#64748b',
+}))
+
+export const tagColors: Record<string, { bg: string; text: string }> = {
+  Recovery: { bg: '#dcfce7', text: '#16a34a' },
+  Metabolic: { bg: '#ffedd5', text: '#c2410c' },
+  Cognitive: { bg: '#ede9fe', text: '#7c3aed' },
+  Longevity: { bg: '#dbeafe', text: '#1d4ed8' },
+  Aesthetic: { bg: '#fce7f3', text: '#be185d' },
+  Guide: { bg: '#f1f5f9', text: '#475569' },
+}
+
+export function getArticleBySlug(slug: string) {
+  return ARTICLES.find((a) => a.id === slug)
+}
+
+/* ── RETIRED (Oct 2026) ──────────────────────────────────────────────────────
+   Pages merged into another URL. Nothing imports this array, so nothing here
+   renders or appears in the sitemap; it is kept so the text is not lost.
+
+   bpc-157-vs-tb-500: the same comparison existed twice, here and at
+   /compare/bpc-157-vs-tb-500, splitting ranking signal between two URLs so
+   neither could rank (Oct 2026 content audit, "High"). The /compare version
+   is kept — it fits that set and carries FAQ schema — and
+   /research/bpc-157-vs-tb-500 301s to it (next.config.js).
+   ────────────────────────────────────────────────────────────────────────── */
+export const RETIRED_ARTICLES: Article[] = [
+  {
     id: 'peptide-quality-failures',
-    title: 'How Research Peptide Vials Fail Quality Control — And the Six Checks That Catch It',
+    title: 'How Peptide Vials Fail QC: 6 Checks That Catch It',
     date: 'Sep 2026',
     dateISO: '2026-09-14',
     metaDescription: 'Purity, net content, identity and endotoxin are four independent measurements. Published testing data show how research peptides actually fail — and how to verify.',
@@ -1301,298 +1616,4 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
-  {
-    id: 'cold-chain-customs-uk-uae',
-    title: 'Do Research Peptides Need Refrigeration? Cold Chain, Customs and Carriers',
-    date: 'Sep 2026',
-    dateISO: '2026-09-14',
-    metaDescription: 'What the published stability data actually say about shipping lyophilised peptides, why dry ice is the wrong coolant, and how UK and UAE customs treat peptides.',
-    tag: 'Guide',
-    readTime: '11 min',
-    excerpt:
-      'The published stability data say lyophilised material is far more robust in transit than the ice packs imply, the real thermal risk sits in customs hold rather than scheduled transit, and dry ice is more dangerous to material in solution than an ambient excursion is.',
-    image: 'guide',
-    content: [
-      {
-        type: 'intro',
-        text: 'Two questions dominate every enquiry about research peptide supply: will it clear customs, and will it survive the journey. Behind the second sits a narrower one — do research peptides need refrigeration in transit at all, or is the ice pack theatre? The honest answers are more interesting than the marketing. One of them contradicts an industry convention that almost every supplier repeats, this one included.',
-      },
-      { type: 'heading', text: 'The Stability Science' },
-      {
-        type: 'paragraph',
-        text: 'The best-characterised published data point comes from a 2026 study of thermally stressed solid-state semaglutide. Using FT-IR, circular dichroism, modulated DSC, RP-HPLC and LC-HRMS, the authors found the material retains its native α-helical conformation up to 60 °C, with helical content falling from 49.07% to 43.75% at 60 °C and collapsing to 0.2% at 80 °C. The amorphous solid has a glass transition temperature of 169 °C.',
-      },
-      {
-        type: 'paragraph',
-        text: 'That figure is the crux. Below its glass transition the matrix is a rigid glass, and molecular mobility — and therefore the hydrolysis, deamidation and aggregation that destroy peptides — is kinetically suppressed. A parcel sitting at 35 °C in a Dubai delivery van is roughly 134 °C below Tg. The temperature that genuinely threatens a lyophilised peptide is not shipping ambient; it is the 60–80 °C range where secondary structure collapses. The same paper still reports temperature-dependent degradation, so robust does not mean unaffected — but the order of magnitude is not what cold-chain marketing implies.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The mechanism is chemistry rather than folklore: deamidation, the dominant degradation route for peptides containing asparagine or glutamine, is water-mediated. Lyophilisation removes the reactant. A dry cake is slow, not inert.',
-      },
-      { type: 'heading', text: 'What the Innovators\u2019 Own Labels Permit' },
-      {
-        type: 'paragraph',
-        text: 'The most persuasive evidence is what manufacturers submitted to regulators about their own products. Ozempic\u2019s FDA label §16 states that after first use the pen can be stored for 56 days at controlled room temperature, 15–30 °C. Mounjaro, per its SmPC, may be stored unrefrigerated for up to 30 days at a temperature not above 30 °C after first use.',
-      },
-      {
-        type: 'paragraph',
-        text: 'These are aqueous, preservative-containing solutions — the physically less stable form — and the regulatory dossier permits a month at 30 °C. They are in-use allowances following an unbroken cold chain, not licence to ship warm, but they establish the scale. A two to four day air transit at ambient is not the event that degrades the molecule.',
-      },
-      {
-        type: 'paragraph',
-        text: 'A useful real-world analogue: a 2021 PLOS ONE study placed insulin under temperature profiles logged in a refugee camp in northern Kenya, oscillating between 25 °C and 37 °C. Weekly HPLC showed conformity to pharmacopoeial guidelines across four weeks, and bioactivity in hepatic cells was identical to material held at 2–8 °C.',
-      },
-      { type: 'heading', text: 'The Asymmetry That Actually Matters: Do Not Freeze' },
-      {
-        type: 'paragraph',
-        text: 'Both labels above carry the same instruction, and it points the opposite way to intuition: do not freeze, and do not use if it has been frozen. Freezing damages peptide solutions through ice-interface denaturation and freeze-concentration.',
-      },
-      {
-        type: 'callout',
-        text: 'This produces the most counter-intuitive conclusion in this article: for any peptide shipped in solution rather than as a lyophilised solid, dry ice poses a greater risk to the material than an ambient excursion does.',
-      },
-      {
-        type: 'paragraph',
-        text: 'For context on what the industry considers a punishing thermal challenge, ICH Q1A(R2) sets the accelerated stability condition at 40 °C and 75% relative humidity for six months. A 72-hour transit is not in the same universe. ICH also supplies the right tool for assessing an excursion — mean kinetic temperature, weighted by the Arrhenius equation — and published modelling shows excursions consume a stability budget rather than producing a binary pass or fail.',
-      },
-      { type: 'heading', text: 'So What Does Cold-Chain Dispatch Actually Buy' },
-      {
-        type: 'list',
-        items: [
-          'Protection against tail risk. Not the scheduled transit, but the parcel forgotten in a sorting hub or standing on a Gulf tarmac where surface temperatures reach the range that does matter.',
-          'Documentary evidence of controlled conditions. A quality-system artefact under Good Distribution Practice, which is a real and separate value.',
-          'Signal — which is legitimate, provided it is not dressed as the first two.',
-        ],
-      },
-      {
-        type: 'paragraph',
-        text: 'What it does not buy, on any evidence located: preserved potency that would otherwise be lost over 48–72 hours of ambient transit in a lyophilised product. The genuine dividing line is solid versus solution, not cold versus warm. Lyophilised powder in short transit is a minor thermal event; its real risks are moisture ingress — a stopper and seal problem, not an ice pack problem — and sustained heat above 60 °C. In solution, water is present, degradation chemistry proceeds, and freezing becomes a distinct failure mode. That is where controlled 2–8 °C storage genuinely earns its place: in qualified cold storage at the receiving facility, not in the carrier\u2019s network.',
-      },
-      { type: 'heading', text: 'Standards and Carriers' },
-      {
-        type: 'paragraph',
-        text: 'EU Good Distribution Practice (2013/C 343/01), Chapter 9 governs transport and is applied by the MHRA. Its principle: regardless of mode, it should be possible to demonstrate that the medicines have not been exposed to conditions that may compromise their quality and integrity. Three requirements are worth quoting because they are frequently ignored — container selection must account for the estimated maximum time for transportation including transit storage at customs; monitoring equipment must be calibrated at least once a year; and if cool-packs are used in insulated boxes they must be located so the product does not come into direct contact with the cool-pack.',
-      },
-      {
-        type: 'paragraph',
-        text: 'WHO TRS 961 Annex 9 sets container qualification expectations: a qualified passive system must demonstrate it can hold the required range, documenting the packaging assembly, conditioning regime and the minimum and maximum shipping volume and thermal mass it accommodates. Data loggers should be accurate to ±0.5 °C, recording at least six times per hour. On excursions, affected product is to be quarantined and evaluated, not automatically discarded. ISTA 7E profiles, developed from real-world data across 82 shipping lanes, are published in 72-hour and 144-hour variants.',
-      },
-      {
-        type: 'callout',
-        text: 'One gap worth stating: no neutral, non-commercial source publishes comparative hold times for gel packs versus dry ice versus phase-change materials. Every such figure originates from a packaging manufacturer marketing its own product. WHO TRS 961 treats coolants as ancillary packaging with no independent duration requirement — performance is only ever established by qualifying the complete system.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Dry ice is a regulatory event. Under IATA Packing Instruction 954 it is UN 1845, Class 9 dangerous goods: packaging must vent to prevent pressure build-up, the outer must be marked with UN 1845, the proper shipping name and net weight in kilograms and carry a Class 9 label, the air waybill needs a specific entry, and shippers require IATA or DOT training renewed every two years. Combined with the freezing prohibition above, the conclusion is clean: dry ice is the wrong coolant for peptide product in almost every commercial scenario. It adds a dangerous-goods burden and introduces a failure mode.',
-      },
-      {
-        type: 'paragraph',
-        text: 'A caution on carriers: none of the major integrators publishes a pharmaceutical acceptance rule. DHL routes such questions to a restricted commodities team; UPS accepts certain categories on a contractual basis only. Acceptance here is a commercial relationship, not a public standard.',
-      },
-      { type: 'heading', text: 'The UK Border' },
-      {
-        type: 'paragraph',
-        text: 'The classification framework — the two-limb medicinal product test under the Human Medicines Regulations 2012, the supply prohibitions in regulations 46 and 255, and the penalties in regulation 47 — is covered in full in our UK legal status guide. Two points specific to physically moving goods across the border are worth adding, because both are routinely reported wrongly.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Customs classification saves nothing fiscally. Duty on peptide hormones into the UK is zero. Commodity heading 2937 — which expressly covers chain modified polypeptides used primarily as hormones — attracts 0.00% third-country duty and 20% import VAT. Laboratory reagents under 3822 also attract 0% duty and 20% VAT. Declaring under a reagent code therefore changes no tax outcome whatsoever; the only variable it moves is the regulatory flag attached to the commodity code, which makes misclassification a customs exposure rather than a tax strategy. Separately, VAT liability shifts at £135 consignment value.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The controlled-drug trap. Most research peptides — BPC-157, TB-500, ipamorelin, CJC-1295, sermorelin, tesamorelin, melanotan — are not controlled under the Misuse of Drugs Act 1971. But somatropin, somatotropin, somatrem and human chorionic gonadotrophin are Class C controlled drugs, added by the 1996 Modification Order. There is no simple possession offence for Schedule 4 Part II drugs, but a 2012 amendment narrowed the import exemption to importation carried out in person for administration to that person. A courier parcel is not "in person". Mail-ordering somatropin or hCG into the UK is therefore an importation offence, not merely a medicines-regulation breach — a change made in 2012 and still reported incorrectly across most of the industry.',
-      },
-      { type: 'heading', text: 'The UAE Border' },
-      {
-        type: 'paragraph',
-        text: 'A free zone sits outside the import perimeter by definition. The governing law defines import as bringing products from outside the country or its free zones to the mainland. A free-zone entity can therefore hold and re-export stock without it ever having been imported; the regulatory event occurs at the moment goods cross into the mainland, which requires marketing approval and an import permit. A free-zone licence is not market access, and it is not a workaround for product registration. Note also that the scope of licensable establishments expressly includes research entities, contract research organisations, pharmaceutical laboratories and biobanks — describing an activity as research does not remove it from the licensing regime, it places it inside a different part of it.',
-      },
-      {
-        type: 'paragraph',
-        text: 'On customs specifically: Abu Dhabi Customs lists pharmaceutical preparations and medicines, medical devices, accessories, laboratory solutions and sterilization devices as restricted and requiring health-ministry approval — the closest official UAE text to research-reagent classification, and notable because it routes lab solutions through the health regulator by default rather than a general chemicals regime. Dubai Customs applies 5% duty on CIF value and prohibits bulk quantities for personal use without special permission.',
-      },
-      { type: 'heading', text: 'What This Adds Up To' },
-      {
-        type: 'paragraph',
-        text: 'Transit duration is not the binding constraint on a UK–UAE lane. Against in-use ambient allowances measured in weeks and a solid-state glass transition at 169 °C, a two to four day express transit is thermally trivial. The binding constraints are customs hold time — unbounded, and expressly called out in EU GDP as a factor in container selection — and peak temperature in sorting hubs and on tarmac, neither of which is a function of how fast the plane flies.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The regulatory constraints are the real ones, and they are not symmetrical: the UK question is medicines classification and the controlled-drug carve-outs; the UAE question is mainland entry, registration and the free-zone boundary. Neither is solved by a label, and neither is solved by an ice pack.',
-      },
-      {
-        type: 'callout',
-        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. This article addresses material handling and regulatory logistics; it is not guidance on administration, and a research-use designation does not authorise human use.',
-      },
-    ],
-  },
 ]
-
-/* ──────────────────────────────────────────────────────────────────────────
-   HELD FOR REGULATORY REVIEW — NOT PUBLISHED
-   ──────────────────────────────────────────────────────────────────────────
-   This article is complete and ready. It is deliberately NOT spread into
-   ARTICLES above, so it does not render, does not appear in /research, is not
-   in the sitemap, and is not indexed.
-
-   WHY IT IS GATED
-   Its own editorial brief flagged it as the one of the five to hold if only
-   one is held, and the reasons are specific rather than theoretical:
-
-     - MHRA named retatrutide in three separate seizure announcements across
-       2025–26, the most recent involving arrests under the Human Medicines
-       Regulations 2012.
-     - The UAE's Emirates Drug Establishment ran a July 2026 campaign naming
-       retatrutide as unapproved, acting against 71 sources and referring 14
-       influencers to the media authority. That is PepcoLab's primary market.
-     - FDA warning letters establish that intended use is inferred from the
-       TOTALITY of a site's copy — mechanism claims, outcome claims, vial
-       sizing, selling bacteriostatic water alongside — and that a
-       "research use only" disclaimer does not cure it.
-     - Eli Lilly filed suit against six companies in August 2026 over
-       retatrutide sales. Civil litigation risk on top of regulatory risk.
-
-   The decisive fact is that PepcoLab SELLS retatrutide. A page reporting
-   human weight-loss percentages at named dose levels, on the same domain as a
-   purchase path for that compound, is precisely the adjacency the FDA's
-   totality-of-copy test is designed to catch. The article itself is written
-   defensibly — published data only, explicit unapproved status, no
-   administration guidance, no CTA — but whether to publish it at all is a
-   commercial risk judgement, not a copywriting one.
-
-   TO PUBLISH: move this object into the ARTICLES array above. Nothing else
-   needs to change. Do NOT link it from product pages, and do not add Product
-   or Offer schema to it.
-   ────────────────────────────────────────────────────────────────────────── */
-export const HELD_FOR_REVIEW_ARTICLES: Article[] = [
-  {
-    id: 'glp1-receptor-agonists-compared',
-    title: 'Retatrutide vs Tirzepatide vs Semaglutide — Pharmacology, Trial Evidence and Regulatory Reality',
-    date: 'Sep 2026',
-    dateISO: '2026-09-14',
-    metaDescription: 'Mono-, dual- and triple-agonist pharmacology, TRIUMPH and SURMOUNT trial data, and the September 2026 regulatory position in the UK and UAE.',
-    tag: 'Metabolic',
-    readTime: '12 min',
-    excerpt:
-      'One is a GLP-1 mono-agonist, one a GIP/GLP-1 dual agonist, one a triple agonist adding glucagon. Two are licensed medicines in the UK; one is approved nowhere on earth.',
-    image: 'metabolic',
-    content: [
-      {
-        type: 'intro',
-        text: 'The incretin class has expanded faster than almost any area of modern pharmacology, and the naming has not helped. Semaglutide, tirzepatide and retatrutide are structurally related, share a synthetic lineage, and are frequently discussed as a progression — as though each were simply a more powerful version of the last. They are meaningfully different molecules with different receptor profiles, and, critically, different legal statuses.',
-      },
-      { type: 'heading', text: 'Receptor Pharmacology' },
-      {
-        type: 'paragraph',
-        text: 'Semaglutide is a GLP-1 receptor mono-agonist built on the human GLP-1(7-37) backbone, 31 amino acids, 4113.58 Da. An α-aminoisobutyric acid substitution at position 8 blocks DPP-4 cleavage; lysine 26 carries a C18 fatty diacid attached through a γ-glutamate and two hydrophilic spacers, driving albumin binding — and an arginine substitution at position 34 exists specifically to ensure only one diacid attaches. Published potency: GLP-1 receptor EC50 of 6.2 pM, binding IC50 of 0.38 nM without albumin rising to 357 nM in 2% albumin, a 940-fold shift that is itself the protraction mechanism. Half-life approximately one week.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Tirzepatide is a 39-residue GIP/GLP-1 dual agonist, 4813.53 Da, C-terminally amidated, with Aib at positions 2 and 13 and a C20 diacid on lysine 20 via an AEEA₂–γGlu linker. Its agonism is deliberately imbalanced: binding and stimulation at the GIP receptor is similar to native GIP, whereas activity at the GLP-1 receptor is less than native GLP-1. Half-life approximately five days.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Retatrutide is a 39-residue triple agonist at GIP, GLP-1 and glucagon receptors, 4731 Da, built on a GIP peptide backbone, with Aib at positions 2 and 20, α-methyl-leucine at 13, and a γGlu-linked long-chain fatty diacid on lysine 17. Half-life approximately six days. In-vitro EC50 values against human receptors, from Coskun and colleagues in Cell Metab (2022): GIP receptor 0.0643 nM, GLP-1 receptor 0.775 nM, glucagon receptor 5.79 nM — characterised in that paper as balanced GCGR and GLP-1R activity but more GIPR activity. Secondary sources frequently invert the direction of the derived potency ratios.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Cagrilintide sits outside this lineage entirely: a 37-residue long-acting acylated amylin analogue derived from pramlintide, 4409 Da, agonist at both amylin and calcitonin receptors, half-life roughly seven to eight days. Two substitutions — N14E and V17R — form an intramolecular salt bridge that blocks amyloid fibril formation, amylin\u2019s defining pharmaceutical problem.',
-      },
-      { type: 'heading', text: 'What the Trials Reported' },
-      {
-        type: 'paragraph',
-        text: 'A note before the numbers, because cross-compound comparison is exactly where this goes wrong: these trials report under different estimands, and figures are not interchangeable between them.',
-      },
-      {
-        type: 'list',
-        items: [
-          'Semaglutide: STEP 1 (NEJM 2021, n = 1,961, 68 weeks) reported mean weight change of −14.9% against −2.4% on placebo. SELECT (NEJM 2023, n = 17,604) reported a primary MACE hazard ratio of 0.80. SUSTAIN-6 carried a safety signal: diabetic retinopathy complications at 3.0% versus 1.8%, p = 0.02.',
-          'Tirzepatide: SURMOUNT-1 (NEJM 2022, n = 2,539, 72 weeks) reported −15.0%, −19.5% and −20.9% at 5, 10 and 15 mg against −3.1% placebo. SURMOUNT-5, head-to-head against semaglutide (NEJM 2025, n = 751), reported −20.2% versus −13.7%.',
-          'Retatrutide: Phase 2 (NEJM 2023, n = 338, 48 weeks) reported −8.7%, −17.1%, −22.8% and −24.2% at 1, 4, 8 and 12 mg against −2.1% placebo. The Phase 3 TRIUMPH programme has since read out: TRIUMPH-1 (May 2026, n = 2,339, 80 wk) −28.3% at 12 mg; TRIUMPH-4 (Dec 2025, n = 445) −28.7%; TRIUMPH-2 (Jul 2026, n = 1,152) up to −20.8%; TRIUMPH-3 (Jul 2026, n = 1,949) up to −22.6%.',
-          'CagriSema: REDEFINE 1 (NEJM 2025, n = 3,417, 68 weeks) reported −20.4% against −3.0% placebo on the treatment-policy estimand.',
-        ],
-      },
-      {
-        type: 'paragraph',
-        text: 'Adverse events across the class are predominantly gastrointestinal, dose-related and concentrated during escalation. Retatrutide carries two signals that distinguish it: dose-dependent heart rate increases peaking around week 24 before declining, attributable to glucagon receptor agonism, and dysesthesia reported at 12.5% on 12 mg against 0.9% on placebo in TRIUMPH-1. Discontinuation for adverse events rose with dose, reaching 11.3% at 12 mg.',
-      },
-      {
-        type: 'callout',
-        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. Trial doses are reported here as published experimental parameters. Nothing in this article constitutes guidance on administration, and a research-use designation does not authorise human use.',
-      },
-      { type: 'heading', text: 'Regulatory Status, September 2026' },
-      {
-        type: 'paragraph',
-        text: 'United Kingdom: semaglutide is licensed as Wegovy for weight management and as Ozempic and Rybelsus for type 2 diabetes. Tirzepatide is licensed as Mounjaro for both indications. Retatrutide, cagrilintide and CagriSema hold no UK marketing authorisation. Eli Lilly has stated it plans to submit a New Drug Application for retatrutide to the FDA in Q1 2027 — meaning that as of today, retatrutide is not approved in any jurisdiction on earth and no application has been filed anywhere.',
-      },
-      {
-        type: 'paragraph',
-        text: 'United Arab Emirates: oral semaglutide was approved by the Emirates Drug Establishment on 1 June 2026, launching 3 June — the first country outside the US. Orforglipron was approved in April 2026. Retatrutide and cagrilintide are not approved. Note that the UAE\u2019s regulator changed: Federal Decree-Law No. 38 of 2024 came into force on 2 January 2025, transferring federal responsibility for medical product approvals from MoHAP to the Emirates Drug Establishment. Any guidance referring to MoHAP as the current federal gate is out of date.',
-      },
-      { type: 'heading', text: 'The Enforcement Position' },
-      {
-        type: 'paragraph',
-        text: 'The FDA has stated that a research-use label is not a defence. Its guidance page, last updated 1 September 2026, refers specifically to illegally sold unapproved drugs containing semaglutide, tirzepatide, retatrutide, survodutide or mazdutide that are falsely labeled for research purposes or not for human consumption, and states that retatrutide and cagrilintide cannot be used in compounding under federal law.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The agency\u2019s warning letters make the mechanism explicit. In a February 2025 letter: despite statements such as research use only, not for human consumption, lab purposes only, evidence obtained from the website establishes that certain products offered for sale are drugs intended for human use. Intended use is determined from the totality of website and marketing copy — mechanism claims, outcome claims, reconstitution instructions, vial sizing, the sale of bacteriostatic water alongside. The disclaimer does not cure it.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The MHRA has named retatrutide in three separate seizure announcements. In October 2025, a Northampton warehouse raid recovered over 2,000 unlicensed retatrutide and tirzepatide pens. In February 2026, a second facility was disrupted across Lincolnshire and Nottinghamshire. On 28 May 2026 the agency\u2019s largest-ever seizure of unlicensed weight-loss medicines recovered approximately 12,000 doses near Northampton, with two men arrested on suspicion of offences under the Human Medicines Regulations 2012. MHRA\u2019s 2025 annual figures: almost £45 million street value, nearly 20 million doses, over 1,500 websites and social accounts disrupted.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The UAE regulator has run the same campaign. On 25 July 2026 the Emirates Drug Establishment reported action against 71 sources marketing or selling unapproved peptide-based weight-loss products, referred 14 social media influencers to the national media authority, and implicated 14 registered establishments. Retatrutide was named specifically as unapproved and still in clinical trials. Notably, no unapproved peptides were found in licensed pharmaceutical warehouses — the illicit supply sits entirely outside the licensed distribution chain.',
-      },
-      { type: 'heading', text: 'Why Impurity Profiles Matter More for This Class' },
-      {
-        type: 'paragraph',
-        text: 'Acylated long-acting analogues are amphiphilic by design — a hydrophobic C18 or C20 diacid grafted onto a hydrophilic peptide. That hydrophobicity drives the intended albumin binding and also unintended self-association. Aggregate control is therefore a potency-relevant specification, not a cosmetic one — and aggregates are largely invisible to analytical RP-HPLC.',
-      },
-      {
-        type: 'paragraph',
-        text: 'More subtly, the acyl group is hydrolytically labile. Losing the fatty diacid produces a des-acyl impurity that is still an intact, receptor-active peptide — but with native-GLP-1-like pharmacokinetics measured in minutes rather than days. It will not appear as missing peptide in a content assay. Only a resolving related-substances method separates it. Mis-acylation regiochemistry is a structurally anticipated failure mode: semaglutide\u2019s Arg34 substitution exists precisely to prevent a second diacid attaching.',
-      },
-      {
-        type: 'paragraph',
-        text: 'A final note on specifications: there is no pharmacopoeial standard establishing 98% or 99% purity for these compounds outside an approved drug substance monograph. Every such figure in circulation is a market convention. A single area-percent number says nothing about which impurities are present, their identity, or counterion content.',
-      },
-    ],
-  },
-]
-
-
-// FIX: counts (18, 24, 12, 15 in the original) were hardcoded placeholders
-// that never matched the real 6-article catalogue above — a visitor
-// filtering by "Recovery" would see "18" in the pill and find one article.
-// Derived from ARTICLES instead, so the number shown always matches reality.
-export const TAG_COLOR: Record<string, string> = {
-  Recovery: '#22c55e',
-  Metabolic: '#f97316',
-  Cognitive: '#8b5cf6',
-  Longevity: '#3b82f6',
-  Aesthetic: '#ec4899',
-  Guide: '#64748b',
-}
-
-export const CATEGORIES = Array.from(new Set(ARTICLES.map((a) => a.tag))).map((title) => ({
-  title,
-  count: ARTICLES.filter((a) => a.tag === title).length,
-  color: TAG_COLOR[title] ?? '#64748b',
-}))
-
-export const tagColors: Record<string, { bg: string; text: string }> = {
-  Recovery: { bg: '#dcfce7', text: '#16a34a' },
-  Metabolic: { bg: '#ffedd5', text: '#c2410c' },
-  Cognitive: { bg: '#ede9fe', text: '#7c3aed' },
-  Longevity: { bg: '#dbeafe', text: '#1d4ed8' },
-  Aesthetic: { bg: '#fce7f3', text: '#be185d' },
-  Guide: { bg: '#f1f5f9', text: '#475569' },
-}
-
-export function getArticleBySlug(slug: string) {
-  return ARTICLES.find((a) => a.id === slug)
-}

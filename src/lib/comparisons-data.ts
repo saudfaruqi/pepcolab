@@ -34,16 +34,40 @@
 // pages that do are winning the question boxes underneath. See
 // components/FaqSection.tsx for the two rules governing those answers.
 
+import type { ContentBlock } from '@/lib/guides-data'
+
 export type ComparisonRow = { label: string; a: string; b: string }
 
 export type Comparison = {
   slug: string
   compoundA: string
   compoundB: string
+  /** The H1. Written for the reader; may run past 60 characters. */
   title: string
+  /**
+   * Optional short <title> for search results, used instead of `title` when
+   * present. Same reasoning as Guide.seoTitle — Google truncates around 60
+   * characters including the " | PepcoLab" suffix.
+   */
+  seoTitle?: string
   metaDescription: string
   intro: string
   rows: ComparisonRow[]
+  /**
+   * Optional long-form body, rendered between the comparison table and the
+   * takeaway.
+   *
+   * Most comparisons here are a table and a paragraph — two compounds, a few
+   * rows of difference. But a comparison can also be the genuinely
+   * substantial page on a topic (collagen vs research peptides is 2,250
+   * words), and before this field the only way to publish one of those was
+   * to put it in /guides and lose the comparison framing, or to flatten the
+   * whole article into table rows and lose the article.
+   *
+   * Uses the same ContentBlock shape as guides-data.ts, so inline
+   * [label](/href) links and the FAQ renderer behave identically.
+   */
+  content?: ContentBlock[]
   takeaway: string
   relatedResearchIds?: string[]
   /**
@@ -96,6 +120,240 @@ export function productLabel(slug: string): string {
 }
 
 export const COMPARISONS: Comparison[] = [
+  {
+    // SUPPLIED ARTICLE (Oct 2026), published per its own brief. The Oct 2026
+    // content audit flagged this gap: "collagen peptides" is about 4,000 UK
+    // Amazon searches a month — the biggest peptide term in UK shopping
+    // search — and the intent behind it is confused in both directions.
+    // Shoppers searching "peptides" land on collagen tubs; people looking for
+    // a defined sequence land on food supplements.
+    //
+    // Placed FIRST so it leads the /compare hub, which renders in array order.
+    // It is the only page here aimed at someone who does not yet know what
+    // category they are in, so it is the right front door.
+    //
+    // It is also the first comparison to use the `content` field: at ~2,250
+    // words this is a full article, not a table and a paragraph. See the
+    // field's comment above for why that was added rather than flattening
+    // the piece into rows.
+    //
+    // Compliance: chemistry, measurement and regulation only. The cosmetic
+    // section deliberately stops at whether a molecule can physically cross
+    // a barrier and says outright that this implies nothing about effect.
+    // Keep it that way — collagen is a food-supplement category with its own
+    // claims regime, and an effect claim here would import that problem.
+    slug: 'collagen-peptides-vs-research-peptides',
+    compoundA: 'Collagen peptides',
+    compoundB: 'Research peptides',
+    title: 'Collagen Peptides vs Research Peptides: What’s the Difference?',
+    seoTitle: 'Collagen Peptides vs Research Peptides',
+    metaDescription:
+      'Collagen peptides and research peptides share a name, not much else. How each is made, how big they are, how they are tested and regulated in the UK and UAE.',
+    intro:
+      'Type “peptides” into a shopping search in the UK and the top results are mostly tubs of collagen peptides. Type it into a science database and you get synthetic sequences of a few amino acids. Both are called peptides, both are white powders, and both are sold online in the UK and the UAE. They are almost entirely different things.',
+    rows: [
+      { label: 'Starting point', a: 'Animal collagen (cow, pig, fish, chicken)', b: 'Individual amino acids' },
+      { label: 'How it is made', a: 'Natural protein is cut into fragments by enzymes or acid', b: 'One sequence is built residue by residue, then purified' },
+      { label: 'What is in it', a: 'A mixture of many different fragments', b: 'One defined sequence' },
+      { label: 'Described by', a: 'Source and average molecular weight', b: 'Exact sequence and exact molecular weight' },
+      { label: 'Typical size', a: 'About 3,000 to 6,000 Da on average', b: 'Usually a few hundred to a few thousand Da' },
+      { label: 'Key quality questions', a: 'Collagen content, size distribution, species, contaminants', b: 'Identity, purity, net peptide content, lot match' },
+      { label: 'Sold as (UK and UAE)', a: 'Food or health supplement', b: 'Laboratory reagent, research use only' },
+      { label: 'Sold in', a: 'Tubs, sachets, drinks', b: 'Sealed vials of freeze-dried powder' },
+    ],
+    content: [
+      {
+        type: 'callout',
+        text: 'Quick answer: collagen peptides are a mixture of fragments made by breaking down collagen, a large animal protein. They are sold as a food or supplement. A research peptide is one defined amino acid sequence built in a laboratory, confirmed by mass spectrometry and sold as a reagent for in vitro research. One is a blend of many molecules; the other is a single molecule.',
+      },
+      { type: 'heading', text: 'What is collagen?' },
+      {
+        type: 'paragraph',
+        text: 'Collagen is a structural protein and the most abundant protein in mammals, making up roughly a quarter to a third of all the protein in the body. Scientists have described 28 types; type I is by far the most common and is the main source of commercial collagen.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A collagen molecule is built from three long protein chains, called alpha chains, wound around each other in a tight triple helix. Each chain weighs about 100,000 daltons (Da), and the finished molecule weighs around 300,000 Da. The sequence has an unusual, repetitive pattern: glycine sits at every third position, so glycine makes up about a third of all the amino acids, and proline together with hydroxyproline accounts for roughly another fifth.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Hydroxyproline is the interesting one. It is rare in other proteins, which is why laboratories measure it to estimate how much collagen a sample contains. Keep that in mind; it comes up again when we look at testing.',
+      },
+      { type: 'heading', text: 'What are collagen peptides?' },
+      {
+        type: 'paragraph',
+        text: 'Collagen peptides, also sold as hydrolysed collagen (often spelled hydrolyzed collagen) or collagen hydrolysate, are what you get when you take that 300,000 Da protein and cut it into small pieces. Manufacturers usually do this in two stages:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Denature: heat separates the three alpha chains of the helix.',
+          'Hydrolyse: enzymes such as alcalase, papain or pepsin cut the chains into fragments. Acid or alkali treatment can also be used, though it leaves more salt behind.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'The result is not one molecule. It is a large mixture of fragments of different lengths and sequences, described by an average molecular weight, typically about 3,000 to 6,000 Da, with ranges from below 1,000 Da to over 10,000 Da depending on the raw material and the process. Two products can both be honestly labelled “collagen peptides” and contain quite different fragment profiles.',
+      },
+      { type: 'heading', text: 'Gelatin vs collagen peptides' },
+      {
+        type: 'paragraph',
+        text: 'Gelatin is the halfway house. It is collagen that has been only partly broken down, so its fragments are still long enough to tangle together and set into a gel as it cools. Collagen peptides are hydrolysed much further, which is why they dissolve in cold water and do not gel. Same starting protein, different degree of cutting.',
+      },
+      { type: 'heading', text: 'What is a research peptide?' },
+      {
+        type: 'paragraph',
+        text: 'A research peptide starts from the opposite end. Instead of cutting a big natural protein into random pieces, a laboratory builds one specific chain of amino acids, one residue at a time, usually by solid-phase peptide synthesis. The target is a single, exact sequence with a single, exact molecular weight. Our guide [what are peptides?](/guides/what-are-peptides) walks through the chemistry.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That precision is the whole point. A research peptide is a reagent for in vitro and preclinical work, where a scientist needs to know exactly which molecule is in the tube. It is not a food, not a supplement, not a cosmetic and not a medicine, and it is sold strictly for research use.',
+      },
+      { type: 'heading', text: 'How big is each one? Collagen and peptides on one scale' },
+      {
+        type: 'paragraph',
+        text: 'Molecular weight is the clearest way to see the difference. This puts a full collagen molecule, the fragments in a collagen powder and some well-known defined peptides on the same scale.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Collagen molecule (triple helix) — about 300,000 Da — three intact alpha chains',
+          'One collagen alpha chain — about 100,000 Da — a single chain of the helix',
+          'Average collagen peptide — about 3,000 to 6,000 Da — average of a mixture of fragments',
+          'BPC-157 — 1,419.56 Da — one defined 15-residue sequence',
+          'Palmitoyl pentapeptide-4 (pal-KTTKS) — 802.05 Da — one defined cosmetic peptide',
+          'GHK — 340.38 Da — one defined 3-residue sequence',
+          'Glycine — 75.07 Da — a single amino acid',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Two things stand out. A full collagen molecule weighs nearly 900 times as much as GHK. And the collagen peptide row is the only one with a range instead of a number, because it is the only one that is not a single molecule.',
+      },
+      { type: 'heading', text: 'Why the testing questions are completely different' },
+      {
+        type: 'paragraph',
+        text: 'Because the products are different kinds of thing, the tests that matter are different too. Asking a collagen supplier for a mass spectrometry identity result, or a peptide supplier for a hydroxyproline figure, would miss the point.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A collagen powder is typically tested for:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Collagen or protein content: often estimated from hydroxyproline, the near-unique collagen amino acid.',
+          'Molecular weight distribution: measured by size-exclusion chromatography to show the spread of fragment sizes.',
+          'Species identification: DNA tests that confirm the animal source, which matters for labelling and for halal status.',
+          'Contaminants: heavy metals and microbiological limits, as for any food ingredient.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'A research peptide is tested for something else entirely:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Identity (mass spectrometry): does the molecular weight match the one expected sequence? See [HPLC vs mass spectrometry](/guides/hplc-vs-mass-spectrometry).',
+          'Purity (HPLC): how much of the sample is that single compound, as opposed to shortened or faulty chains.',
+          'Net peptide content: how much of the powder’s weight is peptide rather than counterions and water. See [net peptide content explained](/guides/net-peptide-content).',
+          'Lot match: the certificate must be for the batch in your vial, not a different one.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'At PepcoLab every batch is tested by an independent third-party laboratory, and you can type the lot number from your vial into our [batch lookup](/verify) to see the certificate for that exact batch. Our guide to [reading a certificate of analysis](/guides/coa-interpretation) explains each line.',
+      },
+      { type: 'heading', text: 'Marine, bovine or porcine collagen: what the source changes' },
+      {
+        type: 'paragraph',
+        text: 'Collagen is labelled by where it came from: bovine (cow hide and bone), porcine (pig skin), marine (fish skin and scales) and chicken (often cartilage). The source does not change the basic chemistry described above, but it does change a few practical things for buyers in the UK and the UAE:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Allergen labelling: fish is one of the 14 allergens that must be declared on UK food labels, so marine collagen has to say so clearly.',
+          'Halal status: porcine collagen and gelatin cannot be halal, and bovine or chicken material needs a recognised halal certificate. In the UAE, registering an animal-derived supplement involves declaring the animal source and providing halal certification.',
+          'Fragment profile: different raw materials and processes give different average molecular weights, which is why the size range above is so wide.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'None of these questions applies to a synthetic research peptide, which is built from individual amino acids rather than extracted from an animal.',
+      },
+      { type: 'heading', text: 'Collagen in skincare vs peptides in skincare' },
+      {
+        type: 'paragraph',
+        text: 'The confusion gets worse on cosmetic labels, where “collagen” and “peptides” often appear in the same product. On an ingredient list, collagen usually appears as soluble collagen or hydrolyzed collagen. Cosmetic peptides appear under names such as copper tripeptide-1 (GHK-Cu), palmitoyl pentapeptide-4 (sold as Matrixyl) or acetyl hexapeptide-8 (sold as Argireline).',
+      },
+      {
+        type: 'paragraph',
+        text: 'Size is the physical difference that matters here. A widely quoted rule of thumb, set out by Bos and Meinardi in 2000, is that molecules much above about 500 Da struggle to pass through the outer layer of skin. The authors present it as a rough guide rather than a law, but the arithmetic is still striking: an intact collagen molecule is around 600 times that figure. Several cosmetic peptides are, by contrast, short sequences related to collagen itself. The GHK sequence occurs within collagen, and palmitoyl pentapeptide-4 is built on a short sequence from type I procollagen with a fatty-acid tail attached.',
+      },
+      {
+        type: 'callout',
+        text: 'Whether a molecule can physically get through a barrier is a question of size and chemistry. On its own it says nothing about what the molecule does, and nothing in this guide should be read as a claim about any product’s effect. For the cosmetic peptides compared directly, see [GHK-Cu vs Matrixyl](/compare/ghk-cu-vs-matrixyl).',
+      },
+      { type: 'heading', text: 'How each is regulated in the UK and UAE' },
+      {
+        type: 'paragraph',
+        text: 'In the UK, collagen powders and drinks are sold as foods or food supplements, so they fall under food law and the rules on nutrition and health claims. Claims have to be authorised before they can be used. In 2011 the European Food Safety Authority assessed an application for a collagen hydrolysate joint claim and concluded that a cause-and-effect relationship had not been established; the claim was refused in Regulation (EU) 379/2012, which remains part of law in Great Britain. The authorised claims that mention collagen relate to vitamin C, which contributes to normal collagen formation, not to collagen itself.',
+      },
+      {
+        type: 'paragraph',
+        text: 'In the UAE, supplements go through product registration before sale: federally with the Emirates Drug Establishment, and with Dubai Municipality through its Montaji platform for the Dubai market. Animal-derived ingredients must declare their source.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Research peptides are a different category altogether. They are supplied as laboratory reagents for in vitro and preclinical research, not as foods, supplements, cosmetics or medicines, and they are not for human or veterinary consumption. Regulators in both countries have made clear in 2026 that they judge a seller by how a product is presented and sold, not just by its label. Our guides to [research peptides in the UK](/guides/research-peptides-legal-status-uk) and [buying research peptides in the UAE](/guides/research-peptides-legal-status-uae) cover the detail.',
+      },
+      { type: 'heading', text: 'How to tell which one you are looking at' },
+      {
+        type: 'paragraph',
+        text: 'If a product listing just says “peptides”, a few questions sort it out quickly:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Is it one named sequence or a source? “Bovine collagen peptides” names a source. “GHK” or “BPC-157” names a sequence.',
+          'Is there a single molecular weight or an average? A range or an average means a mixture.',
+          'How is it packed? Tubs and sachets sold by the scoop are food products. Sealed vials of freeze-dried powder with a lot number are laboratory reagents.',
+          'What does the paperwork test? Hydroxyproline, species and microbiology point to collagen. HPLC purity and mass spectrometry identity point to a defined peptide.',
+          'Is there a certificate for your exact lot? For research peptides this is the question that matters most. See [how to tell if research peptides are real](/guides/how-to-spot-fake-peptides).',
+        ],
+      },
+    ],
+    takeaway:
+      'Collagen peptides are a mixture of fragments from a 300,000 Da animal protein; research peptides are single, defined sequences built in a lab. Collagen powders are described by source and average size; research peptides by exact sequence and exact molecular weight. They are tested for different things — collagen content and species, versus identity, purity and lot match. And in both the UK and the UAE, collagen is regulated as a food or supplement while research peptides are laboratory reagents for research use only.',
+    faq: [
+      {
+        q: 'Are collagen peptides the same as peptides?',
+        a: 'Collagen peptides are peptides in the chemical sense, because they are short chains of amino acids. But they are a mixture of many fragments from a broken-down protein, whereas a research peptide is one defined sequence made in a laboratory.',
+      },
+      {
+        q: 'What is the difference between collagen and collagen peptides?',
+        a: 'Collagen is the intact protein, a triple helix weighing around 300,000 Da. Collagen peptides are the fragments left after that protein has been broken down, typically averaging about 3,000 to 6,000 Da.',
+      },
+      {
+        q: 'Is hydrolysed collagen the same as collagen peptides?',
+        a: 'Yes. Hydrolysed collagen, hydrolyzed collagen, collagen hydrolysate and collagen peptides are different names for the same kind of product.',
+      },
+      {
+        q: 'What is the difference between gelatin and collagen peptides?',
+        a: 'Both come from collagen. Gelatin is only partly broken down, so it sets into a gel; collagen peptides are broken down further, so they dissolve in cold water and do not gel.',
+      },
+      {
+        q: 'Is marine collagen halal?',
+        a: 'Fish-derived collagen is generally regarded as halal-suitable, but buyers in the UAE should still look for a recognised halal certificate. Porcine collagen cannot be halal.',
+      },
+      {
+        q: 'Can you buy research peptides as a supplement?',
+        a: 'No. Research peptides are sold as laboratory reagents for in vitro research only. They are not foods or supplements and are not for human or veterinary consumption.',
+      },
+    ],
+    kind: 'practice',
+  },
   {
     slug: 'bpc-157-vs-tb-500',
     compoundA: 'BPC-157',
@@ -151,6 +409,7 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Primary research focus', a: 'Extracellular matrix remodelling, wound-healing and anti-inflammatory research', b: 'Collagen-signalling research in dermal fibroblast models' },
       { label: 'Copper dependency', a: 'Mechanism is copper-dependent — the copper ion is integral to its proposed activity', b: 'No copper involvement; mechanism is independent of metal-ion binding' },
       { label: 'Typical research format', a: 'Supplied as a lyophilised copper-complexed peptide', b: 'Supplied as a lyophilised lipidated peptide' },
+      { label: 'Not to be confused with', a: 'Collagen or “collagen peptides”, which are a mixture of protein fragments — see [collagen vs research peptides](/compare/collagen-peptides-vs-research-peptides)', b: 'Same — both of these are single defined sequences, not hydrolysed protein' },
     ],
     takeaway:
       'The overlap is functional (both appear in dermal-research and cosmetic-formulation literature), not structural — GHK-Cu is a copper-dependent tripeptide complex, Matrixyl is an unrelated palmitoylated pentapeptide. Reported research effects are not necessarily comparable in mechanism, magnitude, or evidence base.',

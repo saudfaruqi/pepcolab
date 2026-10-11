@@ -62,7 +62,9 @@ const STATIC_ROUTES: StaticRoute[] = [
   // /search removed from the sitemap (Sep 2026): a search interface has
   // nothing unique to index, and on a domain that is already being
   // crawl-rationed it competes with pages that do.
-  { path: '/reviews/write', changeFrequency: 'monthly', priority: 0.4 },
+  // /reviews/write REMOVED (Oct 2026): it is a form. A form has nothing to
+  // rank for, and on a small crawl budget it was one more URL Google was
+  // asked to spend a crawl on. It is now noindexed via its own layout.tsx.
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },
@@ -190,5 +192,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries, ...verifyEntries]
+  // verifyEntries is built above but deliberately NOT returned (Oct 2026):
+  // the batch pages are noindex,follow — see app/verify/[lot]/page.tsx — and
+  // a noindexed URL in a sitemap is a contradictory instruction that Search
+  // Console reports as an error. Re-add it here if the noindex is lifted.
+  void verifyEntries
+  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries]
 }

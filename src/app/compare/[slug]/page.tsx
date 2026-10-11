@@ -32,6 +32,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import FaqSection, { buildFaqJsonLd } from '@/components/FaqSection'
+import ContentBlocks from '@/components/ContentBlocks'
 import { COMPARISONS, getComparisonBySlug, productLabel } from '@/lib/comparisons-data'
 import { ARTICLES } from '@/lib/research-data'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
@@ -61,7 +62,8 @@ export function generateMetadata({ params }: Props): Metadata {
 
   const canonical = `/compare/${c.slug}`
   return {
-    title: c.title,
+    // seoTitle when set — see Comparison.seoTitle.
+    title: c.seoTitle || c.title,
     description: c.metaDescription,
     alternates: {
       canonical,
@@ -226,6 +228,15 @@ export default function ComparisonPage({ params }: Props) {
             </tbody>
           </table>
         </section>
+
+        {/* Long-form body, for comparisons that are a full article rather than
+            a table and a paragraph. Sits between the table and the takeaway so
+            the at-a-glance answer still comes first. */}
+        {c.content && c.content.length > 0 && (
+          <section style={{ maxWidth: 820, margin: '0 auto', padding: '8px 24px 0' }}>
+            <ContentBlocks content={c.content} />
+          </section>
+        )}
 
         <section style={{ maxWidth: 820, margin: '0 auto', padding: '24px 24px 16px' }}>
           <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 19, marginBottom: 10, color: '#0d0d0d' }}>Takeaway</h2>

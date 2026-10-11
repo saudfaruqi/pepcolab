@@ -216,7 +216,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'A research peptide is the opposite: one defined sequence, built residue by residue, with a specific molecular weight that can be confirmed by mass spectrometry. That is why the testing questions that matter for research peptides (is it the right molecule, and how much of it is there?) do not really apply to collagen powders, and vice versa.',
+        text: 'A research peptide is the opposite: one defined sequence, built residue by residue, with a specific molecular weight that can be confirmed by mass spectrometry. That is why the testing questions that matter for research peptides (is it the right molecule, and how much of it is there?) do not really apply to collagen powders, and vice versa. The two are compared in full — how each is made, how big they are, and how each is tested and regulated — in [collagen peptides vs research peptides](/compare/collagen-peptides-vs-research-peptides).',
       },
       { type: 'heading', text: 'How are peptides made?' },
       {
@@ -2413,7 +2413,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'If a supplier fails check 1, the rest is largely academic — you are evaluating documents whose author controls every copy. That is the bar we would ask anyone to hold us to as well: every batch PepcoLab has shipped is resolvable by lot number at [/verify](/verify), without an account, including the test date and the laboratory reference.',
+        text: 'If a supplier fails check 1, the rest is largely academic — you are evaluating documents whose author controls every copy. That is the bar we would ask anyone to hold us to as well: every batch PepcoLab has shipped is resolvable by lot number at [/verify](/verify), without an account, including the test date and the laboratory reference. And if you are not yet sure whether the product in front of you is a defined research peptide at all rather than a hydrolysed protein powder, [collagen peptides vs research peptides](/compare/collagen-peptides-vs-research-peptides) sorts that out first.',
       },
     ],
     faq: [

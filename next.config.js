@@ -61,6 +61,13 @@ const nextConfig = {
       { source: '/blog', destination: '/guides', permanent: true },
       { source: '/blog/:slug*', destination: '/guides', permanent: true },
 
+      // Oct 2026 content audit. /research/melanotan-ii is unpublished (moved to
+      // HELD_FOR_REVIEW_ARTICLES in research-data.ts) and its batch removed
+      // from coaData.ts. /research/bpc-157-vs-tb-500 duplicated
+      // /compare/bpc-157-vs-tb-500 and was merged into it (RETIRED_ARTICLES).
+      { source: '/research/melanotan-ii', destination: '/research', permanent: true },
+      { source: '/research/bpc-157-vs-tb-500', destination: '/compare/bpc-157-vs-tb-500', permanent: true },
+
       // /guides/dosage-calculations was renamed. The page's CONTENT was fine
       // (unit conversion, C1V1, serial dilution) but "dosage" in an indexed
       // URL and H1 is the exact signal regulators cite when disregarding a

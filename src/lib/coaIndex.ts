@@ -63,8 +63,6 @@ const MATCHERS: CoaMatcher[] = [
     test: (n) => has(n, 'tesamorelin') }, // only 5mg published
   { accession: '2606090459',
     test: (n) => has(n, 'igf') },
-  { accession: '2606090458',
-    test: (n) => has(n, 'mt2') || has(n, 'melanotan') }, // only 10mg published
   { accession: '2605180344',
     test: (n) => has(n, 'glow') },
   { accession: '2605180343',

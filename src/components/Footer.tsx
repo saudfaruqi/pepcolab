@@ -64,6 +64,12 @@ const LINKS = {
   Research: [
     { label: 'Research Hub',   href: '/research'      },
     { label: 'COA Library',    href: '/certificates'  },
+    // /verify (Oct 2026). The batch lookup is the one thing no competitor in
+    // this market offers, and it had a single internal link on the whole site
+    // (one button on the homepage). Search Console listed it as "Discovered —
+    // currently not indexed", never crawled. Same cause and same fix as /uk
+    // below: a footer link puts it one hop from every page.
+    { label: 'Verify a Batch', href: '/verify'        },
     // Reviews (Sep 2026). Open to anyone who has dealt with us, ordered or
     // not — the write page does not require an order code.
     { label: 'Reviews',        href: '/reviews'       },
@@ -75,6 +81,11 @@ const LINKS = {
     // attempted. A page in the sitemap and nowhere else tells Google it
     // exists and that nothing on the site considers it worth pointing at.
     { label: 'UK Launch',      href: '/uk'            },
+    // /dubai (Oct 2026): identical situation to /uk above — in the sitemap,
+    // zero internal links, reported "Discovered — currently not indexed" with
+    // no crawl ever attempted. It is the page aimed at the market that
+    // actually generates the orders (Dubai is the #1 city in Analytics).
+    { label: 'Dubai Delivery', href: '/dubai'         },
     { label: 'Help',           href: '/help'          },
     { label: 'Guides',         href: '/guides'        },
     { label: 'Comparisons',    href: '/compare'       },

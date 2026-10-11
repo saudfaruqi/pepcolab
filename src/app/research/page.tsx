@@ -69,7 +69,7 @@ export default function ResearchPage({ searchParams }: Props) {
             </div>
 
             <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(28px,4vw,44px)', letterSpacing: '-.04em', marginBottom: 10, color: '#0d0d0d' }}>
-              Protocols &amp; References
+              Peptide Research Library
             </h1>
 
             <p style={{ maxWidth: 640, fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)' }}>

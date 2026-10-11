@@ -61,6 +61,22 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: verifyHref(batch) },
+    // NOINDEX,FOLLOW (Oct 2026). Search Console had all nine batch pages as
+    // "Discovered — currently not indexed", never crawled — and a diff of two
+    // of them found 495 of 507 lines identical: about 28 unique words each.
+    // Thin near-duplicates do not get indexed, and on a young domain with a
+    // small crawl budget they also compete for crawls with pages that can
+    // actually convert.
+    //
+    // Nothing is lost by this: none of these pages was indexed. A customer
+    // still reaches their batch by typing the lot into /verify, which stays
+    // indexable and is now linked from the footer. "follow" keeps the links
+    // on these pages passing signal.
+    //
+    // To reverse: delete this line and restore verifyEntries in sitemap.ts.
+    // Worth doing once each page carries real unique content (method notes,
+    // chromatogram, compound context) rather than a re-skinned template.
+    robots: { index: false, follow: true },
     openGraph: { title: `${title} | PepcoLab`, description, type: 'article' },
   }
 }

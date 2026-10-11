@@ -188,8 +188,15 @@ export function relatedProductsForResearchArticle(articleId: string): ContentLin
     // LR3" in particular) isn't verified from here. Confirm in Shopify
     // admin before relying on these.
     tesamorelin: [{ slug: 'tesamorelin', label: 'Shop Tesamorelin' }],
-    'igf-1-lr3': [{ slug: 'igf1-lr3', label: 'Shop IGF-1 LR3' }],
-    sermorelin: [{ slug: 'sermorelin', label: 'Shop Sermorelin' }],
+    // FIX (Oct 2026): this was 'igf1-lr3', which 404s. The live catalogue
+    // handle is 'igf-1-lr3' — verified against the sitemap, as the comment
+    // above asked. Every visitor to /research/igf-1-lr3 who clicked "Shop"
+    // landed on a 404.
+    'igf-1-lr3': [{ slug: 'igf-1-lr3', label: 'Shop IGF-1 LR3' }],
+    // Sermorelin REMOVED (Oct 2026): it is not in the catalogue, so
+    // /products/sermorelin 404s. A "Shop" button on a research page that
+    // leads to a 404 is worse than no button — it is a dead end at the one
+    // moment a reader has shown buying intent. The research article stays.
     'ss-31': [{ slug: 'ss-31', label: 'Shop SS-31' }],
     // GHK-Cu and TB-500 intentionally have no shop link: app/data.ts's
     // BUNDLES comment confirms neither is a real catalogue handle as a
