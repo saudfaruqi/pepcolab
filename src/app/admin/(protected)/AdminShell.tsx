@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ClipboardList, Mail, LogOut, Star, ShoppingCart, Send } from 'lucide-react'
+import { ClipboardList, Mail, LogOut, Star, ShoppingCart, Send, Users } from 'lucide-react'
 
 const NAV = [
   { href: '/admin', label: 'Orders', icon: ClipboardList },
@@ -11,6 +11,7 @@ const NAV = [
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/abandoned', label: 'Abandoned', icon: ShoppingCart },
   { href: '/admin/emails', label: 'Emails', icon: Send },
+  { href: '/admin/affiliates', label: 'Affiliates', icon: Users },
 ]
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
