@@ -24,6 +24,21 @@ export interface CatalogueVariant {
   available: boolean
 }
 
+// Admin list views (Oct 2026). The list now holds every order of any status,
+// so these split it the way it gets worked: what to send out, what is paid,
+// and the attempts worth a follow-up call.
+type ViewKey = 'all' | 'to_ship' | 'paid' | 'awaiting_payment' | 'failed' | 'abandoned' | 'refunded' | 'topups'
+const VIEWS: { key: ViewKey; label: string; test: (o: OrderRecord) => boolean }[] = [
+  { key: 'all', label: 'All', test: () => true },
+  { key: 'to_ship', label: 'To ship', test: (o) => isLiveOrder(o) && !o.shippedAt },
+  { key: 'paid', label: 'Paid', test: (o) => isLiveOrder(o) },
+  { key: 'awaiting_payment', label: 'Awaiting payment', test: (o) => o.status === 'awaiting_payment' },
+  { key: 'failed', label: 'Failed', test: (o) => o.status === 'failed' },
+  { key: 'abandoned', label: 'Abandoned', test: (o) => o.status === 'abandoned' },
+  { key: 'refunded', label: 'Refunded / chargeback', test: (o) => o.status === 'refunded' || o.status === 'chargeback' },
+  { key: 'topups', label: 'Top-ups', test: (o) => Boolean(o.topUpFor) },
+]
+
 function lastDigits(phone?: string) {
   return (phone || '').replace(/\D/g, '').slice(-9)
 }
@@ -500,23 +515,25 @@ function formatMoney(total: number, currency: string) {
 export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderRecord[]; catalogue?: CatalogueVariant[] }) {
   const [query, setQuery] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [toShipOnly, setToShipOnly] = useState(false)
+  const [view, setView] = useState<ViewKey>('all')
 
-  const toShipCount = useMemo(
-    () => orders.filter((o) => isLiveOrder(o) && !o.shippedAt).length,
-    [orders]
-  )
+  const counts = useMemo(() => {
+    const c = {} as Record<ViewKey, number>
+    for (const v of VIEWS) c[v.key] = orders.filter(v.test).length
+    return c
+  }, [orders])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const base = toShipOnly ? orders.filter((o) => isLiveOrder(o) && !o.shippedAt) : orders
+    const test = VIEWS.find((v) => v.key === view)?.test ?? (() => true)
+    const base = orders.filter(test)
     if (!q) return base
     return base.filter((o) =>
       [o.orderShortCode, o.email, o.customerName, o.phone, o.trackingNumber]
         .filter(Boolean)
         .some((field) => field!.toLowerCase().includes(q))
     )
-  }, [orders, query, toShipOnly])
+  }, [orders, query, view])
 
   return (
     <div>
@@ -530,24 +547,29 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
             className="w-full text-sm text-[#0D0D0D] outline-none placeholder:text-[#0D0D0D]/40"
           />
         </div>
-        <button
-          type="button"
-          onClick={() => setToShipOnly((v) => !v)}
-          className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium ${
-            toShipOnly ? 'border-[#0D0D0D] bg-[#0D0D0D] text-white' : 'border-[#0D0D0D]/10 bg-white text-[#0D0D0D]'
-          }`}
-        >
-          <Truck size={14} />
-          To ship ({toShipCount})
-        </button>
+      </div>
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        {VIEWS.map((v) => (
+          <button
+            key={v.key}
+            type="button"
+            onClick={() => setView(v.key)}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
+              view === v.key ? 'border-[#0D0D0D] bg-[#0D0D0D] text-white' : 'border-[#0D0D0D]/10 bg-white text-[#0D0D0D]/80'
+            }`}
+          >
+            {v.key === 'to_ship' && <Truck size={12} />}
+            {v.label} ({counts[v.key] ?? 0})
+          </button>
+        ))}
       </div>
 
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[#0D0D0D]/15 py-16 text-center text-sm text-[#0D0D0D]/50">
           {orders.length === 0
             ? 'No orders yet.'
-            : toShipOnly && !query
-              ? 'Nothing waiting to ship.'
+            : !query
+              ? view === 'to_ship' ? 'Nothing waiting to ship.' : 'No orders in this view.'
               : 'No orders match that search.'}
         </div>
       ) : (

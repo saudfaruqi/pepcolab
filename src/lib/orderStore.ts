@@ -184,6 +184,16 @@ const ABANDONED_INDEX_KEY = 'order-lookup:abandoned-index'
 // because "where did my order go" is exactly the question that brings them
 // there. The account page decides what to show; the index just records.
 const EMAIL_INDEX_PREFIX = 'order-lookup:by-email:'
+// EVERY ORDER, ANY STATUS (Oct 2026). The admin list used to read
+// COMPLETED_INDEX_KEY, which only ever held 'created'/'updated' records — so
+// paid orders whose Shopify sync hiccuped ('processing',
+// 'awaiting_payment_mark'), unpaid ones, failed and abandoned attempts never
+// appeared at all, and the page read "Most recent 10 orders" as if that were
+// a cap. This index holds every record; the admin filters by status itself.
+const ALL_INDEX_KEY = 'order-lookup:all-index'
+// Set once the all-index has been backfilled from records written before it
+// existed. See ensureAllIndexBackfilled().
+const ALL_INDEX_BACKFILL_MARKER = 'order-lookup:all-index-backfilled-v1'
 
 export function emailIndexKey(email: string): string {
   return `${EMAIL_INDEX_PREFIX}${email.trim().toLowerCase()}`
@@ -212,6 +222,11 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
         member: record.orderShortCode.trim().toUpperCase(),
       })
     }
+
+    await redis.zadd(ALL_INDEX_KEY, {
+      score: new Date(record.createdAt).getTime() || Date.now(),
+      member: record.orderShortCode.trim().toUpperCase(),
+    })
 
     // Per-customer index. zadd is idempotent on member, so re-saving a
     // record as its status changes updates the score rather than duplicating.
@@ -372,5 +387,78 @@ export async function listAbandonedOrders(limit = 100): Promise<OrderRecord[]> {
   } catch (err) {
     console.error('[orderStore] Failed to list abandoned orders:', err)
     return []
+  }
+}
+
+/**
+ * One-off: adds every order record written before ALL_INDEX_KEY existed.
+ *
+ * Order records are plain string keys "order-lookup:<SHORTCODE>"; the
+ * indexes under the same prefix are sorted sets, so scanning with
+ * type 'string' returns only records. Runs once, then a marker key stops it
+ * running again. Safe to run twice — zadd on an existing member just
+ * rewrites its score.
+ */
+async function ensureAllIndexBackfilled(): Promise<void> {
+  if (await redis.get(ALL_INDEX_BACKFILL_MARKER)) return
+  let cursor: string | number = 0
+  let added = 0
+  let guard = 0
+  do {
+    const [next, keys] = (await redis.scan(cursor, { match: `${KEY_PREFIX}*`, count: 500, type: 'string' })) as [
+      string,
+      string[],
+    ]
+    cursor = next
+    const codes = keys
+      .filter((k) => k !== ALL_INDEX_BACKFILL_MARKER)
+      .map((k) => k.slice(KEY_PREFIX.length))
+      .filter((c) => c && !c.includes(':'))
+    if (codes.length) {
+      const records = await Promise.all(codes.map((c) => getOrderRecord(c)))
+      for (const r of records) {
+        if (!r?.orderShortCode) continue
+        await redis.zadd(ALL_INDEX_KEY, {
+          score: new Date(r.createdAt).getTime() || Date.now(),
+          member: r.orderShortCode.trim().toUpperCase(),
+        })
+        added++
+      }
+    }
+    guard++
+  } while (String(cursor) !== '0' && guard < 1000)
+  await redis.set(ALL_INDEX_BACKFILL_MARKER, new Date().toISOString())
+  console.info(`[orderStore] All-orders index backfilled with ${added} record(s)`)
+}
+
+/**
+ * Every order of any status, newest first, one page at a time — the admin
+ * Orders list. Returns the grand total too, so the page can say "showing
+ * 200 of 340" instead of implying the list is complete.
+ */
+export async function listAllOrders(limit = 200, offset = 0): Promise<{ orders: OrderRecord[]; total: number }> {
+  try {
+    await ensureAllIndexBackfilled()
+  } catch (err) {
+    // A failed backfill must not take the admin down — new orders are still
+    // indexed on write. It retries on the next load (marker not set).
+    console.error('[orderStore] All-orders backfill failed:', err)
+  }
+  try {
+    const [codes, total] = await Promise.all([
+      redis.zrange(ALL_INDEX_KEY, offset, offset + limit - 1, { rev: true }) as Promise<string[]>,
+      redis.zcard(ALL_INDEX_KEY),
+    ])
+    if (!codes?.length) return { orders: [], total: total || 0 }
+    const records = await Promise.all(codes.map((code) => getOrderRecord(code)))
+    return {
+      orders: records
+        .filter((r): r is OrderRecord => Boolean(r))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      total: total || 0,
+    }
+  } catch (err) {
+    console.error('[orderStore] Failed to list all orders:', err)
+    return { orders: [], total: 0 }
   }
 }
