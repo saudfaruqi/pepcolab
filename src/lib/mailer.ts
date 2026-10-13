@@ -37,6 +37,13 @@ export async function sendMail(opts: {
   text: string
   html?: string
   replyTo?: string
+  /**
+   * Extra message headers. Marketing campaigns (lib/marketing) set
+   * List-Unsubscribe / List-Unsubscribe-Post here: Gmail and Yahoo require a
+   * one-click unsubscribe header on bulk mail, and without it campaigns are
+   * far more likely to land in spam or be rejected.
+   */
+  headers?: Record<string, string>
 }) {
   const smtpFrom = process.env.SMTP_FROM
   if (!smtpFrom) throw new Error('SMTP configuration is missing (SMTP_FROM)')
@@ -56,6 +63,7 @@ export async function sendMail(opts: {
       subject: opts.subject,
       text: opts.text,
       html: opts.html,
+      headers: opts.headers,
     })
     await recordEmail({ to: opts.to, subject: opts.subject, status: 'sent', text: opts.text })
   } catch (err) {

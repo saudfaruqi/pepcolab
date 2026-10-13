@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ClipboardList, Mail, LogOut, Star, ShoppingCart, Send, Users } from 'lucide-react'
+import { ClipboardList, Mail, LogOut, Star, ShoppingCart, Send, Users, Megaphone } from 'lucide-react'
 
 const NAV = [
   { href: '/admin', label: 'Orders', icon: ClipboardList },
   { href: '/admin/subscribers', label: 'Subscribers', icon: Mail },
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/abandoned', label: 'Abandoned', icon: ShoppingCart },
+  { href: '/admin/marketing', label: 'Marketing', icon: Megaphone },
   { href: '/admin/emails', label: 'Emails', icon: Send },
   { href: '/admin/affiliates', label: 'Affiliates', icon: Users },
 ]
@@ -35,7 +36,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="text-sm font-semibold text-[#0D0D0D]">PepcoLab Admin</div>
           <nav className="flex items-center gap-1">
             {NAV.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href
+              const active = pathname === href || (href !== '/admin' && pathname.startsWith(href + '/'))
               return (
                 <Link
                   key={href}

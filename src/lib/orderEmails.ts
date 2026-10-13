@@ -270,7 +270,6 @@ export async function sendOrderConfirmationEmail(params: {
   } catch {
     // secret not configured — plain link is still correct, just not one-tap
   }
-  const coaUrl = `${SITE_URL}/certificates`
   const firstName = (customerName || '').trim().split(/\s+/)[0]
   const greeting = firstName ? `Thanks, ${firstName}.` : 'Thanks for your order.'
 
@@ -311,10 +310,9 @@ export async function sendOrderConfirmationEmail(params: {
         title: 'Delivery',
         body: `Delivery estimates run from dispatch, not from the time you ordered. Need a status update at any point, just reply to this email or check <a href="${SITE_URL}/track-order" style="color:${INK}; font-weight:600;">order tracking</a>.`,
       },
-      {
-        title: 'Certificates published per lot',
-        body: `Once it arrives, take the lot number printed on the vial and look it up in the <a href="${coaUrl}" style="color:${INK}; font-weight:600;">certificate library</a>. The certificate matches your exact batch &mdash; not a generic reference document.`,
-      },
+      // Step 3 ("Certificates published per lot", linking to /certificates)
+      // removed Oct 2026 at Mohammed's direction: no certificate-page links
+      // in customer email.
     ])}
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${BORDER}; border-radius:14px; margin:0 0 24px;">
@@ -357,7 +355,7 @@ export async function sendOrderConfirmationEmail(params: {
       `WHAT HAPPENS NEXT\n` +
       `1. Dispatch within 1 business day (next business day if placed after hours, at weekends or on a public holiday).\n` +
       `2. Delivery estimates run from dispatch, not from when you ordered. For a status update, reply to this email or visit ${trackUrl}.\n` +
-      `3. When it arrives, look up the lot number printed on the vial at ${coaUrl} for that batch's certificate.\n\n` +
+      `\n` +
       `ON ARRIVAL\nRefrigerate on delivery and follow the storage requirements printed on the enclosed documentation - they differ between vials, pens and sprays.\n\n` +
       `Track your order: ${trackUrl}\n` +
       `Open your account (one tap, no password — order history and reorder): ${accountUrl}\n\n` +
