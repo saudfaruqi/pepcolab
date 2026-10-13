@@ -35,7 +35,9 @@ import type { CleanAddress } from '@/lib/addressNormalise'
 // once the Shopify order exists, that fact is saved BEFORE attempting to
 // mark it paid, so a retry can find and reuse it instead of creating a
 // second one.
-export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
+// 'awaiting_payment' (Oct 2026): STRABL sent order_created/updated but its
+// payment status was not paid. Not a paid order — see the webhook route.
+export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'awaiting_payment' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
 
 export interface OrderRecord {
   orderShortCode: string
@@ -97,6 +99,41 @@ export interface OrderRecord {
   shippedEmailSentAt?: string   // set when the admin marks the order dispatched with "email the customer" ticked — sent at most once
   aftercareEmailSentAt?: string // set once the "did it arrive OK?" check-in has gone out
   crossSellEmailSentAt?: string // set once the day-18 "more from your research area" email has gone out (or was skipped for having nothing to suggest)
+
+  // ORDER CHANGES & TOP-UPS (Oct 2026, after SOR-LLCQZU)
+  //
+  // A customer who paid for 20mg and then asked for 30mg paid the AED 100
+  // difference through a separate STRABL Payment Link. That link arrived as
+  // a brand-new order: it sat in "to ship", would have received its own
+  // review / aftercare / reorder emails, and — because the Shopify→Orcaflo
+  // bridge couldn't map "20mg to 30mg price difference" to a product — the
+  // driver's sheet still said 20mg.
+  //
+  // amendments: every item change made from the admin "Change item" action,
+  //   newest last. The order's products[] always holds the CURRENT items;
+  //   this is the history of how it got there.
+  // topUpFor: set on the top-up order itself, pointing at the order it paid
+  //   for. A top-up is money, not a parcel — isPaidOrder() returns false for
+  //   it so no cron emails it and the admin never lists it as "to ship".
+  // orcafloUpdatePending: the delivery panel (Orcaflo) has no API for edits,
+  //   so a human must change it by hand. True until the admin clicks "Done".
+  amendments?: OrderAmendment[]
+  topUpFor?: string
+  orcafloUpdatePending?: boolean
+}
+
+export interface OrderAmendment {
+  at: string
+  from: { title: string; price: number; quantity: number }
+  to: { title: string; price: number; quantity: number; variantId: string }
+  /** New line value minus old line value. Negative for a downgrade. */
+  priceDifference: number
+  /** The STRABL order that paid the difference, if one was linked. */
+  topUpOrderShortCode?: string
+  topUpAmount?: number
+  shopifyEdited: boolean
+  shopifyError?: string
+  orcafloUpdatedAt?: string
 }
 
 /**
@@ -111,8 +148,18 @@ export const PAID_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set<OrderStatus
   'processing',
 ])
 
-export function isPaidOrder(order: Pick<OrderRecord, 'status'>): boolean {
-  return PAID_ORDER_STATUSES.has(order.status)
+/**
+ * A paid order that is going ahead as a parcel.
+ *
+ * Top-up payments (topUpFor set) are excluded: they are paid, but they are
+ * not a delivery and not a purchase in their own right. Every caller of this
+ * function — the review, aftercare, cross-sell, win-back and reorder crons,
+ * and the dispatch email — means "a real order the customer is waiting for",
+ * and a top-up must not get any of those emails or count as a newer order
+ * that suppresses the original's reminders.
+ */
+export function isPaidOrder(order: Pick<OrderRecord, 'status'> & { topUpFor?: string }): boolean {
+  return PAID_ORDER_STATUSES.has(order.status) && !order.topUpFor
 }
 
 const KEY_PREFIX = 'order-lookup:'

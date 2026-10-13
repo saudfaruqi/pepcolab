@@ -563,6 +563,50 @@ export async function POST(req: NextRequest) {
           break
         }
 
+        // PAYMENT MUST ACTUALLY BE TAKEN (Oct 2026, after Somia Aboelmagd).
+        //
+        // Everything below assumes order_created/order_updated means "paid":
+        // it creates the Shopify order, records a payment on it, emails the
+        // customer "payment confirmed", and the Shopify→Orcaflo bridge then
+        // books a driver. Nothing checked that STRABL actually said so.
+        //
+        // When STRABL reports a payment status and it is anything other than
+        // a completed payment, stop here: record the order as
+        // 'awaiting_payment' (no emails, no Shopify order, no driver — and
+        // deliberately NOT 'processing', which means "paid but the Shopify
+        // sync failed" and counts as a paid order everywhere) and alert a
+        // human. A later order_updated with a paid status runs this path
+        // again and creates the order normally, because 'awaiting_payment'
+        // is not treated as already-synced by the idempotency check above.
+        //
+        // When STRABL sends no status field at all, behaviour is unchanged:
+        // blocking every real order on an absent field would be worse.
+        const rawPaymentStatus = String(
+          orderUpdate.paymentStatus ?? orderUpdate.payment_status ?? orderUpdate.payment?.status ?? ''
+        ).trim().toLowerCase()
+        const PAID_PAYMENT_STATUSES = new Set(['paid', 'captured', 'success', 'succeeded', 'successful', 'completed', 'settled'])
+        if (rawPaymentStatus && !PAID_PAYMENT_STATUSES.has(rawPaymentStatus)) {
+          console.warn(`[webhook] ${type} for ${orderShortCode} has paymentStatus "${rawPaymentStatus}" — not creating a paid order`)
+          if (!existing || existing.status !== 'awaiting_payment') {
+            await saveOrderRecord(await buildOrderRecord('awaiting_payment'))
+            await sendMailSafe({
+              to: ALERT_EMAIL,
+              subject: `⏸ Payment not cleared — NOT sent for delivery (${orderShortCode})`,
+              text: `STRABL reported ${type} for ${orderShortCode}, but its payment status is "${rawPaymentStatus}", not paid.
+
+No Shopify order was created, the customer was not emailed, and nothing was sent to Orcaflo.
+
+Customer: ${[resolvedCustomer.firstName, resolvedCustomer.lastName].filter(Boolean).join(' ') || '(no name)'}
+Email: ${resolvedCustomer.email || '(none)'}
+Phone: ${resolvedCustomer.phone || '(none)'}
+Products: ${JSON.stringify(resolvedProducts, null, 2)}
+
+If STRABL later confirms the payment, the order is created automatically. If the customer says they paid, check the STRABL dashboard before arranging delivery.`,
+            })
+          }
+          break
+        }
+
         // BUG FIX (Aug 2026): this is the other half of the
         // 'awaiting_payment_mark' fix (see orderStore.ts) — if a PRIOR
         // attempt on this same order got as far as creating the Shopify

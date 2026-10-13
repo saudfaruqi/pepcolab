@@ -156,3 +156,229 @@ export async function markShopifyOrderPaid(orderId: string, strablOrderUuid: str
   }
   return res.json()
 }
+// ─────────────────────────────────────────────────────────────────────────
+// ORDER EDITING (Oct 2026)
+//
+// Used by the admin "Change item" action (app/api/admin/orders/amend). When a
+// customer swaps strength after paying — 20mg → 30mg on SOR-LLCQZU's original
+// order — the Shopify order has to change too, or stock is wrong twice over:
+// the 20mg that is staying on the shelf was decremented, and the 30mg that is
+// leaving was not.
+//
+// Shopify only allows line-item changes on an existing order through the
+// GraphQL order-editing flow (begin → change → commit). REST has no
+// equivalent. The access token needs the `write_order_edits` scope; without
+// it these calls fail with ACCESS_DENIED, which the caller reports in the
+// admin rather than throwing — the order record is still updated.
+// ─────────────────────────────────────────────────────────────────────────
+
+async function adminGraphql<T = any>(query: string, variables: Record<string, unknown>): Promise<T> {
+  const res = await fetch(adminUrl('graphql.json'), {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify({ query, variables }),
+  })
+  const text = await res.text()
+  if (!res.ok) throw new Error(`Shopify GraphQL ${res.status}: ${text.slice(0, 300)}`)
+  let json: any
+  try {
+    json = JSON.parse(text)
+  } catch {
+    throw new Error(`Shopify GraphQL returned non-JSON: ${text.slice(0, 200)}`)
+  }
+  if (json.errors?.length) {
+    throw new Error(`Shopify GraphQL: ${json.errors.map((e: any) => e.message).join('; ')}`)
+  }
+  return json.data as T
+}
+
+function throwUserErrors(step: string, errors: { field?: string[]; message: string }[] | undefined) {
+  if (errors && errors.length) {
+    throw new Error(`${step}: ${errors.map((e) => e.message).join('; ')}`)
+  }
+}
+
+function orderGid(id: string): string {
+  return String(id).startsWith('gid://') ? String(id) : `gid://shopify/Order/${id}`
+}
+
+function variantGid(id: string): string {
+  if (String(id).startsWith('gid://')) return String(id)
+  return `gid://shopify/ProductVariant/${id}`
+}
+
+function normText(v: string): string {
+  return (v || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function strengthOf(v: string): string | null {
+  const m = (v || '').match(/(\d+(?:\.\d+)?)\s*mc?g\b/i)
+  return m ? m[1] : null
+}
+
+export interface LineToReplace {
+  /** The line's title as recorded on our side, e.g. "GLP 20mg Pen". */
+  title: string
+  /** Storefront GID or numeric id, when we know it. */
+  variantId?: string
+}
+
+/**
+ * Picks which Shopify line item is the one being replaced.
+ *
+ * Exact variant id first. Otherwise: if the order has a single live line it
+ * is that one; if it has several, the one whose strength AND name agree with
+ * our recorded title — and only if exactly one does. Anything ambiguous
+ * returns null so a human edits Shopify instead of the wrong line changing.
+ */
+function pickLine(
+  lines: { id: string; quantity: number; title: string; variantTitle: string | null; variant: { id: string } | null }[],
+  target: LineToReplace
+) {
+  const live = lines.filter((l) => l.quantity > 0)
+  if (target.variantId) {
+    const want = variantGid(target.variantId.replace(/^gid:\/\/shopify\/ProductVariant\//, ''))
+    const byVariant = live.filter((l) => l.variant?.id === want)
+    if (byVariant.length === 1) return byVariant[0]
+  }
+  if (live.length === 1) return live[0]
+
+  const wantMg = strengthOf(target.title)
+  const wantName = normText(target.title.replace(/\d+(?:\.\d+)?\s*mc?g\b/gi, ' ').replace(/\b(pen|vial|nasal\s+spray|spray)\b/gi, ' '))
+  const scored = live.filter((l) => {
+    const full = `${l.title} ${l.variantTitle || ''}`
+    const mg = strengthOf(full)
+    if (wantMg && mg && wantMg !== mg) return false
+    const name = normText(l.title.replace(/\d+(?:\.\d+)?\s*mc?g\b/gi, ' ').replace(/\b(pen|vial|nasal\s+spray|spray)\b/gi, ' '))
+    return Boolean(name) && Boolean(wantName) && (wantName.includes(name) || name.includes(wantName))
+  })
+  return scored.length === 1 ? scored[0] : null
+}
+
+/**
+ * Replaces one line on an existing Shopify order with a catalogue variant.
+ *
+ * The old line goes to quantity 0 WITH restock (the unit is back on the
+ * shelf); the new variant is added at the same quantity (Shopify decrements
+ * its stock on commit). The customer is not emailed by Shopify — they have
+ * already been told by us.
+ *
+ * Shopify will show the order as partially paid afterwards when the new item
+ * costs more. That is deliberate and correct: the difference was paid on the
+ * separate top-up order, so the two orders together hold exactly what the
+ * customer paid. Marking this one paid as well would count that money twice.
+ */
+export async function swapShopifyOrderLine(
+  orderId: string,
+  target: LineToReplace,
+  newVariantId: string,
+  quantity: number,
+  staffNote: string
+): Promise<{ removedLineTitle: string }> {
+  const begin = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation begin($id: ID!) {
+        orderEditBegin(id: $id) {
+          calculatedOrder {
+            id
+            lineItems(first: 50) {
+              nodes { id quantity title variantTitle variant { id } }
+            }
+          }
+          userErrors { field message }
+        }
+      }
+    `,
+    { id: orderGid(orderId) }
+  )
+  throwUserErrors('orderEditBegin', begin.orderEditBegin?.userErrors)
+  const calc = begin.orderEditBegin?.calculatedOrder
+  if (!calc?.id) throw new Error('orderEditBegin returned no calculated order')
+
+  const line = pickLine(calc.lineItems?.nodes || [], target)
+  if (!line) {
+    throw new Error(
+      `Couldn't tell which Shopify line is "${target.title}" — the order has ${calc.lineItems?.nodes?.length ?? 0} lines. Edit this order in Shopify by hand.`
+    )
+  }
+
+  const setQty = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation setQty($id: ID!, $lineItemId: ID!) {
+        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: 0, restock: true) {
+          calculatedOrder { id }
+          userErrors { field message }
+        }
+      }
+    `,
+    { id: calc.id, lineItemId: line.id }
+  )
+  throwUserErrors('orderEditSetQuantity', setQty.orderEditSetQuantity?.userErrors)
+
+  const add = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation add($id: ID!, $variantId: ID!, $quantity: Int!) {
+        orderEditAddVariant(id: $id, variantId: $variantId, quantity: $quantity, allowDuplicates: true) {
+          calculatedOrder { id }
+          userErrors { field message }
+        }
+      }
+    `,
+    { id: calc.id, variantId: variantGid(newVariantId.replace(/^gid:\/\/shopify\/ProductVariant\//, '')), quantity }
+  )
+  throwUserErrors('orderEditAddVariant', add.orderEditAddVariant?.userErrors)
+
+  const commit = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation commit($id: ID!, $staffNote: String) {
+        orderEditCommit(id: $id, notifyCustomer: false, staffNote: $staffNote) {
+          order { id }
+          userErrors { field message }
+        }
+      }
+    `,
+    { id: calc.id, staffNote }
+  )
+  throwUserErrors('orderEditCommit', commit.orderEditCommit?.userErrors)
+
+  return { removedLineTitle: [line.title, line.variantTitle].filter(Boolean).join(' / ') }
+}
+
+/**
+ * Marks a Shopify order as a top-up of another order: tags it, writes a note
+ * pointing at the original, and closes (archives) it so it drops out of the
+ * unfulfilled queue. Nothing is refunded or cancelled — the money it holds is
+ * real and stays reported against it.
+ */
+export async function markShopifyTopUpOrder(orderId: string, originalShortCode: string): Promise<void> {
+  const id = orderGid(orderId)
+  const tags = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation tag($id: ID!, $tags: [String!]!) {
+        tagsAdd(id: $id, tags: $tags) { userErrors { field message } }
+      }
+    `,
+    { id, tags: ['order-topup', `topup-for-${originalShortCode}`] }
+  )
+  throwUserErrors('tagsAdd', tags.tagsAdd?.userErrors)
+
+  const note = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation note($input: OrderInput!) {
+        orderUpdate(input: $input) { userErrors { field message } }
+      }
+    `,
+    { input: { id, note: `Top-up payment for ${originalShortCode}. Not a separate delivery — do not fulfil.` } }
+  )
+  throwUserErrors('orderUpdate', note.orderUpdate?.userErrors)
+
+  const close = await adminGraphql<any>(
+    /* GraphQL */ `
+      mutation close($input: OrderCloseInput!) {
+        orderClose(input: $input) { userErrors { field message } }
+      }
+    `,
+    { input: { id } }
+  )
+  throwUserErrors('orderClose', close.orderClose?.userErrors)
+}

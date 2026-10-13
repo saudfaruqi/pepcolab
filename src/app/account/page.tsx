@@ -96,6 +96,9 @@ function statusLabel(o: AccountOrder): { label: string; color: string; tint: str
       return { label: 'Payment issue', color: '#B91C1C', tint: 'rgba(185,28,28,.08)' }
     case 'abandoned':
       return { label: 'Not completed', color: '#4A4A4A', tint: 'rgba(13,13,13,.06)' }
+    case 'awaiting_payment':
+      // Oct 2026: STRABL reported the order but the payment had not cleared.
+      return { label: 'Awaiting payment', color: '#8A6A1E', tint: 'rgba(200,153,42,.12)' }
     default:
       return { label: 'Received', color: '#8A6A1E', tint: 'rgba(200,153,42,.12)' }
   }
