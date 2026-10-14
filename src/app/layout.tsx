@@ -1,6 +1,9 @@
+
 // src/app/layout.tsx
+
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+
 import './globals.css'
 
 import { CartProvider } from '@/lib/cartContext'
@@ -22,6 +25,7 @@ const siteUrl = 'https://www.pepcolab.com'
  *
  * `sameAs` is how Google ties these accounts to the PepcoLab brand entity
  * rather than treating them as unrelated pages that happen to share a name.
+ *
  * Brand queries are already this site's strongest cluster, so making the
  * entity unambiguous is worth the four lines.
  *
@@ -55,6 +59,7 @@ export const metadata: Metadata = {
   //
   // Nothing here claims UK fulfilment. UK is described as launching, which
   // is both true and the claim the /uk page is built to support.
+
   title: {
     default:
       'PepcoLab | Research-Grade Peptides & Laboratory Compounds — UAE & UK',
@@ -89,6 +94,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
     nocache: false,
+
     googleBot: {
       index: true,
       follow: true,
@@ -121,21 +127,56 @@ export const metadata: Metadata = {
   //    is served only to dark-mode ones. Each appears where it has contrast.
   //    The bare entries without `media` are the fallback for browsers that
   //    ignore the query.
+
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon-dark-32.png', type: 'image/png', sizes: '32x32' },
-      { url: '/icon-dark-16.png', type: 'image/png', sizes: '16x16' },
 
-      { url: '/icon-dark-32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: light)' },
-      { url: '/icon-dark-16.png', type: 'image/png', sizes: '16x16', media: '(prefers-color-scheme: light)' },
+      {
+        url: '/icon-dark-32.png',
+        type: 'image/png',
+        sizes: '32x32',
+      },
 
-      { url: '/icon-light-32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: dark)' },
-      { url: '/icon-light-16.png', type: 'image/png', sizes: '16x16', media: '(prefers-color-scheme: dark)' },
+      {
+        url: '/icon-dark-16.png',
+        type: 'image/png',
+        sizes: '16x16',
+      },
+
+      {
+        url: '/icon-dark-32.png',
+        type: 'image/png',
+        sizes: '32x32',
+        media: '(prefers-color-scheme: light)',
+      },
+
+      {
+        url: '/icon-dark-16.png',
+        type: 'image/png',
+        sizes: '16x16',
+        media: '(prefers-color-scheme: light)',
+      },
+
+      {
+        url: '/icon-light-32.png',
+        type: 'image/png',
+        sizes: '32x32',
+        media: '(prefers-color-scheme: dark)',
+      },
+
+      {
+        url: '/icon-light-16.png',
+        type: 'image/png',
+        sizes: '16x16',
+        media: '(prefers-color-scheme: dark)',
+      },
     ],
-    // iOS masks the corners and composites onto the user's wallpaper, so
-    // this must be opaque and must not depend on a white background.
+
+    // iOS masks the corners and composites onto the user's wallpaper, so this
+    // must be opaque and must not depend on a white background.
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+
     shortcut: ['/favicon.ico'],
   },
 
@@ -144,19 +185,18 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Independently tested, batch-matched certificates of analysis and cold-chain dispatch. UAE now, UK launching soon. Research use only.',
+      'Independently tested, batch-matched certificates of analysis and cold-chain dispatch. UAE now, UK launching soon.',
     url: siteUrl,
     siteName: 'PepcoLab',
     locale: 'en_AE',
     alternateLocale: ['en_GB'],
     type: 'website',
+
     images: [
       {
         // WAS: /pepcoall.png — a 2.7 MB PNG, and the single most-shared
         // brand surface on the site. Replaced with a 31 KB typographic card
-        // built from the real logo. See the audit note: the old image was an
-        // AI render whose labels read "Pepco Lau.", "Selenk", "CIC-1295" and
-        // "Semaolutide", and it showed compounds no longer stocked.
+        // built from the real logo.
         url: '/og-pepcolab.jpg',
         width: 1200,
         height: 630,
@@ -180,7 +220,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
   },
 
-  formatDetection: { telephone: false, email: false, address: false },
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
 
   other: {
     'msapplication-TileColor': '#050505',
@@ -189,36 +233,81 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
-    // WAS lang="en-AE". A region-locked root language tag on a site that also
-    // targets the UK undercuts the en-GB hreflang. Plain "en" is the correct
-    // root value; region targeting is carried by hreflang, not by lang.
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+
         <link
           href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
 
-        <link rel="preconnect" href="https://unpkg.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://unpkg.com"
+          crossOrigin="anonymous"
+        />
+
         {/* Shopify CDN serves every product image — resolving DNS and TLS
             up front removes a round-trip from the first product card paint. */}
-        <link rel="preconnect" href="https://cdn.shopify.com" crossOrigin="anonymous" />
-        <link rel="preload" href="/pepcologo.png" as="image" />
+        <link
+          rel="preconnect"
+          href="https://cdn.shopify.com"
+          crossOrigin="anonymous"
+        />
+
+        <link
+          rel="preload"
+          href="/pepcologo.png"
+          as="image"
+        />
+
+        {/* Google Customer Reviews */}
+        <Script
+          src="https://apis.google.com/js/platform.js?onload=renderOptIn"
+          strategy="afterInteractive"
+        />
+
+        <Script
+          id="google-customer-reviews"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.renderOptIn = function() {
+                window.gapi.load('surveyoptin', function() {
+                  window.gapi.surveyoptin.render({
+                    "merchant_id": 5843635708,
+                    "order_id": "ORDER_ID",
+                    "email": "CUSTOMER_EMAIL",
+                    "delivery_country": "COUNTRY_CODE",
+                    "estimated_delivery_date": "YYYY-MM-DD",
+                    "products": [
+                      {"gtin": "GTIN1"},
+                      {"gtin": "GTIN2"}
+                    ]
+                  });
+                });
+              };
+            `,
+          }}
+        />
 
         {/* ORGANIZATION SCHEMA
             areaServed now covers both markets. This is the entity-level
-            statement of who PepcoLab serves, and it is the block Google reads
-            when deciding which regions the brand is relevant to. */}
+            statement of who PepcoLab serves. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -234,8 +323,14 @@ export default function RootLayout({
               email: 'hello@pepcolab.com',
               sameAs: SOCIAL_PROFILES,
               areaServed: [
-                { '@type': 'Country', name: 'United Arab Emirates' },
-                { '@type': 'Country', name: 'United Kingdom' },
+                {
+                  '@type': 'Country',
+                  name: 'United Arab Emirates',
+                },
+                {
+                  '@type': 'Country',
+                  name: 'United Kingdom',
+                },
               ],
             }),
           }}
@@ -257,11 +352,7 @@ export default function RootLayout({
 
         {/* STORE SCHEMA
             Deliberately NOT extended to the UK. The organisation serves both
-            markets; the store currently transacts in one. Claiming UK
-            availability in commerce schema while no UK catalogue exists is
-            the kind of mismatch that earns a manual action, and it would be
-            contradicted by the site's own checkout. Add GB here on the same
-            day UK_CHECKOUT_LIVE flips in lib/pricing.ts — not before. */}
+            markets; the store currently transacts in one. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -289,10 +380,18 @@ export default function RootLayout({
           src="https://www.googletagmanager.com/gtag/js?id=G-8SE9C30NMW"
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
           {`
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+
+            function gtag() {
+              window.dataLayer.push(arguments);
+            }
+
             gtag('js', new Date());
             gtag('config', 'G-8SE9C30NMW');
           `}
@@ -303,26 +402,29 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
 
-        {/* Catches ?ref= on any landing page, for affiliate links. Renders
-            nothing; sits above the providers because it depends on none of
-            them. Replaces the deleted ReferralWidget. */}
+        {/* Catches ?ref= on any landing page, for affiliate links.
+            Renders nothing; sits above the providers because it depends on none
+            of them. */}
         <AffiliateCapture />
+
         <CountryProvider>
           {/* Signed-in state, available to Nav and every page beneath it. One
               fetch per load, shared — see lib/customerContext.tsx. */}
           <CustomerProvider>
-          <AgeLocationGate />
-          <WishlistProvider>
-            <RecentlyViewedProvider>
-              <CartProvider>
-                {children}
-                <CartDrawer />
-                <FloatingCalculator />
-                <FloatingWhatsApp />
-                <ChatWidget />
-              </CartProvider>
-            </RecentlyViewedProvider>
-          </WishlistProvider>
+            <AgeLocationGate />
+
+            <WishlistProvider>
+              <RecentlyViewedProvider>
+                <CartProvider>
+                  {children}
+
+                  <CartDrawer />
+                  <FloatingCalculator />
+                  <FloatingWhatsApp />
+                  <ChatWidget />
+                </CartProvider>
+              </RecentlyViewedProvider>
+            </WishlistProvider>
           </CustomerProvider>
         </CountryProvider>
       </body>
