@@ -7,24 +7,12 @@ import { ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react'
 import { getProducts } from '@/lib/shopify'
 import ProductCard from '@/components/ProductCard'
 import { useCountry } from '@/lib/countryContext'
+import { PRODUCT_CLASSES, LEGACY_CATEGORY_REDIRECTS, classOf } from '@/lib/productClasses'
 
-// ── These are the only valid category tags we recognise ──────────────────
-// Matches the 7 tags actually used in the Shopify catalogue (verified
-// against the product export: metabolic, hormonal, cognitive, recovery,
-// anti-ageing, accessories, immune). Previously included "skin" and "neuro",
-// neither of which is a real product tag — anyone landing on those via a
-// stale link (e.g. the old homepage category grid) always hit "No compounds
-// found" because zero products could ever match. Add to this list only when
-// a new tag is actually created in Shopify.
-const KNOWN_CATEGORIES: { slug: string; label: string }[] = [
-  { slug: 'metabolic',    label: 'Metabolic'   },
-  { slug: 'hormonal',     label: 'Hormonal'    },
-  { slug: 'cognitive',    label: 'Cognitive'   },
-  { slug: 'recovery',     label: 'Recovery'    },
-  { slug: 'anti-ageing',  label: 'Anti-Ageing' },
-  { slug: 'accessories',  label: 'Accessories' },
-  { slug: 'immune',       label: 'Immune'      },
-]
+// ── Compound classes (Oct 2026) — see lib/productClasses.ts. These replaced
+// the health-goal tags (Metabolic, Recovery, Cognitive…). A stale ?cat= link
+// using an old goal slug is translated to its class below.
+const KNOWN_CATEGORIES: { slug: string; label: string }[] = PRODUCT_CLASSES.map((c) => ({ slug: c.slug, label: c.label }))
 
 const KNOWN_SLUGS = new Set(KNOWN_CATEGORIES.map(c => c.slug))
 
@@ -98,7 +86,8 @@ export default function ProductsSection({ showAll = false, initialProducts, init
   // while already on /products). ─────────────────────────────────────────
   useEffect(() => {
     if (!showAll) return
-    const catParam = searchParams.get('cat')
+    const rawCat = searchParams.get('cat')
+    const catParam = rawCat ? (LEGACY_CATEGORY_REDIRECTS[rawCat] ?? rawCat) : rawCat
     const formatParam = searchParams.get('format')
     if (catParam && KNOWN_SLUGS.has(catParam)) {
       setCategory(catParam)
@@ -168,8 +157,8 @@ export default function ProductsSection({ showAll = false, initialProducts, init
 
   // ── Find which category tags each product has ────────────────────────────
   function getProductCategory(p: any): string {
-    const tags: string[] = (p.tags ?? []).map((t: string) => t.toLowerCase().replace(/\s+/g, '-'))
-    return tags.find(t => KNOWN_SLUGS.has(t)) ?? ''
+    const slug: string = p.categorySlug || classOf(p.handle ?? p.slug ?? '', p.tags ?? [])
+    return KNOWN_SLUGS.has(slug) ? slug : ''
   }
 
   // ── Find a product's format (Pen / Vial / Powder / Supply) ───────────────

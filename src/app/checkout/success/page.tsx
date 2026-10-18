@@ -1,11 +1,105 @@
 // src/app/checkout/success/page.tsx
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
-import { trackPurchaseFromPending } from '@/lib/analytics'
+import { trackPurchaseFromPending, readPendingCheckout } from '@/lib/analytics'
 import { useCustomer } from '@/lib/customerContext'
+import { HEARD_FROM_OPTIONS } from '@/lib/heardFromOptions'
+
+type Pending = { ref: string; items: { name: string; quantity: number }[] }
+
+// "How did you hear about us?" (Meta ads plan, Oct 2026). STRABL's hosted
+// checkout cannot ask it, so it is asked here and joined to the order
+// server-side (lib/heardFrom.ts). Optional, one tap, never blocks anything.
+function HeardFromCard({ pending }: { pending: Pending }) {
+  const [answer, setAnswer] = useState('')
+  const [detail, setDetail] = useState('')
+  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
+
+  async function send(value: string, extra?: string) {
+    setState('sending')
+    try {
+      const res = await fetch('/api/checkout/heard-from', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: pending.ref, answer: value, detail: extra, items: pending.items }),
+      })
+      setState(res.ok ? 'done' : 'error')
+    } catch {
+      setState('error')
+    }
+  }
+
+  function pick(value: string) {
+    setAnswer(value)
+    if (value !== 'other') send(value)
+  }
+
+  if (state === 'done') {
+    return (
+      <div style={{ background: '#fff', border: '1px solid rgba(13,13,13,.08)', borderRadius: 20, padding: '18px 24px', marginBottom: 28, fontSize: 14, color: 'rgba(13,13,13,.6)' }}>
+        Thank you — that helps us a lot.
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(13,13,13,.08)', borderRadius: 20, padding: '22px 24px', marginBottom: 28, textAlign: 'left' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(13,13,13,.4)', marginBottom: 6 }}>
+        One quick question <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>· optional</span>
+      </div>
+      <p style={{ fontSize: 15, fontWeight: 600, color: '#0D0D0D', margin: '0 0 14px' }}>How did you hear about us?</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {HEARD_FROM_OPTIONS.map((o) => {
+          const on = answer === o.value
+          return (
+            <button
+              key={o.value}
+              type="button"
+              disabled={state === 'sending'}
+              onClick={() => pick(o.value)}
+              style={{
+                border: `1px solid ${on ? '#0D0D0D' : 'rgba(13,13,13,.16)'}`,
+                background: on ? '#0D0D0D' : '#fff',
+                color: on ? '#fff' : '#0D0D0D',
+                borderRadius: 999,
+                padding: '8px 14px',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: state === 'sending' ? 'wait' : 'pointer',
+              }}
+            >
+              {o.label}
+            </button>
+          )
+        })}
+      </div>
+      {answer === 'other' && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); send('other', detail) }}
+          style={{ display: 'flex', gap: 8, marginTop: 12 }}
+        >
+          <input
+            value={detail}
+            onChange={(e) => setDetail(e.target.value)}
+            maxLength={120}
+            placeholder="Where? (optional)"
+            aria-label="Where did you hear about us?"
+            style={{ flex: 1, minWidth: 0, border: '1px solid rgba(13,13,13,.16)', borderRadius: 999, padding: '9px 14px', fontSize: 13 }}
+          />
+          <button type="submit" disabled={state === 'sending'} style={{ border: 0, background: '#0D0D0D', color: '#fff', borderRadius: 999, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            Send
+          </button>
+        </form>
+      )}
+      {state === 'error' && (
+        <p style={{ fontSize: 12, color: '#9b2c22', margin: '10px 0 0' }}>That did not go through — tap an answer to try again.</p>
+      )}
+    </div>
+  )
+}
 
 export default function CheckoutSuccessPage() {
   // ANALYTICS: the purchase event.
@@ -20,9 +114,12 @@ export default function CheckoutSuccessPage() {
   // against a refresh or back-navigation double-counting in production.
   const { signedIn } = useCustomer()
   const reported = useRef(false)
+  const [pending, setPending] = useState<Pending | null>(null)
   useEffect(() => {
     if (reported.current) return
     reported.current = true
+    // Read the checkout reference BEFORE the purchase event clears it.
+    setPending(readPendingCheckout())
     trackPurchaseFromPending()
   }, [])
 
@@ -53,6 +150,8 @@ export default function CheckoutSuccessPage() {
                 : "We've emailed your order number to the address you checked out with. That email has a one-tap link to your account \u2014 no password, no sign-up form. One tap is all the confirmation we need."}
             </p>
           </div>
+
+          {pending && <HeardFromCard pending={pending} />}
 
           {/* A signed-in customer goes straight to their orders; there is no
               reason to send them to a lookup form that asks for a code and an

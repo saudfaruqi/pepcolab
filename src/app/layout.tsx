@@ -17,6 +17,9 @@ import FloatingCalculator from '@/components/FloatingCalculator'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import ChatWidget from '@/components/ChatWidget'
 import AffiliateCapture from '@/components/AffiliateCapture'
+import ConsentBanner from '@/components/ConsentBanner'
+import MetaPixel from '@/components/MetaPixel'
+import { CONSENT_DEFAULT_SCRIPT } from '@/lib/consent'
 
 const siteUrl = 'https://www.pepcolab.com'
 
@@ -228,6 +231,12 @@ export const metadata: Metadata = {
 
   other: {
     'msapplication-TileColor': '#050505',
+    // Meta Business Manager domain verification (Brand Safety > Domains).
+    // Set NEXT_PUBLIC_META_DOMAIN_VERIFICATION to the code Meta gives you,
+    // or verify by DNS TXT record instead and leave it unset.
+    ...(process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION
+      ? { 'facebook-domain-verification': process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION }
+      : {}),
   },
 }
 
@@ -381,21 +390,29 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
+        {/* Consent Mode defaults run BEFORE gtag config (lib/consent.ts):
+            storage is denied until the visitor accepts in ConsentBanner. */}
+        <Script id="consent-defaults" strategy="beforeInteractive">
+          {CONSENT_DEFAULT_SCRIPT}
+        </Script>
+
         <Script
           id="google-analytics"
           strategy="afterInteractive"
         >
           {`
             window.dataLayer = window.dataLayer || [];
-
             function gtag() {
               window.dataLayer.push(arguments);
             }
-
             gtag('js', new Date());
             gtag('config', 'G-8SE9C30NMW');
           `}
         </Script>
+
+        {/* Meta Pixel: loads only with marketing consent and a configured id. */}
+        <MetaPixel />
+        <ConsentBanner />
 
         <Script
           src="https://unpkg.com/@strabl-engineering/checkout-sdk@1.0.2/dist/index.global.js"

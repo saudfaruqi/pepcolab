@@ -47,7 +47,8 @@ import { useCart } from '@/lib/cartContext'
 import { formatPrice } from '@/lib/utils'
 import { claimNudgeSlot, releaseNudgeSlot } from '@/lib/nudgeCoordinator'
 
-const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin']
+// /learn: ad landing pages carry no shop furniture (Meta ads plan, Oct 2026).
+const HIDDEN_ON = ['/checkout/success', '/checkout/failure', '/checkout/cancel', '/admin', '/learn']
 const SUPPORT_EMAIL = 'hello@pepcolab.com'
 
 /* Recurring nudge. Longer intervals than the calculator's — support is a

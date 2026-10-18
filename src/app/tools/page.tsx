@@ -15,7 +15,6 @@ import Footer from '@/components/Footer'
 import { ArrowRight } from 'lucide-react'
 import {
   ReconstitutionCalculator,
-  DoseCalculator,
   BatchVerifier,
   PurityCalculator,
 } from '@/components/ToolWidgets'
@@ -46,7 +45,7 @@ export default function ToolsPage() {
                 href="/tools/reconstitution-calculator"
                 className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600"
               >
-                Open the Reconstitution Calculator on its own page
+                Open the Concentration Calculator on its own page
                 <ArrowRight size={14} />
               </Link>
             </div>
@@ -56,7 +55,6 @@ export default function ToolsPage() {
         <section className="mx-auto max-w-7xl px-6 py-12 lg:px-12">
           <div className="grid gap-6 lg:grid-cols-2">
             <ReconstitutionCalculator />
-            <DoseCalculator />
             {/* NEW: id target so /tools#batch-verifier (used by the
                homepage ToolsSection card) actually scrolls to this widget
                instead of just landing at the top of the hub page.

@@ -26,6 +26,7 @@
 // return one generic message so the endpoint cannot be used to test whether
 // an order code exists.
 
+import { classOf, getProductClass } from '@/lib/productClasses'
 import { getProducts } from '@/lib/shopify'
 import { getOrderRecord, getOrdersForEmail, type OrderRecord } from '@/lib/orderStore'
 import { COA_BATCHES } from '@/app/coaData'
@@ -278,7 +279,7 @@ export function answerSearch(filters: SearchFilters, catalogue: CatalogueEntry[]
 
   if (filters.category) {
     const want = filters.category.toLowerCase()
-    results = results.filter(p => (p.tags ?? []).some(t => t.toLowerCase() === want))
+    results = results.filter(p => classOf(p.handle, p.tags ?? []) === want)
   }
   if (filters.format) {
     const want = filters.format.toLowerCase()
@@ -301,7 +302,7 @@ export function answerSearch(filters: SearchFilters, catalogue: CatalogueEntry[]
   // Two clauses, because they attach to the headline differently: a format or
   // category reads as "in pen", a price cap reads as "up to AED 800". Joining
   // them into one string gave "in stock in up to AED 800".
-  const describedIn = [filters.format, filters.category].filter(Boolean).join(' ')
+  const describedIn = [filters.format, getProductClass(filters.category)?.label ?? filters.category].filter(Boolean).join(' ')
   // "up to", not "under": the filter is inclusive, because someone asking for
   // "under 800" does not want an AED 800 product hidden from them.
   const describedCap = filters.maxPrice

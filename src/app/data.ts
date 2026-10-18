@@ -1,3 +1,4 @@
+import { PRODUCT_CLASSES, classCounts, CATALOGUE_PRODUCT_COUNT } from '@/lib/productClasses'
 // data.ts
 export interface Product {
   id: string
@@ -58,21 +59,12 @@ export interface Category {
   count: number
 }
 
-// Kept in sync with CategoriesSection.tsx and ProductsSection.tsx's
-// KNOWN_CATEGORIES — all three previously disagreed with each other and
-// with the real Shopify tags. This list, and the counts, now match the
-// live product export (Aug 2026): metabolic(9), hormonal(7), cognitive(6),
-// recovery(6), anti-ageing(5), accessories(3), immune(2) = 38 products.
-// "skin" was removed — it was never a real product tag.
+// Compound classes (Oct 2026) — replaces the health-goal categories
+// (Metabolic, Recovery, Cognitive…). Labels, counts and copy all come from
+// lib/productClasses.ts; this keeps the old export shape for existing imports.
 export const CATEGORIES: Category[] = [
-  { slug: 'all',         label: 'All',          count: 38 },
-  { slug: 'metabolic',   label: 'Metabolic',    count: 9  },
-  { slug: 'hormonal',    label: 'Hormonal',     count: 7  },
-  { slug: 'cognitive',   label: 'Cognitive',    count: 6  },
-  { slug: 'recovery',    label: 'Recovery',     count: 6  },
-  { slug: 'anti-ageing', label: 'Anti-Ageing',  count: 5  },
-  { slug: 'accessories', label: 'Accessories',  count: 3  },
-  { slug: 'immune',      label: 'Immune',       count: 2  },
+  { slug: 'all', label: 'All', count: CATALOGUE_PRODUCT_COUNT },
+  ...PRODUCT_CLASSES.map((c) => ({ slug: c.slug, label: c.label, count: classCounts()[c.slug] })),
 ]
 
 // BUNDLES moved to lib/bundles.ts (Sep 2026): each bundle now names exact

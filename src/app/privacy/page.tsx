@@ -183,14 +183,39 @@ export default function PrivacyPolicyPage() {
 
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            Our website may use cookies, analytics tools, and similar
-            technologies to improve functionality, analyse traffic,
-            remember preferences, and enhance user experience.
+            We use three kinds of cookies and similar storage. You choose the
+            optional ones in the cookie banner the first time you visit, and
+            can change your choice at any time with &ldquo;Cookie settings&rdquo; at the
+            bottom of every page.
           </p>
 
+          <ul className="space-y-3 list-disc pl-6">
+            <li>
+              <strong>Essential (always on):</strong> your cart, sign-in,
+              age and market confirmation, and your cookie choice itself.
+              The site cannot work without these.
+            </li>
+            <li>
+              <strong>Analytics (optional):</strong> Google Analytics, to
+              understand which pages are used. Until you accept, Google
+              Analytics runs in a cookieless mode that stores nothing on your
+              device.
+            </li>
+            <li>
+              <strong>Marketing (optional):</strong> the Meta Pixel, which
+              tells Meta (Facebook and Instagram) when someone who saw one of
+              our ads visits the site or requests a guide, so we can measure
+              whether our ads work. It is not loaded at all unless you accept.
+              When you request a guide with marketing cookies accepted, a
+              one-way hashed (unreadable) copy of your email address is also
+              sent to Meta from our server to match that request to the ad.
+            </li>
+          </ul>
+
           <p>
-            You may control cookies through your browser settings.
-            Disabling certain cookies may affect website functionality.
+            You can also clear or block cookies in your browser settings.
+            Blocking essential storage will stop the cart and sign-in from
+            working.
           </p>
         </div>
       </section>
@@ -210,7 +235,7 @@ export default function PrivacyPolicyPage() {
             <li>Payment processors</li>
             <li>E-commerce infrastructure providers</li>
             <li>Hosting providers</li>
-            <li>Analytics providers</li>
+            <li>Analytics and advertising-measurement providers (Google, Meta)</li>
             <li>Shipping and logistics partners</li>
             <li>Email communication platforms</li>
           </ul>

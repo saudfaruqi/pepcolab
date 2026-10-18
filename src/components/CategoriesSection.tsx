@@ -3,6 +3,7 @@ import { useRef, useEffect, useMemo, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { getProducts } from '@/lib/shopify'
 import { useCountry } from '@/lib/countryContext'
+import { PRODUCT_CLASSES } from '@/lib/productClasses'
 
 // WHY THIS CHANGED
 // ----------------
@@ -22,55 +23,17 @@ import { useCountry } from '@/lib/countryContext'
 // for the visitor's market, so labels, counts and card order all follow the
 // live catalogue with no maintenance.
 
-/** Visual treatment per category slug. Purely presentational — the list of
- *  categories that renders comes from the products, not from this map. */
+/** Visual treatment per compound class (lib/productClasses.ts). Purely
+ *  presentational — which classes render comes from the products. */
 const CATEGORY_STYLE: Record<
   string,
   { label: string; emoji: string; color: { bg: string; accent: string; border: string }; img: string }
-> = {
-  metabolic: {
-    label: 'Metabolic & Weight',
-    emoji: '⚡',
-    color: { bg: '#EBF2FF', accent: '#1A56DB', border: '#BFCFF8' },
-    img: 'https://images.unsplash.com/photo-1576671414121-aa2d60f06f93?w=300&q=80&auto=format&fit=crop',
-  },
-  hormonal: {
-    label: 'Hormonal & Peptide',
-    emoji: '🔬',
-    color: { bg: '#FFF3E8', accent: '#C05621', border: '#F6C69B' },
-    img: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=300&q=80&auto=format&fit=crop',
-  },
-  cognitive: {
-    label: 'Cognitive',
-    emoji: '🧠',
-    color: { bg: '#F5F0FE', accent: '#7C3AED', border: '#D4C5F9' },
-    img: 'https://images.unsplash.com/photo-1628771065518-0d82f1938462?w=300&q=80&auto=format&fit=crop',
-  },
-  recovery: {
-    label: 'Recovery & Healing',
-    emoji: '💊',
-    color: { bg: '#E6F5EE', accent: '#0A7B45', border: '#A7D9BC' },
-    img: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=300&q=80&auto=format&fit=crop',
-  },
-  'anti-ageing': {
-    label: 'Anti-Ageing',
-    emoji: '✨',
-    color: { bg: '#FFF0F5', accent: '#BE185D', border: '#F9A8D4' },
-    img: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=300&q=80&auto=format&fit=crop',
-  },
-  accessories: {
-    label: 'Accessories',
-    emoji: '🧪',
-    color: { bg: '#F0FDF4', accent: '#15803D', border: '#86EFAC' },
-    img: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=300&q=80&auto=format&fit=crop',
-  },
-  immune: {
-    label: 'Immune',
-    emoji: '🛡️',
-    color: { bg: '#FFFBEB', accent: '#B45309', border: '#FDE68A' },
-    img: 'https://images.unsplash.com/photo-1584362917165-526a968579e8?w=300&q=80&auto=format&fit=crop',
-  },
-}
+> = Object.fromEntries(
+  PRODUCT_CLASSES.map((c) => [
+    c.slug,
+    { label: c.label, emoji: '🧪', color: { bg: '#F7F7F5', accent: c.color, border: '#E7E5E4' }, img: '' },
+  ])
+)
 
 /** Used for a tag that has no entry above — a new Shopify category renders
  *  with a sensible neutral card instead of a blank one. */
@@ -132,11 +95,9 @@ export default function CategoriesSection() {
     const counts = new Map<string, number>()
 
     for (const p of products) {
-      for (const tag of p.tags ?? []) {
-        const slug = String(tag).toLowerCase()
-        if (MARKET_TAGS.has(slug)) continue
-        counts.set(slug, (counts.get(slug) ?? 0) + 1)
-      }
+      const slug = String(p.categorySlug || '')
+      if (!slug || MARKET_TAGS.has(slug)) continue
+      counts.set(slug, (counts.get(slug) ?? 0) + 1)
     }
 
     return [...counts.entries()]

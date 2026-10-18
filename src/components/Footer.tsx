@@ -55,9 +55,9 @@ const LINKS = {
     { label: 'All Compounds',    href: '/products'                       },
     // Real crawlable category routes (SEO) rather than the query-string
     // filter — see app/products/category/[category]/page.tsx.
-    { label: 'Recovery',         href: '/products/category/recovery'     },
-    { label: 'Metabolic',        href: '/products/category/metabolic'    },
-    { label: 'Cognitive',        href: '/products/category/cognitive'    },
+    { label: 'GH-Axis Peptides',  href: '/products/category/gh-axis-peptides'         },
+    { label: 'Copper & Cosmetic', href: '/products/category/copper-cosmetic-peptides' },
+    { label: 'Lab Supplies',      href: '/products/category/lab-supplies'             },
     { label: 'Bundles & Stacks', href: '/bundles'               },
     { label: 'Wishlist',         href: '/wishlist'              },
   ],
@@ -511,6 +511,14 @@ export default function Footer() {
             <span className="footer-bottom-text">© {year} PepcoLab — SEE BEE DEE LIMITED (England &amp; Wales, 17072052)</span>
             <div className="footer-dot" />
             <Link href="/privacy" className="footer-bottom-link">Privacy</Link>
+            <button
+              type="button"
+              className="footer-bottom-link"
+              onClick={() => window.dispatchEvent(new Event('pepcolab:open-consent'))}
+              style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', font: 'inherit' }}
+            >
+              Cookie settings
+            </button>
             <Link href="/terms"   className="footer-bottom-link">Terms</Link>
             <Link href="/shipping" className="footer-bottom-link">Shipping</Link>
             <Link href="/refund-policy" className="footer-bottom-link">Refunds</Link>

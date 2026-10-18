@@ -449,16 +449,15 @@ export const FAQS: Faq[] = [
   {
     id: 'handling-pen-clicks',
     topic: 'handling',
-    question: 'How many clicks are in a pen, and how much per click?',
+    question: 'How much does a pen contain?',
     answer: [
-      'A pen’s total contents are divided across its clicks, so what one click contains is simply the pen strength divided by the number of clicks on that pen. A 30mg pen with 240 clicks works out at 0.125mg per click.',
-      'There is a calculator built into the site for exactly this — open the Calculator button on any page and switch to the Pen tab. Enter the pen strength and its click count and it gives you the amount per click, plus how many clicks make up any quantity you enter.',
-      'Check the click count printed on your own pen’s label rather than assuming, because it varies between pen models. To be explicit: this is the arithmetic of what is in the device. It is not a dosing tool, and we don’t give administration guidance.',
+      'Each pen’s total peptide content is printed on its label and matches the strength you selected at checkout (for example, a 30mg pen contains 30mg). The certificate for that lot reports the measured content.',
+      'We don’t provide per-click, per-use or administration figures for any product. Our products are supplied for laboratory research only, and the site’s calculator works out solution concentration (mg/mL) and nothing else.',
     ],
-    keywords: ['click', 'clicks', 'per click', 'pen', 'pens', 'dial', 'how many clicks', '240', 'increments', 'graduation', 'pen calculator'],
+    keywords: ['click', 'clicks', 'per click', 'pen', 'pens', 'dial', 'how many clicks', 'increments', 'graduation', 'pen calculator', 'pen contents'],
     links: [
-      { label: 'Open the pen calculator', href: '/tools/reconstitution-calculator' },
-      { label: 'Browse pen formats', href: '/products' },
+      { label: 'Concentration calculator', href: '/tools/reconstitution-calculator' },
+      { label: 'Browse pen formats', href: '/products?format=pen' },
     ],
     related: ['handling-reconstitution', 'handling-storage'],
   },
@@ -486,7 +485,7 @@ export const FAQS: Faq[] = [
     keywords: ['reconstitute', 'reconstitution', 'mix', 'dilute', 'dilution', 'solvent', 'bac water', 'bacteriostatic', 'water', 'calculator', 'concentration', 'ml'],
     links: [
       { label: 'Reconstitution calculator', href: '/tools/reconstitution-calculator' },
-      { label: 'Solvents & accessories', href: '/products/category/accessories' },
+      { label: 'Solvents & accessories', href: '/products/category/lab-supplies' },
     ],
     related: ['handling-pen-clicks', 'handling-storage'],
   },

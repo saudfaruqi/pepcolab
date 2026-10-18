@@ -188,7 +188,7 @@ export function useStrablCheckout() {
       // /checkout/success can report the purchase. STRABL redirects back with
       // no order data in the URL, so without the stash there is no way to
       // attribute revenue client-side. See lib/analytics.ts.
-      trackBeginCheckout(
+      const checkoutRef = trackBeginCheckout(
         lines.map(l => lineToItem(l)),
         discountCode
       )
@@ -245,6 +245,9 @@ export function useStrablCheckout() {
         // webhook route.ts). Used to attribute/increment redemption counts
         // after a real order is created, not just at validate time.
         extra: {
+          // Joins the success-page "How did you hear about us?" answer to
+          // this order (lib/heardFrom.ts).
+          ref: checkoutRef,
           ...(discountCode ? { discountCode } : {}),
           ...(bundleSavings.bundles.length ? { bundles: bundleSavings.bundles.map(b => `${b.id}x${b.sets}`).join(',') } : {}),
         },

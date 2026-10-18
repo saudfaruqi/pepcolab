@@ -366,9 +366,9 @@ export async function sendCrossSellEmail(order: OrderRecord, journey: OrderJourn
 
   const html = emailShell(`
     ${preheader(`${area ? `More ${area.toLowerCase()} compounds` : 'Compounds'} to sit alongside your ${summary}`)}
-    ${pill(area ? `${escapeHtml(area)} research` : 'For your research', GOLD_TEXT, GOLD_TINT)}
+    ${pill(area ? escapeHtml(area) : 'For your research', GOLD_TEXT, GOLD_TINT)}
     ${h1('Building on your last order')}
-    ${para(`${greetingHtml(order.customerName)} since you ordered ${escapeHtml(summary)}, here are ${area ? `other compounds from the same research area` : 'a few compounds'} we stock. Every one ships as a current batch with its own published certificate, cold-chain packed.`)}
+    ${para(`${greetingHtml(order.customerName)} since you ordered ${escapeHtml(summary)}, here are ${area ? `other compounds in the same class` : 'a few compounds'} we stock. Every one ships as a current batch with its own published certificate, cold-chain packed.`)}
     ${related.html}
     ${supplies.html}
     ${primaryButton('Browse the full catalogue', `${SITE_URL}/products?utm_source=email&utm_medium=lifecycle&utm_campaign=cross-sell`, 12)}
@@ -380,10 +380,10 @@ export async function sendCrossSellEmail(order: OrderRecord, journey: OrderJourn
   await sendMailSafe({
     to: order.email,
     replyTo: SUPPORT_EMAIL,
-    subject: area ? `More from ${area} research` : 'Picked for your next order',
+    subject: area ? `More from the ${area} range` : 'Picked for your next order',
     text:
       `${greetingText(order.customerName)}\n\n` +
-      `Since you ordered ${summary}, here are ${area ? 'other compounds from the same research area' : 'a few compounds'} we stock.\n\n` +
+      `Since you ordered ${summary}, here are ${area ? 'other compounds in the same class' : 'a few compounds'} we stock.\n\n` +
       `${related.text}\n` +
       (supplies.text ? `\n${supplies.text}\n` : '') +
       `\nFull catalogue: ${SITE_URL}/products\nBulk supply for labs: ${SITE_URL}/bulk-orders\n\n${RUO}` +

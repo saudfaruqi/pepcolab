@@ -218,7 +218,7 @@ export default function StoragePage() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 30 }}>
             {[
               { href: '/tools/reconstitution-calculator', label: 'Reconstitution calculator' },
-              { href: '/products/category/accessories', label: 'Solvents & accessories' },
+              { href: '/products/category/lab-supplies', label: 'Solvents & accessories' },
               { href: '/testing', label: 'How we test' },
               { href: '/guides/storage-conditions', label: 'Guide: storage science' },
             ].map(l => (

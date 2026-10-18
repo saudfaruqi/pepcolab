@@ -51,28 +51,41 @@ export interface ActionRequest {
  */
 export const MAX_ADD_QTY = 5
 
+// Words a visitor might type → compound class (lib/productClasses.ts).
+//
+// Oct 2026: health-goal words ("recovery", "metabolic", "anti-ageing",
+// "immune", "nootropic") were removed. Mapping a body outcome to a product
+// list is exactly the implied claim the class taxonomy exists to avoid, and
+// it would do it in the chat's own voice. Those words now fall through to an
+// ordinary product-name search.
 const CATEGORIES: Record<string, string> = {
-  recovery: 'recovery',
-  repair: 'recovery',
-  metabolic: 'metabolic',
-  metabolism: 'metabolic',
-  cognitive: 'cognitive',
-  nootropic: 'cognitive',
-  nootropics: 'cognitive',
-  hormonal: 'hormonal',
-  hormone: 'hormonal',
-  hormones: 'hormonal',
-  'anti-ageing': 'anti-ageing',
-  'anti ageing': 'anti-ageing',
-  'anti-aging': 'anti-ageing',
-  'anti aging': 'anti-ageing',
-  longevity: 'anti-ageing',
-  immune: 'immune',
-  immunity: 'immune',
-  accessory: 'accessories',
-  accessories: 'accessories',
-  solvent: 'accessories',
-  solvents: 'accessories',
+  secretagogue: 'gh-axis-peptides',
+  secretagogues: 'gh-axis-peptides',
+  ghrh: 'gh-axis-peptides',
+  'gh axis': 'gh-axis-peptides',
+  'gh-axis': 'gh-axis-peptides',
+  incretin: 'incretin-analogues',
+  incretins: 'incretin-analogues',
+  amylin: 'incretin-analogues',
+  neuropeptide: 'neuropeptide-analogues',
+  neuropeptides: 'neuropeptide-analogues',
+  mitochondrial: 'mitochondrial-cofactors',
+  cofactor: 'mitochondrial-cofactors',
+  cofactors: 'mitochondrial-cofactors',
+  copper: 'copper-cosmetic-peptides',
+  cosmetic: 'copper-cosmetic-peptides',
+  cosmetics: 'copper-cosmetic-peptides',
+  bioregulator: 'bioregulator-peptides',
+  bioregulators: 'bioregulator-peptides',
+  blend: 'research-blends',
+  blends: 'research-blends',
+  stack: 'research-blends',
+  stacks: 'research-blends',
+  accessory: 'lab-supplies',
+  accessories: 'lab-supplies',
+  solvent: 'lab-supplies',
+  solvents: 'lab-supplies',
+  supplies: 'lab-supplies',
 }
 
 const FORMATS: Record<string, string> = {

@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronDown, ChevronUp, Truck, Loader2, Replace, AlertTriangle } from 'lucide-react'
 import type { OrderRecord, OrderStatus } from '@/lib/orderStore'
+import { heardFromLabel } from '@/lib/heardFromOptions'
 
 // Mirrors lib/orderStore.ts PAID_ORDER_STATUSES (kept local: this is a client
 // component and orderStore imports the Redis client).
@@ -523,6 +524,23 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
     return c
   }, [orders])
 
+  // "How did you hear about us?" answers across the orders shown in this
+  // view — the attribution signal the Meta plan relies on (Oct 2026).
+  const heardTally = useMemo(() => {
+    const test = VIEWS.find((v) => v.key === view)?.test ?? (() => true)
+    const t = new Map<string, number>()
+    let answered = 0
+    let total = 0
+    for (const o of orders.filter(test)) {
+      total++
+      if (!o.heardFrom) continue
+      answered++
+      const label = heardFromLabel(o.heardFrom.answer)
+      t.set(label, (t.get(label) || 0) + 1)
+    }
+    return { answered, total, rows: Array.from(t.entries()).sort((a, b) => b[1] - a[1]) }
+  }, [orders, view])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const test = VIEWS.find((v) => v.key === view)?.test ?? (() => true)
@@ -563,6 +581,15 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
           </button>
         ))}
       </div>
+
+      {heardTally.answered > 0 && (
+        <div className="mb-4 rounded-lg border border-[#0D0D0D]/10 bg-white px-3 py-2 text-xs text-[#0D0D0D]/70">
+          <span className="font-medium text-[#0D0D0D]">Heard about us</span>
+          <span className="text-[#0D0D0D]/50"> ({heardTally.answered} of {heardTally.total} answered)</span>
+          {': '}
+          {heardTally.rows.map(([label, n]) => `${label} ${n}`).join(' · ')}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[#0D0D0D]/15 py-16 text-center text-sm text-[#0D0D0D]/50">
@@ -653,6 +680,12 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
                             </div>
                             <div className="text-sm text-[#0D0D0D]/70">
                               {o.phone && <div>Phone: {o.phone}</div>}
+                              {o.heardFrom && (
+                                <div>
+                                  Heard about us: {heardFromLabel(o.heardFrom.answer)}
+                                  {o.heardFrom.detail ? ` — “${o.heardFrom.detail}”` : ''}
+                                </div>
+                              )}
                               {o.shopifyOrderId && <div>Shopify order ID: {o.shopifyOrderId}</div>}
                               {o.failureReason && (
                                 <div className="text-red-700">Failure reason: {o.failureReason}</div>

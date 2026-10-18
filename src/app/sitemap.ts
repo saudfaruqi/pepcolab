@@ -59,6 +59,11 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/dubai',        changeFrequency: 'weekly',  priority: 0.8  },
   { path: '/bulk-orders',  changeFrequency: 'monthly', priority: 0.7  },
   { path: '/help',         changeFrequency: 'monthly', priority: 0.6  },
+  // Free guides (Meta ads landing pages, Oct 2026). Thank-you pages are noindex.
+  { path: '/learn',                  changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/learn/coa-guide',        changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/learn/vendor-checklist', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/learn/storage-guide',    changeFrequency: 'monthly', priority: 0.6 },
   // /search removed from the sitemap (Sep 2026): a search interface has
   // nothing unique to index, and on a domain that is already being
   // crawl-rationed it competes with pages that do.
@@ -67,11 +72,6 @@ const STATIC_ROUTES: StaticRoute[] = [
   // asked to spend a crawl on. It is now noindexed via its own layout.tsx.
   { path: '/legal',        changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/compare',      changeFrequency: 'weekly',  priority: 0.75 },
-  { path: '/longevity',    changeFrequency: 'weekly',  priority: 0.75 },
-  { path: '/aesthetic',    changeFrequency: 'weekly',  priority: 0.75 },
-  { path: '/recovery',     changeFrequency: 'weekly',  priority: 0.75 },
-  { path: '/cognitive',    changeFrequency: 'weekly',  priority: 0.75 },
-  { path: '/metabolic',    changeFrequency: 'weekly',  priority: 0.75 },
   { path: '/tools',        changeFrequency: 'monthly', priority: 0.6 },
   { path: '/about',        changeFrequency: 'monthly', priority: 0.6 },
   { path: '/faq',          changeFrequency: 'monthly', priority: 0.6 },

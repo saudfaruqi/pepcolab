@@ -1,4 +1,5 @@
 'use client'
+import { PRODUCT_CLASSES } from '@/lib/productClasses'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -119,7 +120,7 @@ export default function Nav() {
   const closeDrop = ()          => { dropTimer.current = setTimeout(() => setActiveDrop(null), 130) }
 
   const categoryCounts = products.reduce<Record<string, number>>((acc, p) => {
-    const c = p.category.toLowerCase(); acc[c] = (acc[c] ?? 0) + 1; return acc
+    const c = String((p as any).categorySlug || ''); if (c) acc[c] = (acc[c] ?? 0) + 1; return acc
   }, {})
 
   const searchResults = searchQuery.length > 1
@@ -129,10 +130,10 @@ export default function Nav() {
       ).slice(0, 6)
     : []
 
-  const CATEGORY_LABELS: Record<string, string> = {
-    metabolic: 'Metabolic', recovery: 'Recovery', cognitive: 'Cognitive', hormonal: 'Hormonal',
-    'anti-ageing': 'Anti-Ageing', immune: 'Immune', accessories: 'Accessories',
-  }
+  // Compound classes (Oct 2026), not health goals — lib/productClasses.ts.
+  const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
+    PRODUCT_CLASSES.map((c) => [c.slug, c.label])
+  )
 
   const NAV_LINKS = [
     {

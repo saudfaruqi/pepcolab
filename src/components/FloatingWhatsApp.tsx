@@ -10,7 +10,8 @@ import { useCart } from '@/lib/cartContext'
 /** Same hidden-on-checkout rule as FloatingCalculator — a WhatsApp bubble
  *  sitting over the STRABL payment UI is exactly the kind of thing that
  *  causes an abandoned card. */
-const HIDDEN_PREFIXES = ['/checkout']
+// /learn: ad landing pages carry no shop furniture (Meta ads plan, Oct 2026).
+const HIDDEN_PREFIXES = ['/checkout', '/learn']
 
 export default function FloatingWhatsApp() {
   const pathname = usePathname()

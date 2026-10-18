@@ -125,6 +125,26 @@ export function trackBeginCheckout(items: AnalyticsItem[], discountCode?: string
 }
 
 /**
+ * The pending checkout WITHOUT clearing it — read by /checkout/success
+ * before trackPurchaseFromPending() clears it, to join the "How did you
+ * hear about us?" answer to the order (lib/heardFrom.ts).
+ */
+export function readPendingCheckout(): { ref: string; items: { name: string; quantity: number }[] } | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw) as { transactionId?: string; items?: AnalyticsItem[]; ts?: number }
+    if (!p?.transactionId || !p.ts || Date.now() - p.ts > 6 * 60 * 60 * 1000) return null
+    return {
+      ref: p.transactionId,
+      items: (p.items || []).map((i) => ({ name: i.item_name, quantity: Number(i.quantity) || 1 })),
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
  * Called once on /checkout/success. Reads and CLEARS the stash, so a refresh
  * or a back-navigation cannot double-count the order.
  *

@@ -145,54 +145,9 @@ export function ReconstitutionCalculator({ standalone = false }: { standalone?: 
   )
 }
 
-/* ─────────────────────────────
-   DOSE CALCULATOR
-   Volume (mL) = Dose (mcg) / Concentration (mcg/mL)
-───────────────────────────── */
-export function DoseCalculator() {
-  const [concentration, setConcentration] = useState('')
-  const [dose, setDose] = useState('')
-
-  const volume = useMemo(() => {
-    const conc = safeNumber(concentration)
-    const targetDose = safeNumber(dose)
-    if (!conc || !targetDose || conc <= 0) return null
-    const v = targetDose / conc
-    if (!Number.isFinite(v) || v <= 0) return null
-    return v
-  }, [concentration, dose])
-
-  return (
-    <ToolCard
-      title="Concentration / Volume Calculator"
-      description="Convert a target mcg amount into a solution volume at a given concentration."
-      icon={<Beaker size={20} />}
-    >
-      <div className="space-y-4">
-        <input
-          type="number"
-          value={concentration}
-          onChange={(e) => setConcentration(e.target.value)}
-          placeholder="Concentration (mcg/mL)"
-          className="w-full bg-white rounded-xl border px-4 py-3"
-        />
-        <input
-          type="number"
-          value={dose}
-          onChange={(e) => setDose(e.target.value)}
-          placeholder="Target amount (mcg)"
-          className="w-full bg-white rounded-xl border px-4 py-3"
-        />
-        {volume !== null && (
-          <div className="rounded-2xl bg-zinc-50 p-5 text-center">
-            <div className="text-sm text-zinc-500">Required Volume</div>
-            <div className="text-4xl font-bold">{volume.toFixed(2)} mL</div>
-          </div>
-        )}
-      </div>
-    </ToolCard>
-  )
-}
+/* "DOSE CALCULATOR" REMOVED (Oct 2026). It converted a target mcg amount
+   into a volume to draw — a per-use answer, whatever its title said. The
+   tools now stop at concentration (ReconstitutionCalculator above). */
 
 /* ─────────────────────────────
    BATCH VERIFIER

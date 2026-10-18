@@ -1,111 +1,13 @@
 // src/app/recovery/page.tsx
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import Nav from '@/components/Nav'
-import Footer from '@/components/Footer'
-import { ChevronRight } from 'lucide-react'
-
-const SITE_URL = 'https://www.pepcolab.com'
-
-// SEO FIX (Sep 2026) — KEYWORD CANNIBALISATION
 //
-// This hub and /products/category/{slug} were both titled "<Topic> Research
-// Peptides — UAE" and both described as the compounds studied in that field.
-// Two pages on the same domain competing for the same query is a net loss:
-// internal links and external signal split between them, Google picks one
-// (often not the one you wanted), and both rank lower than a single
-// consolidated page would.
-//
-// They are not merged, because the intent genuinely differs. The split is now
-// explicit:
-//   THIS page  -> informational. "which compounds, what the research says,
-//                 how to evaluate a supplier." No "for sale", no price, no
-//                 market qualifier in the title.
-//   /products/category/{slug} -> commercial. "<Topic> Peptides for Sale —
-//                 Research Grade | UAE & UK", product grid, prices.
-//
-// The existing link from this page down to the category page is what passes
-// the informational traffic through to the commercial page. Keep it.
-export const metadata: Metadata = {
-  title: 'Recovery Peptides: Research Overview & Compound Guide',
-  description:
-    'Which peptides appear most in musculoskeletal and tissue-repair research, what the proposed mechanisms are, and how to read a supplier’s batch documentation before you order.',
-  alternates: {
-    canonical: '/recovery',
-    languages: { 'en-GB': '/recovery', 'en-AE': '/recovery', 'x-default': '/recovery' },
-  },
-  openGraph: {
-    title: 'Recovery Research Peptides | PepcoLab',
-    description: 'The compounds most studied in musculoskeletal and tissue-repair research, and how to evaluate a supplier.',
-    url: `${SITE_URL}/recovery`,
-    type: 'website',
-  },
+// RETIRED (Oct 2026). This was a health-goal hub ("Recovery research").
+// The catalogue is now organised by compound class (lib/productClasses.ts),
+// and goal-led landing pages are the implied-claim pattern the MHRA, the Abu
+// Dhabi DoH and Meta's ad review all flag. Permanently redirected to the
+// nearest compound class; next.config.js carries the same 301 so it applies
+// before this page is ever rendered.
+import { permanentRedirect } from 'next/navigation'
+
+export default function RetiredRecoveryHub() {
+  permanentRedirect('/products/category/bioregulator-peptides')
 }
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
-  name: 'Recovery Research Peptides',
-  url: `${SITE_URL}/recovery`,
-}
-
-export default function RecoveryHubPage() {
-  return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Nav />
-      <main style={{ background: '#fff', minHeight: '100vh' }}>
-        <section style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px 24px' }}>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(28px,4vw,42px)', lineHeight: 1.15, letterSpacing: '-.03em', marginBottom: 16, color: '#0d0d0d' }}>
-            Recovery Research Peptides
-          </h1>
-          <p style={{ fontSize: 16.5, lineHeight: 1.7, color: 'rgba(13,13,13,.65)', maxWidth: 680 }}>
-            Musculoskeletal and tissue-repair research covers a specific set of mechanisms — growth-factor signalling, angiogenesis, and cell migration among them. The compounds below are the ones most discussed in that literature, supplied strictly for laboratory research use.
-          </p>
-        </section>
-
-        <section style={{ maxWidth: 820, margin: '0 auto', padding: '8px 24px 40px' }}>
-          <div style={{ display: 'grid', gap: 14 }}>
-            <div style={cardStyle}>
-              <h2 style={cardTitleStyle}>BPC-157</h2>
-              <p style={cardTextStyle}>A synthetic fragment studied in gastroprotective and musculoskeletal-repair research, with a proposed mechanism centred on growth-factor pathways.</p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link href="/research/bpc-157" style={pillStyle}>Research profile <ChevronRight size={13} /></Link>
-                <Link href="/legal/bpc-157" style={pillStyle}>Legal status <ChevronRight size={13} /></Link>
-                <Link href="/compare/bpc-157-vs-tb-500" style={pillStyle}>Compare vs TB-500 <ChevronRight size={13} /></Link>
-                <Link href="/products/bpc-157" style={pillStyle}>Shop BPC-157 <ChevronRight size={13} /></Link>
-              </div>
-            </div>
-            <div style={cardStyle}>
-              <h2 style={cardTitleStyle}>TB-500</h2>
-              <p style={cardTextStyle}>A thymosin beta-4 fragment studied for its proposed role in cell migration and angiogenesis during tissue-repair research models.</p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link href="/legal/tb-500" style={pillStyle}>Legal status <ChevronRight size={13} /></Link>
-                <Link href="/compare/bpc-157-vs-tb-500" style={pillStyle}>Compare vs BPC-157 <ChevronRight size={13} /></Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section style={{ maxWidth: 820, margin: '0 auto', padding: '0 24px 64px' }}>
-          <Link href="/products/category/recovery" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700,
-            color: '#0d0d0d', textDecoration: 'none', borderBottom: '2px solid #0d0d0d', paddingBottom: 2,
-          }}>
-            Browse all Recovery research peptides <ChevronRight size={15} />
-          </Link>
-        </section>
-      </main>
-      <Footer />
-    </>
-  )
-}
-
-const cardStyle = { background: '#f7f5f1', borderRadius: 14, padding: '22px 24px' }
-const cardTitleStyle = { fontFamily: 'Georgia, serif', fontSize: 19, marginBottom: 8, color: '#0d0d0d' }
-const cardTextStyle = { fontSize: 14.5, lineHeight: 1.6, color: 'rgba(13,13,13,.65)', marginBottom: 14 }
-const pillStyle = {
-  display: 'inline-flex', alignItems: 'center', gap: 6,
-  fontSize: 13, fontWeight: 600, color: '#0d0d0d', textDecoration: 'none',
-  border: '1px solid #e5e7eb', borderRadius: 999, padding: '8px 14px', background: '#fff',
-} as const

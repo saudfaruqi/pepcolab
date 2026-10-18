@@ -120,6 +120,14 @@ export interface OrderRecord {
   amendments?: OrderAmendment[]
   topUpFor?: string
   orcafloUpdatePending?: boolean
+
+  // ATTRIBUTION (Oct 2026)
+  // checkoutRef: the browser's checkout reference, echoed by STRABL in
+  //   cart.extra.ref — joins the success-page answer to this order.
+  // heardFrom: the customer's answer to "How did you hear about us?" on
+  //   /checkout/success (lib/heardFrom.ts). Optional; most never answer.
+  checkoutRef?: string
+  heardFrom?: { answer: string; detail?: string; at: string }
 }
 
 export interface OrderAmendment {

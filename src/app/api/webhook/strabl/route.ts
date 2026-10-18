@@ -27,6 +27,7 @@ import {
   AFFILIATE_HOLD_DAYS,
 } from '@/lib/affiliateStore'
 import { redis } from '@/lib/redis'
+import { cleanCheckoutRef, rememberCheckoutRef, takePendingHeardFrom } from '@/lib/heardFrom'
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
@@ -390,16 +391,35 @@ export async function POST(req: NextRequest) {
   // exists at all.
   const buildOrderRecord = async (status: OrderRecord['status'], shopifyOrderId?: string): Promise<OrderRecord> => {
     const existingRecord = await getOrderRecord(orderShortCode)
-    const products = resolvedProducts.map((item: any) => ({
+    const stablProducts = resolvedProducts.map((item: any) => ({
       title: item.title || 'Product',
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
       variantOptions: item.extra || [],
       variantId: resolveVariantGid(item) || undefined,
     }))
-    const total = products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
+    // An order changed from the admin ("Change item") holds its CURRENT
+    // items on our record; a later STRABL event still carries the original
+    // ones and must not undo the change.
+    const amended = Boolean(existingRecord?.amendments?.length)
+    const products = amended ? existingRecord!.products : stablProducts
+    const total = amended
+      ? existingRecord!.total
+      : products.reduce((sum: number, p: any) => sum + p.price * p.quantity, 0)
+
+    // "How did you hear about us?" — see lib/heardFrom.ts.
+    const checkoutRef = cleanCheckoutRef(orderUpdate.meta?.ref) || existingRecord?.checkoutRef || undefined
+    if (checkoutRef && !existingRecord?.checkoutRef) await rememberCheckoutRef(checkoutRef, orderShortCode)
+    const heardFrom =
+      existingRecord?.heardFrom ?? (checkoutRef ? await takePendingHeardFrom(checkoutRef) : undefined)
 
     return {
+      // Keep everything else already on the record (email-sent markers,
+      // amendments, top-up links, dispatch details); the fields below are
+      // the ones this event is allowed to set.
+      ...(existingRecord ?? {}),
+      checkoutRef,
+      heardFrom,
       orderShortCode,
       orderUuid: orderUuid || '',
       status,

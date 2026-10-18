@@ -14,6 +14,7 @@ import { ChevronRight } from 'lucide-react'
 import { getProducts, getProductByHandle } from '@/lib/shopify'
 import { stripLeadingName, toNeutralSlug, toShopifyHandle, productHref } from '@/lib/utils'
 import { relatedContentForProduct } from '@/lib/contentLinks'
+import { classOf, getProductClass } from '@/lib/productClasses'
 import { buildProductTitle, buildProductDescription } from '@/lib/productMeta'
 import { getApprovedReviewsStatic, type Review } from '@/lib/reviewStore'
 
@@ -167,9 +168,9 @@ function getOneLiner(description?: string, name?: string): string {
   return body.slice(0, 120).trim() + '…'
 }
 
-/** The research category tag, ignoring market tags. */
-function categoryTag(tags: string[] = []): string | undefined {
-  return tags.map((t) => t.toLowerCase()).find((t) => !MARKET_TAGS.has(t))
+/** The product's compound class (lib/productClasses.ts), never a health-goal tag. */
+function productClassSlug(p: { handle: string; tags?: string[] }): string {
+  return classOf(p.handle, (p.tags ?? []).filter((t) => !MARKET_TAGS.has(t.toLowerCase())))
 }
 
 /**
@@ -179,12 +180,10 @@ function categoryTag(tags: string[] = []): string | undefined {
  * card or an empty section on those pages.
  */
 function pickRelated(all: any[], current: any, limit = 4) {
-  const cat = categoryTag(current.tags)
+  const cat = productClassSlug(current)
   const pool = all.filter((p) => p.handle !== current.handle)
 
-  const sameCategory = cat
-    ? pool.filter((p) => (p.tags ?? []).map((t: string) => t.toLowerCase()).includes(cat))
-    : []
+  const sameCategory = pool.filter((p) => productClassSlug(p) === cat)
 
   const rest = pool.filter((p) => !sameCategory.includes(p))
 
@@ -402,8 +401,8 @@ export default async function ProductPage({ params }: Props) {
     name: shopifyProduct.title,
     shortName: shopifyProduct.title,
     oneLiner: getOneLiner(shopifyProduct.description, shopifyProduct.title),
-    category: categoryTag(shopifyProduct.tags) || '',
-    categorySlug: categoryTag(shopifyProduct.tags) || '',
+    category: getProductClass(productClassSlug(shopifyProduct))?.label ?? '',
+    categorySlug: productClassSlug(shopifyProduct),
     badge: undefined as undefined,
     color: {
       bg: '#f5f7fb', accent: '#2563eb', pill: '#dbeafe', pillText: '#1d4ed8',
@@ -413,13 +412,13 @@ export default async function ProductPage({ params }: Props) {
 
   const jsonLd = buildJsonLd(shopifyProduct, approvedReviews ?? [])
   const related = pickRelated(allProducts, shopifyProduct, 4)
-  const relatedCategory = categoryTag(shopifyProduct.tags)
+  const relatedCategory = productClassSlug(shopifyProduct)
   // SEO FIX: product pages had zero links into /guides or /research (audit
   // finding — 15 articles "orphaned... zero internal links either way").
   // This is the product -> content half of that fix; see
   // relatedContentForProduct() in lib/contentLinks.ts. The content -> product
   // half lives in app/guides/[slug]/page.tsx and app/research/[slug]/page.tsx.
-  const relatedContent = relatedContentForProduct(shopifyProduct.title, categoryTag(shopifyProduct.tags))
+  const relatedContent = relatedContentForProduct(shopifyProduct.title, productClassSlug(shopifyProduct))
 
   return (
     <>

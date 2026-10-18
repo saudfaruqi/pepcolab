@@ -15,6 +15,7 @@
 //
 // Server-only: it calls the Storefront API through lib/shopify.ts.
 
+import { classOf, getProductClass } from '@/lib/productClasses'
 import { getProducts } from '@/lib/shopify'
 import { productHref } from '@/lib/utils'
 import type { OrderRecord } from '@/lib/orderStore'
@@ -66,11 +67,10 @@ function normTitle(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '')
 }
 
-function categoryOf(tags: string[]): { label: string; slug: string } {
-  const tag = tags.find((t) => !NON_CATEGORY_TAGS.has(t.toLowerCase())) || ''
-  const slug = tag.toLowerCase().replace(/\s+/g, '-')
-  const label = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-  return { label, slug }
+// Compound class (lib/productClasses.ts), not the old health-goal tag.
+function categoryOf(handle: string, tags: string[]): { label: string; slug: string } {
+  const slug = classOf(handle, tags.filter((t) => !NON_CATEGORY_TAGS.has(t.toLowerCase())))
+  return { label: getProductClass(slug)?.label ?? '', slug }
 }
 
 /**
@@ -84,7 +84,7 @@ export async function loadCatalogue(currency = 'AED'): Promise<CatalogueItem[]> 
     const products = await getProducts(100, market)
     return products.map((p: any) => {
       const tags: string[] = p.tags ?? []
-      const cat = categoryOf(tags)
+      const cat = categoryOf(String(p.handle || ''), tags)
       return {
         handle: p.handle,
         title: p.title,
@@ -175,7 +175,7 @@ export function buildJourney(order: OrderRecord, catalogue: CatalogueItem[], cam
   // something already bought. Stable order so the same customer doesn't see a
   // random shuffle between emails.
   const candidates = catalogue.filter(
-    (c) => c.inStock && !purchasedHandles.has(c.handle) && !SUPPLY_RE.test(c.title) && c.categorySlug !== 'accessories'
+    (c) => c.inStock && !purchasedHandles.has(c.handle) && !SUPPLY_RE.test(c.title) && c.categorySlug !== 'lab-supplies'
   )
   const sameArea = candidates.filter((c) => categorySlugs.includes(c.categorySlug))
   const popular = candidates.filter(

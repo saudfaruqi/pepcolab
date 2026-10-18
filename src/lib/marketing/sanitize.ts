@@ -2,7 +2,7 @@
 // Normalises a campaign coming from the admin editor before it is stored.
 import type { AudienceSegment, AudienceSpec, Campaign, CampaignCta, CampaignOffer } from './types'
 
-const SEGMENTS: AudienceSegment[] = ['buyers', 'non_buyers', 'all_customers', 'lapsed_buyers', 'bought_product', 'newsletter']
+const SEGMENTS: AudienceSegment[] = ['buyers', 'non_buyers', 'all_customers', 'lapsed_buyers', 'bought_product', 'newsletter', 'leads']
 
 function str(v: unknown, max: number): string {
   return typeof v === 'string' ? v.slice(0, max) : ''

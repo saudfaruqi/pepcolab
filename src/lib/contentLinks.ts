@@ -1,3 +1,4 @@
+import { PRODUCT_CLASSES } from '@/lib/productClasses'
 // src/lib/contentLinks.ts
 //
 // SEO FIX (Aug 2026 audit): "15 quality articles published but orphaned —
@@ -69,16 +70,10 @@ export function crossHubLinkForGuide(guideId: string): ContentLink | null {
   return GUIDE_TO_RESEARCH[guideId] ?? null
 }
 
-/** Product research-category tag -> the categories page it maps to (see app/data.ts CATEGORIES). */
-const CATEGORY_LABEL: Record<string, string> = {
-  metabolic: 'Metabolic',
-  hormonal: 'Hormonal',
-  cognitive: 'Cognitive',
-  recovery: 'Recovery',
-  'anti-ageing': 'Anti-Ageing',
-  accessories: 'Accessories',
-  immune: 'Immune',
-}
+/** Compound-class slug -> label (lib/productClasses.ts). */
+const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
+  PRODUCT_CLASSES.map((c) => [c.slug, c.label])
+)
 
 /** Given a product's title + research-category tag, return content links for its page. */
 export function relatedContentForProduct(title: string, categorySlug?: string): ContentLink[] {
@@ -133,10 +128,11 @@ export function relatedContentForProduct(title: string, categorySlug?: string): 
  */
 export function relatedProductsForGuideCategory(category: string): ContentLink[] {
   const map: Record<string, string[]> = {
-    'Lab Basics': ['metabolic', 'recovery'],
-    Storage: ['metabolic', 'recovery', 'cognitive'],
-    Calculations: ['metabolic', 'hormonal'],
-    Pharmacology: ['recovery', 'anti-ageing'],
+    // Compound classes (Oct 2026), not health goals.
+    'Lab Basics': ['lab-supplies', 'bioregulator-peptides'],
+    Storage: ['lab-supplies', 'research-blends', 'neuropeptide-analogues'],
+    Calculations: ['lab-supplies', 'gh-axis-peptides'],
+    Pharmacology: ['bioregulator-peptides', 'copper-cosmetic-peptides'],
     Documentation: [],
     'Legality & Compliance': [],
     'Buying Guide': [],
@@ -144,7 +140,7 @@ export function relatedProductsForGuideCategory(category: string): ContentLink[]
   const slugs = map[category] ?? []
   return slugs
     .filter((s) => CATEGORY_LABEL[s])
-    .map((s) => ({ href: `/products/category/${s}`, label: `Shop ${CATEGORY_LABEL[s]} compounds` }))
+    .map((s) => ({ href: `/products/category/${s}`, label: `Shop ${CATEGORY_LABEL[s]}` }))
 }
 
 /**

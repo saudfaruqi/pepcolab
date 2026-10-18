@@ -1,6 +1,7 @@
 // components/HomePageContent.tsx
 
 "use client";
+import { PRODUCT_CLASSES } from '@/lib/productClasses'
 import Nav from "@/components/Nav";
 import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react";
 import HeroCinematic from "@/components/HeroSections";
@@ -144,25 +145,15 @@ function initialsFor(name: string): string {
   return parts.slice(0, 2).map((p) => p.charAt(0).toUpperCase()).join('')
 }
 
-const AREA_ACCENTS: Record<string, string> = {
-  metabolic:     "#3B82F6",
-  hormonal:      "#F59E0B",
-  cognitive:     "#A78BFA",
-  recovery:      "#34D399",
-  "anti-ageing": "#F472B6",
-  accessories:   "#4ADE80",
-  immune:        "#FBBF24",
-}
+// Compound classes (Oct 2026) replace the old health-goal areas — see
+// lib/productClasses.ts for why.
+const AREA_ACCENTS: Record<string, string> = Object.fromEntries(
+  PRODUCT_CLASSES.map((c) => [c.slug, c.color])
+)
 
-const AREA_LABELS: Record<string, string> = {
-  metabolic:     "Metabolic",
-  hormonal:      "Hormonal",
-  cognitive:     "Cognitive",
-  recovery:      "Recovery",
-  "anti-ageing": "Anti-Ageing",
-  accessories:   "Accessories",
-  immune:        "Immune",
-}
+const AREA_LABELS: Record<string, string> = Object.fromEntries(
+  PRODUCT_CLASSES.map((c) => [c.slug, c.label])
+)
 
 const MARKET_TAGS = new Set(["uae", "uk"])
 
@@ -438,14 +429,12 @@ export default function PepcoLabPage({
     const counts = new Map<string, number>()
     const samples = new Map<string, string[]>()
     for (const p of products) {
-      for (const tag of p.tags ?? []) {
-        const slug = tag.toLowerCase()
-        if (MARKET_TAGS.has(slug)) continue
-        counts.set(slug, (counts.get(slug) ?? 0) + 1)
-        const list = samples.get(slug) ?? []
-        if (list.length < 3 && p.name) list.push(p.name)
-        samples.set(slug, list)
-      }
+      const slug = String(p.categorySlug || '')
+      if (!slug || MARKET_TAGS.has(slug)) continue
+      counts.set(slug, (counts.get(slug) ?? 0) + 1)
+      const list = samples.get(slug) ?? []
+      if (list.length < 3 && p.name) list.push(p.name)
+      samples.set(slug, list)
     }
     return [...counts.entries()]
       .map(([slug, count]) => ({
@@ -1419,8 +1408,8 @@ export default function PepcoLabPage({
         <div style={{ maxWidth:1120, margin:"0 auto", padding:"0 clamp(20px,5vw,60px)" }}>
           <FadeUp style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:48, flexWrap:"wrap", gap:24 }}>
             <div>
-              <div style={TYPOGRAPHY.labelLight}>Research Categories</div>
-              <h2 style={TYPOGRAPHY.headingLight}>Explore research<br />focus areas.</h2>
+              <div style={TYPOGRAPHY.labelLight}>Compound Classes</div>
+              <h2 style={TYPOGRAPHY.headingLight}>Browse by<br />compound class.</h2>
             </div>
             <span style={{ 
               fontSize: "clamp(12px, 1vw, 13px)", 

@@ -61,6 +61,23 @@ const nextConfig = {
       { source: '/blog', destination: '/guides', permanent: true },
       { source: '/blog/:slug*', destination: '/guides', permanent: true },
 
+      // ── COMPOUND CLASSES (Oct 2026) ─────────────────────────────────────
+      // The catalogue is grouped by compound class instead of health goal
+      // (src/lib/productClasses.ts). Old goal-led category URLs and the goal
+      // hub pages 301 to their nearest class so links and rankings carry over.
+      { source: '/products/category/metabolic', destination: '/products/category/incretin-analogues', permanent: true },
+      { source: '/products/category/hormonal', destination: '/products/category/gh-axis-peptides', permanent: true },
+      { source: '/products/category/cognitive', destination: '/products/category/neuropeptide-analogues', permanent: true },
+      { source: '/products/category/recovery', destination: '/products/category/bioregulator-peptides', permanent: true },
+      { source: '/products/category/anti-ageing', destination: '/products/category/copper-cosmetic-peptides', permanent: true },
+      { source: '/products/category/immune', destination: '/products/category/bioregulator-peptides', permanent: true },
+      { source: '/products/category/accessories', destination: '/products/category/lab-supplies', permanent: true },
+      { source: '/metabolic', destination: '/products/category/incretin-analogues', permanent: true },
+      { source: '/recovery', destination: '/products/category/bioregulator-peptides', permanent: true },
+      { source: '/cognitive', destination: '/products/category/neuropeptide-analogues', permanent: true },
+      { source: '/longevity', destination: '/products/category/mitochondrial-cofactors', permanent: true },
+      { source: '/aesthetic', destination: '/products/category/copper-cosmetic-peptides', permanent: true },
+
       // Oct 2026 content audit. /research/melanotan-ii is unpublished (moved to
       // HELD_FOR_REVIEW_ARTICLES in research-data.ts) and its batch removed
       // from coaData.ts. /research/bpc-157-vs-tb-500 duplicated

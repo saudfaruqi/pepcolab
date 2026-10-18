@@ -10,6 +10,7 @@ export type AudienceSegment =
   | 'lapsed_buyers'   // paid before, nothing paid in the last N days
   | 'bought_product'  // paid for a product whose title contains `productQuery`
   | 'newsletter'      // newsletter sign-ups (footer / homepage form)
+  | 'leads'           // /learn guide requests who ticked the follow-up opt-in
 
 export interface AudienceSpec {
   segment: AudienceSegment
@@ -97,4 +98,5 @@ export const SEGMENT_LABELS: Record<AudienceSegment, string> = {
   lapsed_buyers: 'Paid before, nothing recently',
   bought_product: 'Bought a specific product',
   newsletter: 'Newsletter sign-ups',
+  leads: 'Guide leads (opted in)',
 }

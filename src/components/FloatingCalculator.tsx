@@ -20,12 +20,14 @@ import { Calculator, X, ChevronRight } from 'lucide-react'
  * The maths is dilution arithmetic only: mass in, volume in, concentration out.
  * It does not and should not take personal inputs of any kind.
  *
- * PEN MODE (Sep 2026) — the most common customer question: "how much is in one
- * click?". Same principle: pen contents ÷ clicks per pen, and how many whole
- * clicks make up a given quantity. No amounts are suggested — the quantity
- * field starts empty and the customer supplies their own figure.
- * Click counts differ between pen models, so the field is editable and the
- * sheet tells the customer to use the figure on their own pen's label.
+ * CONCENTRATION ONLY (Oct 2026). This panel used to have a Pen tab ("what
+ * each click contains", "clicks for a quantity") and, on the vial tab, a
+ * target-quantity field with "volume for X mcg", "per 0.01 ml" (a syringe
+ * graduation) and "portions per vial". Every one of those is a per-use
+ * output: it answers "how much do I take", which no wording around it can
+ * turn back into laboratory arithmetic. It sat on every page of the site, so
+ * it was the first thing a regulator or Meta's ad reviewer would find. It now
+ * does one thing: mass and volume in, concentration out.
  *
  * STYLING — mobile-first and flat. Base rules describe the phone layout
  * (circular FAB, full-width bottom sheet); the `min-width: 641px` block layers
@@ -35,7 +37,7 @@ import { Calculator, X, ChevronRight } from 'lucide-react'
 
 /** Routes where a floating button is unwelcome — it can overlap the Strabl
  *  checkout UI, and it's a distraction at the point of payment. */
-const HIDDEN_PREFIXES = ['/checkout']
+const HIDDEN_PREFIXES = ['/checkout', '/learn']
 
 /* Nudge timing. The bubble RECURS: it hides itself after PROMPT_VISIBLE and
    returns after PROMPT_REPEAT, up to PROMPT_MAX_SHOWS times. Only an explicit
@@ -48,15 +50,6 @@ const PROMPT_VISIBLE = 9000
 const PROMPT_REPEAT = 40000
 const PROMPT_MAX_SHOWS = 4
 
-type Mode = 'vial' | 'pen'
-
-/** Strengths stocked as pens — one-tap presets for the pen tab. */
-const PEN_PRESETS_MG = [10, 20, 30, 40, 50, 60, 80, 100]
-const DEFAULT_CLICKS_PER_PEN = '240'
-
-function fmt(n: number, maxDp: number): string {
-  return n.toLocaleString('en-GB', { maximumFractionDigits: maxDp })
-}
 
 export default function FloatingCalculator() {
   const pathname = usePathname()
@@ -65,13 +58,8 @@ export default function FloatingCalculator() {
   const [prompt, setPrompt] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
-  const [mode, setMode] = useState<Mode>('vial')
-  const [penMg, setPenMg] = useState('30')
-  const [clicks, setClicks] = useState(DEFAULT_CLICKS_PER_PEN)
-  const [penTarget, setPenTarget] = useState('')
   const [mg, setMg] = useState('10')
   const [ml, setMl] = useState('2')
-  const [target, setTarget] = useState('250')
 
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -193,52 +181,10 @@ export default function FloatingCalculator() {
   const result = useMemo(() => {
     const mass = parseFloat(mg)
     const volume = parseFloat(ml)
-    const want = parseFloat(target)
-
     if (!isFinite(mass) || !isFinite(volume) || mass <= 0 || volume <= 0) return null
-
     const mgPerMl = mass / volume
-    const mcgPerMl = mgPerMl * 1000
-    // Per 0.01 ml — the smallest graduation on a 1 ml syringe, and the
-    // practical unit for measuring small volumes at the bench.
-    const mcgPerGraduation = mcgPerMl / 100
-    const volumeForTarget = isFinite(want) && want > 0 ? want / mcgPerMl : null
-
-    return {
-      mgPerMl,
-      mcgPerMl,
-      mcgPerGraduation,
-      volumeForTarget,
-      graduationsForTarget: volumeForTarget != null ? volumeForTarget * 100 : null,
-      portions: isFinite(want) && want > 0 ? (mass * 1000) / want : null,
-    }
-  }, [mg, ml, target])
-
-  const penResult = useMemo(() => {
-    const mass = parseFloat(penMg)
-    const perPen = parseFloat(clicks)
-    const want = parseFloat(penTarget)
-
-    if (!isFinite(mass) || !isFinite(perPen) || mass <= 0 || perPen <= 0) return null
-
-    const mgPerClick = mass / perPen
-    const hasTarget = isFinite(want) && want > 0
-    // Pens deliver whole clicks only, so round to the nearest click and show
-    // exactly what that many clicks contains — never a fractional click.
-    const exactClicks = hasTarget ? want / mgPerClick : null
-    const wholeClicks = exactClicks != null ? Math.max(1, Math.round(exactClicks)) : null
-
-    return {
-      mgPerClick,
-      mcgPerClick: mgPerClick * 1000,
-      clicksFor1mg: 1 / mgPerClick,
-      wholeClicks,
-      exactClicks,
-      deliveredMg: wholeClicks != null ? wholeClicks * mgPerClick : null,
-      portions: hasTarget && wholeClicks ? Math.floor(perPen / wholeClicks) : null,
-      overPen: hasTarget ? want > mass : false,
-    }
-  }, [penMg, clicks, penTarget])
+    return { mgPerMl, mcgPerMl: mgPerMl * 1000 }
+  }, [mg, ml])
 
   if (hidden) return null
 
@@ -284,134 +230,35 @@ export default function FloatingCalculator() {
       {open && <div className="fc-backdrop" onClick={() => setOpen(false)} />}
 
       {open && (
-        <div ref={panelRef} role="dialog" aria-modal="true" aria-label={mode === 'pen' ? 'Pen calculator' : 'Reconstitution calculator'} className="fc-panel">
+        <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Concentration calculator" className="fc-panel">
           <div className="fc-grabber" aria-hidden="true" />
 
           <div className="fc-head">
             <div>
-              <div className="fc-title">{mode === 'pen' ? 'Pen calculator' : 'Reconstitution calculator'}</div>
-              <div className="fc-sub">
-                {mode === 'pen' ? 'What each click contains, and clicks for a quantity.' : 'Concentration after adding diluent.'}
-              </div>
+              <div className="fc-title">Concentration calculator</div>
+              <div className="fc-sub">Solution concentration after adding diluent.</div>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Close calculator" className="fc-close">
               <X size={16} />
             </button>
           </div>
 
-          <div className="fc-tabs" role="tablist" aria-label="Calculator type">
-            <button
-              role="tab"
-              aria-selected={mode === 'vial'}
-              className={`fc-tab${mode === 'vial' ? ' fc-tab-on' : ''}`}
-              onClick={() => setMode('vial')}
-            >
-              Vial
-            </button>
-            <button
-              role="tab"
-              aria-selected={mode === 'pen'}
-              className={`fc-tab${mode === 'pen' ? ' fc-tab-on' : ''}`}
-              onClick={() => setMode('pen')}
-            >
-              Pen
-            </button>
+          <div className="fc-grid">
+            {field('Vial contents', mg, setMg, 'mg', '0.5', firstFieldRef)}
+            {field('Diluent added', ml, setMl, 'ml', '0.1')}
           </div>
 
-          {mode === 'vial' ? (
-            <>
-            <div className="fc-grid">
-              {field('Vial contents', mg, setMg, 'mg', '0.5', firstFieldRef)}
-              {field('Diluent added', ml, setMl, 'ml', '0.1')}
+          {result ? (
+            <div className="fc-result">
+              {row('Concentration', `${result.mgPerMl.toFixed(2)} mg/ml`, true)}
+              {row('In micrograms', `${Math.round(result.mcgPerMl).toLocaleString()} mcg/ml`)}
             </div>
-
-            <div className="fc-grid-single">{field('Target quantity', target, setTarget, 'mcg', '10')}</div>
-
-            {result ? (
-              <div className="fc-result">
-                {row('Concentration', `${result.mgPerMl.toFixed(2)} mg/ml`, true)}
-                {row('In micrograms', `${Math.round(result.mcgPerMl).toLocaleString()} mcg/ml`)}
-                {row('Per 0.01 ml', `${Math.round(result.mcgPerGraduation).toLocaleString()} mcg`)}
-                {result.volumeForTarget != null && (
-                  <>
-                    {row(`Volume for ${Number(target).toLocaleString()} mcg`, `${result.volumeForTarget.toFixed(3)} ml`, true)}
-                    {row('Graduations (0.01 ml)', result.graduationsForTarget!.toFixed(1))}
-                    {result.portions != null && (
-                      <div className="fc-note">
-                        Vial yields <strong>{Math.floor(result.portions)}</strong> portions at that quantity.
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="fc-warn">Enter a vial mass and a diluent volume greater than zero.</div>
-            )}
-              <p className="fc-disclaimer">
-                For laboratory use only. Figures are dilution arithmetic, not guidance on administration.
-              </p>
-            </>
           ) : (
-            <>
-              <div className="fc-label" style={{ marginBottom: 6 }}>Pen strength</div>
-              <div className="fc-chips">
-                {PEN_PRESETS_MG.map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    className={`fc-chip${parseFloat(penMg) === v ? ' fc-chip-on' : ''}`}
-                    onClick={() => setPenMg(String(v))}
-                  >
-                    {v}mg
-                  </button>
-                ))}
-              </div>
-
-              <div className="fc-grid">
-                {field('Pen contents', penMg, setPenMg, 'mg', '0.5', firstFieldRef)}
-                {field('Clicks per pen', clicks, setClicks, 'clicks', '1')}
-              </div>
-
-              <div className="fc-grid-single">{field('Quantity (optional)', penTarget, setPenTarget, 'mg', '0.1')}</div>
-
-              {penResult ? (
-                <div className="fc-result">
-                  {row('Each click contains', `${fmt(penResult.mgPerClick, 3)} mg`, true)}
-                  {row('In micrograms', `${fmt(penResult.mcgPerClick, 1)} mcg`)}
-                  {row('Clicks per 1 mg', fmt(penResult.clicksFor1mg, 1))}
-                  {penResult.wholeClicks != null && (
-                    <>
-                      {row(`Clicks for ${fmt(parseFloat(penTarget), 3)} mg`, `${penResult.wholeClicks} clicks`, true)}
-                      {penResult.exactClicks != null && Math.abs(penResult.exactClicks - penResult.wholeClicks) > 0.01 && (
-                        <div className="fc-note">
-                          Pens deliver whole clicks, so that&rsquo;s rounded from {fmt(penResult.exactClicks, 2)}.{' '}
-                          {penResult.wholeClicks} clicks = <strong>{fmt(penResult.deliveredMg!, 3)} mg</strong>.
-                        </div>
-                      )}
-                      {penResult.overPen ? (
-                        <div className="fc-note">That&rsquo;s more than one pen contains ({fmt(parseFloat(penMg), 2)} mg).</div>
-                      ) : penResult.portions != null && (
-                        <div className="fc-note">
-                          One pen gives <strong>{penResult.portions}</strong> portions of {penResult.wholeClicks} clicks.
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="fc-warn">Enter the pen contents and clicks per pen, both greater than zero.</div>
-              )}
-
-              <div className="fc-example">
-                <strong>Example:</strong> a 30 mg pen with 240 clicks → 30 ÷ 240 = <strong>0.125 mg per click</strong>.
-              </div>
-
-              <p className="fc-disclaimer">
-                Click counts vary by pen model — use the number on your pen&rsquo;s label or leaflet. For laboratory
-                use only. Figures are arithmetic, not guidance on administration.
-              </p>
-            </>
+            <div className="fc-warn">Enter a vial mass and a diluent volume greater than zero.</div>
           )}
+          <p className="fc-disclaimer">
+            For laboratory use only. This calculates solution concentration and nothing else.
+          </p>
         </div>
       )}
 
@@ -426,7 +273,7 @@ export default function FloatingCalculator() {
               setOpen(true)
             }}
           >
-            <span>Vial or pen? Work out what&rsquo;s in each click</span>
+            <span>Work out a solution&rsquo;s concentration</span>
             <ChevronRight size={14} className="fc-prompt-chev" />
           </button>
           <button className="fc-prompt-x" onClick={dismissPrompt} aria-label="Dismiss">

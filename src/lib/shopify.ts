@@ -1,5 +1,6 @@
 // src/lib/shopify.ts
 import { convertFromAed, convertOptional, currencyFor, marketQuery } from './pricing'
+import { classOf, getProductClass } from '@/lib/productClasses'
 
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
 const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
@@ -446,10 +447,9 @@ export function normaliseProduct(node: ShopifyProduct, market?: string) {
     descriptionHtml: node.descriptionHtml,
     tags,
 
-    category: tags[0] ?? '',
-    categorySlug: tags[0]
-      ? tags[0].toLowerCase().replace(/\s+/g, '-')
-      : '',
+    // Compound class, not the old health-goal tag (see lib/productClasses.ts).
+    category: getProductClass(classOf(node.handle, tags))?.label ?? '',
+    categorySlug: classOf(node.handle, tags),
     badge: tags.includes('popular') ? 'popular' : undefined,
 
     // Format (Pen / Vial / Powder / Supply) — comes from Shopify's

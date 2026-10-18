@@ -10,6 +10,7 @@
 // sees exactly who will be skipped and why before pressing send.
 import { listAllOrders, isPaidOrder, type OrderRecord } from '@/lib/orderStore'
 import { listSubscribers } from '@/lib/newsletterStore'
+import { listLeads } from '@/lib/leadStore'
 import type { AudienceSpec, Recipient } from './types'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -105,7 +106,19 @@ export async function resolveAudience(spec: AudienceSpec): Promise<Recipient[]> 
   const exclude = new Set((spec.excludeEmails || []).map((e) => e.trim().toLowerCase()))
   const out: Recipient[] = []
 
-  if (spec.segment === 'newsletter') {
+  if (spec.segment === 'leads') {
+    // Only leads who ticked the opt-in. Everyone else asked for one guide,
+    // which they were sent, and nothing more.
+    const leads = await listLeads()
+    for (const l of leads) {
+      const email = l.email.trim().toLowerCase()
+      if (!l.emailOptIn || !EMAIL_RE.test(email) || exclude.has(email)) continue
+      const r = toRecipient(customers.get(email) ?? newAcc(email))
+      if (!r.firstName && l.firstName) r.firstName = firstNameOf(l.firstName)
+      if (!r.name && l.firstName) r.name = l.firstName
+      out.push(r)
+    }
+  } else if (spec.segment === 'newsletter') {
     const subs = await listSubscribers()
     for (const s of subs) {
       const email = s.email.trim().toLowerCase()
