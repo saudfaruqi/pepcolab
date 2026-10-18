@@ -7,6 +7,7 @@ import Nav from '@/components/Nav'
 import { trackPurchaseFromPending, readPendingCheckout } from '@/lib/analytics'
 import { useCustomer } from '@/lib/customerContext'
 import { HEARD_FROM_OPTIONS } from '@/lib/heardFromOptions'
+import GoogleCustomerReviews from '@/components/GoogleCustomerReviews'
 
 type Pending = { ref: string; items: { name: string; quantity: number }[] }
 
@@ -152,6 +153,7 @@ export default function CheckoutSuccessPage() {
           </div>
 
           {pending && <HeardFromCard pending={pending} />}
+          {pending && <GoogleCustomerReviews checkoutRef={pending.ref} items={pending.items} />}
 
           {/* A signed-in customer goes straight to their orders; there is no
               reason to send them to a lookup form that asks for a code and an

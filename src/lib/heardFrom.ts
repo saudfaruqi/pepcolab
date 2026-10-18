@@ -18,6 +18,7 @@
 // match is unique.
 
 import { redis } from '@/lib/redis'
+import { getOrderRecord, getRecentOrders, type OrderRecord } from '@/lib/orderStore'
 
 export { HEARD_FROM_OPTIONS, heardFromLabel } from '@/lib/heardFromOptions'
 
@@ -65,4 +66,56 @@ export async function takePendingHeardFrom(ref: string): Promise<HeardFrom | und
   } catch {
     return undefined
   }
+}
+
+export interface CheckoutItem {
+  name: string
+  quantity: number
+}
+
+export function cleanCheckoutItems(raw: unknown): CheckoutItem[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .slice(0, 30)
+    .filter((i: any) => typeof i?.name === 'string' && i.name.trim())
+    .map((i: any) => ({ name: String(i.name).slice(0, 200), quantity: Number(i.quantity) || 1 }))
+}
+
+function itemKey(items: CheckoutItem[]): string {
+  return items
+    .map((i) => `${i.name.trim().toLowerCase()}×${Math.max(1, Math.round(i.quantity))}`)
+    .sort()
+    .join('|')
+}
+
+const MATCH_WINDOW_MS = 6 * 60 * 60 * 1000
+
+/**
+ * The order a browser checkout became: by the reference STRABL echoed back,
+ * or else the single recent paid order with exactly the same items.
+ * `exclude` skips candidates for the item match (e.g. already answered).
+ */
+export async function resolveCheckoutOrder(
+  ref: string,
+  items: CheckoutItem[],
+  exclude: (o: OrderRecord) => boolean = () => false
+): Promise<OrderRecord | null> {
+  const code = await orderForCheckoutRef(ref)
+  if (code) {
+    const order = await getOrderRecord(code)
+    if (order) return order
+  }
+  if (!items.length) return null
+  const key = itemKey(items)
+  const since = Date.now() - MATCH_WINDOW_MS
+  const recent = await getRecentOrders(40)
+  const matches = recent.filter(
+    (o) =>
+      new Date(o.createdAt).getTime() >= since &&
+      !o.topUpFor &&
+      (!o.checkoutRef || o.checkoutRef === ref) &&
+      !exclude(o) &&
+      itemKey(o.products.map((p) => ({ name: p.title, quantity: p.quantity }))) === key
+  )
+  return matches.length === 1 ? matches[0] : null
 }

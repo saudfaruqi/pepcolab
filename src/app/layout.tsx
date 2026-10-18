@@ -284,35 +284,10 @@ export default function RootLayout({
           as="image"
         />
 
-        {/* Google Customer Reviews */}
-        <Script
-          src="https://apis.google.com/js/platform.js?onload=renderOptIn"
-          strategy="afterInteractive"
-        />
-
-        <Script
-          id="google-customer-reviews"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.renderOptIn = function() {
-                window.gapi.load('surveyoptin', function() {
-                  window.gapi.surveyoptin.render({
-                    "merchant_id": 5843635708,
-                    "order_id": "ORDER_ID",
-                    "email": "CUSTOMER_EMAIL",
-                    "delivery_country": "COUNTRY_CODE",
-                    "estimated_delivery_date": "YYYY-MM-DD",
-                    "products": [
-                      {"gtin": "GTIN1"},
-                      {"gtin": "GTIN2"}
-                    ]
-                  });
-                });
-              };
-            `,
-          }}
-        />
+        {/* Google Customer Reviews: the opt-in is rendered on
+            /checkout/success only, with the real order (see
+            components/GoogleCustomerReviews.tsx). It used to sit here with
+            Google's sample placeholders and fired on every page. */}
 
         {/* ORGANIZATION SCHEMA
             areaServed now covers both markets. This is the entity-level
