@@ -123,7 +123,6 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
 
       <label className="lf-opt">
         <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
-        <span>Also send me four short follow-up emails over the next two weeks on testing, suppliers and regulation, and future free guides. Unsubscribe any time.</span>
       </label>
 
       <button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email me the guide'}</button>
