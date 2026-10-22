@@ -9,6 +9,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAdmin } from '@/lib/marketing/adminGuard'
 import { getCampaign } from '@/lib/marketing/store'
 import { sendBatch, sendTest, requeueFailed, validateForSend } from '@/lib/marketing/send'
+import { MARKETING_SENDS_PAUSED, MARKETING_PAUSED_REASON } from '@/lib/marketingGate'
+
+// Test copies go only to the internal QA inbox(es), never to customers.
+const TEST_RECIPIENTS = (process.env.MARKETING_TEST_RECIPIENTS || 'saudafaruqi@gmail.com')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean)
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -27,6 +34,7 @@ export async function POST(req: NextRequest) {
     if (body?.action === 'test') {
       const to = String(body?.to || '').trim().toLowerCase()
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return fail('Enter a valid email address for the test.')
+      if (!TEST_RECIPIENTS.includes(to)) return fail(`Test copies can only go to: ${TEST_RECIPIENTS.join(', ')}.`, 403)
       const problem = validateForSend(campaign)
       if (problem) return fail(problem)
       await sendTest(campaign, to)
@@ -34,6 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (body?.action === 'batch') {
+      if (MARKETING_SENDS_PAUSED) return fail(MARKETING_PAUSED_REASON, 423)
       if (campaign.status === 'sent') return fail('This campaign has already been sent.', 409)
       const minGapHours = Number.isFinite(Number(body?.minGapHours)) ? Number(body.minGapHours) : undefined
       const result = await sendBatch(campaign.id, { minGapHours })
@@ -41,6 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (body?.action === 'requeue-failed') {
+      if (MARKETING_SENDS_PAUSED) return fail(MARKETING_PAUSED_REASON, 423)
       const count = await requeueFailed(campaign.id)
       return NextResponse.json({ success: true, requeued: count })
     }

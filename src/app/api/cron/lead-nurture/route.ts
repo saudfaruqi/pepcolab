@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDueLeads, saveLead } from '@/lib/leadStore'
 import { sendSeriesEmail, NURTURE_OFFSETS_DAYS, LAST_STEP } from '@/lib/leadEmails'
 import { isMarketingSuppressed } from '@/lib/emailPreferences'
+import { MARKETING_SENDS_PAUSED, marketingBlockFor, recordMarketingSend } from '@/lib/marketingGate'
+import { syncLead } from '@/lib/crm/sync'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -20,6 +22,8 @@ export async function GET(req: NextRequest) {
   if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  if (MARKETING_SENDS_PAUSED) return NextResponse.json({ paused: true })
 
   const started = Date.now()
   const due = await getDueLeads(started, 200)
@@ -34,6 +38,20 @@ export async function GET(req: NextRequest) {
       continue
     }
 
+    // The lead's consent lives in the CRM (lib/crm). Make sure it is there,
+    // then apply the same gate as every other marketing email.
+    await syncLead(lead.email).catch(() => null)
+    const block = await marketingBlockFor(lead.email)
+    if (block === 'no_consent') {
+      await saveLead({ ...lead, emailOptIn: false, nextAt: null, updatedAt: new Date().toISOString() })
+      result.stopped++
+      continue
+    }
+    if (block === 'cadence') {
+      await saveLead({ ...lead, nextAt: Date.now() + DAY_MS, updatedAt: new Date().toISOString() })
+      continue
+    }
+
     const step = lead.step + 1
     if (step > LAST_STEP) {
       await saveLead({ ...lead, nextAt: null, updatedAt: new Date().toISOString() })
@@ -42,6 +60,7 @@ export async function GET(req: NextRequest) {
 
     try {
       await sendSeriesEmail(lead, step)
+      await recordMarketingSend(lead.email)
       const signedUp = new Date(lead.createdAt).getTime() || Date.now()
       const nextOffset = NURTURE_OFFSETS_DAYS[step + 1]
       // Never schedule into the past: a lead who joined the series late

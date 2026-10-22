@@ -7,28 +7,51 @@
 import nodemailer from 'nodemailer'
 import { recordEmail } from '@/lib/emailLog'
 
-let cachedTransporter: ReturnType<typeof nodemailer.createTransport> | null = null
+// TWO SENDING STREAMS (Oct 2026 clean-up brief, B8).
+//
+// Marketing goes out from its own subdomain (mail.pepcolab.com) and
+// transactional mail from orders.pepcolab.com, so a complaint spike on a
+// campaign can never block order emails. Each stream reads its own settings
+// and falls back to the original single mailbox (SMTP_*) until the
+// subdomains are set up:
+//   transactional  ORDERS_SMTP_HOST / _PORT / _USER / _PASS / _FROM
+//   marketing      MARKETING_SMTP_HOST / _PORT / _USER / _PASS / _FROM
+export type MailStream = 'transactional' | 'marketing'
 
-function getTransporter() {
-  const smtpUser = process.env.SMTP_USER
-  const smtpPass = process.env.SMTP_PASS
+const transporters = new Map<string, ReturnType<typeof nodemailer.createTransport>>()
 
-  if (!smtpUser || !smtpPass) {
+function streamConfig(stream: MailStream) {
+  const p = stream === 'marketing' ? 'MARKETING_SMTP_' : 'ORDERS_SMTP_'
+  const own = Boolean(process.env[`${p}USER`] && process.env[`${p}PASS`])
+  return {
+    host: (own && process.env[`${p}HOST`]) || process.env.SMTP_HOST || 'smtpout.secureserver.net',
+    port: Number((own && process.env[`${p}PORT`]) || process.env.SMTP_PORT || 465),
+    user: own ? process.env[`${p}USER`]! : process.env.SMTP_USER,
+    pass: own ? process.env[`${p}PASS`]! : process.env.SMTP_PASS,
+    from: (own && process.env[`${p}FROM`]) || process.env.SMTP_FROM,
+  }
+}
+
+function getTransporter(stream: MailStream) {
+  const cfg = streamConfig(stream)
+  if (!cfg.user || !cfg.pass) {
     throw new Error('SMTP configuration is missing (SMTP_USER/SMTP_PASS)')
   }
-
-  if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport({
-      host: 'smtpout.secureserver.net',
-      port: 465,
-      secure: true,
-      auth: { user: smtpUser, pass: smtpPass },
+  const key = `${cfg.host}:${cfg.port}:${cfg.user}`
+  let t = transporters.get(key)
+  if (!t) {
+    t = nodemailer.createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.port === 465,
+      auth: { user: cfg.user, pass: cfg.pass },
       tls: { rejectUnauthorized: false },
       connectionTimeout: 30000,
       socketTimeout: 30000,
     })
+    transporters.set(key, t)
   }
-  return cachedTransporter
+  return { transporter: t, from: cfg.from }
 }
 
 export async function sendMail(opts: {
@@ -44,11 +67,11 @@ export async function sendMail(opts: {
    * far more likely to land in spam or be rejected.
    */
   headers?: Record<string, string>
+  /** 'marketing' for campaigns, lifecycle and follow-up emails; default 'transactional'. */
+  stream?: MailStream
 }) {
-  const smtpFrom = process.env.SMTP_FROM
+  const { transporter, from: smtpFrom } = getTransporter(opts.stream ?? 'transactional')
   if (!smtpFrom) throw new Error('SMTP configuration is missing (SMTP_FROM)')
-
-  const transporter = getTransporter()
 
   // EVERY SEND IS LOGGED (Sep 2026), success or failure.
   //

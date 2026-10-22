@@ -22,7 +22,7 @@ interface Props {
 
 /**
  * Owns the image column + info column together, because they need to share
- * state: selecting a strength (Pen / Nasal Spray / Vial) in ProductActions
+ * state: selecting a strength in ProductActions
  * has to update the big image above it. That wasn't possible before because
  * the image lived in the server-rendered page.tsx while the variant picker
  * lived inside ProductActions — two separate places with no way to talk to

@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const contactLine = [
       contact.name && `Name: ${contact.name}`,
       contact.email && `Email: ${contact.email}`,
-      contact.phone && `Phone/WhatsApp: ${contact.phone}`,
+      contact.phone && `Phone (not a WhatsApp opt-in — reply by email): ${contact.phone}`,
     ]
       .filter(Boolean)
       .join('\n')
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       await sendMailSafe({
         to: contact.email,
         subject: "We've got your chat — PepcoLab",
-        text: `Hi ${contact.name || 'there'},\n\nThanks for chatting with us. A member of the PepcoLab team has your conversation and will follow up shortly${contact.phone ? ' on WhatsApp or email' : ' by email'}.\n\nIn the meantime: https://www.pepcolab.com/products\n\n— PepcoLab Team`,
+        text: `Hi ${contact.name || 'there'},\n\nThanks for chatting with us. A member of the PepcoLab team has your conversation and will follow up shortly by email.\n\nIn the meantime: https://www.pepcolab.com/products\n\n— PepcoLab Team`,
         // Was a bare <div> with no HTML document around it, no light-only
         // declaration, and a #1A56DB link that appears nowhere else in the
         // brand. Routed through emailShell so it is light-locked and looks
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
             Thanks for getting in touch${contact.name ? `, ${escapeHtml(contact.name.split(' ')[0])}` : ''}.
           </h1>
           <p style="font-size:14px; line-height:1.7; color:${INK_60}; margin:0 0 24px;">
-            Someone on the team has your full conversation and will follow up shortly${contact.phone ? ' on WhatsApp or by email' : ' by email'}. You don&rsquo;t need to repeat anything.
+            Someone on the team has your full conversation and will follow up shortly by email. You don&rsquo;t need to repeat anything.
           </p>
           ${primaryButton('Browse the catalogue', 'https://www.pepcolab.com/products', 16)}
           <p style="font-size:11px; line-height:1.6; color:${INK_40}; margin:20px 0 0; text-align:center;">

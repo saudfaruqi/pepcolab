@@ -34,11 +34,11 @@ export const ARTICLES: Article[] = [
     date: 'May 2026',
     dateISO: '2026-05-15',
     metaDescription: 'BPC-157\'s proposed mechanisms, musculoskeletal and GI research findings, and the key limitations of current preclinical evidence.',
-    tag: 'Recovery',
+    tag: 'Bioregulator & Fragment',
     readTime: '8 min',
     excerpt:
-      'A deep-dive into Body Protection Compound-157, its gastroprotective origins, and its expanding role in musculoskeletal and neurological recovery research.',
-    image: 'recovery',
+      'A deep-dive into Body Protection Compound-157, its gastroprotective origins, and the musculoskeletal and neurological models in which it has been studied.',
+    image: 'bioregulator-fragment',
     content: [
       {
         type: 'intro',
@@ -75,11 +75,11 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The bulk of published preclinical data centers on tendon-to-bone healing. In rat Achilles tendon transection models, BPC-157 administration — whether systemic (intraperitoneal or subcutaneous) or local — consistently accelerated the formation of organized collagen fibers and improved tensile strength at four weeks post-injury compared to saline controls. Similar results have been replicated in models of rotator cuff damage, ligament rupture, and bone fracture.',
+        text: 'The bulk of published preclinical data centers on tendon-to-bone models. In rat Achilles tendon transection studies, BPC-157-treated animals showed more organized collagen fibers and greater tensile strength at four weeks than saline controls, according to the study authors. Comparable findings have been reported in rodent models of rotator cuff damage, ligament rupture and bone fracture.',
       },
       {
         type: 'paragraph',
-        text: 'The proposed mechanism in musculoskeletal tissue is primarily the upregulation of VEGF (vascular endothelial growth factor) and PDGF-BB, both of which are rate-limiting factors in tendon healing. Histological analyses from multiple Zagreb-group studies document markedly increased vascularity at the repair site in BPC-157-treated animals, which correlates with improved functional outcomes on treadmill and grip-strength testing.',
+        text: 'The proposed mechanism in musculoskeletal tissue is primarily the upregulation of VEGF (vascular endothelial growth factor) and PDGF-BB, both of which are rate-limiting factors in tendon remodelling in these models. Histological analyses from multiple Zagreb-group studies report increased vascularity at the injury site in BPC-157-treated animals, which the authors correlate with treadmill and grip-strength measurements.',
       },
       {
         type: 'callout',
@@ -99,7 +99,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'A growing body of work examines BPC-157 in the context of central nervous system injury. Spinal cord contusion models in rats show improved locomotor recovery scores and reduced lesion volume when BPC-157 is administered within 24 hours of injury. The proposed mechanism involves both anti-inflammatory action (suppression of NF-κB signaling) and direct neurotrophic support through BDNF upregulation. Separately, several groups have documented reversal of dopaminergic lesion-induced catalepsy and hyperactivity, suggesting potential relevance to Parkinson\'s and addiction research.',
+        text: 'A growing body of work examines BPC-157 in the context of central nervous system injury. In rat spinal cord contusion models, the authors report higher locomotor scores and smaller lesion volume in animals given BPC-157 within 24 hours of injury. The proposed mechanism involves both anti-inflammatory action (suppression of NF-κB signaling) and direct neurotrophic support through BDNF upregulation. Separately, several groups have documented reversal of dopaminergic lesion-induced catalepsy and hyperactivity, suggesting potential relevance to Parkinson\'s and addiction research.',
       },
       {
         type: 'heading',
@@ -107,85 +107,11 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The overwhelming majority of BPC-157 research originates from a single academic group in Zagreb, which raises valid questions about independent replication. While the results are consistently impressive in that body of work, external laboratories have produced more mixed findings, particularly regarding optimal dosing windows and route-of-administration equivalency. The field would benefit substantially from multi-center, independently funded replication studies before definitive mechanistic conclusions are drawn.',
+        text: 'The overwhelming majority of BPC-157 research originates from a single academic group in Zagreb, which raises valid questions about independent replication. While the results are consistently impressive in that body of work, external laboratories have produced more mixed findings, particularly regarding timing and the comparability of different experimental conditions. The field would benefit substantially from multi-center, independently funded replication studies before definitive mechanistic conclusions are drawn.',
       },
       {
         type: 'paragraph',
         text: 'For research purposes, BPC-157 is typically reconstituted in bacteriostatic water and stored at -20°C. Freeze-thaw cycles should be minimized, and working solutions prepared fresh. The peptide is moderately sensitive to oxidation; researchers working with it should minimize air exposure during handling.',
-      },
-    ],
-  },
-  {
-    id: 'glp1',
-    title: 'Understanding GLP-1 Receptor Agonists in Metabolic Research',
-    date: 'Apr 2026',
-    dateISO: '2026-04-20',
-    metaDescription: 'How GLP-1 receptor agonists work in metabolic research, key preclinical findings, and the distinction between research compounds and approved medicines.',
-    tag: 'Metabolic',
-    readTime: '12 min',
-    excerpt:
-      'A comprehensive review of glucagon-like peptide-1 receptor signalling, the structural biology of synthetic agonists, and emerging metabolic research directions.',
-    image: 'metabolic',
-    content: [
-      {
-        type: 'intro',
-        text: 'Glucagon-like peptide-1 (GLP-1) is a 30-amino-acid incretin hormone secreted by intestinal L-cells in response to nutrient ingestion. Its discovery in the mid-1980s and subsequent characterization of its receptor (GLP-1R) opened one of the most productive chapters in modern metabolic biology — ultimately yielding drug classes that have reshaped the treatment of type 2 diabetes and obesity. This article reviews the fundamental receptor biology and the structural logic behind synthetic agonists, with an emphasis on research-relevant considerations.',
-      },
-      {
-        type: 'heading',
-        text: 'Receptor Biology and Signaling Cascade',
-      },
-      {
-        type: 'paragraph',
-        text: 'The GLP-1 receptor is a class B G protein-coupled receptor (GPCR) with a large extracellular domain that coordinates initial peptide binding. Upon agonist binding, the receptor undergoes a conformational change that couples to Gαs, activating adenylyl cyclase and elevating intracellular cAMP. This triggers PKA-mediated phosphorylation of voltage-gated calcium channels and potassium channels in pancreatic β-cells, enhancing glucose-stimulated insulin secretion (GSIS) in a glucose-dependent manner — the key property that largely explains the favorable safety profile of GLP-1-based therapies.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Beyond the canonical Gαs pathway, GLP-1R also signals through β-arrestin recruitment, which initiates receptor internalization and activates a parallel set of intracellular signals including ERK1/2 and PI3K. This biased signaling concept is now central to next-generation agonist design: compounds that preferentially engage the Gαs pathway over β-arrestin internalization maintain prolonged surface receptor availability, translating to sustained insulin secretion and reduced tachyphylaxis.',
-      },
-      {
-        type: 'heading',
-        text: 'Structural Basis of Synthetic Agonists',
-      },
-      {
-        type: 'paragraph',
-        text: 'Native GLP-1(7-36) amide has a plasma half-life of approximately 2 minutes, rapidly cleaved by DPP-4 (dipeptidyl peptidase-4) at the His7-Ala8 bond. Synthetic agonists circumvent this limitation through three primary strategies:',
-      },
-      {
-        type: 'list',
-        items: [
-          'Substitution of Ala8 with α-aminoisobutyric acid (Aib) or α-methylalanine, creating DPP-4-resistant analogs (exendin-4 uses Gly at position 2 for similar stability).',
-          'Fatty acid acylation (as in semaglutide) enabling reversible albumin binding, extending the half-life to ~7 days through reduced renal clearance and protection from proteolysis.',
-          'Fc fusion technologies and half-life extension via conjugation to IgG4 fragments, as explored in several pipeline candidates.',
-        ],
-      },
-      {
-        type: 'heading',
-        text: 'Central Nervous System Actions',
-      },
-      {
-        type: 'paragraph',
-        text: 'GLP-1Rs are expressed in the hypothalamus, brainstem (particularly nucleus tractus solitarius and area postrema), mesolimbic dopamine pathways, and hippocampus. Central GLP-1R activation reduces food intake through hypothalamic arc nucleus circuits, modulates gastric emptying through vagal efferent pathways, and exerts direct neuroprotective effects through PI3K/Akt and MAPK cascades. The neuroprotective angle has opened substantial research interest in Alzheimer\'s and Parkinson\'s disease, where GLP-1R agonism reduces amyloid burden and α-synuclein aggregation in preclinical models.',
-      },
-      {
-        type: 'callout',
-        text: 'GLP-1 research peptides used in laboratory settings are distinct from pharmaceutical formulations. Research-grade peptides are intended solely for in vitro and preclinical in vivo studies. Purity characterization (HPLC ≥98%, mass spectrometry verification) is essential for reproducible results.',
-      },
-      {
-        type: 'heading',
-        text: 'Dual and Triple Agonism: The Next Research Frontier',
-      },
-      {
-        type: 'paragraph',
-        text: 'The recognition that GIP (glucose-dependent insulinotropic polypeptide) receptor and glucagon receptor agonism can be synergistic with GLP-1R activation has driven intense research into dual (GLP-1/GIP or GLP-1/glucagon) and triple (GLP-1/GIP/glucagon) agonists. These compounds demonstrate superior metabolic effects compared to GLP-1-only agonists, driven in part by additive effects on adipose tissue lipolysis and independent contributions to satiety. Research peptides that explore this space include various chimeric sequences designed to probe the relative receptor contributions.',
-      },
-      {
-        type: 'heading',
-        text: 'Methodological Notes for In Vitro Research',
-      },
-      {
-        type: 'paragraph',
-        text: 'Cell-based GLP-1R activation assays most commonly use transfected HEK293 cells or INS-1E rat insulinoma cells. cAMP accumulation assays (HTRF or ELISA-based) are preferred for characterizing Gαs engagement; β-arrestin recruitment is best quantified with PathHunter or BRET-based biosensor systems. Researchers should note that species differences in GLP-1R pharmacology are substantial — mouse and rat receptors show 5-10 fold differences in affinity for several synthetic analogs compared to the human receptor, complicating translation of rodent efficacy data.',
       },
     ],
   },
@@ -195,7 +121,7 @@ export const ARTICLES: Article[] = [
     date: 'Apr 2026',
     dateISO: '2026-04-10',
     metaDescription: 'The degradation chemistry behind peptide instability — oxidation, deamidation, aggregation and hydrolysis kinetics — and what the evidence says about storage variables.',
-    tag: 'Longevity',
+    tag: 'Guide',
     readTime: '6 min',
     excerpt:
       'A mechanistic look at why peptides degrade in storage: the oxidation, deamidation, and aggregation pathways behind the temperature and handling variables researchers control for.',
@@ -243,11 +169,11 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'heading',
-        text: 'For Step-by-Step Handling Protocol',
+        text: 'For Step-by-Step Handling',
       },
       {
         type: 'paragraph',
-        text: 'This article covers the reactions driving degradation; it isn\'t a procedural checklist. For temperature ranges, aliquoting technique, and a practical day-to-day storage protocol, see the Storage Conditions for Research Peptides guide in our Guides section.',
+        text: 'This article covers the reactions driving degradation; it isn\'t a procedural checklist. For temperature ranges, aliquoting technique, and a practical day-to-day storage routine, see the Storage Conditions for Research Peptides guide in our Guides section.',
       },
     ],
   },
@@ -257,11 +183,11 @@ export const ARTICLES: Article[] = [
     date: 'Mar 2026',
     dateISO: '2026-03-18',
     metaDescription: 'Epithalon\'s proposed role in telomerase activity and pineal gland research, and what current preclinical evidence does and doesn\'t show.',
-    tag: 'Longevity',
+    tag: 'Bioregulator & Fragment',
     readTime: '10 min',
     excerpt:
-      'Exploring the tetrapeptide Epithalon, its interactions with telomerase, pineal gland regulation, and its position within the broader landscape of longevity research.',
-    image: 'longevity',
+      'Exploring the tetrapeptide Epithalon, its interactions with telomerase, pineal gland regulation, and its position within the broader literature on cellular ageing models.',
+    image: 'bioregulator-fragment',
     content: [
       {
         type: 'intro',
@@ -289,7 +215,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'callout',
-        text: 'The telomerase-activating claim, while intriguing, requires independent replication in rigorously controlled settings. The primary body of evidence comes from the originating research group. Independent confirmation using standardized TRAP assay protocols and modern single-molecule telomere length measurement (e.g., TeSLA or STELA) would substantially strengthen these findings.',
+        text: 'The telomerase-activating claim, while intriguing, requires independent replication in rigorously controlled settings. The primary body of evidence comes from the originating research group. Independent confirmation using standardized TRAP assay methods and modern single-molecule telomere length measurement (e.g., TeSLA or STELA) would substantially strengthen these findings.',
       },
       {
         type: 'heading',
@@ -314,16 +240,16 @@ export const ARTICLES: Article[] = [
     title: 'Semax: Structure and Receptor Studies',
     date: 'Mar 2026',
     dateISO: '2026-03-05',
-    metaDescription: 'Semax\'s history as a nootropic research compound, proposed BDNF-related mechanisms, and the current state of cognitive research evidence.',
-    tag: 'Cognitive',
+    metaDescription: 'Semax\'s structure as an ACTH(4-10) analogue, its proposed BDNF-related mechanisms in rodent models, and the limits of the current evidence.',
+    tag: 'Neuropeptide',
     readTime: '9 min',
     excerpt:
-      'A systematic review of Semax pharmacology, its BDNF-upregulating and neuroprotective mechanisms, and the clinical research landscape from its origins in Soviet neuroscience.',
-    image: 'cognitive',
+      'A review of Semax as an ACTH(4-10) analogue: its structure, the BDNF and melanocortin-receptor mechanisms reported in rodent models, and the gaps in the literature.',
+    image: 'neuropeptide',
     content: [
       {
         type: 'intro',
-        text: 'Semax (Met-Glu-His-Phe-Pro-Gly-Pro) is a heptapeptide analog of the ACTH(4-10) fragment, developed in Russia in the 1980s by Nikolai Myasoedov and colleagues at the Russian Academy of Sciences. Unlike intact ACTH, Semax lacks steroidogenic activity — it does not stimulate cortisol production — but retains and amplifies the neuroprotective and nootropic properties associated with the ACTH fragment. It is approved in Russia for clinical use in stroke, neurological trauma, and attention deficit disorders, making it one of the few peptides in this class with a clinical registration history.',
+        text: 'Semax (Met-Glu-His-Phe-Pro-Gly-Pro) is a heptapeptide analog of the ACTH(4-10) fragment, developed in Russia in the 1980s by Nikolai Myasoedov and colleagues at the Russian Academy of Sciences. Unlike intact ACTH, Semax lacks steroidogenic activity — it does not stimulate cortisol production — while retaining the receptor activity of the ACTH fragment that the rodent literature investigates. It holds a registration in Russia but no UK or EU marketing authorisation.',
       },
       {
         type: 'heading',
@@ -331,11 +257,11 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The most consistently replicated finding in Semax research is its ability to upregulate brain-derived neurotrophic factor (BDNF) and its high-affinity receptor TrkB (tropomyosin receptor kinase B). BDNF is critical for neuronal survival, synaptic plasticity, long-term potentiation (LTP), and the support of cholinergic and dopaminergic neuron populations. In the hippocampus — a region central to declarative memory and particularly vulnerable to ischemic injury — Semax administration in rodents produces robust BDNF mRNA increases (2-5 fold over baseline) within 24 hours, persisting for up to 3 days after a single intranasal dose.',
+        text: 'The most consistently replicated finding in Semax research is its ability to upregulate brain-derived neurotrophic factor (BDNF) and its high-affinity receptor TrkB (tropomyosin receptor kinase B). BDNF is critical for neuronal survival, synaptic plasticity, long-term potentiation (LTP), and the support of cholinergic and dopaminergic neuron populations. In the hippocampus — a region central to declarative memory and particularly vulnerable to ischemic injury — Semax administration in rodents produces robust BDNF mRNA increases (2-5 fold over baseline) within 24 hours, persisting for up to 3 days after a single administration, according to the published rodent studies.',
       },
       {
         type: 'paragraph',
-        text: 'The mechanism involves Semax binding to melanocortin receptors (MC4R and MC5R are the primary candidates, though this remains incompletely characterized) and downstream activation of CREB (cAMP response element-binding protein), a transcription factor that drives BDNF gene expression. Separately, Semax modulates NGF (nerve growth factor) expression in cholinergic basal forebrain neurons, which may contribute to its observed effects on attention and working memory in animal models.',
+        text: 'The mechanism involves Semax binding to melanocortin receptors (MC4R and MC5R are the primary candidates, though this remains incompletely characterized) and downstream activation of CREB (cAMP response element-binding protein), a transcription factor that drives BDNF gene expression. Separately, Semax modulates NGF (nerve growth factor) expression in cholinergic basal forebrain neurons, which the authors propose as a second pathway in the rodent models studied.',
       },
       {
         type: 'heading',
@@ -343,7 +269,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The majority of Semax\'s clinical data comes from stroke research. In middle cerebral artery occlusion (MCAO) rat models, Semax administered intranasally within 3 hours of ischemia onset reduces infarct volume by 30–50% in multiple independent studies. The proposed neuroprotective mechanisms are multi-factorial:',
+        text: 'Much of the Semax literature uses rodent ischemia models. In middle cerebral artery occlusion (MCAO) rat studies, the authors report smaller infarct volumes in animals given Semax within 3 hours of ischemia onset than in controls. The mechanisms proposed in these studies are multi-factorial:',
       },
       {
         type: 'list',
@@ -351,28 +277,12 @@ export const ARTICLES: Article[] = [
           'Anti-excitotoxic: Semax reduces post-ischemic glutamate release and attenuates NMDA receptor hyperactivation, limiting calcium-mediated neuronal necrosis in the ischemic penumbra.',
           'Anti-inflammatory: Suppression of microglial activation and reduction of TNF-α, IL-1β, and IL-6 in the peri-infarct zone.',
           'Anti-apoptotic: Upregulation of Bcl-2 and downregulation of Bax and caspase-3 in threatened neurons.',
-          'Pro-angiogenic: Enhanced VEGF expression and microvessel density in the peri-lesion area at 7–14 days post-ischemia, supporting long-term recovery.',
+          'Pro-angiogenic: Enhanced VEGF expression and microvessel density in the peri-lesion area at 7–14 days post-ischemia in the rat models studied.',
         ],
       },
       {
-        type: 'heading',
-        text: 'Intranasal Delivery and CNS Bioavailability',
-      },
-      {
-        type: 'paragraph',
-        text: 'Semax is administered intranasally in all approved formulations, exploiting olfactory and trigeminal nerve transport pathways to achieve CNS delivery without systemic circulation. This bypasses the blood-brain barrier entirely for a portion of the administered dose: radiotracer studies in rodents demonstrate detectable Semax (or its active fragments) in olfactory bulb, hippocampus, and frontal cortex within 30 minutes of intranasal application, at concentrations substantially above those achievable by intravenous dosing at equivalent amounts.',
-      },
-      {
         type: 'callout',
-        text: 'Semax degrades rapidly in aqueous solution (t½ ~15 minutes at 37°C due to aminopeptidase activity). Research solutions should be prepared fresh immediately before use, or stored as lyophilized aliquots and reconstituted just prior to administration.',
-      },
-      {
-        type: 'heading',
-        text: 'Cognitive Enhancement in Non-Pathological Contexts',
-      },
-      {
-        type: 'paragraph',
-        text: 'Beyond neuroprotection, a subset of Semax research investigates cognitive enhancement in healthy subjects. In healthy volunteer EEG studies, intranasal Semax produced measurable increases in alpha and beta power in frontal and temporal regions at 40–60 minutes post-administration, consistent with a state of enhanced alertness and focused attention. Controlled cognitive battery tests in these populations showed improvements in working memory span and processing speed. It is worth noting that most such studies are small (n=20–40), and the absence of preregistration in the older literature limits confidence in reported effect sizes.',
+        text: 'Semax degrades rapidly in aqueous solution (t½ ~15 minutes at 37°C due to aminopeptidase activity). Research solutions should be prepared fresh immediately before use, or stored as lyophilized aliquots and reconstituted just before the assay.',
       },
     ],
   },
@@ -381,16 +291,16 @@ export const ARTICLES: Article[] = [
     title: 'Tesamorelin: A GHRH Analogue Explained',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
-    metaDescription: 'Tesamorelin\'s mechanism as a GHRH analog, its research history in visceral adipose tissue and metabolic studies, and open questions on GH-axis pulsatility.',
-    tag: 'Metabolic',
+    metaDescription: 'Tesamorelin\'s structure as a stabilised GHRH analogue, its receptor mechanism, pulsatility, and handling of the lyophilised material.',
+    tag: 'GH-Axis',
     readTime: '7 min',
     excerpt:
-      'A research overview of Tesamorelin, a stabilized GHRH(1-44) analog studied for its effects on visceral adipose tissue, IGF-1 signaling, and pulsatile growth hormone release.',
-    image: 'metabolic',
+      'A research overview of Tesamorelin, a stabilized GHRH(1-44) analog: its N-terminal modification, its action at the pituitary GHRH receptor, and the stability considerations for lyophilised material.',
+    image: 'gh-axis',
     content: [
       {
         type: 'intro',
-        text: 'Tesamorelin is a synthetic analog of growth hormone-releasing hormone (GHRH), modified with a trans-3-hexenoic acid group at the N-terminus to resist rapid degradation by dipeptidyl peptidase-4 (DPP-4). Unlike exogenous growth hormone itself, Tesamorelin acts upstream at the pituitary somatotroph, stimulating endogenous GH release in a manner that preserves the body\'s natural pulsatile secretion pattern. This distinction — indirect, pulsatile stimulation versus direct, continuous GH exposure — is central to why Tesamorelin has drawn sustained research interest, particularly in visceral adiposity models.',
+        text: 'Tesamorelin is a synthetic analog of growth hormone-releasing hormone (GHRH), modified with a trans-3-hexenoic acid group at the N-terminus to resist rapid degradation by dipeptidyl peptidase-4 (DPP-4). Unlike exogenous growth hormone itself, Tesamorelin acts upstream at the pituitary somatotroph, stimulating endogenous GH release in a manner that preserves the body\'s natural pulsatile secretion pattern. This distinction — indirect, pulsatile stimulation versus direct, continuous GH exposure — is central to why Tesamorelin is used as a tool compound in GH-axis receptor research.',
       },
       {
         type: 'heading',
@@ -402,31 +312,11 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'heading',
-        text: 'Visceral Adipose Tissue: The Primary Research Focus',
+        text: 'Regulatory Position',
       },
       {
         type: 'paragraph',
-        text: 'The bulk of controlled Tesamorelin research centers on visceral adipose tissue (VAT) reduction, most extensively in HIV-associated lipodystrophy models and trials — the indication for which it holds regulatory approval in some jurisdictions. Mechanistically, the proposed pathway runs through increased lipolysis in visceral fat depots (which carry a higher density of GH-sensitive adipocytes than subcutaneous fat) and downstream IGF-1-mediated shifts in substrate metabolism. Imaging-based studies (CT-quantified VAT area) report reductions on the order of 15–20% over 26-week treatment windows relative to placebo, without matched reductions in subcutaneous fat — a selectivity pattern that is itself an active area of mechanistic study.',
-      },
-      {
-        type: 'list',
-        items: [
-          'VAT-selective lipolysis is attributed to higher GH-receptor density and greater beta-adrenergic sensitivity in visceral versus subcutaneous adipocytes.',
-          'IGF-1 elevation following Tesamorelin administration is dose-dependent and used in research settings as a pharmacodynamic marker of GH-axis engagement.',
-          'Effects on VAT appear to reverse within months of discontinuation in longitudinal follow-up cohorts, consistent with a maintenance-dependent rather than structural mechanism.',
-        ],
-      },
-      {
-        type: 'heading',
-        text: 'Metabolic and Lipid Parameters',
-      },
-      {
-        type: 'paragraph',
-        text: 'Secondary endpoints in Tesamorelin research frequently include triglycerides, HDL cholesterol, and markers of hepatic fat content. Triglyceride reductions of 10–15% are commonly reported alongside VAT loss, plausibly linked to reduced free-fatty-acid flux from a smaller visceral depot. Hepatic fat fraction, measured by MRI proton-density fat fraction (MRI-PDFF) in a subset of studies, shows modest but statistically significant reductions, generating research interest in Tesamorelin as a tool compound for studying GH-axis contributions to non-alcoholic fatty liver models — though this remains investigational rather than an established application.',
-      },
-      {
-        type: 'callout',
-        text: 'Tesamorelin research protocols consistently note glucose/insulin sensitivity as a monitoring parameter — GH elevation has counter-regulatory effects on insulin signaling, and studies report small increases in fasting glucose in a subset of subjects despite the favorable lipid and VAT findings. This is typically framed as a trade-off requiring ongoing metabolic monitoring within a study design, not a contraindication to further research.',
+        text: 'Tesamorelin holds a marketing authorisation in some jurisdictions for a single, specific clinical indication. That authorisation applies only to the licensed medicine. Research-grade Tesamorelin is a laboratory reagent with no human-use authorisation in the UK or the UAE, and this page does not cover clinical use or outcomes.',
       },
       {
         type: 'heading',
@@ -439,82 +329,20 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
-    id: 'igf-1-lr3',
-    title: 'IGF-1 LR3: Structure of an 83-Residue Analogue',
-    date: 'Sep 2026',
-    dateISO: '2026-09-02',
-    metaDescription: 'IGF-1 LR3\'s engineered mutations, its use as an extended-half-life research tool for IGF-1 receptor signaling, and evidence on hyperplasia versus hypertrophy.',
-    tag: 'Recovery',
-    readTime: '7 min',
-    excerpt:
-      'How a 13-amino-acid B-domain extension and single point mutation transform native IGF-1 into a long-acting research tool for studying anabolic signaling and satellite cell activity.',
-    image: 'recovery',
-    content: [
-      {
-        type: 'intro',
-        text: 'Insulin-like Growth Factor 1 Long Arg3 (IGF-1 LR3) is an 83-amino-acid engineered analog of native human IGF-1. It differs from the endogenous hormone in two ways: a 13-amino-acid extension of the B-domain at the N-terminus, and substitution of glutamic acid for arginine at position 3. Neither modification meaningfully alters binding affinity for the IGF-1 receptor (IGF-1R) — the changes exist specifically to reduce affinity for IGF-binding proteins (IGFBPs), which in native circulation sequester the vast majority of IGF-1 within minutes of release.',
-      },
-      {
-        type: 'heading',
-        text: 'Why the B-Domain Extension Matters',
-      },
-      {
-        type: 'paragraph',
-        text: 'In normal physiology, over 90% of circulating IGF-1 is bound to IGFBPs (principally IGFBP-3, in a ternary complex with acid-labile subunit), which limits free, receptor-available IGF-1 to a small fraction of total serum concentration at any given time. The Arg3 substitution and B-domain extension in LR3 sterically and electrostatically reduce IGFBP binding affinity roughly 10-fold relative to native IGF-1, while leaving IGF-1R affinity essentially unchanged. The practical research consequence is a dramatically extended functional half-life — native IGF-1 has a circulating half-life measured in minutes once unbound, whereas LR3\'s reduced IGFBP sequestration extends this to several hours in research models.',
-      },
-      {
-        type: 'heading',
-        text: 'IGF-1 Receptor Signaling and Downstream Pathways',
-      },
-      {
-        type: 'paragraph',
-        text: 'IGF-1R is a receptor tyrosine kinase structurally related to the insulin receptor. Ligand binding triggers autophosphorylation and activates two principal downstream cascades studied extensively in LR3 research: the PI3K/Akt/mTOR pathway, which drives protein synthesis and is considered the dominant route for anabolic signaling in skeletal muscle, and the Ras/MAPK/ERK pathway, more closely associated with cell proliferation and differentiation. The relative weighting between these pathways — and how LR3\'s extended exposure window shifts that balance compared to pulsatile native IGF-1 signaling — remains an active question in in vitro and animal research.',
-      },
-      {
-        type: 'heading',
-        text: 'Satellite Cell Activation and Hyperplasia Research',
-      },
-      {
-        type: 'paragraph',
-        text: 'A significant strand of LR3 research concerns satellite cells — quiescent muscle stem cells that, upon activation, can proliferate and either fuse with existing myofibers (contributing to hypertrophy) or in some animal models generate genuinely new muscle fibers (hyperplasia). LR3 is a commonly used tool compound in this line of research because its extended half-life sustains satellite cell mitogenic signaling for longer than native IGF-1 pulses allow in culture or in vivo. Findings on true fiber-number hyperplasia remain mixed and highly species- and model-dependent; most controlled evidence supports robust hypertrophic (existing-fiber growth) effects, with hyperplasia results considered preliminary and not consistently replicated.',
-      },
-      {
-        type: 'list',
-        items: [
-          'In vitro myoblast studies show LR3 sustains Akt phosphorylation for hours longer than equimolar native IGF-1, correlating with increased proliferation markers.',
-          'Rodent models report increased satellite cell nuclei-to-fiber ratios with prolonged LR3 exposure, though translation to hyperplasia versus hypertrophy is model-dependent.',
-          'IGF-1R is also expressed outside skeletal muscle (adipose, cardiac, neural tissue), so systemic research protocols must account for off-target signaling when interpreting muscle-specific outcomes.',
-        ],
-      },
-      {
-        type: 'heading',
-        text: 'Cross-Reactivity with the Insulin Receptor',
-      },
-      {
-        type: 'paragraph',
-        text: 'IGF-1R and the insulin receptor share substantial structural homology, and IGF-1 (including LR3) retains weak but non-negligible affinity for the insulin receptor. Research protocols using LR3 typically account for this by monitoring glucose parameters as a confound variable, since insulin-receptor cross-activation can independently affect glucose uptake in ways that overlap with — and complicate interpretation of — the compound\'s primary IGF-1R-mediated effects.',
-      },
-      {
-        type: 'callout',
-        text: 'Because LR3\'s extended half-life is a direct function of reduced IGFBP binding, degraded or improperly stored material that has undergone deamidation near the mutation site can regain native-like IGFBP affinity — silently reverting the compound toward native IGF-1 kinetics without any visible change to the solution. This makes stringent cold-chain handling and fresh reconstitution more consequential for LR3 than for many other research peptides.',
-      },
-    ],
-  },
-  {
     id: 'ghk-cu',
     title: 'GHK-Cu: The Copper-Binding Tripeptide Explained',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
-    metaDescription: 'GHK-Cu\'s copper-chelation chemistry, its research history in dermal remodeling and wound healing, and gene-expression findings from microarray studies.',
-    tag: 'Aesthetic',
+    metaDescription: 'GHK-Cu\'s copper-chelation chemistry, its research history in dermal remodeling and rodent wound models, and gene-expression findings from microarray studies.',
+    tag: 'Copper & Cosmetic',
     readTime: '7 min',
     excerpt:
-      'A research overview of GHK-Cu, a naturally occurring copper-binding tripeptide studied for its effects on collagen remodeling, gene expression, and wound repair.',
-    image: 'aesthetic',
+      'A research overview of GHK-Cu, a naturally occurring copper-binding tripeptide studied in collagen-remodeling, gene-expression and rodent wound-model research.',
+    image: 'copper-cosmetic',
     content: [
       {
         type: 'intro',
-        text: 'GHK-Cu (glycyl-L-histidyl-L-lysine, complexed with copper(II)) is a naturally occurring tripeptide first isolated from human plasma in 1973, where it was noted to decline substantially with age — from roughly 200 ng/mL in young adults to a fraction of that by the sixth decade. This age-related decline, combined with its high-affinity copper-chelating structure, is what originally directed research attention toward its role in tissue maintenance and repair, and it remains one of the more mechanistically well-characterized peptides in the dermal-research literature.',
+        text: 'GHK-Cu (glycyl-L-histidyl-L-lysine, complexed with copper(II)) is a naturally occurring tripeptide first isolated from human plasma in 1973, where it was noted to decline substantially with age — from roughly 200 ng/mL in young adults to a fraction of that by the sixth decade. This age-related decline, combined with its high-affinity copper-chelating structure, is what originally directed research attention toward its role in connective-tissue biology, and it remains one of the more mechanistically well-characterized peptides in the dermal-research literature.',
       },
       {
         type: 'heading',
@@ -537,17 +365,17 @@ export const ARTICLES: Article[] = [
         items: [
           'Stimulates collagen and glycosaminoglycan synthesis in fibroblast culture models, supporting extracellular matrix research applications.',
           'Modulates matrix metalloproteinase (MMP) and TIMP expression in a pattern research literature associates with balanced remodeling rather than net degradation.',
-          'Shows chemotactic effects on macrophages and mast cells in wound-model research, consistent with a role in early inflammatory-phase repair signaling.',
+          'Shows chemotactic effects on macrophages and mast cells in wound-model research, consistent with a role in early inflammatory-phase signaling in those models.',
           'Exhibits antioxidant activity attributed both to its own radical-scavenging capacity and to copper-dependent superoxide dismutase support.',
         ],
       },
       {
         type: 'heading',
-        text: 'Wound Healing Models',
+        text: 'Rodent Wound Models',
       },
       {
         type: 'paragraph',
-        text: 'Animal wound-healing research is where GHK-Cu has the longest track record. In rodent excisional and incisional wound models, topical or local GHK-Cu application is repeatedly associated with accelerated healing timelines, increased wound-breaking strength, and improved angiogenesis in the healing bed relative to controls. Proposed contributing mechanisms include the chemotactic recruitment of immune cells noted above, stimulated collagen deposition, and copper-dependent angiogenic signaling via effects on endothelial cell migration.',
+        text: 'Animal wound-model research is where GHK-Cu has the longest track record. In rodent excisional and incisional wound models, the study authors repeatedly report faster closure, greater wound-breaking strength and increased angiogenesis at the wound site in GHK-Cu-treated animals relative to controls. Proposed contributing mechanisms include the chemotactic recruitment of immune cells noted above, stimulated collagen deposition, and copper-dependent angiogenic signaling via effects on endothelial cell migration.',
       },
       {
         type: 'heading',
@@ -559,7 +387,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'callout',
-        text: 'GHK-Cu solutions are prone to oxidative degradation distinct from typical peptide bond hydrolysis — free copper ions can catalyze oxidation of the peptide backbone and of other components in a formulation if the complex dissociates. Research protocols generally recommend protecting reconstituted GHK-Cu from light and prolonged room-temperature exposure, and avoiding co-formulation with reducing agents that could destabilize the copper coordination complex.',
+        text: 'GHK-Cu solutions are prone to oxidative degradation distinct from typical peptide bond hydrolysis — free copper ions can catalyze oxidation of the peptide backbone and of other components in a formulation if the complex dissociates. Laboratory practice generally recommends protecting reconstituted GHK-Cu from light and prolonged room-temperature exposure, and avoiding co-formulation with reducing agents that could destabilize the copper coordination complex.',
       },
     ],
   },
@@ -568,12 +396,12 @@ export const ARTICLES: Article[] = [
     title: 'TB-500: The Thymosin Beta-4 Fragment Explained',
     date: 'Sep 2026',
     dateISO: '2026-09-02',
-    metaDescription: 'TB-500\'s relationship to the naturally occurring protein Thymosin Beta-4, its actin-binding mechanism, and research findings on cell migration and tissue repair.',
-    tag: 'Recovery',
+    metaDescription: 'TB-500\'s relationship to the naturally occurring protein Thymosin Beta-4, its actin-binding mechanism, and cell-migration findings in laboratory models.',
+    tag: 'Bioregulator & Fragment',
     readTime: '7 min',
     excerpt:
-      'How a 43-amino-acid synthetic fragment of Thymosin Beta-4 became a widely studied tool compound for actin dynamics, cell migration, and tissue-repair research.',
-    image: 'recovery',
+      'How a 43-amino-acid synthetic fragment of Thymosin Beta-4 became a widely studied tool compound for actin dynamics and cell-migration research.',
+    image: 'bioregulator-fragment',
     content: [
       {
         type: 'intro',
@@ -593,15 +421,14 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'Because directed cell migration depends on coordinated actin polymerization at the leading edge of a moving cell, TB-500\'s actin-binding activity makes it a widely used tool in migration research across several cell types relevant to tissue repair — including keratinocytes, endothelial cells, and various stem and progenitor cell populations. In scratch-wound and Boyden-chamber migration assays, TB-500 exposure is consistently associated with increased migration rates relative to untreated controls, an effect attributed to more efficient lamellipodial actin turnover at the cell periphery.',
+        text: 'Because directed cell migration depends on coordinated actin polymerization at the leading edge of a moving cell, TB-500\'s actin-binding activity makes it a widely used tool in migration research across several cell types — including keratinocytes, endothelial cells, and various stem and progenitor cell populations. In scratch-wound and Boyden-chamber migration assays, TB-500 exposure is consistently associated with increased migration rates relative to untreated controls, an effect attributed to more efficient lamellipodial actin turnover at the cell periphery.',
       },
       {
         type: 'list',
         items: [
-          'Endothelial cell migration studies link TB-500 to increased angiogenic sprouting, positioning it as a research tool for studying vascularization in repair models.',
-          'Keratinocyte migration assays report accelerated wound-edge closure in vitro, a frequently cited basis for dermal repair research interest.',
-          'Cardiac progenitor cell studies in animal models associate TB-4/TB-500 exposure with increased progenitor cell migration into infarcted tissue, an active area of cardiac-repair research.',
-          'TB-500\'s small size (unlike full-length Tβ4 in some contexts) is reported to allow more efficient tissue penetration in systemic administration models, a property researchers cite when comparing it to the parent protein.',
+          'Endothelial cell migration studies link TB-500 to increased angiogenic sprouting, positioning it as a research tool for studying vascularization in cell models.',
+          'Keratinocyte migration assays report accelerated wound-edge closure in vitro, a frequently cited basis for dermal cell-biology research.',
+          'Cardiac progenitor cell studies in animal models associate TB-4/TB-500 exposure with increased progenitor cell migration into infarcted tissue, an active area of cardiac cell-biology research.',
         ],
       },
       {
@@ -610,7 +437,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'Beyond direct actin effects, TB-500/Tβ4 research describes downstream modulation of inflammatory and fibrotic signaling — including reported suppression of pro-inflammatory cytokine release and downregulation of transforming growth factor-beta (TGF-β)-driven fibrotic gene programs in some tissue-injury models. This has directed a meaningful share of the literature toward scarring and fibrosis research, on the hypothesis that a compound promoting more organized, migration-driven repair may reduce the disorganized collagen deposition characteristic of fibrotic healing — though this remains a research hypothesis rather than an established clinical finding.',
+        text: 'Beyond direct actin effects, TB-500/Tβ4 research describes downstream modulation of inflammatory and fibrotic signaling — including reported suppression of pro-inflammatory cytokine release and downregulation of transforming growth factor-beta (TGF-β)-driven fibrotic gene programs in some tissue-injury models. This has directed a meaningful share of the literature toward scarring and fibrosis research, on the hypothesis that more organized, migration-driven tissue responses may reduce the disorganized collagen deposition characteristic of fibrosis — a research hypothesis, not an established finding.',
       },
       {
         type: 'heading',
@@ -632,11 +459,11 @@ export const ARTICLES: Article[] = [
     date: 'Sep 2026',
     dateISO: '2026-09-02',
     metaDescription: 'Sermorelin\'s history as the first characterized GHRH fragment, its short half-life, and its continued role as a reference compound in GH-axis research.',
-    tag: 'Longevity',
+    tag: 'GH-Axis',
     readTime: '6 min',
     excerpt:
       'A research overview of Sermorelin, the 29-amino-acid GHRH fragment that established the pharmacological basis for the entire class of GH-secretagogue research compounds.',
-    image: 'longevity',
+    image: 'gh-axis',
     content: [
       {
         type: 'intro',
@@ -656,13 +483,13 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'Sermorelin\'s defining pharmacokinetic feature is its very short plasma half-life — on the order of 10–20 minutes, driven primarily by rapid degradation via dipeptidyl peptidase-4 (DPP-4) cleavage at the N-terminal Tyr-Ala bond. This is frequently discussed in the literature both as a limitation (requiring more frequent dosing intervals in longitudinal research protocols) and as a research advantage: the short window of receptor engagement produces a single, well-defined GH pulse per administration, making Sermorelin a useful tool for studying acute GH-axis dynamics in isolation, without the sustained receptor occupancy that complicates interpretation of longer-acting GHRH analogs.',
+        text: 'Sermorelin\'s defining pharmacokinetic feature is its very short plasma half-life — on the order of 10–20 minutes, driven primarily by rapid degradation via dipeptidyl peptidase-4 (DPP-4) cleavage at the N-terminal Tyr-Ala bond. This is frequently discussed in the literature both as a limitation (requiring more frequent administration in longitudinal studies) and as a research advantage: the short window of receptor engagement produces a single, well-defined GH pulse per administration, making Sermorelin a useful tool for studying acute GH-axis dynamics in isolation, without the sustained receptor occupancy that complicates interpretation of longer-acting GHRH analogs.',
       },
       {
         type: 'list',
         items: [
           'DPP-4-mediated cleavage is the dominant degradation pathway, motivating later-generation GHRH analogs (including Tesamorelin) engineered specifically for DPP-4 resistance.',
-          'GH pulse amplitude following Sermorelin administration correlates with baseline somatostatin tone, a variable research protocols typically control for via standardized timing (e.g., fasting, time of day).',
+          'GH pulse amplitude following Sermorelin administration correlates with baseline somatostatin tone, a variable study designs typically control for via standardized timing (e.g., fasting, time of day).',
           'Because Sermorelin acts on endogenous somatotroph reserve rather than supplying GH directly, its effects are attenuated in models of pituitary insufficiency — a property researchers use diagnostically to distinguish pituitary from hypothalamic causes of GH deficiency in animal models.',
         ],
       },
@@ -672,7 +499,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'Sermorelin\'s clean, well-characterized single-pulse GH response has made it a standard reference or stimulation-test compound in GH-axis research, used to establish somatotroph functional reserve independent of hypothalamic GHRH output. This diagnostic-style application is distinct from — but closely related to — its use in longer-term research protocols examining cumulative effects of repeated GHRH receptor stimulation on IGF-1 levels, body composition, and sleep architecture, the latter driven by GH\'s established relationship with slow-wave sleep.',
+        text: 'Sermorelin\'s clean, well-characterized single-pulse GH response has made it a standard reference or stimulation-test compound in GH-axis research, used to establish somatotroph functional reserve independent of hypothalamic GHRH output. This diagnostic-style application is distinct from — but closely related to — its use in longer-term animal studies examining the cumulative effects of repeated GHRH receptor stimulation on IGF-1 levels.',
       },
       {
         type: 'heading',
@@ -680,7 +507,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'Within the broader class of GHRH-class research compounds, Sermorelin is generally positioned as the shortest-acting reference standard, against which longer-acting, protease-resistant analogs (such as Tesamorelin, or GHRP-class secretagogues acting through a distinct ghrelin-receptor mechanism) are benchmarked. Comparative research designs frequently pair Sermorelin\'s well-characterized acute pulse profile with a longer-acting analog to separate acute receptor-engagement effects from cumulative, multi-dose outcomes.',
+        text: 'Within the broader class of GHRH-class research compounds, Sermorelin is generally positioned as the shortest-acting reference standard, against which longer-acting, protease-resistant analogs (such as Tesamorelin, or GHRP-class secretagogues acting through a distinct ghrelin-receptor mechanism) are benchmarked. Comparative research designs frequently pair Sermorelin\'s well-characterized acute pulse profile with a longer-acting analog to separate acute receptor-engagement effects from cumulative, repeated-exposure effects.',
       },
       {
         type: 'callout',
@@ -694,11 +521,11 @@ export const ARTICLES: Article[] = [
     date: 'Sep 2026',
     dateISO: '2026-09-02',
     metaDescription: 'SS-31\'s cardiolipin-binding mechanism, its selective mitochondrial accumulation, and research findings on oxidative stress and bioenergetic function.',
-    tag: 'Longevity',
+    tag: 'Mitochondrial',
     readTime: '8 min',
     excerpt:
       'A research overview of SS-31, a Szeto-Schiller peptide engineered to concentrate in the inner mitochondrial membrane and studied for its effects on cardiolipin stability and oxidative stress.',
-    image: 'longevity',
+    image: 'mitochondrial',
     content: [
       {
         type: 'intro',
@@ -726,7 +553,7 @@ export const ARTICLES: Article[] = [
           'In vitro and animal models of ischemia-reperfusion injury report SS-31 preserving mitochondrial membrane potential and ATP production during the reperfusion oxidative burst.',
           'Cardiac and renal ischemia models show reduced infarct size and preserved organ function associated with SS-31 administration, driving much of the compound\'s clinical-stage research interest.',
           'Neurodegeneration models (including Parkinsonian and Alzheimer\'s-pattern models) report reduced ROS production and improved mitochondrial bioenergetics with SS-31 exposure, an active area of ongoing research.',
-          'Skeletal muscle aging research associates SS-31 with improved mitochondrial respiratory capacity in aged animal models, contributing to its positioning within longevity-adjacent research.',
+          'Skeletal muscle aging research associates SS-31 with improved mitochondrial respiratory capacity in aged animal models, which places it within research on aged-animal models.',
         ],
       },
       {
@@ -823,7 +650,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The trade-off is measurable within a single run. In one documented preparative separation of crude bradykinin at 84.6% starting purity, volume-overloaded loading achieved 100% purity at 77% recovery, while a concentration-overload strategy achieved the same purity at 97% recovery. Same material, same target, twenty points of yield difference depending on how the column was run. Every purification pass removed shows up as margin — and it does not show up on a chromatogram that the seller chose the method for.',
+        text: 'The trade-off is measurable within a single run. In one documented preparative separation of crude bradykinin at 84.6% starting purity, volume-overloaded loading achieved 100% purity at 77% yield, while a concentration-overload strategy achieved the same purity at 97% yield. Same material, same target, twenty points of yield difference depending on how the column was run. Every purification pass removed shows up as margin — and it does not show up on a chromatogram that the seller chose the method for.',
       },
       { type: 'heading', text: 'The Milligrams You Are Comparing May Not Be Peptide' },
       {
@@ -840,7 +667,7 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'paragraph',
-        text: 'The pathological version of this gap is documented. In a 2024 JAMA Network Open analysis of semaglutide vials test-purchased without prescription online, LC-MS chromatograms showed a single clean peak with no peptide-like impurities — by the vendors\u2019 own metric, immaculate material. Measured polypeptide concentration in those same vials was 14.37%, 8.97% and 7.70% against a stated claim of at least 99% purity.',
+        text: 'The pathological version of this gap is documented. In a 2024 JAMA Network Open analysis of peptide vials test-purchased from online sellers, LC-MS chromatograms showed a single clean peak with no peptide-like impurities — by the vendors\u2019 own metric, immaculate material. Measured polypeptide concentration in those same vials was 14.37%, 8.97% and 7.70% against a stated claim of at least 99% purity.',
       },
       {
         type: 'callout',
@@ -856,13 +683,13 @@ export const ARTICLES: Article[] = [
         items: [
           'Fewer or less selective purification passes. In the 98-peptide study, only 43 met the 95% specification their certificates claimed — traced to the supplier\u2019s own chromatographic method lacking selectivity. One peptide reported at ≥95.0% by the supplier measured 80.6% under a selective method.',
           'No pyrogen control. In the largest available dataset of consumer-submitted research peptide tests — 6,285 samples across 14 compounds — endotoxin data existed for fewer than 4% of them. Chromatographic purity predicted endotoxin essentially not at all (R² below 0.01, p = 0.75).',
-          'No batch discipline upstream. The FDA has inspected 48 GLP-1 API manufacturing sites and found 21% non-compliant with current good manufacturing practice, alongside a documented pattern of firms registering, offering product, refusing inspection and then deregistering.',
+          'No batch discipline upstream. FDA inspections of peptide API manufacturing sites have found a substantial share non-compliant with current good manufacturing practice, alongside a documented pattern of firms registering, offering product, refusing inspection and then deregistering.',
           'Cheaper molecules wearing the right label. Analyses of seized material have identified glycine-extended GHRP analogues and a 192-amino-acid growth hormone variant carrying an extra N-terminal alanine — near-analogues that are cheaper to make and pass a loose mass check.',
         ],
       },
       {
         type: 'paragraph',
-        text: 'One widely held assumption deserves correcting. The largest dataset does not show systematic underdosing: median measured abundance was 101.80% of label, and the vials in the 2024 test-purchase study were actually overfilled by 29–39% in absolute semaglutide mass. The documented failure in this market is variance and contamination, not short measure. Cheap material is not reliably less; it is reliably less predictable.',
+        text: 'One widely held assumption deserves correcting. The largest dataset does not show systematic short measure: median measured abundance was 101.80% of label, and the vials in the 2024 test-purchase study were actually overfilled by 29–39% in absolute peptide mass. The documented failure in this market is variance and contamination, not short measure. Cheap material is not reliably less; it is reliably less predictable.',
       },
       { type: 'heading', text: 'How to Read a Price Properly' },
       {
@@ -907,7 +734,7 @@ export const ARTICLES: Article[] = [
       { type: 'heading', text: 'The Stability Science' },
       {
         type: 'paragraph',
-        text: 'The best-characterised published data point comes from a 2026 study of thermally stressed solid-state semaglutide. Using FT-IR, circular dichroism, modulated DSC, RP-HPLC and LC-HRMS, the authors found the material retains its native α-helical conformation up to 60 °C, with helical content falling from 49.07% to 43.75% at 60 °C and collapsing to 0.2% at 80 °C. The amorphous solid has a glass transition temperature of 169 °C.',
+        text: 'The best-characterised published data point comes from a 2026 study of a thermally stressed solid-state lyophilised peptide. Using FT-IR, circular dichroism, modulated DSC, RP-HPLC and LC-HRMS, the authors found the material retains its native α-helical conformation up to 60 °C, with helical content falling from 49.07% to 43.75% at 60 °C and collapsing to 0.2% at 80 °C. The amorphous solid has a glass transition temperature of 169 °C.',
       },
       {
         type: 'paragraph',
@@ -917,23 +744,15 @@ export const ARTICLES: Article[] = [
         type: 'paragraph',
         text: 'The mechanism is chemistry rather than folklore: deamidation, the dominant degradation route for peptides containing asparagine or glutamine, is water-mediated. Lyophilisation removes the reactant. A dry cake is slow, not inert.',
       },
-      { type: 'heading', text: 'What the Innovators\u2019 Own Labels Permit' },
+      { type: 'heading', text: 'Solutions Versus the Dry Solid' },
       {
         type: 'paragraph',
-        text: 'The most persuasive evidence is what manufacturers submitted to regulators about their own products. Ozempic\u2019s FDA label §16 states that after first use the pen can be stored for 56 days at controlled room temperature, 15–30 °C. Mounjaro, per its SmPC, may be stored unrefrigerated for up to 30 days at a temperature not above 30 °C after first use.',
-      },
-      {
-        type: 'paragraph',
-        text: 'These are aqueous, preservative-containing solutions — the physically less stable form — and the regulatory dossier permits a month at 30 °C. They are in-use allowances following an unbroken cold chain, not licence to ship warm, but they establish the scale. A two to four day air transit at ambient is not the event that degrades the molecule.',
-      },
-      {
-        type: 'paragraph',
-        text: 'A useful real-world analogue: a 2021 PLOS ONE study placed insulin under temperature profiles logged in a refugee camp in northern Kenya, oscillating between 25 °C and 37 °C. Weekly HPLC showed conformity to pharmacopoeial guidelines across four weeks, and bioactivity in hepatic cells was identical to material held at 2–8 °C.',
+        text: 'Material in aqueous solution is the physically less stable form, and even so, published pharmaceutical stability data for peptide solutions commonly permit weeks at controlled room temperature after an unbroken cold chain. Those allowances are not licence to ship warm, but they establish the scale. A two to four day air transit at ambient is not the event that degrades a lyophilised molecule.',
       },
       { type: 'heading', text: 'The Asymmetry That Actually Matters: Do Not Freeze' },
       {
         type: 'paragraph',
-        text: 'Both labels above carry the same instruction, and it points the opposite way to intuition: do not freeze, and do not use if it has been frozen. Freezing damages peptide solutions through ice-interface denaturation and freeze-concentration.',
+        text: 'Stability documentation for peptide solutions carries the same instruction, and it points the opposite way to intuition: do not freeze, and do not use if it has been frozen. Freezing damages peptide solutions through ice-interface denaturation and freeze-concentration.',
       },
       {
         type: 'callout',
@@ -1011,6 +830,136 @@ export const ARTICLES: Article[] = [
       {
         type: 'callout',
         text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. This article addresses material handling and regulatory logistics; it is not guidance on administration, and a research-use designation does not authorise human use.',
+      },
+    ],
+  },
+  {
+    id: 'peptide-quality-failures',
+    title: 'How Peptide Vials Fail QC: 6 Checks That Catch It',
+    date: 'Sep 2026',
+    dateISO: '2026-09-14',
+    metaDescription: 'Purity, net content, identity and endotoxin are four independent measurements. Published testing data show how research peptides actually fail — and how to verify.',
+    tag: 'Guide',
+    readTime: '11 min',
+    excerpt:
+      'Research peptide purity, net content, identity and pyrogen load are four independent variables. A vial can pass one and fail the other three without the certificate saying anything untrue.',
+    image: 'guide',
+    content: [
+      {
+        type: 'intro',
+        text: 'The research peptide market runs on a single number. "99% purity" appears on nearly every product page, and for most buyers it is the whole of quality assurance. It is a real measurement. It is also, on its own, close to uninformative — and the published analytical literature is now detailed enough to show precisely why, and precisely how vials fail.',
+      },
+      { type: 'heading', text: 'What the Testing Data Actually Show' },
+      {
+        type: 'paragraph',
+        text: 'A 2026 preprint analysed 6,285 consumer-submitted third-party test results across 14 compounds including BPC-157, TB-500, GHK-Cu, PT-141 and CJC-1295. Depending on which acceptance model was applied, between 41.6% and 71.1% of samples failed basic quality criteria. Median purity was high — 99.80% — but median measured abundance was 101.80% of label with an interquartile range of 95–109%. The authors\u2019 conclusion is the important one: content accuracy, not gross impurity, was the dominant deficit. Pass rates varied enormously by compound: against the stricter manufactured-product model, TB-500 passed in 7.5% of cases and CJC-1295 in 10.7%.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A caveat worth stating, which most coverage does not: this is voluntarily submitted data, not a random sample, and it is a preprint rather than peer-reviewed work. The authors themselves describe their failure rates as a lower bound.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The cleanest demonstration of the purity/content gap comes from a 2024 study in JAMA Network Open, which test-purchased a lyophilised peptide from online sellers. Three lyophilised vials were delivered; three orders were simply non-delivery scams. LC-MS on the delivered material showed a single chromatographic peak with no peptide-like impurities. Measured polypeptide concentration was 14.37%, 8.97% and 7.70% against a labelled claim of at least 99% purity. Sterility testing found no viable organisms — and endotoxin was present in all three at 2.16–8.95 EU/mg.',
+      },
+      {
+        type: 'callout',
+        text: 'Clean chromatogram. Sterile. Pyrogenic. Roughly a tenth peptide by mass. Every one of those statements is simultaneously true.',
+      },
+      {
+        type: 'paragraph',
+        text: 'A separate certificate-integrity study ordered 98 synthetic peptides from two international suppliers at a specified minimum 95% purity. All 98 arrived with certificates stating at least 95%. In-house quality control found 43 of 98 actually met it. The authors identified the mechanism: the supplier\u2019s own chromatographic method clearly lacked selectivity. For one peptide, the supplier\u2019s chromatogram claimed at least 95%; a selective method found 80.6%. For another, the main peak was not the ordered sequence at all — it was the intramolecularly disulfide-cyclised form, 2.1 Da lighter. A pure-looking trace of the wrong molecule.',
+      },
+      {
+        type: 'paragraph',
+        text: 'And sometimes the compound simply is not there. Polish official medicines control laboratory analysis of 601 samples seized between 2020 and 2024 examined a 63-sample post-cycle-therapy subset in which 34.9% did not contain the declared active substance at all — 20.6% contained none whatsoever, and 14.3% contained a different, undeclared one. Within the peptide-specific portion, of 16 samples declared as human chorionic gonadotrophin, 37.5% contained no active substance — mannitol only.',
+      },
+      { type: 'heading', text: 'What Each Analytical Method Actually Proves' },
+      {
+        type: 'paragraph',
+        text: 'The gap between what a test measures and what buyers assume it measures is where most of the confusion lives. RP-HPLC at 210–220 nm measures purity: the main peak area as a percentage of total peak area. It has four blind spots, each evidenced above.',
+      },
+      {
+        type: 'list',
+        items: [
+          'It is a ratio, not a mass. It cannot tell you how much peptide is in the vial.',
+          'It only counts what absorbs UV and elutes. Water, counterion, inorganic salt and bulking agents are invisible to it.',
+          'It is method-dependent. Same peptide, 80.6% or ≥95% depending on column and gradient.',
+          'The main peak may not be your peptide. Disulfide-scrambled and cyclised species can present as a single clean peak.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'LC-MS and high-resolution MS confirm identity — molecular weight, and with MS² the sequence through fragment ions. But they do not give quantity without a calibrated reference standard, do not distinguish D- from L-amino acid epimers (identical mass), do not reliably distinguish leucine from isoleucine, and an intact-mass check with a loose tolerance will not catch an N-terminal glycine (+57 Da) or alanine (+71 Da) extension — both identified in real seized material.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Amino acid analysis — net peptide content. Acid hydrolysis to free amino acids, then quantification. This is the test that answers how many milligrams of peptide are actually in the vial, and its absence is the single largest information gap in grey-market documentation.',
+          'Karl Fischer titration — water content. Lyophilised cake is hygroscopic, and water is both dead mass and a degradation accelerant.',
+          'Ion chromatography — counterion. TFA from reversed-phase purification cannot be completely removed; the FDA expects counterion content and identity on a drug substance specification.',
+          'LAL or recombinant Factor C — endotoxin. Endotoxin is heat-stable and is not removed by sterile filtration. A vial can be sterile and pyrogenic at once. It must be measured directly and reported as a number with a unit.',
+        ],
+      },
+      { type: 'heading', text: 'The Eight Ways a Vial Goes Wrong' },
+      {
+        type: 'paragraph',
+        text: 'Solid-phase synthesis has a characteristic failure catalogue. The question that matters commercially is whether routine RP-HPLC catches each one.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Deletion sequences (incomplete coupling): usually caught, but short polar deletions can co-elute. 74% of all identified impurities in the 98-peptide study involved at least one deletion.',
+          'Insertion sequences (excess amino acid driving double coupling): often caught.',
+          'Racemisation / D-epimers: frequently NOT caught — identical mass, similar retention. Needs chiral analysis. Cysteine racemisation of ~50% has been documented under the wrong base.',
+          'Oxidation of Met, Trp or Cys: usually caught, since +16 Da is more polar and elutes earlier.',
+          'Deamidation of Asn/Gln via succinimide: only partially — the +0.98 Da shift sits at the edge of low-resolution MS.',
+          'Aggregation and high-molecular-weight species: NOT caught. Largely invisible to analytical RP-HPLC; needs SEC or light obscuration.',
+          'Disulfide scrambling: deceptively — presents as a clean single peak that is the wrong molecule.',
+          'Residual protecting groups (tBu, Trt, Pbf adducts): usually caught, since the hydrophobicity shift is large.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Two of these — aggregation and disulfide scrambling — are the ones regulators cite most often. The FDA\u2019s stated rationale for placing several peptides in its higher-risk compounding category is immunogenicity due to the potential for aggregation and peptide-related impurities. Aggregates are precisely what a purity chromatogram does not show you.',
+      },
+      { type: 'heading', text: 'What a Certificate Has to Contain to Mean Anything' },
+      {
+        type: 'paragraph',
+        text: 'There is an established standard, and it is not a matter of opinion. ICH Q7 §11.4 and EU GMP Part II require a certificate of analysis to carry the name of the substance, the batch number, release and expiry dates, a list of each test performed including acceptance limits, numerical results rather than "pass" or "conforms", a dated signature by authorised personnel, and the name of the company or laboratory.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The FDA\u2019s expectation for a peptide drug substance specification goes further: identity by a combination of orthogonal methods, a stability-indicating assay, related substances by orthogonal methods, plus water content, residual solvents, elemental impurities, counterion content and identity, bacterial endotoxins and microbial limits. Measured against that, a certificate reporting only HPLC purity and MS mass confirmation omits six of the nine expected attributes.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Impurity thresholds are what give a purity figure meaning. The European Pharmacopoeia monograph for synthetic peptides sets reporting at 0.1%, identification at 0.5% and qualification at 1.0%. The FDA\u2019s synthetic peptide guidance requires applicants to identify each peptide-related impurity at 0.10% or greater, and justification for any new impurity must include data showing it does not contain sequences with increased MHC affinity — potential T-cell epitopes. A bare percentage with no impurity table cannot speak to any of this.',
+      },
+      {
+        type: 'paragraph',
+        text: 'One point of honesty: there is a great deal of industry talk about fabricated and recycled certificates, and no peer-reviewed study or regulatory publication quantifies it. What can be said with evidence is narrower and more useful — a certificate lacking a lot number, numerical results or acceptance limits fails on its face against ICH Q7, and supplier-generated purity figures have been shown empirically to overstate.',
+      },
+      { type: 'heading', text: 'The Six Checks, in Order' },
+      {
+        type: 'list',
+        items: [
+          'Does the certificate carry a lot number, a test list with acceptance limits, numerical results, and a dated signature? Anything less is not a certificate of analysis in the regulatory sense.',
+          'Does it report net peptide content or assay — not just purity by HPLC? Without it the ratio is known and the mass is not. This is the single most common omission.',
+          'Does it report water content and counterion identity and quantity? These are the two largest non-peptide mass sinks in a lyophilised vial.',
+          'Does it report endotoxin as a number with a unit? Purity predicts pyrogenic load with an R² below 0.01. If it is not measured, it is not known.',
+          'Is identity confirmed by MS² or peptide mapping rather than intact mass alone? Glycine- and alanine-extended analogues have been found in seized material precisely because a loose mass check passes them.',
+          'Was the analysis performed on the specific lot supplied, by a laboratory independent of the seller, with the method disclosed on the certificate? This is the check the published evidence supports most strongly — and the one most rarely satisfied.',
+        ],
+      },
+      { type: 'heading', text: 'The Underlying Point' },
+      {
+        type: 'paragraph',
+        text: 'Purity, content, identity and pyrogen load are four independent measurements. Treating one as a proxy for the others is not a small analytical imprecision; it is the specific error the 2024 test-purchase study documented in its purest form — a flawless chromatogram sitting on top of a vial that was roughly 90% something else. Read "99% purity" as a statement about a chromatogram, not about a vial. Everything else follows from that.',
+      },
+      {
+        type: 'callout',
+        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. The analytical framework described here concerns material characterisation; it is not guidance on administration.',
       },
     ],
   },
@@ -1298,11 +1247,12 @@ export const HELD_FOR_REVIEW_ARTICLES: Article[] = [
 // filtering by "Recovery" would see "18" in the pill and find one article.
 // Derived from ARTICLES instead, so the number shown always matches reality.
 export const TAG_COLOR: Record<string, string> = {
-  Recovery: '#22c55e',
-  Metabolic: '#f97316',
-  Cognitive: '#8b5cf6',
-  Longevity: '#3b82f6',
-  Aesthetic: '#ec4899',
+  // Compound classes (Oct 2026) — never outcome labels.
+  'Bioregulator & Fragment': '#06B6D4',
+  'GH-Axis': '#8B5CF6',
+  Neuropeptide: '#EC4899',
+  Mitochondrial: '#10B981',
+  'Copper & Cosmetic': '#F59E0B',
   Guide: '#64748b',
 }
 
@@ -1313,11 +1263,11 @@ export const CATEGORIES = Array.from(new Set(ARTICLES.map((a) => a.tag))).map((t
 }))
 
 export const tagColors: Record<string, { bg: string; text: string }> = {
-  Recovery: { bg: '#dcfce7', text: '#16a34a' },
-  Metabolic: { bg: '#ffedd5', text: '#c2410c' },
-  Cognitive: { bg: '#ede9fe', text: '#7c3aed' },
-  Longevity: { bg: '#dbeafe', text: '#1d4ed8' },
-  Aesthetic: { bg: '#fce7f3', text: '#be185d' },
+  'Bioregulator & Fragment': { bg: '#cffafe', text: '#0e7490' },
+  'GH-Axis': { bg: '#ede9fe', text: '#6d28d9' },
+  Neuropeptide: { bg: '#fce7f3', text: '#be185d' },
+  Mitochondrial: { bg: '#dcfce7', text: '#15803d' },
+  'Copper & Cosmetic': { bg: '#fef3c7', text: '#b45309' },
   Guide: { bg: '#f1f5f9', text: '#475569' },
 }
 
@@ -1336,133 +1286,141 @@ export function getArticleBySlug(slug: string) {
    /research/bpc-157-vs-tb-500 301s to it (next.config.js).
    ────────────────────────────────────────────────────────────────────────── */
 export const RETIRED_ARTICLES: Article[] = [
+  // Oct 2026 clean-up (brief A3): withdrawn with the GLP line and the
+  // pen-only products. Both URLs answer 410 Gone (lib/retired-paths.ts).
   {
-    id: 'peptide-quality-failures',
-    title: 'How Peptide Vials Fail QC: 6 Checks That Catch It',
-    date: 'Sep 2026',
-    dateISO: '2026-09-14',
-    metaDescription: 'Purity, net content, identity and endotoxin are four independent measurements. Published testing data show how research peptides actually fail — and how to verify.',
-    tag: 'Guide',
-    readTime: '11 min',
+    id: 'glp1',
+    title: 'Understanding GLP-1 Receptor Agonists in Metabolic Research',
+    date: 'Apr 2026',
+    dateISO: '2026-04-20',
+    metaDescription: 'How GLP-1 receptor agonists work in metabolic research, key preclinical findings, and the distinction between research compounds and approved medicines.',
+    tag: 'Metabolic',
+    readTime: '12 min',
     excerpt:
-      'Research peptide purity, net content, identity and pyrogen load are four independent variables. A vial can pass one and fail the other three without the certificate saying anything untrue.',
-    image: 'guide',
+      'A comprehensive review of glucagon-like peptide-1 receptor signalling, the structural biology of synthetic agonists, and emerging metabolic research directions.',
+    image: 'metabolic',
     content: [
       {
         type: 'intro',
-        text: 'The research peptide market runs on a single number. "99% purity" appears on nearly every product page, and for most buyers it is the whole of quality assurance. It is a real measurement. It is also, on its own, close to uninformative — and the published analytical literature is now detailed enough to show precisely why, and precisely how vials fail.',
-      },
-      { type: 'heading', text: 'What the Testing Data Actually Show' },
-      {
-        type: 'paragraph',
-        text: 'A 2026 preprint analysed 6,285 consumer-submitted third-party test results across 14 compounds including BPC-157, TB-500, retatrutide, semaglutide, tirzepatide, GHK-Cu, PT-141 and CJC-1295. Depending on which acceptance model was applied, between 41.6% and 71.1% of samples failed basic quality criteria. Median purity was high — 99.80% — but median measured abundance was 101.80% of label with an interquartile range of 95–109%. The authors\u2019 conclusion is the important one: dosing accuracy, not gross impurity, was the dominant deficit. Pass rates varied enormously by compound: against the stricter manufactured-product model, TB-500 passed in 7.5% of cases and CJC-1295 in 10.7%.',
+        text: 'Glucagon-like peptide-1 (GLP-1) is a 30-amino-acid incretin hormone secreted by intestinal L-cells in response to nutrient ingestion. Its discovery in the mid-1980s and subsequent characterization of its receptor (GLP-1R) opened one of the most productive chapters in modern metabolic biology — ultimately yielding drug classes that have reshaped the treatment of type 2 diabetes and obesity. This article reviews the fundamental receptor biology and the structural logic behind synthetic agonists, with an emphasis on research-relevant considerations.',
       },
       {
-        type: 'paragraph',
-        text: 'A caveat worth stating, which most coverage does not: this is voluntarily submitted data, not a random sample, and it is a preprint rather than peer-reviewed work. The authors themselves describe their failure rates as a lower bound.',
+        type: 'heading',
+        text: 'Receptor Biology and Signaling Cascade',
       },
       {
         type: 'paragraph',
-        text: 'The cleanest demonstration of the purity/content gap comes from a 2024 study in JAMA Network Open, which test-purchased semaglutide from online sellers operating without prescription. Three lyophilised vials were delivered; three orders were simply non-delivery scams. LC-MS on the delivered material showed a single chromatographic peak with no peptide-like impurities. Measured polypeptide concentration was 14.37%, 8.97% and 7.70% against a labelled claim of at least 99% purity. Sterility testing found no viable organisms — and endotoxin was present in all three at 2.16–8.95 EU/mg.',
+        text: 'The GLP-1 receptor is a class B G protein-coupled receptor (GPCR) with a large extracellular domain that coordinates initial peptide binding. Upon agonist binding, the receptor undergoes a conformational change that couples to Gαs, activating adenylyl cyclase and elevating intracellular cAMP. This triggers PKA-mediated phosphorylation of voltage-gated calcium channels and potassium channels in pancreatic β-cells, enhancing glucose-stimulated insulin secretion (GSIS) in a glucose-dependent manner — the key property that largely explains the favorable safety profile of GLP-1-based therapies.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Beyond the canonical Gαs pathway, GLP-1R also signals through β-arrestin recruitment, which initiates receptor internalization and activates a parallel set of intracellular signals including ERK1/2 and PI3K. This biased signaling concept is now central to next-generation agonist design: compounds that preferentially engage the Gαs pathway over β-arrestin internalization maintain prolonged surface receptor availability, translating to sustained insulin secretion and reduced tachyphylaxis.',
+      },
+      {
+        type: 'heading',
+        text: 'Structural Basis of Synthetic Agonists',
+      },
+      {
+        type: 'paragraph',
+        text: 'Native GLP-1(7-36) amide has a plasma half-life of approximately 2 minutes, rapidly cleaved by DPP-4 (dipeptidyl peptidase-4) at the His7-Ala8 bond. Synthetic agonists circumvent this limitation through three primary strategies:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Substitution of Ala8 with α-aminoisobutyric acid (Aib) or α-methylalanine, creating DPP-4-resistant analogs (exendin-4 uses Gly at position 2 for similar stability).',
+          'Fatty acid acylation (as in semaglutide) enabling reversible albumin binding, extending the half-life to ~7 days through reduced renal clearance and protection from proteolysis.',
+          'Fc fusion technologies and half-life extension via conjugation to IgG4 fragments, as explored in several pipeline candidates.',
+        ],
+      },
+      {
+        type: 'heading',
+        text: 'Central Nervous System Actions',
+      },
+      {
+        type: 'paragraph',
+        text: 'GLP-1Rs are expressed in the hypothalamus, brainstem (particularly nucleus tractus solitarius and area postrema), mesolimbic dopamine pathways, and hippocampus. Central GLP-1R activation reduces food intake through hypothalamic arc nucleus circuits, modulates gastric emptying through vagal efferent pathways, and exerts direct neuroprotective effects through PI3K/Akt and MAPK cascades. The neuroprotective angle has opened substantial research interest in Alzheimer\'s and Parkinson\'s disease, where GLP-1R agonism reduces amyloid burden and α-synuclein aggregation in preclinical models.',
       },
       {
         type: 'callout',
-        text: 'Clean chromatogram. Sterile. Pyrogenic. Roughly a tenth peptide by mass. Every one of those statements is simultaneously true.',
+        text: 'GLP-1 research peptides used in laboratory settings are distinct from pharmaceutical formulations. Research-grade peptides are intended solely for in vitro and preclinical in vivo studies. Purity characterization (HPLC ≥98%, mass spectrometry verification) is essential for reproducible results.',
+      },
+      {
+        type: 'heading',
+        text: 'Dual and Triple Agonism: The Next Research Frontier',
       },
       {
         type: 'paragraph',
-        text: 'A separate certificate-integrity study ordered 98 synthetic peptides from two international suppliers at a specified minimum 95% purity. All 98 arrived with certificates stating at least 95%. In-house quality control found 43 of 98 actually met it. The authors identified the mechanism: the supplier\u2019s own chromatographic method clearly lacked selectivity. For one peptide, the supplier\u2019s chromatogram claimed at least 95%; a selective method found 80.6%. For another, the main peak was not the ordered sequence at all — it was the intramolecularly disulfide-cyclised form, 2.1 Da lighter. A pure-looking trace of the wrong molecule.',
+        text: 'The recognition that GIP (glucose-dependent insulinotropic polypeptide) receptor and glucagon receptor agonism can be synergistic with GLP-1R activation has driven intense research into dual (GLP-1/GIP or GLP-1/glucagon) and triple (GLP-1/GIP/glucagon) agonists. These compounds demonstrate superior metabolic effects compared to GLP-1-only agonists, driven in part by additive effects on adipose tissue lipolysis and independent contributions to satiety. Research peptides that explore this space include various chimeric sequences designed to probe the relative receptor contributions.',
+      },
+      {
+        type: 'heading',
+        text: 'Methodological Notes for In Vitro Research',
       },
       {
         type: 'paragraph',
-        text: 'And sometimes the compound simply is not there. Polish official medicines control laboratory analysis of 601 samples seized between 2020 and 2024 examined a 63-sample post-cycle-therapy subset in which 34.9% did not contain the declared active substance at all — 20.6% contained none whatsoever, and 14.3% contained a different, undeclared one. Within the peptide-specific portion, of 16 samples declared as human chorionic gonadotrophin, 37.5% contained no active substance — mannitol only.',
+        text: 'Cell-based GLP-1R activation assays most commonly use transfected HEK293 cells or INS-1E rat insulinoma cells. cAMP accumulation assays (HTRF or ELISA-based) are preferred for characterizing Gαs engagement; β-arrestin recruitment is best quantified with PathHunter or BRET-based biosensor systems. Researchers should note that species differences in GLP-1R pharmacology are substantial — mouse and rat receptors show 5-10 fold differences in affinity for several synthetic analogs compared to the human receptor, complicating translation of rodent efficacy data.',
       },
-      { type: 'heading', text: 'What Each Analytical Method Actually Proves' },
+    ],
+  },
+  {
+    id: 'igf-1-lr3',
+    title: 'IGF-1 LR3: Structure of an 83-Residue Analogue',
+    date: 'Sep 2026',
+    dateISO: '2026-09-02',
+    metaDescription: 'IGF-1 LR3\'s engineered mutations, its use as an extended-half-life research tool for IGF-1 receptor signaling, and evidence on hyperplasia versus hypertrophy.',
+    tag: 'Recovery',
+    readTime: '7 min',
+    excerpt:
+      'How a 13-amino-acid B-domain extension and single point mutation transform native IGF-1 into a long-acting research tool for studying anabolic signaling and satellite cell activity.',
+    image: 'recovery',
+    content: [
+      {
+        type: 'intro',
+        text: 'Insulin-like Growth Factor 1 Long Arg3 (IGF-1 LR3) is an 83-amino-acid engineered analog of native human IGF-1. It differs from the endogenous hormone in two ways: a 13-amino-acid extension of the B-domain at the N-terminus, and substitution of glutamic acid for arginine at position 3. Neither modification meaningfully alters binding affinity for the IGF-1 receptor (IGF-1R) — the changes exist specifically to reduce affinity for IGF-binding proteins (IGFBPs), which in native circulation sequester the vast majority of IGF-1 within minutes of release.',
+      },
+      {
+        type: 'heading',
+        text: 'Why the B-Domain Extension Matters',
+      },
       {
         type: 'paragraph',
-        text: 'The gap between what a test measures and what buyers assume it measures is where most of the confusion lives. RP-HPLC at 210–220 nm measures purity: the main peak area as a percentage of total peak area. It has four blind spots, each evidenced above.',
+        text: 'In normal physiology, over 90% of circulating IGF-1 is bound to IGFBPs (principally IGFBP-3, in a ternary complex with acid-labile subunit), which limits free, receptor-available IGF-1 to a small fraction of total serum concentration at any given time. The Arg3 substitution and B-domain extension in LR3 sterically and electrostatically reduce IGFBP binding affinity roughly 10-fold relative to native IGF-1, while leaving IGF-1R affinity essentially unchanged. The practical research consequence is a dramatically extended functional half-life — native IGF-1 has a circulating half-life measured in minutes once unbound, whereas LR3\'s reduced IGFBP sequestration extends this to several hours in research models.',
+      },
+      {
+        type: 'heading',
+        text: 'IGF-1 Receptor Signaling and Downstream Pathways',
+      },
+      {
+        type: 'paragraph',
+        text: 'IGF-1R is a receptor tyrosine kinase structurally related to the insulin receptor. Ligand binding triggers autophosphorylation and activates two principal downstream cascades studied extensively in LR3 research: the PI3K/Akt/mTOR pathway, which drives protein synthesis and is considered the dominant route for anabolic signaling in skeletal muscle, and the Ras/MAPK/ERK pathway, more closely associated with cell proliferation and differentiation. The relative weighting between these pathways — and how LR3\'s extended exposure window shifts that balance compared to pulsatile native IGF-1 signaling — remains an active question in in vitro and animal research.',
+      },
+      {
+        type: 'heading',
+        text: 'Satellite Cell Activation and Hyperplasia Research',
+      },
+      {
+        type: 'paragraph',
+        text: 'A significant strand of LR3 research concerns satellite cells — quiescent muscle stem cells that, upon activation, can proliferate and either fuse with existing myofibers (contributing to hypertrophy) or in some animal models generate genuinely new muscle fibers (hyperplasia). LR3 is a commonly used tool compound in this line of research because its extended half-life sustains satellite cell mitogenic signaling for longer than native IGF-1 pulses allow in culture or in vivo. Findings on true fiber-number hyperplasia remain mixed and highly species- and model-dependent; most controlled evidence supports robust hypertrophic (existing-fiber growth) effects, with hyperplasia results considered preliminary and not consistently replicated.',
       },
       {
         type: 'list',
         items: [
-          'It is a ratio, not a mass. It cannot tell you how much peptide is in the vial.',
-          'It only counts what absorbs UV and elutes. Water, counterion, inorganic salt and bulking agents are invisible to it.',
-          'It is method-dependent. Same peptide, 80.6% or ≥95% depending on column and gradient.',
-          'The main peak may not be your peptide. Disulfide-scrambled and cyclised species can present as a single clean peak.',
+          'In vitro myoblast studies show LR3 sustains Akt phosphorylation for hours longer than equimolar native IGF-1, correlating with increased proliferation markers.',
+          'Rodent models report increased satellite cell nuclei-to-fiber ratios with prolonged LR3 exposure, though translation to hyperplasia versus hypertrophy is model-dependent.',
+          'IGF-1R is also expressed outside skeletal muscle (adipose, cardiac, neural tissue), so systemic research protocols must account for off-target signaling when interpreting muscle-specific outcomes.',
         ],
       },
       {
-        type: 'paragraph',
-        text: 'LC-MS and high-resolution MS confirm identity — molecular weight, and with MS² the sequence through fragment ions. But they do not give quantity without a calibrated reference standard, do not distinguish D- from L-amino acid epimers (identical mass), do not reliably distinguish leucine from isoleucine, and an intact-mass check with a loose tolerance will not catch an N-terminal glycine (+57 Da) or alanine (+71 Da) extension — both identified in real seized material.',
-      },
-      {
-        type: 'list',
-        items: [
-          'Amino acid analysis — net peptide content. Acid hydrolysis to free amino acids, then quantification. This is the test that answers how many milligrams of peptide are actually in the vial, and its absence is the single largest information gap in grey-market documentation.',
-          'Karl Fischer titration — water content. Lyophilised cake is hygroscopic, and water is both dead mass and a degradation accelerant.',
-          'Ion chromatography — counterion. TFA from reversed-phase purification cannot be completely removed; the FDA expects counterion content and identity on a drug substance specification.',
-          'LAL or recombinant Factor C — endotoxin. Endotoxin is heat-stable and is not removed by sterile filtration. A vial can be sterile and pyrogenic at once. It must be measured directly and reported as a number with a unit.',
-        ],
-      },
-      { type: 'heading', text: 'The Eight Ways a Vial Goes Wrong' },
-      {
-        type: 'paragraph',
-        text: 'Solid-phase synthesis has a characteristic failure catalogue. The question that matters commercially is whether routine RP-HPLC catches each one.',
-      },
-      {
-        type: 'list',
-        items: [
-          'Deletion sequences (incomplete coupling): usually caught, but short polar deletions can co-elute. 74% of all identified impurities in the 98-peptide study involved at least one deletion.',
-          'Insertion sequences (excess amino acid driving double coupling): often caught.',
-          'Racemisation / D-epimers: frequently NOT caught — identical mass, similar retention. Needs chiral analysis. Cysteine racemisation of ~50% has been documented under the wrong base.',
-          'Oxidation of Met, Trp or Cys: usually caught, since +16 Da is more polar and elutes earlier.',
-          'Deamidation of Asn/Gln via succinimide: only partially — the +0.98 Da shift sits at the edge of low-resolution MS.',
-          'Aggregation and high-molecular-weight species: NOT caught. Largely invisible to analytical RP-HPLC; needs SEC or light obscuration.',
-          'Disulfide scrambling: deceptively — presents as a clean single peak that is the wrong molecule.',
-          'Residual protecting groups (tBu, Trt, Pbf adducts): usually caught, since the hydrophobicity shift is large.',
-        ],
+        type: 'heading',
+        text: 'Cross-Reactivity with the Insulin Receptor',
       },
       {
         type: 'paragraph',
-        text: 'Two of these — aggregation and disulfide scrambling — are the ones regulators cite most often. The FDA\u2019s stated rationale for placing several peptides in its higher-risk compounding category is immunogenicity due to the potential for aggregation and peptide-related impurities. Aggregates are precisely what a purity chromatogram does not show you.',
-      },
-      { type: 'heading', text: 'What a Certificate Has to Contain to Mean Anything' },
-      {
-        type: 'paragraph',
-        text: 'There is an established standard, and it is not a matter of opinion. ICH Q7 §11.4 and EU GMP Part II require a certificate of analysis to carry the name of the substance, the batch number, release and expiry dates, a list of each test performed including acceptance limits, numerical results rather than "pass" or "conforms", a dated signature by authorised personnel, and the name of the company or laboratory.',
-      },
-      {
-        type: 'paragraph',
-        text: 'The FDA\u2019s expectation for a peptide drug substance specification goes further: identity by a combination of orthogonal methods, a stability-indicating assay, related substances by orthogonal methods, plus water content, residual solvents, elemental impurities, counterion content and identity, bacterial endotoxins and microbial limits. Measured against that, a certificate reporting only HPLC purity and MS mass confirmation omits six of the nine expected attributes.',
-      },
-      {
-        type: 'paragraph',
-        text: 'Impurity thresholds are what give a purity figure meaning. The European Pharmacopoeia monograph for synthetic peptides sets reporting at 0.1%, identification at 0.5% and qualification at 1.0%. The FDA\u2019s synthetic peptide guidance requires applicants to identify each peptide-related impurity at 0.10% or greater, and justification for any new impurity must include data showing it does not contain sequences with increased MHC affinity — potential T-cell epitopes. A bare percentage with no impurity table cannot speak to any of this.',
-      },
-      {
-        type: 'paragraph',
-        text: 'One point of honesty: there is a great deal of industry talk about fabricated and recycled certificates, and no peer-reviewed study or regulatory publication quantifies it. What can be said with evidence is narrower and more useful — a certificate lacking a lot number, numerical results or acceptance limits fails on its face against ICH Q7, and supplier-generated purity figures have been shown empirically to overstate.',
-      },
-      { type: 'heading', text: 'The Six Checks, in Order' },
-      {
-        type: 'list',
-        items: [
-          'Does the certificate carry a lot number, a test list with acceptance limits, numerical results, and a dated signature? Anything less is not a certificate of analysis in the regulatory sense.',
-          'Does it report net peptide content or assay — not just purity by HPLC? Without it the ratio is known and the mass is not. This is the single most common omission.',
-          'Does it report water content and counterion identity and quantity? These are the two largest non-peptide mass sinks in a lyophilised vial.',
-          'Does it report endotoxin as a number with a unit? Purity predicts pyrogenic load with an R² below 0.01. If it is not measured, it is not known.',
-          'Is identity confirmed by MS² or peptide mapping rather than intact mass alone? Glycine- and alanine-extended analogues have been found in seized material precisely because a loose mass check passes them.',
-          'Was the analysis performed on the specific lot supplied, by a laboratory independent of the seller, with the method disclosed on the certificate? This is the check the published evidence supports most strongly — and the one most rarely satisfied.',
-        ],
-      },
-      { type: 'heading', text: 'The Underlying Point' },
-      {
-        type: 'paragraph',
-        text: 'Purity, content, identity and pyrogen load are four independent measurements. Treating one as a proxy for the others is not a small analytical imprecision; it is the specific error the 2024 test-purchase study documented in its purest form — a flawless chromatogram sitting on top of a vial that was roughly 90% something else. Read "99% purity" as a statement about a chromatogram, not about a vial. Everything else follows from that.',
+        text: 'IGF-1R and the insulin receptor share substantial structural homology, and IGF-1 (including LR3) retains weak but non-negligible affinity for the insulin receptor. Research protocols using LR3 typically account for this by monitoring glucose parameters as a confound variable, since insulin-receptor cross-activation can independently affect glucose uptake in ways that overlap with — and complicate interpretation of — the compound\'s primary IGF-1R-mediated effects.',
       },
       {
         type: 'callout',
-        text: 'Research use only. PepcoLab compounds are supplied for laboratory and in-vitro research purposes. They are not approved for human or veterinary use, consumption, or household purposes. The analytical framework described here concerns material characterisation; it is not guidance on administration.',
+        text: 'Because LR3\'s extended half-life is a direct function of reduced IGFBP binding, degraded or improperly stored material that has undergone deamidation near the mutation site can regain native-like IGFBP affinity — silently reverting the compound toward native IGF-1 kinetics without any visible change to the solution. This makes stringent cold-chain handling and fresh reconstitution more consequential for LR3 than for many other research peptides.',
       },
     ],
   },

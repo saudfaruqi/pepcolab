@@ -27,6 +27,7 @@ import { ARTICLES } from '@/lib/research-data'
 import { COMPARISONS } from '@/lib/comparisons-data'
 import { LEGAL_NOTES } from '@/lib/legal-data'
 import { toNeutralSlug } from '@/lib/utils'
+import { isRetiredHandle, isRetiredHref, PRODUCT_WITHDRAWAL_ACTIVE } from '@/lib/retired-paths'
 
 /**
  * Only the fields search actually reads.
@@ -112,7 +113,7 @@ const STOPWORDS = new Set([
  *
  * Kept deliberately short and one-directional. These are abbreviations in
  * genuine common use — "bac water" is how the product is universally referred
- * to, and we sell a SKU literally named pharma-grade-bac-water — not a general
+ * to, and two of our SKUs are bacteriostatic water — not a general
  * synonym dictionary, which would start producing surprising matches.
  */
 const TOKEN_ALIASES: Record<string, string[]> = {
@@ -182,7 +183,7 @@ const GENERIC_COMPOUND_WORDS = new Set([
  * True when the query names this specific compound, as opposed to merely
  * sharing a generic word with its description. Checks the compound field and
  * the slug, both stripped of generic vocabulary, and accepts a prefix match so
- * "reta" finds Retatrutide and "semag" finds Semaglutide.
+ * "sema" finds Semax and "epit" finds Epithalon.
  */
 function compoundIsNamed(note: { compound: string; slug: string }, qTokens: string[]): boolean {
   const identifying = `${note.compound} ${note.slug.replace(/-/g, ' ')}`
@@ -195,15 +196,37 @@ function compoundIsNamed(note: { compound: string; slug: string }, qTokens: stri
   )
 }
 
+/**
+ * Queries for withdrawn lines and device formats return nothing at all
+ * (Oct 2026 clean-up, brief A3/D). Matched on whole query tokens and on
+ * prefixes of the withdrawn compound names, so "reta", "glp-1", "pen" and
+ * "nasal spray" are all empty, while "open" or "pentapeptide" still work.
+ */
+const WITHDRAWN_TOKENS = new Set(['glp', 'glp1', 'glp2', 'glp3', 'pen', 'pens', 'spray', 'sprays', 'nasal', 'cagri', 'reta'])
+const WITHDRAWN_NAMES = ['retatrutide', 'cagrilintide', 'tirzepatide', 'semaglutide', 'liraglutide', 'tirz', 'semag']
+
+function isWithdrawnQuery(q: string): boolean {
+  // Only while products are withdrawn (lib/retired-paths.ts master switch).
+  if (!PRODUCT_WITHDRAWAL_ACTIVE) return false
+  const tokens = q.split(/[^a-z0-9]+/).filter(Boolean)
+  return tokens.some(
+    (t) =>
+      WITHDRAWN_TOKENS.has(t) ||
+      (t.length >= 4 && WITHDRAWN_NAMES.some((n) => n.startsWith(t) || t.startsWith(n)))
+  )
+}
+
 export function searchAll(query: string, products: SearchableProduct[] = []): SearchHit[] {
   const q = norm(query).trim()
   if (q.length < 2) return []
+  if (isWithdrawnQuery(q)) return []
 
   const qt = queryTokens(q)
   const hits: SearchHit[] = []
 
   // ── Products ─────────────────────────────────────────────────────────────
   for (const p of products) {
+    if (isRetiredHandle(p.slug)) continue
     const score =
       scoreField(p.name, q, 10) +
       scoreField(p.slug, q, 8) +
@@ -302,8 +325,8 @@ export function searchAll(query: string, products: SearchableProduct[] = []): Se
       // single-compound page.
       //
       // The generic-word filter is the part that matters: one note's compound
-      // field reads "GLP-1 Research Peptides (Semaglutide / Tirzepatide /
-      // Retatrutide class)", so a bare substring test on the compound name let
+      // field read "<Class> Research Peptides (…)", so a bare substring test on
+      // the compound name let
       // the word "peptides" satisfy the guard and defeated it entirely.
       if (compoundIsNamed(n, qt)) {
         score =
@@ -371,7 +394,10 @@ export function searchAll(query: string, products: SearchableProduct[] = []): Se
     }
   }
 
-  return hits.sort((a, b) => b.score - a.score).slice(0, 30)
+  return hits
+    .filter((h) => !isRetiredHref(h.href))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 30)
 }
 
 export const KIND_LABEL: Record<SearchKind, string> = {

@@ -2,7 +2,7 @@
 //
 // WHY THIS EXISTS
 // ----------------
-// /products?cat=metabolic (ProductsSection's client-side filter) was the
+// /products?cat=<slug> (ProductsSection's client-side filter) was the
 // only way to browse a category, and query-string routes don't reliably get
 // indexed as distinct pages — sitemap.ts even has a standing TODO flagging
 // this exact gap: "If you want category pages indexed, make them real
@@ -15,7 +15,7 @@
 // once this ships — see the note added there.
 //
 // Copy is deliberately kept in the same research-use register as the rest
-// of the site: no therapeutic/benefit claims, no dosing claims. Same reason
+// of the site: no therapeutic/benefit claims, no usage claims. Same reason
 // REVIEWS in data.ts strips fabricated "Dr." credentials and invented
 // lab-match quotes — overclaiming here is exactly what UK ASA / ACCC-style
 // regulators and Google's own health-content quality raters penalise, which
@@ -23,6 +23,7 @@
 
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -89,18 +90,8 @@ export default async function CategoryPage({ params }: Props) {
   const content = CATEGORY_CONTENT[params.category]
   const catMeta = CATEGORIES.find((c) => c.slug === params.category)
   if (!content || !catMeta) {
-    // Unknown category slug — send visitors to the full catalogue rather
-    // than a dead end. (Doesn't 404 mid-render for a typo'd internal link.)
-    return (
-      <>
-        <Nav />
-        <div style={{ padding: '120px 24px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-          <p>That category doesn&apos;t exist.</p>
-          <Link href="/products">Browse all products →</Link>
-        </div>
-        <Footer />
-      </>
-    )
+    // Unknown or withdrawn class — a real 404, never a 200 "not found" page.
+    notFound()
   }
 
   const country = (await cookies()).get('pepcolab_country')?.value ?? 'AE'

@@ -1,6 +1,7 @@
 // src/app/sitemap.ts
 import type { MetadataRoute } from 'next'
 import { getProducts } from '@/lib/shopify'
+import { isGonePath } from '@/lib/retired-paths'
 import { CATEGORIES } from '@/app/data'
 import { GUIDES } from '@/lib/guides-data'
 import { ARTICLES } from '@/lib/research-data'
@@ -197,5 +198,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // a noindexed URL in a sitemap is a contradictory instruction that Search
   // Console reports as an error. Re-add it here if the noindex is lifted.
   void verifyEntries
-  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries]
+  // Safety net (clean-up brief A4): nothing withdrawn is ever listed, whatever
+  // a data file or Shopify says.
+  return [...staticEntries, ...productEntries, ...guideEntries, ...researchEntries, ...legalEntries, ...comparisonEntries].filter(
+    (e) => !isGonePath(new URL(e.url).pathname)
+  )
 }

@@ -57,8 +57,8 @@ export const PRODUCT_CLASSES: ProductClass[] = [
         'GHRH analogues, growth-hormone secretagogues, IGF-1 LR3 and GH-fragment peptides for laboratory research. Identity and purity independently tested, certificate published per batch.',
       h1: 'GH-Axis Research Peptides',
       intro:
-        'Synthetic GHRH analogues (CJC-1295, Tesamorelin), secretagogues (Ipamorelin), IGF-1 LR3 and growth-hormone sequence fragments, supplied for in-vitro and analytical research. Every lot is tested by an independent laboratory for identity and HPLC purity before release.',
-      examples: 'CJC-1295, Ipamorelin, Tesamorelin, IGF-1 LR3, AOD-9604',
+        'Synthetic GHRH analogues (Tesamorelin, CJC-1295 with Ipamorelin) and growth-hormone sequence fragments (FRAG 176-191), supplied lyophilised for in-vitro and analytical research. Every lot is tested by an independent laboratory for identity and HPLC purity before release.',
+      examples: 'FRAG 176-191, Tesamorelin, CJC-1295, Ipamorelin, IGF-1 LR3, AOD-9604',
     },
   },
   {
@@ -84,10 +84,10 @@ export const PRODUCT_CLASSES: ProductClass[] = [
     seo: {
       title: 'Neuropeptide Analogues — Research Grade | UAE',
       description:
-        'Synthetic neuropeptide and melanocortin analogues including Semax, Selank, DSIP, VIP and Kisspeptin-10, for laboratory research. Third-party tested, certificate per batch.',
+        'Synthetic neuropeptide and melanocortin analogues including Semax, Selank, VIP, PT-141 and Dihexa, for laboratory research. Third-party tested, certificate per batch.',
       h1: 'Neuropeptide Analogues',
       intro:
-        'Synthetic analogues and fragments of endogenous neuropeptides — ACTH(4-10) and tuftsin analogues, DSIP, VIP, kisspeptin-10, melanocortin-receptor peptides and Dihexa — supplied for in-vitro and analytical research with an independent certificate for every lot.',
+        'Synthetic analogues and fragments of endogenous neuropeptides — ACTH(4-10) and tuftsin analogues, VIP, melanocortin-receptor peptides and Dihexa — supplied lyophilised for in-vitro and analytical research with an independent certificate for every lot.',
       examples: 'Semax, Selank, DSIP, VIP, Kisspeptin-10, PT-141, Dihexa',
     },
   },
@@ -97,12 +97,12 @@ export const PRODUCT_CLASSES: ProductClass[] = [
     short: 'Mitochondria-derived peptides, cofactors and small molecules',
     color: '#10B981',
     seo: {
-      title: 'Mitochondrial Peptides, NAD+ & Cofactors — Research Grade | UAE',
+      title: 'Mitochondrial Peptides & Cofactors — Research Grade | UAE',
       description:
-        'Mitochondria-derived and mitochondria-targeted peptides, NAD+, glutathione and small-molecule research compounds for laboratory use. Independently tested, certificate per batch.',
+        'Mitochondria-derived and mitochondria-targeted peptides, glutathione and small-molecule research compounds for laboratory use. Independently tested, certificate per batch.',
       h1: 'Mitochondrial Peptides & Cofactors',
       intro:
-        'Mitochondria-derived peptides (MOTS-c), mitochondria-targeted tetrapeptides (SS-31), the cofactors NAD+ and glutathione, and small-molecule enzyme and receptor ligands, supplied for in-vitro and analytical research.',
+        'Mitochondria-derived peptides (MOTS-c), mitochondria-targeted tetrapeptides (SS-31), the cofactor glutathione and the small-molecule enzyme inhibitor 5-Amino-1MQ, supplied for in-vitro and analytical research.',
       examples: 'MOTS-c, SS-31, NAD+, Glutathione, 5-Amino-1MQ, SLU-PP-223',
     },
   },
@@ -129,10 +129,10 @@ export const PRODUCT_CLASSES: ProductClass[] = [
     seo: {
       title: 'Bioregulator & Fragment Peptides — Research Grade | UAE',
       description:
-        'Short-chain bioregulator peptides and protein-derived sequence fragments — BPC-157, Epithalon, Thymosin Alpha-1, KPV — for laboratory research. Third-party tested, certificate per batch.',
+        'Short-chain bioregulator peptides and protein-derived sequence fragments — Epithalon, Thymosin Alpha-1, KPV — for laboratory research. Third-party tested, certificate per batch.',
       h1: 'Bioregulator & Fragment Peptides',
       intro:
-        'Short synthetic peptides derived from endogenous protein sequences — the gastric pentadecapeptide BPC-157, the tetrapeptide Epithalon, Thymosin Alpha-1 and the α-MSH fragment KPV — supplied for in-vitro and analytical research.',
+        'Short synthetic peptides derived from endogenous protein sequences — the tetrapeptide Epithalon, Thymosin Alpha-1 and the α-MSH fragment KPV — supplied lyophilised for in-vitro and analytical research.',
       examples: 'BPC-157, Epithalon, Thymosin Alpha-1, KPV',
     },
   },
@@ -144,11 +144,11 @@ export const PRODUCT_CLASSES: ProductClass[] = [
     seo: {
       title: 'Multi-Peptide Research Blends — Research Grade | UAE',
       description:
-        'Fixed-ratio multi-peptide research preparations (GLOW, KLOW, Wolverine Stack), each component identified and quantified on the batch certificate.',
+        'Fixed-ratio multi-peptide research preparations (BPC-157 / TB-500 Blend, GLOW, KLOW), each component identified and quantified on the batch certificate.',
       h1: 'Multi-Peptide Research Blends',
       intro:
-        'Pre-combined, fixed-ratio peptide preparations for research protocols that study several sequences together. Each component is identified and its content reported on the certificate for that lot.',
-      examples: 'GLOW, KLOW, Wolverine Stack',
+        'Pre-combined, fixed-ratio peptide preparations supplied lyophilised in a single vial for in-vitro studies of several sequences together. Each component is identified and its content reported on the certificate for that lot.',
+      examples: 'BPC-157 / TB-500 Blend, GLOW, KLOW',
     },
   },
   {
@@ -157,12 +157,12 @@ export const PRODUCT_CLASSES: ProductClass[] = [
     short: 'Bacteriostatic water and reconstitution solvents',
     color: '#6B7280',
     seo: {
-      title: 'Bacteriostatic Water & Reconstitution Solvents | UAE',
+      title: 'Bacteriostatic Water & Laboratory Solvents | UAE',
       description:
-        'Bacteriostatic water, pharma-grade bacteriostatic water and 0.6% acetic acid for laboratory peptide reconstitution, shipped across the UAE.',
+        'Bacteriostatic water, Bacteriostatic Water USP and 0.6% acetic acid for laboratory peptide reconstitution, batch-documented.',
       h1: 'Bacteriostatic Water & Solvents',
       intro:
-        'Laboratory-grade solvents used to reconstitute lyophilised peptides: bacteriostatic water (0.9% benzyl alcohol), a pharmaceutical-grade alternative, and dilute acetic acid for sequences with limited aqueous solubility.',
+        'Laboratory solvents used to reconstitute lyophilised peptides: bacteriostatic water (0.9% benzyl alcohol), Bacteriostatic Water USP, and dilute acetic acid for sequences with limited aqueous solubility.',
       examples: 'bacteriostatic water, acetic acid 0.6%',
     },
   },
@@ -170,31 +170,31 @@ export const PRODUCT_CLASSES: ProductClass[] = [
 
 /** Shopify handle (without the -uae / -uk market suffix) → class. */
 export const CLASS_BY_HANDLE: Record<string, ProductClassSlug> = {
-  'cjc-no-dac': 'gh-axis-peptides',
-  'cjc-ipa': 'gh-axis-peptides',
-  ipamorelin: 'gh-axis-peptides',
+  'frag-176-191': 'gh-axis-peptides',
   tesamorelin: 'gh-axis-peptides',
+  'cjc-ipa': 'gh-axis-peptides',
+  'cjc-no-dac': 'gh-axis-peptides',
+  ipamorelin: 'gh-axis-peptides',
   'igf-1-lr3': 'gh-axis-peptides',
   'aod-9604': 'gh-axis-peptides',
-  'frag-176-191': 'gh-axis-peptides',
 
   retatrutide: 'incretin-analogues',
   'reta-cagri': 'incretin-analogues',
   cagrilintide: 'incretin-analogues',
 
+  vip: 'neuropeptide-analogues',
+  dihexa: 'neuropeptide-analogues',
   semax: 'neuropeptide-analogues',
   selank: 'neuropeptide-analogues',
-  dsip: 'neuropeptide-analogues',
-  vip: 'neuropeptide-analogues',
-  kisspeptin: 'neuropeptide-analogues',
   'pt-141': 'neuropeptide-analogues',
-  dihexa: 'neuropeptide-analogues',
+  dsip: 'neuropeptide-analogues',
+  kisspeptin: 'neuropeptide-analogues',
 
-  'mots-c': 'mitochondrial-cofactors',
-  'ss-31': 'mitochondrial-cofactors',
-  nad: 'mitochondrial-cofactors',
   glutathione: 'mitochondrial-cofactors',
   '5-amino-1mq': 'mitochondrial-cofactors',
+  'ss-31': 'mitochondrial-cofactors',
+  'mots-c': 'mitochondrial-cofactors',
+  nad: 'mitochondrial-cofactors',
   'slu-pp-223': 'mitochondrial-cofactors',
 
   'ghk-cu': 'copper-cosmetic-peptides',
@@ -202,18 +202,19 @@ export const CLASS_BY_HANDLE: Record<string, ProductClassSlug> = {
   matrixyl: 'copper-cosmetic-peptides',
   'snap-8': 'copper-cosmetic-peptides',
 
-  'bpc-157': 'bioregulator-peptides',
+  kpv: 'bioregulator-peptides',
   epithalon: 'bioregulator-peptides',
   'thymosin-alpha': 'bioregulator-peptides',
-  kpv: 'bioregulator-peptides',
+  'bpc-157': 'bioregulator-peptides',
 
+  'bpc-157-tb-500-blend': 'research-blends',
+  'wolverine-stack': 'research-blends',
   glow: 'research-blends',
   klow: 'research-blends',
-  'wolverine-stack': 'research-blends',
 
+  'acetic-acid': 'lab-supplies',
   'bacteriostatic-water': 'lab-supplies',
   'pharma-grade-bac-water': 'lab-supplies',
-  'acetic-acid': 'lab-supplies',
 }
 
 /** Fallback for products not yet in CLASS_BY_HANDLE. */
@@ -229,7 +230,7 @@ export const LEGACY_TAG_TO_CLASS: Record<string, ProductClassSlug> = {
 
 /** Old category URL slug → new class slug (301s in next.config.js use the same map). */
 export const LEGACY_CATEGORY_REDIRECTS: Record<string, ProductClassSlug> = {
-  metabolic: 'incretin-analogues',
+  metabolic: 'mitochondrial-cofactors',
   hormonal: 'gh-axis-peptides',
   cognitive: 'neuropeptide-analogues',
   recovery: 'bioregulator-peptides',
@@ -263,11 +264,15 @@ export function classOf(handle: string, tags: string[] = []): ProductClassSlug {
   return 'research-blends'
 }
 
-/** Number of catalogue products per class, from the handle map. */
-export function classCounts(): Record<ProductClassSlug, number> {
+/**
+ * Products per class, computed from the LIVE catalogue (brief A5) — pass the
+ * result of getProducts(). Never hard-coded: counts and example names must
+ * only ever reflect products that still exist.
+ */
+export function classCounts(products: { categorySlug?: string }[]): Record<ProductClassSlug, number> {
   const counts = Object.fromEntries(PRODUCT_CLASSES.map((c) => [c.slug, 0])) as Record<ProductClassSlug, number>
-  for (const slug of Object.values(CLASS_BY_HANDLE)) counts[slug]++
+  for (const p of products) {
+    if (p.categorySlug && isProductClassSlug(p.categorySlug)) counts[p.categorySlug as ProductClassSlug]++
+  }
   return counts
 }
-
-export const CATALOGUE_PRODUCT_COUNT = Object.keys(CLASS_BY_HANDLE).length

@@ -68,7 +68,7 @@ const VALUES = [
   {
     icon: FlaskConical,
     title: 'Research-Focused Catalogue',
-    text: 'Our range is structured exclusively for laboratory and non-clinical scientific research. Product pages describe compound identity and documentation, not dosing, administration, or expected outcomes.',
+    text: 'Our range is structured exclusively for laboratory and non-clinical scientific research. Product pages describe compound identity and documentation, never use in people or animals or expected outcomes.',
   },
   {
     icon: FileCheck,

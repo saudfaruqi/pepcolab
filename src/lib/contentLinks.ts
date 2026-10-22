@@ -1,4 +1,5 @@
 import { PRODUCT_CLASSES } from '@/lib/productClasses'
+import { isRetiredHref } from '@/lib/retired-paths'
 // src/lib/contentLinks.ts
 //
 // SEO FIX (Aug 2026 audit): "15 quality articles published but orphaned —
@@ -18,11 +19,9 @@ export type ContentLink = { href: string; label: string }
 /** Research articles keyed by the product-name substring that identifies them. */
 const RESEARCH_BY_PRODUCT_KEYWORD: { match: RegExp; id: string; title: string }[] = [
   { match: /bpc-?157/i, id: 'bpc-157', title: 'BPC-157' },
-  { match: /\bglp\b|retatrutide|glp-?1/i, id: 'glp1', title: 'GLP-1' },
   { match: /epithalon/i, id: 'epithalon', title: 'Epithalon' },
   { match: /\bsemax\b/i, id: 'semax', title: 'Semax' },
   { match: /tesamorelin/i, id: 'tesamorelin', title: 'Tesamorelin' },
-  { match: /igf-?1?-?lr3/i, id: 'igf-1-lr3', title: 'IGF-1 LR3' },
   { match: /ghk-?cu/i, id: 'ghk-cu', title: 'GHK-Cu' },
   { match: /tb-?500/i, id: 'tb-500', title: 'TB-500' },
   { match: /sermorelin/i, id: 'sermorelin', title: 'Sermorelin' },
@@ -84,7 +83,7 @@ export function relatedContentForProduct(title: string, categorySlug?: string): 
     links.push({ href: `/research/${researchMatch.id}`, label: `Research: ${researchMatch.title}` })
   }
 
-  // Oct 2026: bacteriostatic water and the pharma-grade presentation are
+  // Oct 2026: bacteriostatic water and the USP presentation are
   // diluents, not compounds, and the generic compound links below are close to
   // useless on them. They get the three pages that answer what someone buying
   // a diluent is actually asking — placed before the generic set so they
@@ -110,7 +109,7 @@ export function relatedContentForProduct(title: string, categorySlug?: string): 
   links.push({ href: '/guides/peptide-reconstitution', label: 'Reconstitution guide' })
   links.push({ href: '/guides/storage-conditions', label: 'Storage guide' })
 
-  return links.slice(0, 4)
+  return links.filter((l) => !isRetiredHref(l.href)).slice(0, 4)
 }
 
 /**
@@ -155,11 +154,11 @@ export function relatedProductsForGuideCategory(category: string): ContentLink[]
 const GUIDE_SPECIFIC_PRODUCTS: Record<string, ContentLink[]> = {
   'bacteriostatic-water-shelf-life': [
     { href: '/products/bacteriostatic-water', label: 'Bacteriostatic Water' },
-    { href: '/products/pharma-grade-bac-water', label: 'Pharma-Grade Bacteriostatic Water' },
+    { href: '/products/pharma-grade-bac-water', label: 'Bacteriostatic Water USP' },
   ],
   'bacteriostatic-water-vs-sterile-water': [
     { href: '/products/bacteriostatic-water', label: 'Bacteriostatic Water' },
-    { href: '/products/pharma-grade-bac-water', label: 'Pharma-Grade Bacteriostatic Water' },
+    { href: '/products/pharma-grade-bac-water', label: 'Bacteriostatic Water USP' },
   ],
 }
 
@@ -168,14 +167,15 @@ const GUIDE_SPECIFIC_PRODUCTS: Record<string, ContentLink[]> = {
  * mapping when the guide has no specific products of its own.
  */
 export function productsForGuide(guideId: string, category: string): ContentLink[] {
-  return GUIDE_SPECIFIC_PRODUCTS[guideId] ?? relatedProductsForGuideCategory(category)
+  return (GUIDE_SPECIFIC_PRODUCTS[guideId] ?? relatedProductsForGuideCategory(category)).filter(
+    (l) => !isRetiredHref(l.href)
+  )
 }
 
 /** Given a research article's id, return the specific product(s) it discusses. */
 export function relatedProductsForResearchArticle(articleId: string): ContentLink[] {
   const map: Record<string, { slug: string; label: string }[]> = {
     'bpc-157': [{ slug: 'bpc-157', label: 'Shop BPC-157' }],
-    glp1: [{ slug: 'retatrutide', label: 'Shop GLP' }],
     epithalon: [{ slug: 'epithalon', label: 'Shop Epithalon' }],
     semax: [{ slug: 'semax', label: 'Shop Semax' }],
     // Best-guess handles following the "{name}-uae" pattern noted in
@@ -184,11 +184,6 @@ export function relatedProductsForResearchArticle(articleId: string): ContentLin
     // LR3" in particular) isn't verified from here. Confirm in Shopify
     // admin before relying on these.
     tesamorelin: [{ slug: 'tesamorelin', label: 'Shop Tesamorelin' }],
-    // FIX (Oct 2026): this was 'igf1-lr3', which 404s. The live catalogue
-    // handle is 'igf-1-lr3' — verified against the sitemap, as the comment
-    // above asked. Every visitor to /research/igf-1-lr3 who clicked "Shop"
-    // landed on a 404.
-    'igf-1-lr3': [{ slug: 'igf-1-lr3', label: 'Shop IGF-1 LR3' }],
     // Sermorelin REMOVED (Oct 2026): it is not in the catalogue, so
     // /products/sermorelin 404s. A "Shop" button on a research page that
     // leads to a 404 is worse than no button — it is a dead end at the one
@@ -200,5 +195,10 @@ export function relatedProductsForResearchArticle(articleId: string): ContentLin
     // and TB-500 only appears inside the GLOW blend in coaData.ts) — a
     // guessed slug here would 404 rather than sell.
   }
-  return (map[articleId] ?? []).map((p) => ({ href: `/products/${p.slug}`, label: p.label }))
+  // Withdrawn products (lib/retired-paths.ts) never get a shop link — this
+  // is how BPC-157's link disappears while it is pen-only and returns when
+  // BPC157_VIAL_LIVE is set.
+  return (map[articleId] ?? [])
+    .map((p) => ({ href: `/products/${p.slug}`, label: p.label }))
+    .filter((l) => !isRetiredHref(l.href))
 }

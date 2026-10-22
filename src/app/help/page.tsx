@@ -43,7 +43,7 @@ const GROUPS = [
       { href: '/certificates', label: 'Find a batch certificate', d: 'Search by the lot number printed on your vial.' },
       { href: '/testing', label: 'How we test', d: 'Independent third-party testing and batch-matched documentation.' },
       { href: '/storage', label: 'Storage & handling', d: 'Temperatures by format, reconstituted shelf life, freeze–thaw.' },
-      { href: '/tools/reconstitution-calculator', label: 'Reconstitution calculator', d: 'Work out concentrations for laboratory preparation.' },
+      { href: '/tools', label: 'Concentration calculator', d: 'Work out concentrations for laboratory preparation.' },
     ],
   },
   {
@@ -103,7 +103,7 @@ export default function HelpPage() {
           ))}
 
           <p style={{ fontSize: 12.5, lineHeight: 1.8, color: 'rgba(13,13,13,.45)', borderTop: `1px solid ${BORDER}`, paddingTop: 22 }}>
-            One thing we can&apos;t help with: dosing, administration or protocol questions.
+            One thing we can&apos;t help with: any question about use in people or animals.
             Everything PepcoLab supplies is for in-vitro laboratory research only, and a supplier
             willing to answer those is telling you something about how they operate.
           </p>

@@ -35,6 +35,7 @@
 
 import Link from 'next/link'
 import type { ContentBlock } from '@/lib/guides-data'
+import { isRetiredHref } from '@/lib/retired-paths'
 
 /** Matches [label](target). Lazy label so two links in one sentence don't merge. */
 const LINK_RE = /\[([^\]]+?)\]\(([^)\s]+?)\)/g
@@ -82,7 +83,11 @@ function withLinks(text: string, keyPrefix: string): React.ReactNode {
 
     if (m.index > last) out.push(text.slice(last, m.index))
 
-    if (!safe) {
+    if (safe && !safe.external && isRetiredHref(safe.href)) {
+      // Withdrawn product or page (lib/retired-paths.ts): keep the words,
+      // drop the link, so no content ever points at a 410.
+      out.push(label)
+    } else if (!safe) {
       // Unrecognised target: emit the original source text verbatim so the
       // problem is visible in review rather than silently swallowed.
       out.push(full)

@@ -7,7 +7,7 @@
 // Order SOR-GNRKNV (28 Sep 2026) arrived as a custom Shopify line item with
 // no catalogue link and no inventory decrement. The payload was:
 //
-//   { productUuid: "9a84c5f3-…", title: "GLP 40mg Pen", price: 1200,
+//   { productUuid: "9a84c5f3-…", title: "Selank 10mg Vial", price: 120,
 //     quantity: 1, orderProductType: "Buy Now", extra: [] }
 //
 // app/api/webhook/strabl/route.ts resolves variants from
@@ -15,14 +15,14 @@
 // NEITHER — only STRABL's own productUuid, which means nothing to Shopify,
 // and a human-readable title.
 //
-// That is not an edge case. Every GLP sale goes through a Payment Link
+// That is not an edge case. Every Payment Link sale arrives this way
 // (see lib/restrictedCheckout.ts), so the highest-value product in the
 // catalogue has never decremented stock automatically, and none of those
 // orders are linked to the catalogue for reporting.
 //
 // THE SAFETY RULE — READ BEFORE CHANGING ANYTHING HERE
 //
-// A wrong match is worse than no match. Linking "GLP 40mg Pen" to the wrong
+// A wrong match is worse than no match. Linking "Selank 10mg Vial" to the wrong
 // variant silently decrements stock of something that was never sold, and
 // the error surfaces weeks later as an inventory discrepancy nobody can
 // trace. A missed match just leaves the line item custom — exactly what
@@ -61,7 +61,7 @@ function norm(value: string): string {
 }
 
 /**
- * Pulls the strength out of a title. "GLP 40mg Pen" → 40.
+ * Pulls the strength out of a title. "Selank 10mg Vial" → 10.
  * Handles "40mg", "40 mg", "1000mcg". Returns null when absent — several
  * products are single-strength and their titles carry no number at all.
  *
@@ -76,7 +76,7 @@ function parseStrength(title: string): number | null {
 }
 
 /**
- * Pulls the presentation out of a title. "GLP 40mg Pen" → "pen".
+ * Pulls the presentation out of a title. "Selank 10mg Vial" → "vial".
  * Checked longest-first so "nasal spray" wins over "spray".
  */
 function parseFormat(title: string): string | null {
@@ -91,7 +91,7 @@ function parseFormat(title: string): string | null {
 
 /**
  * The product name, with the strength and format stripped off.
- * "GLP 40mg Pen" → "glp".
+ * "Selank 10mg Vial" → "selank".
  */
 function parseProductName(title: string): string {
   return norm(
@@ -105,8 +105,8 @@ function parseProductName(title: string): string {
  * Finds the catalogue product a line-item title refers to.
  *
  * Exact match first, then a containment match, and only when exactly one
- * product contains the name — "glp" must not quietly resolve when both
- * "GLP" and some future "GLP-2" exist.
+ * product contains the name — "selank" must not quietly resolve when both
+ * "Selank" and some future "Selank-2" exist.
  */
 function findProduct(title: string, catalogue: ResolverProduct[]): ResolverProduct | null {
   const key = parseProductName(title)

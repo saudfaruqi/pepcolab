@@ -215,9 +215,9 @@ export default function CampaignEditor({ initial }: { initial: Campaign }) {
   const [testMsg, setTestMsg] = useState<Msg>(null)
   useEffect(() => {
     try {
-      setTestTo(localStorage.getItem(TEST_EMAIL_KEY) || 'hello@pepcolab.com')
+      setTestTo(localStorage.getItem(TEST_EMAIL_KEY) || 'saudafaruqi@gmail.com')
     } catch {
-      setTestTo('hello@pepcolab.com')
+      setTestTo('saudafaruqi@gmail.com')
     }
   }, [])
 

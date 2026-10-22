@@ -21,7 +21,19 @@
 // "manufacturer's certificate" and "across the UAE and UK" long after the
 // site's marketing had moved on. That cannot happen again from here.
 
+import { stripDeviceCopy } from '@/lib/shopify'
+import { PRODUCT_WITHDRAWAL_ACTIVE, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
+
 const TESTING_LAB = 'Freedom Diagnostics'
+
+/** Formats offered — device formats drop out only if the withdrawal switch is on. */
+function labFormats(format?: string): string {
+  return (format || '')
+    .split(/\s*[,/&]\s*/)
+    .map((f) => f.trim())
+    .filter((f) => f && !isWithdrawnDeviceTitle(f))
+    .join(', ')
+}
 
 interface Props {
   /** Storage line for this compound — comes from the product data. */
@@ -53,7 +65,9 @@ const SECTION: React.CSSProperties = {
   borderTop: '1px solid rgba(13,13,13,.08)',
 }
 
-export default function ProductSpecBlock({ storage, format, presentation }: Props) {
+export default function ProductSpecBlock({ storage: rawStorage, format: rawFormat, presentation }: Props) {
+  const format = labFormats(rawFormat)
+  const storage = rawStorage ? (PRODUCT_WITHDRAWAL_ACTIVE ? stripDeviceCopy(rawStorage) : rawStorage) : undefined
   return (
     <div style={{ marginTop: 24 }}>
       {(format || presentation) && (
@@ -93,9 +107,8 @@ export default function ProductSpecBlock({ storage, format, presentation }: Prop
 
       <div style={SECTION}>
         <p style={{ ...BODY, fontSize: 12.5, color: 'rgba(13,13,13,.45)' }}>
-          For laboratory research use only. Not for human consumption, therapeutic use,
-          diagnostic procedures or veterinary applications. PepcoLab does not provide dosing,
-          administration or protocol guidance.
+          For in-vitro laboratory research use only. Not for use in or on humans or animals.
+          PepcoLab does not advise on use in people or animals.
         </p>
       </div>
     </div>

@@ -153,13 +153,13 @@ export const GUIDES: Guide[] = [
           'Oxytocin — 9 amino acids, about 1,007 Da — peptide hormone',
           'BPC-157 — 15 amino acids, 1,419.56 Da — peptide',
           'CJC-1295 (with DAC) — 30 amino acids, about 3,647 Da — peptide',
-          'Insulin — 51 amino acids across two chains, about 5,808 Da — on the boundary',
+          'Epidermal growth factor (EGF) — 53 amino acids, about 6,045 Da — on the boundary',
           'IGF-1 LR3 — 83 amino acids, about 9,111 Da — protein-sized',
         ],
       },
       {
         type: 'paragraph',
-        text: 'Insulin is the classic boundary case. It has 51 amino acids across two chains held together by disulfide bonds, and it is often described as both a peptide hormone and a small protein. In 1955 it became the first protein whose full amino acid sequence was determined, work that earned Frederick Sanger the 1958 Nobel Prize in Chemistry.',
+        text: 'Epidermal growth factor is a useful boundary case. Its 53 amino acids are held in a compact fold by three disulfide bonds, so it is described both as a peptide growth factor and as a small protein. Sequence length alone does not settle the label; whether the chain adopts a stable fold matters too.',
       },
       {
         type: 'paragraph',
@@ -183,8 +183,8 @@ export const GUIDES: Guide[] = [
       {
         type: 'list',
         items: [
-          'In the body: many hormones and signalling molecules are peptides. Oxytocin has nine amino acids; insulin has 51.',
-          'In medicine: a number of licensed medicines are peptides, from insulin (first used therapeutically in 1922) to the GLP-1 class of prescription drugs. These are regulated medicines made and tested under pharmaceutical controls.',
+          'In the body: many hormones and signalling molecules are peptides. Oxytocin has nine amino acids; epidermal growth factor has 53.',
+          'In medicine: a number of licensed medicines are peptides. These are regulated medicines made and tested under pharmaceutical controls, and are a different category entirely from research-grade material.',
           'In skincare: cosmetic peptides such as copper tripeptide-1 (GHK-Cu), palmitoyl pentapeptide-4 (sold as Matrixyl) and acetyl hexapeptide-8 (sold as Argireline) appear on ingredient lists. They are regulated as cosmetic ingredients, not medicines.',
           'In food: collagen peptides are proteins broken into fragments by hydrolysis.',
           'In the laboratory: research peptides are synthesised to a defined sequence for in vitro and preclinical study.',
@@ -315,7 +315,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: 'What is the difference between a peptide and a protein?',
-        a: 'Size and structure. Peptides are shorter and usually flexible; proteins are longer and typically fold into a defined three-dimensional shape. Insulin, at 51 amino acids, sits on the boundary.',
+        a: 'Size and structure. Peptides are shorter and usually flexible; proteins are longer and typically fold into a defined three-dimensional shape. Epidermal growth factor, at 53 amino acids, sits on the boundary.',
       },
       {
         q: 'Are collagen peptides the same as research peptides?',
@@ -356,7 +356,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Choosing the wrong solvent, using aggressive mixing, or working in non-sterile conditions can all compromise the compound — sometimes invisibly. This is why standardizing your reconstitution protocol matters.',
+        text: 'Choosing the wrong solvent, using aggressive mixing, or working in non-sterile conditions can all compromise the compound — sometimes invisibly. This is why standardizing your reconstitution method matters.',
       },
       {
         type: 'heading',
@@ -385,7 +385,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'All reconstitution should occur inside a laminar flow hood or biological safety cabinet if available. At minimum, work on a clean bench surface wiped with 70% ethanol. Wear gloves and use sterile, single-use syringes and vials.',
+        text: 'All reconstitution should occur inside a laminar flow hood or biological safety cabinet if available. At minimum, work on a clean bench surface wiped with 70% ethanol. Wear gloves and use sterile, single-use pipette tips, tubes and vials.',
       },
       {
         type: 'callout',
@@ -397,11 +397,11 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Using a sterile syringe, slowly add your chosen solvent along the inner wall of the vial — not directly onto the powder. For a 1 mg vial targeting 1 mg/mL, add 1 mL of solvent. Do not add all the solvent at once.',
+        text: 'Using a calibrated micropipette with a sterile tip, slowly add your chosen solvent along the inner wall of the vial — not directly onto the powder. For a 1 mg vial targeting 1 mg/mL, add 1 mL of solvent. Do not add all the solvent at once.',
       },
       {
         type: 'paragraph',
-        text: 'After each addition, gently swirl the vial. Never vortex vigorously — mechanical shear can break peptide bonds and create aggregates that reduce bioavailability in cell-based assays.',
+        text: 'After each addition, gently swirl the vial. Never vortex vigorously — mechanical shear can break peptide bonds and create aggregates that reduce the available peptide in cell-based assays.',
       },
       {
         type: 'heading',
@@ -441,13 +441,13 @@ export const GUIDES: Guide[] = [
           'Using the wrong solvent based on assumed solubility rather than checking the COA',
           'Vortexing aggressively instead of gentle swirling',
           'Opening lyophilized vials while still cold',
-          'Storing reconstituted solutions in the same vial drawn from repeatedly',
+          'Storing reconstituted solutions in the same vial sampled from repeatedly',
           'Failing to record exact concentration and preparation date',
         ],
       },
       {
         type: 'paragraph',
-        text: 'Following this protocol consistently will produce reliable, reproducible results and protect the integrity of your research data.',
+        text: 'Following this method consistently will produce reliable, reproducible results and protect the integrity of your research data.',
       },
       {
         type: 'paragraph',
@@ -483,7 +483,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Lyophilized peptides are significantly more stable than their reconstituted counterparts. Most can be stored at −20°C for several years without meaningful degradation if kept dry. For maximum longevity:',
+        text: 'Lyophilized peptides are significantly more stable than their reconstituted counterparts. Most can be stored at −20°C for several years without meaningful degradation if kept dry. For maximum shelf life:',
       },
       {
         type: 'list',
@@ -593,7 +593,7 @@ export const GUIDES: Guide[] = [
     excerpt: 'Minimizing contamination risk during peptide preparation and handling.',
     publishedAt: 'May 20, 2026',
     publishedISO: '2026-05-20',
-    metaDescription: 'Sterile technique for peptide research handling: PPE, workspace prep, needle/syringe procedure and documentation for reproducible results.',
+    metaDescription: 'Sterile technique for peptide research handling: PPE, workspace prep, aseptic liquid transfer and documentation for reproducible results.',
     content: [
       {
         type: 'intro',
@@ -624,21 +624,21 @@ export const GUIDES: Guide[] = [
         items: [
           'UV decontamination of biosafety cabinets: 30 minutes before use where available',
           'Surface wipe with 70% ethanol: minimum 15 minutes before use',
-          'Pipette tips, tubes, and syringes: use sterile, individually packaged items',
+          'Pipette tips and tubes: use sterile, individually packaged items',
           'Reused glassware: autoclave at 121°C for 15 minutes before use',
         ],
       },
       {
         type: 'heading',
-        text: 'Needle and Syringe Technique',
+        text: 'Aseptic Liquid Transfer',
       },
       {
         type: 'paragraph',
-        text: 'When drawing up reconstituted peptide, use a fresh sterile syringe and needle for each operation. Do not touch the needle to any non-sterile surface after removing from packaging. Insert through a sterile rubber septum or use a new vial for each draw.',
+        text: 'When transferring reconstituted peptide, use a calibrated micropipette with a fresh sterile tip for each operation. Do not let the tip touch any non-sterile surface after it is fitted. Swab the vial septum with 70% alcohol and allow it to dry before each entry, or prepare single-use aliquots so the stock vial is opened once.',
       },
       {
         type: 'callout',
-        text: 'Flaming needles is not sterile technique — it introduces combustion residue and is a fire hazard. Use only sterile, single-use needles.',
+        text: 'Flaming tips or tools is not sterile technique — it introduces combustion residue and is a fire hazard. Use only sterile, single-use consumables.',
       },
       {
         type: 'heading',
@@ -646,11 +646,11 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'For experiments requiring confirmed sterility (in vivo research with sterility requirements, long-duration cell culture studies), consider filtering reconstituted solutions through a 0.22 µm syringe filter. This removes bacteria and most fungal spores but does not address viral contamination.',
+        text: 'For experiments requiring confirmed sterility (in vivo research with sterility requirements, long-duration cell culture studies), consider filtering reconstituted solutions through a sterile 0.22 µm filter unit. This removes bacteria and most fungal spores but does not address viral contamination.',
       },
       {
         type: 'paragraph',
-        text: 'Note that some peptides may bind to syringe filters — particularly hydrophobic sequences. Pre-wet filters with your solvent and discard the first 0.5–1 mL passing through to reduce binding losses.',
+        text: 'Note that some peptides may bind to filter membranes — particularly hydrophobic sequences. Pre-wet filters with your solvent and discard the first 0.5–1 mL passing through to reduce binding losses.',
       },
       {
         type: 'heading',
@@ -1023,7 +1023,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'This is why every legitimate UK research peptide supplier — PepcoLab included — labels products "for laboratory research use only, not for human or veterinary use" and avoids any dosing, administration, or health-outcome language on product pages. The moment a supplier suggests how a compound should be used in or on the human body, they risk that product being reclassified as an unlicensed medicine, which is a criminal offence under Regulation 46 of the Human Medicines Regulations 2012 to manufacture, sell, or supply without a marketing authorisation.',
+        text: 'This is why every legitimate UK research peptide supplier — PepcoLab included — labels products "for laboratory research use only, not for human or veterinary use" and avoids any usage, administration, or health-outcome language on product pages. The moment a supplier suggests how a compound should be used in or on the human body, they risk that product being reclassified as an unlicensed medicine, which is a criminal offence under Regulation 46 of the Human Medicines Regulations 2012 to manufacture, sell, or supply without a marketing authorisation.',
       },
       {
         type: 'heading',
@@ -1035,7 +1035,7 @@ export const GUIDES: Guide[] = [
           'Purchasing research peptides for genuine laboratory or in-vitro research purposes is lawful.',
           'Suppliers must not make medicinal claims (treatment, prevention, performance, cosmetic or health benefits) about research-only products.',
           'Buyers are responsible for how they actually use a compound after purchase — a "research use only" label does not authorise human use, and using a research compound on yourself or another person falls outside what the product was lawfully supplied for.',
-          'Some individual peptides may separately be classified as prescription-only medicines or controlled substances depending on their pharmacological profile — this varies by compound and is worth checking independently if you are uncertain.',
+          'Some individual peptides may separately be classified as restricted medicines or controlled substances depending on their pharmacological profile — this varies by compound and is worth checking independently if you are uncertain.',
         ],
       },
       {
@@ -1066,7 +1066,7 @@ export const GUIDES: Guide[] = [
         type: 'list',
         items: [
           'Confirm the supplier is a UK-registered company (check Companies House) with a real registered address, not just a website.',
-          'Confirm the product listing makes no health, dosing, or performance claims.',
+          'Confirm the product listing makes no health, usage, or performance claims.',
           'Confirm a batch-specific Certificate of Analysis is available, ideally from an independent, named testing laboratory.',
           'Understand that your own subsequent use of the compound is your responsibility, separate from the lawfulness of the purchase itself.',
         ],
@@ -1084,7 +1084,7 @@ export const GUIDES: Guide[] = [
         items: [
           '[BPC-157](/legal/bpc-157) · [TB-500](/legal/tb-500) · [CJC-1295](/legal/cjc-1295) · [Ipamorelin](/legal/ipamorelin)',
           '[GHK-Cu](/legal/ghk-cu) · [Epithalon](/legal/epithalon) · [Semax](/legal/semax) · [Selank](/legal/selank)',
-          '[Thymosin Alpha-1](/legal/thymosin-alpha) · [GLP compounds](/legal/glp)',
+          '[Thymosin Alpha-1](/legal/thymosin-alpha)',
           'The full set is indexed at [/legal](/legal)',
         ],
       },
@@ -1102,7 +1102,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Supplying is the most regulated of the three. Selling a compound with health claims attached, or presenting it as something to be administered to a person, risks it being treated as an unlicensed medicinal product — which under Regulation 46 of the Human Medicines Regulations 2012 is an offence to manufacture, sell or supply without a marketing authorisation. This is why the labelling and the absence of dosing language on legitimate suppliers\' listings is not decoration; it is the thing that keeps the product on the right side of the definition.',
+        text: 'Supplying is the most regulated of the three. Selling a compound with health claims attached, or presenting it as something to be administered to a person, risks it being treated as an unlicensed medicinal product — which under Regulation 46 of the Human Medicines Regulations 2012 is an offence to manufacture, sell or supply without a marketing authorisation. This is why the labelling and the absence of usage language on legitimate suppliers\' listings is not decoration; it is the thing that keeps the product on the right side of the definition.',
       },
       {
         type: 'paragraph',
@@ -1141,7 +1141,7 @@ export const GUIDES: Guide[] = [
     faq: [
       {
         q: 'Are research peptides legal in the UK?',
-        a: 'Peptides sold explicitly for laboratory research use, with no health or dosing claims attached, generally fall outside the definition of a medicinal product under the Human Medicines Regulations 2012, and the compounds discussed on this site are not scheduled under the Misuse of Drugs Act 1971. What changes the position is intent and presentation: the same compound marketed for human administration is a different regulatory object. This is general information, not legal advice.',
+        a: 'Peptides sold explicitly for laboratory research use, with no health or usage claims attached, generally fall outside the definition of a medicinal product under the Human Medicines Regulations 2012, and the compounds discussed on this site are not scheduled under the Misuse of Drugs Act 1971. What changes the position is intent and presentation: the same compound marketed for human administration is a different regulatory object. This is general information, not legal advice.',
       },
       {
         q: 'Are peptides legal in the UK for personal use?',
@@ -1205,7 +1205,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'A compound labelled for research use only is not licensed or approved for human or veterinary use in the UAE. Legitimate research suppliers operating into the UAE market — PepcoLab among them — sell strictly on that basis: no dosing guidance, no administration instructions, no therapeutic claims. As with the UK, the responsibility for how a compound is subsequently used sits with the buyer, not the supplier, and using a research-only compound outside a laboratory setting falls outside the terms it was supplied under.',
+        text: 'A compound labelled for research use only is not licensed or approved for human or veterinary use in the UAE. Legitimate research suppliers operating into the UAE market — PepcoLab among them — sell strictly on that basis: no usage guidance, no administration instructions, no therapeutic claims. As with the UK, the responsibility for how a compound is subsequently used sits with the buyer, not the supplier, and using a research-only compound outside a laboratory setting falls outside the terms it was supplied under.',
       },
       {
         type: 'heading',
@@ -1240,7 +1240,7 @@ export const GUIDES: Guide[] = [
         type: 'list',
         items: [
           'Verify the supplier ships from UAE-held stock rather than importing per-order from overseas.',
-          'Check that product pages carry no dosing or human-use language.',
+          'Check that product pages carry no usage or human-use language.',
           'Confirm a per-batch COA is available before you order, not only "on request" after purchase.',
           'If in doubt about a specific compound\'s status, check directly with MOHAP or DHA rather than relying on a supplier\'s framing.',
         ],
@@ -1285,7 +1285,7 @@ export const GUIDES: Guide[] = [
     faq: [
       {
         q: 'Is it legal to buy research peptides in Dubai and the UAE?',
-        a: 'Compounds supplied explicitly for laboratory research use, with no human-use or dosing claims, reach the UAE market through a different channel from clinically dispensed pharmaceuticals, and legitimate suppliers operate on that basis. The two channels are regulated very differently and conflating them is where most risk comes from. For a definitive answer on a specific compound, MOHAP or the relevant emirate health authority is the source — this is general information, not legal advice.',
+        a: 'Compounds supplied explicitly for laboratory research use, with no human-use or usage claims, reach the UAE market through a different channel from clinically dispensed pharmaceuticals, and legitimate suppliers operate on that basis. The two channels are regulated very differently and conflating them is where most risk comes from. For a definitive answer on a specific compound, MOHAP or the relevant emirate health authority is the source — this is general information, not legal advice.',
       },
       {
         q: 'Are peptides illegal in Dubai?',
@@ -1305,7 +1305,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: 'What documentation should I expect when buying research peptides in the UAE?',
-        a: 'A batch-specific certificate of analysis available before you order rather than only on request afterwards, research-use labelling with no dosing or human-use language, and a lot number you can independently resolve. Every batch we have shipped is checkable by lot number at [/verify](/verify) with no account needed — a standard most of the market does not meet.',
+        a: 'A batch-specific certificate of analysis available before you order rather than only on request afterwards, research-use labelling with no usage or human-use language, and a lot number you can independently resolve. Every batch we have shipped is checkable by lot number at [/verify](/verify) with no account needed — a standard most of the market does not meet.',
       },
       {
         q: 'Does the UAE heat affect how peptides should be stored?',
@@ -1362,7 +1362,7 @@ export const GUIDES: Guide[] = [
           'Specific review counts with no way to verify them, or testimonials attributed to invented credentials ("Dr. …", "Biochemistry Dept.") that can\'t be checked.',
           '"Highest purity in the UK/UAE" or similar unqualified superiority claims — purity should be demonstrated per batch, not asserted as a blanket brand claim.',
           'Accreditation labels (cGMP, ISO 9001, ISO 17025) mentioned without a certificate number or issuing body — a real accreditation is checkable against a public register.',
-          'Any product copy describing dosing, administration, or "what researchers report" in terms that sound like usage instructions rather than research parameters.',
+          'Any product copy describing usage, administration, or "what researchers report" in terms that sound like usage instructions rather than research parameters.',
         ],
       },
       {
@@ -1386,7 +1386,7 @@ export const GUIDES: Guide[] = [
         items: [
           'Batch-specific COA published before purchase, from a named independent lab',
           'Verifiable business registration (Companies House / UAE trade licence)',
-          'No dosing, administration, or health-outcome claims on product pages',
+          'No usage, administration, or health-outcome claims on product pages',
           'Specific, checkable accreditation and testing claims rather than unqualified superlatives',
           'Clear cold-chain and dispatch information, with disclosed shipping origin',
         ],
@@ -1500,7 +1500,7 @@ export const GUIDES: Guide[] = [
     content: [
       {
         type: 'intro',
-        text: 'Both are water for injection-grade diluents used to reconstitute lyophilised peptides, and both are sterile at time of packaging. The difference is what happens after the vial is first opened — and that difference changes how a reconstituted solution should be stored and used.',
+        text: 'Both are sterile, pharmacopoeial-grade water diluents used to reconstitute lyophilised peptides, and both are sterile at time of packaging. The difference is what happens after the vial is first opened — and that difference changes how a reconstituted solution should be stored and used.',
       },
       {
         type: 'heading',
@@ -1508,7 +1508,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Sterile water contains no preservative. It is sterile when the vial is sealed, but once opened it offers no protection against microbial growth from repeated needle entries or ambient exposure. It is the appropriate choice for single-use preparations that will be consumed in one sitting, or for applications where a preservative could interfere with a downstream assay.',
+        text: 'Sterile water contains no preservative. It is sterile when the vial is sealed, but once opened it offers no protection against microbial growth from repeated septum entries or ambient exposure. It is the appropriate choice for single-use preparations that will be used in one session, or for applications where a preservative could interfere with a downstream assay.',
       },
       {
         type: 'heading',
@@ -1516,7 +1516,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Bacteriostatic water contains 0.9% benzyl alcohol as a preservative, which inhibits (but does not eliminate) bacterial growth across repeated vial entries. This makes it the standard choice for reconstituting a vial that will be drawn from multiple times over days or weeks, since it reduces contamination risk introduced by successive needle punctures.',
+        text: 'Bacteriostatic water contains 0.9% benzyl alcohol as a preservative, which inhibits (but does not eliminate) bacterial growth across repeated vial entries. This makes it the standard choice for reconstituting a vial that will be sampled multiple times over days or weeks, since it reduces contamination risk introduced by successive septum entries.',
       },
       {
         type: 'callout',
@@ -1552,7 +1552,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Neither is a drop-in substitute for the other without thinking about what the resulting solution is for. If a protocol or a certificate of analysis specifies a diluent, that specification is doing work — it is not interchangeable boilerplate.',
+        text: 'Neither is a drop-in substitute for the other without thinking about what the resulting solution is for. If a study method or a certificate of analysis specifies a diluent, that specification is doing work — it is not interchangeable boilerplate.',
       },
       {
         type: 'heading',
@@ -1567,11 +1567,11 @@ export const GUIDES: Guide[] = [
     faq: [
       {
         q: 'Can I use sterile water instead of bacteriostatic water?',
-        a: 'For a single-use preparation consumed in one sitting, sterile water is sufficient — the preservative in bacteriostatic water exists to protect a vial across repeated entries, and a vial entered once does not need that protection. For a preparation that will be drawn from over days or weeks, sterile water offers no protection against microbial growth introduced by successive needle punctures.',
+        a: 'For a single-use preparation consumed in one sitting, sterile water is sufficient — the preservative in bacteriostatic water exists to protect a vial across repeated entries, and a vial entered once does not need that protection. For a preparation that will be sampled over days or weeks, sterile water offers no protection against microbial growth introduced by successive septum entries.',
       },
       {
-        q: 'Is bacteriostatic water the same as sterile water for injection?',
-        a: 'No. Both are sterile when sealed. Bacteriostatic water additionally contains 0.9% benzyl alcohol as a preservative, which inhibits bacterial growth after the vial is first opened. Sterile water for injection contains no preservative at all.',
+        q: 'Is bacteriostatic water the same as sterile water?',
+        a: 'No. Both are sterile when sealed. Bacteriostatic water additionally contains 0.9% benzyl alcohol as a preservative, which inhibits bacterial growth after the vial is first opened. Plain sterile water contains no preservative at all.',
       },
       {
         q: 'Is bacteriostatic water the same as bacteriostatic sodium chloride?',
@@ -1583,11 +1583,11 @@ export const GUIDES: Guide[] = [
       },
       {
         q: 'What can I use instead of bacteriostatic water?',
-        a: 'Sterile water is the usual alternative for single-use preparations, and some protocols specify dilute acetic acid or a buffer depending on the sequence. Which is appropriate is a function of the peptide\'s composition and what the solution is for — our [reconstitution guide](/guides/peptide-reconstitution) covers solvent selection in detail.',
+        a: 'Sterile water is the usual alternative for single-use preparations, and some methods specify dilute acetic acid or a buffer depending on the sequence. Which is appropriate is a function of the peptide\'s composition and what the solution is for — our [reconstitution guide](/guides/peptide-reconstitution) covers solvent selection in detail.',
       },
       {
         q: 'Is bacteriostatic water legal to buy in the UK or UAE?',
-        a: 'Bacteriostatic water is a laboratory and pharmaceutical diluent rather than a controlled substance, and is routinely supplied for research use in both markets. It is stocked as [bacteriostatic water](/products/bacteriostatic-water) and in a [pharma-grade presentation](/products/pharma-grade-bac-water) here. As with any research material, the regulated question is what it is used for, not the diluent itself.',
+        a: 'Bacteriostatic water is a laboratory and pharmaceutical diluent rather than a controlled substance, and is routinely supplied for research use in both markets. It is stocked as [bacteriostatic water](/products/bacteriostatic-water) and as [Bacteriostatic Water USP](/products/pharma-grade-bac-water) here. As with any research material, the regulated question is what it is used for, not the diluent itself.',
       },
     ],
   },
@@ -1881,7 +1881,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Bacteriostatic water is water for injection containing a preservative, conventionally 0.9% benzyl alcohol. The preservative inhibits the multiplication of bacteria introduced during use, which is what makes the vial suitable for multiple entries rather than one. It is not an antibiotic, it is not a sterilant, and it does not reverse contamination that has already occurred. The distinction from preservative-free sterile water, and from bacteriostatic saline, is covered in our [bacteriostatic vs sterile water guide](/guides/bacteriostatic-water-vs-sterile-water).',
+        text: 'Bacteriostatic water is sterile, pharmacopoeial-grade water containing a preservative, conventionally 0.9% benzyl alcohol. The preservative inhibits the multiplication of bacteria introduced during use, which is what makes the vial suitable for multiple entries rather than one. It is not an antibiotic, it is not a sterilant, and it does not reverse contamination that has already occurred. The distinction from preservative-free sterile water, and from bacteriostatic saline, is covered in our [bacteriostatic vs sterile water guide](/guides/bacteriostatic-water-vs-sterile-water).',
       },
       {
         type: 'callout',
@@ -1909,11 +1909,11 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Twenty-eight days is the conventional in-use period applied to multi-dose preserved preparations generally, drawn from pharmaceutical practice around how long a preservative system can be relied on to control organisms introduced through repeated entries. It is a conservative, deliberately round interval chosen to be defensible across a wide range of handling quality, not a cliff edge discovered in a laboratory. Applied as "start a fresh vial every four weeks", it is sound practice. Read as "sterile on day 28, dangerous on day 29", it misrepresents what kind of number it is.',
+        text: 'Twenty-eight days is the conventional in-use period applied to multi-use preserved preparations generally, taken from pharmaceutical practice around how long a preservative system can be relied on to control organisms introduced through repeated entries. It is a conservative, deliberately round interval chosen to be defensible across a wide range of handling quality, not a cliff edge discovered in a laboratory. Applied as "start a fresh vial every four weeks", it is sound practice. Read as "sterile on day 28, dangerous on day 29", it misrepresents what kind of number it is.',
       },
       {
         type: 'paragraph',
-        text: 'Several factors legitimately shorten it. A vial entered many times a day accumulates more risk than one entered twice a week. Technique matters more than elapsed time — a vial entered thirty times with a fresh needle, swabbed each time, is in a different position from one entered five times carelessly. And a vial stored warm is in a worse position than one stored cool, because preservative efficacy is not independent of temperature.',
+        text: 'Several factors legitimately shorten it. A vial entered many times a day accumulates more risk than one entered twice a week. Technique matters more than elapsed time — a vial entered thirty times with a fresh sterile tip, swabbed each time, is in a different position from one entered five times carelessly. And a vial stored warm is in a worse position than one stored cool, because preservative efficacy is not independent of temperature.',
       },
       {
         type: 'heading',
@@ -1947,7 +1947,7 @@ export const GUIDES: Guide[] = [
       {
         type: 'list',
         items: [
-          'A fresh sterile needle for every entry, with no exceptions — reusing a needle into the vial is the single most reliable way to contaminate it',
+          'A fresh sterile tip for every entry, with no exceptions — reusing a tip in the vial is the single most reliable way to contaminate it',
           'Swab the stopper with 70% alcohol and let it dry before each entry; wiping and immediately piercing achieves considerably less than people assume',
           'Do not return anything to the vial, ever',
           'Date the vial at first entry, on the vial itself. A part-used vial of unknown age is a vial to discard',
@@ -1995,13 +1995,13 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'We stock it in both a standard [bacteriostatic water](/products/bacteriostatic-water) presentation and a [pharma-grade](/products/pharma-grade-bac-water) one, shipped from within the UAE for next-day domestic delivery.',
+        text: 'We stock it in both a standard [bacteriostatic water](/products/bacteriostatic-water) presentation and as [Bacteriostatic Water USP](/products/pharma-grade-bac-water), both batch-documented.',
       },
     ],
     faq: [
       {
         q: 'How long does bacteriostatic water last once opened?',
-        a: 'The conventional in-use period is 28 days from first entry. That figure comes from pharmaceutical practice on multi-dose preserved preparations rather than from a measured property of benzyl alcohol, so treat it as a conservative prompt to start a fresh vial rather than a precise expiry. Frequent entries, poor technique or warm storage all argue for shorter.',
+        a: 'The conventional in-use period is 28 days from first entry. That figure comes from pharmaceutical practice on multi-use preserved preparations rather than from a measured property of benzyl alcohol, so treat it as a conservative prompt to start a fresh vial rather than a precise expiry. Frequent entries, poor technique or warm storage all argue for shorter.',
       },
       {
         q: 'Why does bacteriostatic water expire?',
@@ -2013,7 +2013,7 @@ export const GUIDES: Guide[] = [
       },
       {
         q: 'Can you reuse bacteriostatic water?',
-        a: 'Yes — multi-entry use is the reason the product exists. What matters is the quality of each entry: a fresh sterile needle every time, the stopper swabbed with 70% alcohol and allowed to dry, nothing ever returned to the vial, and a first-entry date written on the vial itself.',
+        a: 'Yes — multi-entry use is the reason the product exists. What matters is the quality of each entry: a fresh sterile tip every time, the stopper swabbed with 70% alcohol and allowed to dry, nothing ever returned to the vial, and a first-entry date written on the vial itself.',
       },
       {
         q: 'What happens if you use expired bacteriostatic water?',
@@ -2099,7 +2099,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'Our [reconstitution calculator](/tools/reconstitution-calculator) does this arithmetic directly, including the reverse case — working back from a target concentration to the volume required.',
+        text: 'Our [concentration calculator](/tools/reconstitution-calculator) does this arithmetic directly, including the reverse case — working back from a target concentration to the volume required.',
       },
       {
         type: 'heading',
@@ -2164,7 +2164,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'This is the practical link between the two decisions. A preparation intended for single use argues for a smaller volume in preservative-free diluent; one intended to be drawn from repeatedly argues for a preservative-containing diluent and a volume matched to the number of expected entries. The comparison is in [bacteriostatic vs sterile water](/guides/bacteriostatic-water-vs-sterile-water), and the in-use timeframes in [bacteriostatic water shelf life](/guides/bacteriostatic-water-shelf-life).',
+        text: 'This is the practical link between the two decisions. A preparation intended for single use argues for a smaller volume in preservative-free diluent; one intended to be sampled repeatedly argues for a preservative-containing diluent and a volume matched to the number of expected entries. The comparison is in [bacteriostatic vs sterile water](/guides/bacteriostatic-water-vs-sterile-water), and the in-use timeframes in [bacteriostatic water shelf life](/guides/bacteriostatic-water-shelf-life).',
       },
       {
         type: 'heading',
@@ -2194,7 +2194,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: 'paragraph',
-        text: 'A large share of the search traffic on this topic asks for a specific volume for a specific compound at a specific vial size. We deliberately do not publish those tables. The reason is not coyness: a volume figure tied to a named compound is only meaningful alongside an intended concentration, and divorced from that it reads as a protocol — which for research material supplied for laboratory use is not something a supplier should be writing.',
+        text: 'A large share of the search traffic on this topic asks for a specific volume for a specific compound at a specific vial size. We deliberately do not publish those tables. The reason is not coyness: a volume figure tied to a named compound is only meaningful alongside an intended concentration, and divorced from that it reads as a usage instruction — which for research material supplied for laboratory use is not something a supplier should be writing.',
       },
       {
         type: 'paragraph',

@@ -217,7 +217,7 @@ export default function StoragePage() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 30 }}>
             {[
-              { href: '/tools/reconstitution-calculator', label: 'Reconstitution calculator' },
+              { href: '/tools/reconstitution-calculator', label: 'Concentration calculator' },
               { href: '/products/category/lab-supplies', label: 'Solvents & accessories' },
               { href: '/testing', label: 'How we test' },
               { href: '/guides/storage-conditions', label: 'Guide: storage science' },
@@ -232,8 +232,8 @@ export default function StoragePage() {
 
           <p style={{ fontSize: 12, lineHeight: 1.8, color: 'rgba(13,13,13,.42)', marginTop: 30 }}>
             All materials are supplied for in-vitro laboratory research use only. Nothing on this
-            page describes preparation for human or veterinary use, and PepcoLab does not provide
-            dosing, administration or protocol guidance.
+            page describes preparation for human or veterinary use, and PepcoLab does not advise
+            on use in people or animals.
           </p>
         </section>
       </main>

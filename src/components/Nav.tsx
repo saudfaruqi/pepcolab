@@ -144,7 +144,7 @@ export default function Nav() {
           label, href: `/products/category/${slug}`,
           sub: categoryCounts[slug] != null ? `${categoryCounts[slug]} product${categoryCounts[slug] !== 1 ? 's' : ''}` : undefined,
         })),
-        { label: 'Bundles & Stacks', href: '/bundles', sub: 'Save 10% on combinations' },
+        { label: 'Paired Sets', href: '/bundles', sub: 'Save 10% on paired compounds' },
       ] as { label: string; href: string; sub?: string }[],
     },
     {
@@ -271,9 +271,9 @@ export default function Nav() {
               </div>
             ) : (
               <div style={{ padding: '14px 18px 18px' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(13,13,13,.32)', marginBottom: 12 }}>Popular</div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(13,13,13,.32)', marginBottom: 12 }}>Suggested</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                  {['BPC-157', 'GLP-1', 'TB-500', 'GHK-Cu', 'Selank', 'Semaglutide'].map(q => (
+                  {['GHK-Cu', 'Semax', 'Selank', 'MOTS-c', 'Epithalon', 'KPV'].map(q => (
                     <button key={q} className="search-chip" onClick={() => setSearchQuery(q)}>{q}</button>
                   ))}
                 </div>

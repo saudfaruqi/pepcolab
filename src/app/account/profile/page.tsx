@@ -23,7 +23,8 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import AccountTabs from '@/components/AccountTabs'
 import { useCustomer } from '@/lib/customerContext'
-import { Loader2, LogOut, Mail, MessageCircle, Package, MapPin, Star } from 'lucide-react'
+import { Loader2, LogOut, Mail, MessageCircle, Package, MapPin, Star, Bell } from 'lucide-react'
+import { CONSENT_WORDING } from '@/lib/crm/types'
 
 const INK = '#0D0D0D'
 const PAPER = '#F7F5F1'
@@ -55,6 +56,114 @@ const row: React.CSSProperties = {
 }
 const key: React.CSSProperties = { color: 'rgba(13,13,13,.5)', flexShrink: 0 }
 const val: React.CSSProperties = { color: INK, textAlign: 'right', wordBreak: 'break-word' }
+
+interface Prefs {
+  email: boolean
+  whatsapp: boolean
+  hasPhone: boolean
+  whatsappAvailable: boolean
+  joinLink: string | null
+}
+
+// MARKETING PREFERENCES (clean-up brief B4: account page toggles). Each
+// toggle shows the exact recorded wording; turning one off records a
+// "withdrawn" consent event in the CRM.
+function MarketingPreferences() {
+  const [prefs, setPrefs] = useState<Prefs | null>(null)
+  const [busy, setBusy] = useState<'email' | 'whatsapp' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/account/consent')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => { if (!cancelled) setPrefs(d) })
+      .catch(() => { if (!cancelled) setLoadFailed(true) })
+    return () => { cancelled = true }
+  }, [])
+
+  async function toggle(channel: 'email' | 'whatsapp', on: boolean) {
+    if (!prefs) return
+    setBusy(channel)
+    setError(null)
+    try {
+      const res = await fetch('/api/account/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel, on, pageUrl: window.location.href.split('#')[0] }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setError(data?.error || 'That didn\u2019t save. Please try again.'); return }
+      setPrefs({ ...prefs, [channel]: on })
+    } catch {
+      setError('That didn\u2019t save. Please check your connection and try again.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const toggleRow = (channel: 'email' | 'whatsapp', label: string, on: boolean, disabled: boolean, note?: string) => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 14, alignItems: 'start', padding: '12px 0', borderTop: `1px solid ${BORDER}` }}>
+      <div>
+        <div id={`pref-${channel}-label`} style={{ fontSize: 14, fontWeight: 600, color: INK, marginBottom: 3 }}>{label}</div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.6, color: 'rgba(13,13,13,.55)' }}>
+          {CONSENT_WORDING[channel === 'email' ? 'email-v1' : 'whatsapp-v1']}
+        </div>
+        {note && <div style={{ fontSize: 12, lineHeight: 1.6, color: 'rgba(13,13,13,.45)', marginTop: 4 }}>{note}</div>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby={`pref-${channel}-label`}
+        disabled={disabled || busy !== null}
+        onClick={() => toggle(channel, !on)}
+        style={{
+          width: 44, height: 26, borderRadius: 999, border: 0, padding: 3, cursor: disabled ? 'not-allowed' : 'pointer',
+          background: on ? INK : 'rgba(13,13,13,.18)', opacity: disabled ? 0.45 : 1, transition: 'background .2s',
+          display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',
+        }}
+      >
+        <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', display: 'block' }} />
+      </button>
+    </div>
+  )
+
+  return (
+    <div style={card}>
+      <h2 style={cardTitle}><Bell size={16} aria-hidden="true" /> Marketing preferences</h2>
+      {!prefs && !loadFailed && <p style={{ fontSize: 13, color: 'rgba(13,13,13,.5)', margin: 0 }}>Loading…</p>}
+      {loadFailed && <p style={{ fontSize: 13, color: 'rgba(13,13,13,.5)', margin: 0 }}>Your preferences couldn\u2019t be loaded right now.</p>}
+      {prefs && (
+        <>
+          {toggleRow('email', 'Email updates', prefs.email, false)}
+          {prefs.whatsappAvailable &&
+            toggleRow(
+              'whatsapp',
+              'WhatsApp updates',
+              prefs.whatsapp,
+              !prefs.hasPhone && !prefs.whatsapp,
+              !prefs.hasPhone ? 'We don\u2019t have a phone number for you yet. It is added with your next order.' : undefined
+            )}
+          {prefs.whatsapp && prefs.joinLink && (
+            <p style={{ fontSize: 12.5, lineHeight: 1.6, color: 'rgba(13,13,13,.55)', margin: '10px 0 0' }}>
+              To receive WhatsApp updates,{' '}
+              <a href={prefs.joinLink} target="_blank" rel="noopener noreferrer" style={{ color: INK, fontWeight: 600 }}>
+                open WhatsApp and send JOIN
+              </a>
+              , and save our number as PepcoLab.
+            </p>
+          )}
+          {error && <p role="alert" style={{ fontSize: 12.5, color: '#9b2c22', margin: '10px 0 0' }}>{error}</p>}
+          <p style={{ fontSize: 12, color: 'rgba(13,13,13,.45)', margin: '12px 0 0' }}>
+            Order and delivery messages are not marketing and are always sent.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -197,6 +306,8 @@ export default function ProfilePage() {
                   View orders &amp; reorder
                 </Link>
               </div>
+
+              <MarketingPreferences />
 
               <div style={card}>
                 <h2 style={cardTitle}><Star size={16} aria-hidden="true" /> Share your experience</h2>

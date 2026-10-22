@@ -36,6 +36,7 @@ import ContentBlocks from '@/components/ContentBlocks'
 import { COMPARISONS, getComparisonBySlug, productLabel } from '@/lib/comparisons-data'
 import { ARTICLES } from '@/lib/research-data'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
+import { isRetiredHref } from '@/lib/retired-paths'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -244,7 +245,7 @@ export default function ComparisonPage({ params }: Props) {
 
           {c.kind !== 'practice' && (
             <p style={{ fontSize: 12.5, lineHeight: 1.6, color: 'rgba(13,13,13,.45)', marginTop: 18 }}>
-              Research-profile comparison for laboratory reference only — not a usage, dosing, or stacking guide. See our{' '}
+              Research-profile comparison for laboratory reference only — not a usage or combination guide. See our{' '}
               <Link href="/legal" style={{ color: 'rgba(13,13,13,.6)', fontWeight: 600 }}>legal &amp; compliance hub</Link> for the regulatory position on either compound.
             </p>
           )}
@@ -256,12 +257,12 @@ export default function ComparisonPage({ params }: Props) {
 
         <section style={{ maxWidth: 820, margin: '0 auto', padding: '8px 24px 48px' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {(c.relatedProductSlugs ?? []).map((slug) => (
+            {(c.relatedProductSlugs ?? []).filter((slug) => !isRetiredHref(`/products/${slug}`)).map((slug) => (
               <Link key={slug} href={`/products/${slug}`} style={pillStyle}>
                 Shop {productLabel(slug)} <ChevronRight size={13} />
               </Link>
             ))}
-            {(c.relatedResearchIds ?? []).map((id) => (
+            {(c.relatedResearchIds ?? []).filter((id) => ARTICLES.some((a) => a.id === id) && !isRetiredHref(`/research/${id}`)).map((id) => (
               <Link key={id} href={`/research/${id}`} style={pillStyle}>
                 {researchTitle(id)} <ChevronRight size={13} />
               </Link>
@@ -318,6 +319,10 @@ function renderCell(text: string): React.ReactNode {
 
     if (href.startsWith('//') || (!internal && !external)) {
       out.push(full)
+    } else if (internal && isRetiredHref(href)) {
+      // Withdrawn product or page (lib/retired-paths.ts): keep the words,
+      // drop the link.
+      out.push(label)
     } else if (external) {
       out.push(
         <a key={`c${n}`} href={href} target="_blank" rel="noopener noreferrer" style={cellLinkStyle}>{label}</a>

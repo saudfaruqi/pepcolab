@@ -31,6 +31,7 @@ import { isMarketingSuppressed } from '@/lib/emailPreferences'
 import { buildUnsubscribeUrl } from '@/lib/unsubscribeToken'
 import { redis } from '@/lib/redis'
 import { sweepAffiliateHolds } from '@/lib/affiliateStore'
+import { MARKETING_SENDS_PAUSED, marketingBlockFor, recordMarketingSend } from '@/lib/marketingGate'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -96,6 +97,8 @@ async function runAftercare(now: Date, catalogueFor: ReturnType<typeof catalogue
 }
 
 async function runCrossSell(now: Date, catalogueFor: ReturnType<typeof catalogueCache>) {
+  // Marketing: opted-in contacts only, within the weekly ceiling (lib/marketingGate.ts).
+  if (MARKETING_SENDS_PAUSED) return { sent: 0, skipped: 0, paused: true }
   const windowEnd = now.getTime() - CROSS_SELL_DAYS * DAY_MS
   const orders = await getCompletedOrdersInWindow(windowEnd - CROSS_SELL_WINDOW_DAYS * DAY_MS, windowEnd)
   let sent = 0
@@ -104,7 +107,7 @@ async function runCrossSell(now: Date, catalogueFor: ReturnType<typeof catalogue
   for (const order of orders) {
     if (order.crossSellEmailSentAt || !order.email || !order.products?.length) { skipped++; continue }
     if (!isPaidOrder(order)) { skipped++; continue }
-    if (await isMarketingSuppressed(order.email)) { skipped++; continue }
+    if (await marketingBlockFor(order.email)) { skipped++; continue }
 
     // One cross-sell per customer per window: if they placed a newer order,
     // that order will get its own at the right time.
@@ -119,6 +122,7 @@ async function runCrossSell(now: Date, catalogueFor: ReturnType<typeof catalogue
       if (!newer) {
         const journey = buildJourney(order, await catalogueFor(order.currency), 'cross-sell')
         didSend = await sendCrossSellEmail(order, journey, unsubscribeUrlFor(order.email))
+        if (didSend) await recordMarketingSend(order.email)
       }
       // Stamp either way so the order isn't re-evaluated every day.
       await saveOrderRecord({ ...order, crossSellEmailSentAt: new Date().toISOString() })
@@ -132,6 +136,8 @@ async function runCrossSell(now: Date, catalogueFor: ReturnType<typeof catalogue
 }
 
 async function runWinback(now: Date, catalogueFor: ReturnType<typeof catalogueCache>) {
+  // Marketing: opted-in contacts only, within the weekly ceiling (lib/marketingGate.ts).
+  if (MARKETING_SENDS_PAUSED) return { sent: 0, skipped: 0, paused: true }
   const windowEnd = now.getTime() - WINBACK_DAYS * DAY_MS
   const orders = await getCompletedOrdersInWindow(windowEnd - WINBACK_WINDOW_DAYS * DAY_MS, windowEnd)
 
@@ -145,7 +151,7 @@ async function runWinback(now: Date, catalogueFor: ReturnType<typeof catalogueCa
     seen.add(email)
 
     if (!isPaidOrder(order) || !order.products?.length) { skipped++; continue }
-    if (await isMarketingSuppressed(email)) { skipped++; continue }
+    if (await marketingBlockFor(email)) { skipped++; continue }
 
     const marker = `${WINBACK_MARKER_PREFIX}${email}`
     try {
@@ -167,6 +173,7 @@ async function runWinback(now: Date, catalogueFor: ReturnType<typeof catalogueCa
       if (!claimed) { skipped++; continue }
       const journey = buildJourney(latestPaid, await catalogueFor(latestPaid.currency), 'win-back')
       await sendWinbackEmail(latestPaid, journey, unsubscribeUrlFor(email))
+      await recordMarketingSend(email)
       sent++
     } catch (err) {
       console.error(`[customer-care] Win-back failed for ${latestPaid.orderShortCode}:`, err)

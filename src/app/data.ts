@@ -1,4 +1,5 @@
-import { PRODUCT_CLASSES, classCounts, CATALOGUE_PRODUCT_COUNT } from '@/lib/productClasses'
+import { PRODUCT_CLASSES, CLASS_BY_HANDLE } from '@/lib/productClasses'
+import { isRetiredHandle } from '@/lib/retired-paths'
 // data.ts
 export interface Product {
   id: string
@@ -62,9 +63,17 @@ export interface Category {
 // Compound classes (Oct 2026) — replaces the health-goal categories
 // (Metabolic, Recovery, Cognitive…). Labels, counts and copy all come from
 // lib/productClasses.ts; this keeps the old export shape for existing imports.
+// Counts here are the static fallback (handle map minus withdrawn products,
+// with the renamed blend counted once). Pages that have the live catalogue
+// compute counts from it instead (lib/productClasses.ts classCounts).
+const LIVE_HANDLES = Object.keys(CLASS_BY_HANDLE).filter((h) => h !== 'wolverine-stack' && !isRetiredHandle(h))
 export const CATEGORIES: Category[] = [
-  { slug: 'all', label: 'All', count: CATALOGUE_PRODUCT_COUNT },
-  ...PRODUCT_CLASSES.map((c) => ({ slug: c.slug, label: c.label, count: classCounts()[c.slug] })),
+  { slug: 'all', label: 'All', count: LIVE_HANDLES.length },
+  ...PRODUCT_CLASSES.map((c) => ({
+    slug: c.slug,
+    label: c.label,
+    count: LIVE_HANDLES.filter((h) => CLASS_BY_HANDLE[h] === c.slug).length,
+  })),
 ]
 
 // BUNDLES moved to lib/bundles.ts (Sep 2026): each bundle now names exact
@@ -72,42 +81,5 @@ export const CATEGORIES: Category[] = [
 // checkout. Re-exported here so existing imports keep working.
 export { BUNDLE_DEFS as BUNDLES } from '@/lib/bundles'
 
-// PLACEHOLDER CONTENT — not real customer reviews. "Verified ·" badges on
-// invented quotes are exactly what the UK's DMCC Act 2024 fake-reviews
-// provisions target, and a fabricated "Dr." credential plus an invented
-// quantitative lab-match claim raise that further into fabricated-expert-
-// endorsement territory. "GLP-1 Tera" also isn't in your catalogue (see
-// BUNDLES note above), so that line cited a product that doesn't exist.
-// Replace this whole array with real, consented reviews as soon as you
-// have them — until then, keep the "Verified" framing and invented
-// credentials off.
-export const REVIEWS = [
-  {
-    id: 'r1',
-    text: 'The COA transparency is genuinely unlike any other supplier I\'ve used. Independent verification, downloadable HPLC traces — exactly what serious research requires.',
-    author: 'D. Roswell', role: 'Independent Researcher',
-    sub: 'BPC-157 5mg', initials: 'DR',
-    rating: 5,
-  },
-  {
-    id: 'r2',
-    text: 'Ordered Friday afternoon, arrived Saturday morning, cold-chain packaging intact.',
-    author: 'M. Kapur', role: 'Biochemistry Dept.',
-    sub: 'Epithalon 10mg', initials: 'MK',
-    rating: 5,
-  },
-  {
-    id: 'r3',
-    text: 'Finally a supplier that publishes their actual lab work. The batch verifier is a game-changer for research documentation.',
-    author: 'S. Lowe', role: 'Pharmacology Research',
-    sub: 'Epithalon 5mg', initials: 'SL',
-    rating: 5,
-  },
-  {
-    id: 'r4',
-    text: 'The reconstitution calculator alone saves me time per session. Product quality has been consistently good across several orders.',
-    author: 'T. Griffiths', role: 'Laboratory Technician',
-    sub: 'GHK-Cu 100mg', initials: 'TG',
-    rating: 5,
-  },
-]
+// Customer reviews come from the moderated review store (lib/reviewStore.ts).
+// The placeholder REVIEWS array that used to live here was removed.

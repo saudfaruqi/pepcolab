@@ -43,6 +43,7 @@
 
 import HomePageContent from '@/components/HomePageContent'
 import { getProducts } from '@/lib/shopify'
+import { listAllOrders, isPaidOrder } from '@/lib/orderStore'
 
 /**
  * Only the fields HomePageContent's cards, spotlight and bundles actually
@@ -96,10 +97,6 @@ function pickCardFields(p: any) {
     images: (p.images ?? []).slice(0, 2),
 
     color: p.color,
-    badge:
-      p.badge && ['popular', 'new', 'sale', 'bestseller'].includes(p.badge)
-        ? p.badge
-        : undefined,
 
     // Deliberately omitted: description, descriptionHtml, longDesc, sequence,
     // coaUrl, updatedAt, and the full variants array. All of those are
@@ -111,6 +108,37 @@ function pickCardFields(p: any) {
 // that, and it keeps the page on the edge cache the rest of the time.
 export const revalidate = 300
 
+/**
+ * Handles of the listed products ranked by how many paid orders included
+ * them, most first — the "What researchers order most" rail (brief A8).
+ * Order lines store product titles, so they are matched to listed products
+ * by title. Withdrawn products never match because getProducts() has
+ * already dropped them. Any failure (no Redis at build time) returns [] and
+ * the rail falls back to its fixed list.
+ */
+async function popularHandlesFor(products: any[]): Promise<string[]> {
+  try {
+    const { orders } = await listAllOrders(2000, 0)
+    const norm = (t: string) => (t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+    const byTitle = new Map<string, string>()
+    for (const p of products) byTitle.set(norm(p.title), p.handle)
+    const counts = new Map<string, number>()
+    for (const o of orders) {
+      if (!isPaidOrder(o)) continue
+      const inOrder = new Set<string>()
+      for (const line of o.products || []) {
+        const handle = byTitle.get(norm(line.title))
+        if (handle) inOrder.add(handle)
+      }
+      for (const h of inOrder) counts.set(h, (counts.get(h) || 0) + 1)
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([h]) => h)
+  } catch (err) {
+    console.error('[home] Could not rank products by orders:', err)
+    return []
+  }
+}
+
 export default async function Home() {
   // Baseline market. Not the visitor's real country — that's resolved
   // client-side by CountryProvider, which is what allows this page to stay
@@ -119,9 +147,11 @@ export default async function Home() {
   const country = 'AE'
 
   let initialProducts: any[] = []
+  let popularHandles: string[] = []
   try {
     const raw = await getProducts(40, country)
     initialProducts = raw.map(pickCardFields)
+    popularHandles = await popularHandlesFor(raw)
   } catch (err) {
     // Same reasoning as sitemap.ts: never let a Shopify hiccup 500 the
     // homepage. HomePageContent's own client-side fetch (with its existing
@@ -129,5 +159,5 @@ export default async function Home() {
     console.error('[home] Server-side product fetch failed:', err)
   }
 
-  return <HomePageContent initialProducts={initialProducts} initialCountry={country} />
+  return <HomePageContent initialProducts={initialProducts} initialCountry={country} popularHandles={popularHandles} />
 }

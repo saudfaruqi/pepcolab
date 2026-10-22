@@ -1,3 +1,4 @@
+import { PRODUCT_WITHDRAWAL_ACTIVE } from '@/lib/retired-paths'
 // src/lib/productMeta.ts
 //
 // PRODUCT TITLES & META DESCRIPTIONS — September 2026
@@ -36,11 +37,17 @@
 // ALIASES expands abbreviated catalogue names for the title only — the
 // Shopify product name itself is unchanged.
 
-const FORMAT_WORDS = ['pen', 'nasal spray', 'spray', 'vial', 'powder', 'supply'] as const
+// Device formats are named only while products are on sale (lib/retired-paths.ts
+// PRODUCT_WITHDRAWAL_ACTIVE); when withdrawal is on, only laboratory formats.
+const FORMAT_WORDS = (PRODUCT_WITHDRAWAL_ACTIVE
+  ? ['vial', 'powder', 'supply']
+  : ['pen', 'nasal spray', 'spray', 'vial', 'powder', 'supply']) as readonly string[]
 
 /** Abbreviated catalogue names → the fuller name searchers type. Title only. */
 const ALIASES: Record<string, string> = {
-  'pharma grade bac water': 'Pharma Grade Bacteriostatic Water',
+  'pharma grade bac water': 'Bacteriostatic Water USP',
+  'pharma-grade bac water': 'Bacteriostatic Water USP',
+  'pharma grade bacteriostatic water': 'Bacteriostatic Water USP',
   'bac water': 'Bacteriostatic Water',
 }
 
@@ -96,7 +103,9 @@ export function parseVariants(product: MetaProductLike): { formats: string[]; st
     const lower = product.format.trim().toLowerCase()
     // "Supply" is Shopify's internal bucket for accessories, not something a
     // customer would search for — left out rather than shown.
-    if (lower && lower !== 'supply' && lower !== 'accessories') formats.add(titleCase(product.format.trim()))
+    if (lower && lower !== 'supply' && lower !== 'accessories' && !(PRODUCT_WITHDRAWAL_ACTIVE && /\b(pens?|nasal|spray)\b/.test(lower))) {
+      formats.add(titleCase(product.format.trim()))
+    }
   }
 
   return { formats: [...formats], strengths: [...strengths] }

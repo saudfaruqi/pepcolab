@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus, Megaphone } from 'lucide-react'
 import { SEGMENT_LABELS, type AudienceSegment, type CampaignStatus } from '@/lib/marketing/types'
+import { MARKETING_SENDS_PAUSED, MARKETING_PAUSED_REASON } from '@/lib/marketingGate'
 
 export interface CampaignRow {
   id: string
@@ -102,11 +103,17 @@ export default function MarketingHome({
           <Megaphone size={18} /> Marketing
         </h1>
         <p className="text-sm text-[#0D0D0D]/50">
-          Branded campaign emails to customers, built from their orders. Every send skips anyone who has unsubscribed,
-          anyone on the exclusion list, and anyone who got another campaign in the last 3 days.
+          Branded campaign emails to customers who opted in to email updates (consent recorded in Contacts). Every send
+          skips anyone without a current opt-in, anyone who has unsubscribed or is on the exclusion list, and anyone who
+          has already had 2 marketing emails this week.
         </p>
       </div>
 
+      {MARKETING_SENDS_PAUSED && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <strong>Sending is paused.</strong> {MARKETING_PAUSED_REASON} You can still draft campaigns and send test copies.
+        </div>
+      )}
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <div className="mb-8">

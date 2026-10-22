@@ -104,7 +104,7 @@ export default function AffiliatesPage() {
         </h2>
         <ul style={{ margin: 0, padding: '0 0 0 20px', maxWidth: 700 }}>
           {[
-            'Everything we sell is for in-vitro research use only. Promote it that way. No dosing advice, no protocols, no before-and-afters, no claims about what any compound does in a person.',
+            'Everything we sell is for in-vitro research use only. Promote it that way. No advice on use, no before-and-afters, no claims about what any compound does in a person.',
             'Do not describe our products as safe, approved, or fit for human use. They are not, and saying so puts you at risk as much as us.',
             'Say that you earn a commission. Your audience is entitled to know, and in most places you are legally required to tell them.',
             'No paid search on our brand name, and no posting your code to coupon aggregators.',

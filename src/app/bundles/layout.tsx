@@ -3,14 +3,14 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Research Peptide Bundles & Stacks',
+  title: 'Research Compound Sets',
   description:
-    'Pre-matched peptide bundles curated for common research protocols, including KLOW, GLOW and Wolverine Stack combinations. Save up to 15% versus buying individually.',
+    'Pre-matched pairs of research compounds, supplied together at 10% below individual pricing. Batch COA published for every vial. For in-vitro research use only.',
   alternates: { canonical: '/bundles' },
   openGraph: {
-    title: 'Research Peptide Bundles & Stacks | PepcoLab',
+    title: 'Research Compound Sets | PepcoLab',
     description:
-      'Pre-matched peptide bundles curated for common research protocols. Save up to 15% versus buying individually.',
+      'Pre-matched pairs of research compounds, supplied together at 10% below individual pricing. Batch COA published for every vial. For in-vitro research use only.',
     type: 'website',
   },
 }

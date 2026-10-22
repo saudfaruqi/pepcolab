@@ -5,6 +5,11 @@ import { trackBeginCheckout, lineToItem } from '@/lib/analytics'
 import { computeBundleSavings } from '@/lib/bundles'
 import { useEffect, useState } from 'react'
 import type { CartLine } from '@/lib/cartContext'
+import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
+
+/** Shown when checkout is attempted without the research attestation. */
+export const ATTESTATION_REQUIRED_MESSAGE =
+  'Please tick the research-use confirmation above before continuing to payment.'
 
 // ============================================================
 // STRABL CHECKOUT INTEGRATION
@@ -106,7 +111,7 @@ export function useStrablCheckout() {
           // @ts-ignore
           if (!window.StrablCheckout) {
             setSdkError(
-              'Payment couldn\u2019t load — this is usually an ad blocker or privacy extension blocking STRABL. Disable it and refresh, or use "Order via WhatsApp instead" below to complete your order right away.'
+              'Payment couldn\u2019t load — this is usually an ad blocker or privacy extension blocking STRABL. Disable it and refresh, or message us on WhatsApp and we will help.'
             )
           }
         }
@@ -123,8 +128,22 @@ export function useStrablCheckout() {
     lines: CartLine[],
     displayCurrency: string,
     detectedCountry?: string | null,
-    appliedDiscount?: { code: string; discountAmount: number } | null
+    appliedDiscount?: { code: string; discountAmount: number } | null,
+    // RESEARCH ATTESTATION (brief A10): ISO time the customer ticked the
+    // required confirmation. Checkout refuses to proceed without it — this
+    // is enforced here, not only by a disabled button.
+    researchAttestedAt?: string | null,
+    // Optional marketing consent ticked under the attestation (brief B4).
+    // Sent with the attestation; written to the CRM when the order exists.
+    consents?: { email: boolean; whatsapp: boolean } | null
   ) => {
+    if (!researchAttestedAt || !Number.isFinite(new Date(researchAttestedAt).getTime())) {
+      setSdkError(ATTESTATION_REQUIRED_MESSAGE)
+      return
+    }
+    // Withdrawn products / device formats never reach payment (dormant while
+    // the withdrawal switch in lib/retired-paths.ts is off).
+    lines = lines.filter((l) => !(l.slug && isRetiredHandle(l.slug)) && !isWithdrawnDeviceTitle(l.variantTitle || ''))
     // BUNDLE SAVINGS (Sep 2026): complete bundle sets in the cart earn their
     // bundle discount (lib/bundles.ts) wherever checkout is started from —
     // cart page or drawer. Combined with any discount code into the single
@@ -193,6 +212,28 @@ export function useStrablCheckout() {
         discountCode
       )
 
+      // Record the attestation server-side under this checkout reference so
+      // the order webhook can attach it (lib/attestation.ts). It also travels
+      // in cart.extra below; a slow or failed call here never blocks payment.
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 3000)
+        await fetch('/api/checkout/attest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ref: checkoutRef,
+            attestedAt: researchAttestedAt,
+            consents: { email: Boolean(consents?.email), whatsapp: Boolean(consents?.whatsapp) },
+            pageUrl: window.location.href.split('#')[0],
+          }),
+          signal: controller.signal,
+          keepalive: true,
+        }).finally(() => clearTimeout(timer))
+      } catch (err) {
+        console.error('[useStrablCheckout] attestation record failed:', err)
+      }
+
       // HONESTY NOTE: STRABL's checkoutWithRedirect has no dedicated
       // "discount" field in the schema we've verified against, so a
       // discount is applied here by reducing each line item's unit price
@@ -248,6 +289,7 @@ export function useStrablCheckout() {
           // Joins the success-page "How did you hear about us?" answer to
           // this order (lib/heardFrom.ts).
           ref: checkoutRef,
+          researchAttestedAt,
           ...(discountCode ? { discountCode } : {}),
           ...(bundleSavings.bundles.length ? { bundles: bundleSavings.bundles.map(b => `${b.id}x${b.sets}`).join(',') } : {}),
         },

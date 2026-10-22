@@ -28,6 +28,23 @@ import {
 } from '@/lib/affiliateStore'
 import { redis } from '@/lib/redis'
 import { cleanCheckoutRef, rememberCheckoutRef, takePendingHeardFrom } from '@/lib/heardFrom'
+import { takeAttestation } from '@/lib/attestation'
+import { syncContactFromOrder } from '@/lib/crm/sync'
+import { optInBlockFor } from '@/lib/crm/optinLinks'
+
+/**
+ * CRM (clean-up brief, part B): every order record also updates the
+ * customer's contact — order figures, plus any consent ticked at checkout or
+ * on the order-confirmed page before the order existed. Best-effort: a CRM
+ * failure must never fail the payment webhook.
+ */
+async function syncCrm(record: OrderRecord): Promise<void> {
+  try {
+    await syncContactFromOrder(record)
+  } catch (err) {
+    console.error('[webhook] CRM sync failed (order unaffected):', err)
+  }
+}
 
 const ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 
@@ -413,6 +430,18 @@ export async function POST(req: NextRequest) {
     const heardFrom =
       existingRecord?.heardFrom ?? (checkoutRef ? await takePendingHeardFrom(checkoutRef) : undefined)
 
+    // Research attestation (clean-up brief A10): the time the buyer ticked
+    // the required box — echoed by STRABL in cart.extra, or stored by
+    // /api/checkout/attest under the checkout reference.
+    const metaAttested = typeof orderUpdate.meta?.researchAttestedAt === 'string' &&
+      Number.isFinite(new Date(orderUpdate.meta.researchAttestedAt).getTime())
+      ? new Date(orderUpdate.meta.researchAttestedAt).toISOString()
+      : undefined
+    const researchAttestedAt =
+      existingRecord?.researchAttestedAt ??
+      metaAttested ??
+      (checkoutRef ? (await takeAttestation(checkoutRef)) ?? undefined : undefined)
+
     return {
       // Keep everything else already on the record (email-sent markers,
       // amendments, top-up links, dispatch details); the fields below are
@@ -420,6 +449,7 @@ export async function POST(req: NextRequest) {
       ...(existingRecord ?? {}),
       checkoutRef,
       heardFrom,
+      researchAttestedAt,
       orderShortCode,
       orderUuid: orderUuid || '',
       status,
@@ -497,7 +527,7 @@ export async function POST(req: NextRequest) {
     const catalogueOnce = async () => {
       if (catalogue === null) {
         try {
-          catalogue = (await getProducts(250, 'AE')) as any[]
+          catalogue = (await getProducts(250, 'AE', { includeRetired: true })) as any[]
         } catch (err) {
           console.error('[webhook] Could not load catalogue for variant resolution:', err)
           catalogue = []
@@ -658,6 +688,7 @@ If STRABL later confirms the payment, the order is created automatically. If the
           console.error(`[webhook] ⚠️ No usable line items (missing price) for paid order ${orderShortCode}`)
           const record = await buildOrderRecord(type === 'order_created' ? 'created' : 'updated')
           await saveOrderRecord(record) // still let the customer look it up / get their confirmation email below
+          await syncCrm(record)
           if (record.email) {
             await sendOrderConfirmationEmail({
               to: record.email,
@@ -666,6 +697,7 @@ If STRABL later confirms the payment, the order is created automatically. If the
               total: record.total,
               currency: record.currency,
               customerName: record.customerName,
+              optIn: await optInBlockFor(record.email),
             })
           }
           await sendMailSafe({
@@ -732,6 +764,7 @@ Please create this order manually in Shopify and mark it paid. The customer has 
         await markShopifyOrderPaid(shopifyOrder.id, orderUuid)
         const record = await buildOrderRecord(type === 'order_created' ? 'created' : 'updated', shopifyOrder.id)
         await saveOrderRecord(record)
+        await syncCrm(record)
 
         // This is the actual fix for "how does the customer find their
         // order code again" — it previously only ever appeared transiently
@@ -747,6 +780,7 @@ Please create this order manually in Shopify and mark it paid. The customer has 
             total: record.total,
             currency: record.currency,
             customerName: record.customerName,
+            optIn: await optInBlockFor(record.email),
           })
         }
 
@@ -845,6 +879,7 @@ Please create this order manually in Shopify and mark it paid. The customer has 
           ? await buildOrderRecord('awaiting_payment_mark', shopifyOrder.id)
           : await buildOrderRecord('processing')
         await saveOrderRecord(processingRecord)
+      await syncCrm(processingRecord)
 
         // This is the important one: STRABL has already taken the
         // customer's money at this point, but the Shopify order — the
@@ -879,6 +914,7 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
       )
       const failedRecord = await buildOrderRecord('failed')
       await saveOrderRecord(failedRecord)
+      await syncCrm(failedRecord)
 
       // Reassures the customer no money was taken and gives them the order
       // code + a track-order link, rather than leaving them wondering what
@@ -918,17 +954,29 @@ STRABL will retry this webhook automatically (it received a 500). If retries kee
 
     case 'order_refunded':
       console.info(`[webhook] 🔄 Order refunded — strabl:${orderUuid}`)
-      await saveOrderRecord(await buildOrderRecord('refunded'))
+      {
+        const r = await buildOrderRecord('refunded')
+        await saveOrderRecord(r)
+        await syncCrm(r)
+      }
       break
 
     case 'order_chargeback':
       console.info(`[webhook] 🔄 Chargeback — strabl:${orderUuid}`)
-      await saveOrderRecord(await buildOrderRecord('chargeback'))
+      {
+        const r = await buildOrderRecord('chargeback')
+        await saveOrderRecord(r)
+        await syncCrm(r)
+      }
       break
 
     case 'order_abandoned': {
       console.info(`[webhook] 🛒 Order abandoned — strabl order: ${orderShortCode}`)
-      await saveOrderRecord(await buildOrderRecord('abandoned'))
+      {
+        const r = await buildOrderRecord('abandoned')
+        await saveOrderRecord(r)
+        await syncCrm(r)
+      }
 
       // Same reasoning as order_failed above: real but voided Shopify
       // order, tagged for filtering, so abandoned carts are visible for

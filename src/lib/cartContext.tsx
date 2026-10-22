@@ -22,6 +22,7 @@ import {
   type ShopifyCartLine,
 } from '@/lib/shopify'
 import { useCountry } from '@/lib/countryContext'
+import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
 import { convertFromAed, currencyFor } from '@/lib/pricing'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -142,14 +143,30 @@ function mapLine(node: ShopifyCartLine): CartLine {
  * sum visibly disagreeing after rounding.
  */
 function applyCart(cart: ShopifyCart, market?: string) {
-  const lines = cart.lines.edges.map(({ node }) => {
-    const line = mapLine(node)
-    return { ...line, price: convertFromAed(line.price, market) }
-  })
-  const qty = cart.totalQuantity
+  const lines = cart.lines.edges
+    .map(({ node }) => {
+      const line = mapLine(node)
+      return { ...line, price: convertFromAed(line.price, market) }
+    })
+    .filter((l) => !isWithdrawnLine(l))
+  const qty = lines.reduce((s, l) => s + l.quantity, 0)
   const total = lines.reduce((s, l) => s + l.price * l.quantity, 0)
   return { lines, total, qty, currencyCode: currencyFor(market) }
 }
+
+/**
+ * A line for a product that has been withdrawn from the catalogue, or for a
+ * device format that is no longer sold. Dormant while the withdrawal switch
+ * in lib/retired-paths.ts is off — both checks then return false. Such lines can
+ * survive in a saved cart from before the withdrawal; they are removed on
+ * load and never reach checkout.
+ */
+function isWithdrawnLine(line: Pick<CartLine, 'slug' | 'variantTitle'>): boolean {
+  return (Boolean(line.slug) && isRetiredHandle(line.slug)) || isWithdrawnDeviceTitle(line.variantTitle || '')
+}
+
+const WITHDRAWN_NOTICE = (names: string[]) =>
+  `${names.join(', ')} ${names.length === 1 ? 'is' : 'are'} no longer available and ${names.length === 1 ? 'was' : 'were'} removed from your cart.`
 
 function computeTotals(lines: CartLine[]) {
   return {
@@ -190,7 +207,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Optimistic first-paint from cache
     if (storedLines) {
       try {
-        const lines: CartLine[] = JSON.parse(storedLines)
+        const lines: CartLine[] = (JSON.parse(storedLines) as CartLine[]).filter((l) => !isWithdrawnLine(l))
         const { total, qty } = computeTotals(lines)
         dispatch({ type: 'SET_LINES', lines, total, qty, currencyCode: storedCurrency ?? undefined })
       } catch {}
@@ -199,12 +216,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!storedId) return
     dispatch({ type: 'SET_CART_ID', cartId: storedId })
 
-    shopifyGetCart(storedId).then(async cart => {
-      if (!cart) {
+    shopifyGetCart(storedId).then(async fetched => {
+      if (!fetched) {
         // Cart expired — wipe everything
         clearCartStorage()
         dispatch({ type: 'CLEAR_CART' })
         return
+      }
+
+      // Drop withdrawn products / device formats before anything renders or
+      // can be sent to checkout, and say so once.
+      let cart = fetched
+      const withdrawn = cart.lines.edges.map(({ node }) => mapLine(node)).filter(isWithdrawnLine)
+      if (withdrawn.length > 0) {
+        try {
+          cart = await shopifyRemove(storedId, withdrawn.map((l) => l.id))
+        } catch (err) {
+          console.error('[Cart] could not remove withdrawn lines:', err)
+        }
+        dispatch({
+          type: 'SET_ERROR',
+          error: WITHDRAWN_NOTICE(Array.from(new Set(withdrawn.map((l) => l.title || 'An item')))),
+        })
       }
 
       // Update buyer identity so Shopify returns the right currency
@@ -268,6 +301,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     slug: string,
     image?: string,
   ) => {
+    if (isWithdrawnLine({ slug, variantTitle })) {
+      dispatch({ type: 'SET_ERROR', error: `${title || 'This item'} is no longer available.` })
+      return
+    }
     dispatch({ type: 'SET_LOADING', loading: true })
     dispatch({ type: 'SET_ERROR', error: null })
 

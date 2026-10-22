@@ -35,6 +35,7 @@
 //  - Customers who have already ordered again since are not reminded.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { MARKETING_SENDS_PAUSED, MARKETING_PAUSED_REASON, marketingBlockFor, recordMarketingSend } from '@/lib/marketingGate'
 import { getOrdersDueForReorderReminder, getOrdersForEmail, saveOrderRecord, isPaidOrder } from '@/lib/orderStore'
 import { sendReorderReminderEmail } from '@/lib/accountEmails'
 import { buildOrderAgainUrl, relatedProductsSection } from '@/lib/lifecycleEmails'
@@ -52,6 +53,11 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Marketing: opted-in contacts only, within the weekly ceiling (lib/marketingGate.ts).
+  if (MARKETING_SENDS_PAUSED) {
+    return NextResponse.json({ success: true, paused: true, reason: MARKETING_PAUSED_REASON })
   }
 
   const now = Date.now()
@@ -76,7 +82,7 @@ export async function GET(req: NextRequest) {
     const orderedMs = new Date(order.createdAt).getTime()
     if (!orderedMs || now - orderedMs < REMINDER_DAYS * DAY_MS) { skipped++; continue }
 
-    if (await isMarketingSuppressed(order.email)) { skipped++; continue }
+    if (await marketingBlockFor(order.email)) { skipped++; continue }
 
     // Already ordered again since this one? Then a reminder is noise.
     const history = await getOrdersForEmail(order.email, 20)
@@ -113,6 +119,7 @@ export async function GET(req: NextRequest) {
         ),
         unsubscribeUrl,
       })
+      await recordMarketingSend(order.email)
 
       await saveOrderRecord({
         ...order,

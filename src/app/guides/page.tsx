@@ -21,12 +21,12 @@ const SITE_URL = 'https://www.pepcolab.com'
 export const metadata: Metadata = {
   title: 'Research Guides — Peptide Handling, Storage & Compliance',
   description:
-    'In-depth guides on peptide reconstitution, storage, sterile handling, dosage calculation, COA interpretation, and UK/UAE regulatory compliance for research use.',
+    'In-depth guides on peptide reconstitution, storage, sterile handling, concentration calculations, COA interpretation, and UK/UAE regulatory compliance for research use.',
   alternates: { canonical: '/guides' },
   openGraph: {
     title: 'Research Guides | PepcoLab',
     description:
-      'In-depth guides on peptide reconstitution, storage, sterile handling, dosage calculation, COA interpretation, and UK/UAE regulatory compliance for research use.',
+      'In-depth guides on peptide reconstitution, storage, sterile handling, concentration calculations, COA interpretation, and UK/UAE regulatory compliance for research use.',
     url: `${SITE_URL}/guides`,
     type: 'website',
   },
@@ -83,8 +83,8 @@ export default function GuidesPage({ searchParams }: Props) {
             </h1>
 
             <p style={{ maxWidth: 640, fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)' }}>
-              Structured protocols, lab techniques, and regulatory context for peptide research in the UK
-              and UAE — reconstitution, storage, sterile handling, dosage calculation, COA interpretation,
+              Structured methods, lab techniques, and regulatory context for peptide research in the UK
+              and UAE — reconstitution, storage, sterile handling, concentration calculations, COA interpretation,
               and buying compliantly. Built for consistency and reproducibility.
             </p>
           </div>

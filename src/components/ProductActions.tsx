@@ -234,7 +234,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
             {[
               { label: 'Short-term',           value: 'Refrigerate at 2–8°C' },
               { label: 'Long-term',            value: 'Freeze at −20°C or below' },
-              { label: 'After reconstitution', value: 'Use within 28 days, refrigerated' },
+              { label: 'In solution',          value: '2–8°C, per batch documentation' },
               { label: 'Avoid',                value: 'Repeated freeze-thaw cycles' },
               { label: 'Protect from',         value: 'Light and moisture' },
             ].map(({ label, value }) => (
@@ -339,7 +339,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
 
   return (
     <>
-      {/* Strength / dose picker — only shown when there's more than one variant */}
+      {/* Strength picker — only shown when there's more than one variant */}
       {hasMultipleVariants && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#626A85', marginBottom: 8 }}>
@@ -544,7 +544,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
           }}
         >
           <MessageCircle size={16} />
-          Order via WhatsApp
+          Questions? Message us on WhatsApp
         </a>
       )}
 

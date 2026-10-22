@@ -116,7 +116,7 @@ function SearchInner() {
         <div style={{ fontSize: 14, lineHeight: 1.8, color: 'rgba(13,13,13,.55)' }}>
           <p style={{ margin: '0 0 14px' }}>Searches everything at once:</p>
           <ul style={{ margin: 0, paddingLeft: 18 }}>
-            <li>Compound names — <strong>BPC-157</strong>, <strong>retatrutide</strong></li>
+            <li>Compound names — <strong>GHK-Cu</strong>, <strong>Semax</strong></li>
             <li>Lot numbers printed on your vial</li>
             <li>Guides and research articles</li>
           </ul>

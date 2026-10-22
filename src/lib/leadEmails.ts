@@ -28,7 +28,7 @@ import {
   BORDER,
 } from '@/lib/orderEmails'
 import { unsubscribeLinks } from '@/lib/marketing/render'
-import { LEARN_GUIDES, getLearnGuide, YOUTUBE_URL, type LearnGuide } from '@/lib/learnGuides'
+import { LEARN_GUIDES, getLearnGuide, type LearnGuide } from '@/lib/learnGuides'
 import type { LeadRecord } from '@/lib/leadStore'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com').replace(/\/$/, '')
@@ -64,11 +64,13 @@ const list = (items: string[]) =>
 const quote = (t: string) =>
   `<div style="margin:0 0 20px; padding:16px 18px; border:1px solid ${BORDER}; border-radius:14px; font-size:14px; line-height:1.7; color:${INK}; white-space:pre-line;">${t}</div>`
 
+const COMPANY_LINE = 'PepcoLab is a trading name of SEE BEE DEE LIMITED (17072052).'
+
 function footer(email: string, reason: string): string {
   const links = unsubscribeLinks(email)
   return `<div style="margin-top:24px; padding-top:18px; border-top:1px solid ${BORDER}; font-size:11.5px; line-height:1.7; color:${INK_40}; text-align:center;">
     Questions? Just reply, or write to <a href="mailto:${esc(SUPPORT_EMAIL)}" style="color:${INK_40};">${esc(SUPPORT_EMAIL)}</a>.<br />
-    ${reason} <a href="${esc(links.page)}" style="color:${INK_40};">Unsubscribe</a>.
+    ${COMPANY_LINE} ${reason} <a href="${esc(links.page)}" style="color:${INK_40};">Unsubscribe</a>.
   </div>`
 }
 
@@ -76,13 +78,14 @@ function hi(lead: Pick<LeadRecord, 'firstName'>): string {
   return lead.firstName ? `Hi ${esc(lead.firstName)},` : 'Hi,'
 }
 
-async function send(lead: LeadRecord, subject: string, pre: string, body: string, text: string, reason: string) {
+async function send(lead: LeadRecord, subject: string, pre: string, body: string, text: string, reason: string, stream: 'transactional' | 'marketing' = 'transactional') {
   const links = unsubscribeLinks(lead.email)
   await sendMail({
+    stream,
     to: lead.email,
     subject,
     html: emailShell(`${preheader(esc(pre))}${body}${footer(lead.email, reason)}`),
-    text: `${text}\n\nFor laboratory and research purposes only. Not for human or veterinary use.\nUnsubscribe: ${links.page}`,
+    text: `${text}\n\nFor laboratory and research purposes only. Not for human or veterinary use.\n${COMPANY_LINE} ${reason}\nUnsubscribe: ${links.page}`,
     headers: {
       'List-Unsubscribe': `<${links.oneClick}>, <mailto:${SUPPORT_EMAIL}?subject=unsubscribe>`,
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -101,7 +104,6 @@ export async function sendGuideEmail(lead: LeadRecord, guide: LearnGuide): Promi
     ${primaryButton('Open the guide (PDF)', esc(pdf), 22)}
     ${p('Two more free guides from the same series, if they are useful:', 10)}
     ${list(others.map((g) => `<a href="${esc(utm(`/learn/${g.slug}`, `guide-${g.slug}`))}" style="color:${INK}; font-weight:600;">${esc(g.title)}</a>`))}
-    ${p(`We also explain this material on video, on our <a href="${YOUTUBE_URL}" style="color:${INK}; font-weight:600;">YouTube channel</a>.`, 0)}
   `
   const text = [
     `${lead.firstName ? `Hi ${lead.firstName},` : 'Hi,'} here is ${guide.shortName} you asked for.`,
@@ -110,10 +112,8 @@ export async function sendGuideEmail(lead: LeadRecord, guide: LearnGuide): Promi
     '',
     'More free guides:',
     ...others.map((g) => `- ${g.title}: ${utm(`/learn/${g.slug}`, `guide-${g.slug}`)}`),
-    '',
-    `YouTube: ${YOUTUBE_URL}`,
   ].join('\n')
-  await send(lead, `Your guide: ${guide.title}`, `${guide.pages} pages, readable in one sitting.`, body, text, 'You requested this guide from Pepco Lab.')
+  await send(lead, `Your guide: ${guide.title}`, `${guide.pages} pages, readable in one sitting.`, body, text, 'You requested this guide from PepcoLab.')
 }
 
 // ── Steps 1–4: the series ─────────────────────────────────────────────────
@@ -138,10 +138,10 @@ const SERIES: Record<number, SeriesEmail> = {
         'Check the lot number on the certificate matches the lot on the label.',
         'Note who ran the test: the manufacturer, or an independent laboratory.',
       ])}
-      ${primaryButton('Watch the explainer on YouTube', esc(YOUTUBE_URL), 0)}
+      ${primaryButton('Read the full certificate guide', esc(utm('/learn/coa-guide', 'series-1')), 0)}
     `,
     text: (lead) =>
-      `${lead.firstName ? `Hi ${lead.firstName},` : 'Hi,'} most people read a certificate from the top: the big purity number. It is the least important line on the page.\n\nPurity by HPLC says how clean a sample is, not which molecule it is. The line that decides everything is identity, usually by mass spectrometry.\n\n- Look for an identity method (MS, LC-MS, MALDI) and an observed mass next to the expected one.\n- Check the lot number on the certificate matches the label.\n- Note who ran the test: the manufacturer or an independent lab.\n\nExplainer: ${YOUTUBE_URL}`,
+      `${lead.firstName ? `Hi ${lead.firstName},` : 'Hi,'} most people read a certificate from the top: the big purity number. It is the least important line on the page.\n\nPurity by HPLC says how clean a sample is, not which molecule it is. The line that decides everything is identity, usually by mass spectrometry.\n\n- Look for an identity method (MS, LC-MS, MALDI) and an observed mass next to the expected one.\n- Check the lot number on the certificate matches the label.\n- Note who ran the test: the manufacturer or an independent lab.\n\nThe full certificate guide: ${utm('/learn/coa-guide', 'series-1')}`,
   },
   2: {
     subject: 'Three questions to ask any supplier',
@@ -169,16 +169,16 @@ Thank you.`)}
       ${h1('One batch, one certificate')}
       ${p(`${hi(lead)} a certificate is a test report on one production batch. That sounds obvious, but it is where most of the confusion in this market comes from.`)}
       ${p('A “representative” certificate — one document shown for every batch a seller ever ships — tells you about a sample someone once tested. It tells you nothing about the vial you receive.')}
-      ${p('This is why every lot Pepco Lab sells is tested by an independent laboratory and published by its lot number, so the certificate and the label can be checked against each other. It is the standard we think every supplier should be held to — including us.')}
+      ${p('This is why every lot PepcoLab sells is tested by an independent laboratory and published by its lot number, so the certificate and the label can be checked against each other. It is the standard we think every supplier should be held to — including us.')}
       ${list([
         'The lot number on the label should appear on the certificate.',
         'The test date should be recent and after the batch was made.',
         'The laboratory should be named, and should not be the seller.',
       ])}
-      ${primaryButton('About Pepco Lab', esc(utm('/about', 'series-3')), 0)}
+      ${primaryButton('About PepcoLab', esc(utm('/about', 'series-3')), 0)}
     `,
     text: (lead) =>
-      `${lead.firstName ? `Hi ${lead.firstName},` : 'Hi,'} a certificate is a test report on one batch. A "representative" certificate shown for every batch tells you nothing about the vial you receive.\n\nEvery lot Pepco Lab sells is tested by an independent laboratory and published by its lot number.\n\n- The lot number on the label should appear on the certificate.\n- The test date should be recent.\n- The laboratory should be named, and should not be the seller.\n\nAbout Pepco Lab: ${utm('/about', 'series-3')}`,
+      `${lead.firstName ? `Hi ${lead.firstName},` : 'Hi,'} a certificate is a test report on one batch. A "representative" certificate shown for every batch tells you nothing about the vial you receive.\n\nEvery lot PepcoLab sells is tested by an independent laboratory and published by its lot number.\n\n- The lot number on the label should appear on the certificate.\n- The test date should be recent.\n- The laboratory should be named, and should not be the seller.\n\nAbout PepcoLab: ${utm('/about', 'series-3')}`,
   },
   4: {
     subject: 'What changed in UK and UAE peptide regulation this summer',
@@ -210,7 +210,8 @@ export async function sendSeriesEmail(lead: LeadRecord, step: number): Promise<v
     email.pre,
     email.html(lead),
     email.text(lead),
-    'You asked Pepco Lab for a free guide and to receive the short follow-up series.'
+    "You're receiving this because you opted in to PepcoLab research updates.",
+    'marketing'
   )
 }
 

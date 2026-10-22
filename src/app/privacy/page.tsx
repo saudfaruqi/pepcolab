@@ -38,12 +38,12 @@ export default function PrivacyPolicyPage() {
               {
                 icon: Database,
                 title: 'Data Collection',
-                text: 'We collect only essential information required to process orders and provide support.',
+                text: 'We collect what we need to take and deliver your order, and nothing for advertising.',
               },
               {
                 icon: Lock,
                 title: 'Secure Storage',
-                text: 'Your data is stored securely using industry-standard encryption and safeguards.',
+                text: 'Customer records are kept in our own systems with access limited to the people who run your order.',
               },
               {
                 icon: Eye,
@@ -52,8 +52,8 @@ export default function PrivacyPolicyPage() {
               },
               {
                 icon: ShieldCheck,
-                title: 'No Selling Data',
-                text: 'We do not sell, rent, or trade personal information to third parties.',
+                title: 'Marketing Only by Opt-in',
+                text: 'Email and WhatsApp marketing go only to people who ticked the box for that channel.',
               },
             ].map(item => {
               const Icon = item.icon
@@ -79,7 +79,7 @@ export default function PrivacyPolicyPage() {
 
     <div className="mb-16">
       <div className="inline-flex items-center rounded-full border border-neutral-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
-        Last Updated • July 2026
+        Last Updated • October 2026
       </div>
     </div>
 
@@ -87,265 +87,177 @@ export default function PrivacyPolicyPage() {
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          1. Introduction
+          1. Who we are
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            PepcoLab Ltd ("PepcoLab", "we", "us", or "our") is committed
-            to protecting and respecting your privacy. This Privacy Policy
-            explains how we collect, use, disclose, store, and protect
-            personal information obtained through our website, products,
-            services, and communications.
-          </p>
-
-          <p>
-            We process personal information in accordance with applicable
-            data protection legislation, including the UK General Data
-            Protection Regulation ("UK GDPR"), the Data Protection Act
-            2018, and other applicable privacy laws.
+            PepcoLab is a trading name of SEE BEE DEE LIMITED, a company
+            registered in England and Wales (company number 17072052),
+            registered office: Dalveen, Sweetloves Lane, Bolton, England,
+            BL1 7EU. We are the controller of your personal data. Contact:{' '}
+            <a href="mailto:privacy@pepcolab.com" className="underline">privacy@pepcolab.com</a>.
           </p>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          2. Information We Collect
+          2. Information we collect
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
-          <p>
-            We may collect the following categories of information:
-          </p>
-
+          <p>We collect the information you give us and the information needed to run the site:</p>
           <ul className="space-y-3 list-disc pl-6">
-            <li>Full name</li>
-            <li>Email address</li>
-            <li>Billing address</li>
-            <li>Shipping address</li>
-            <li>Telephone number</li>
+            <li>Name, email address, telephone number, billing and delivery address</li>
             <li>Order and transaction history</li>
-            <li>Account and authentication information</li>
-            <li>Website usage and analytics data</li>
-            <li>Customer service communications</li>
-            <li>Technical information including IP address, browser type, device information and log data</li>
+            <li>Account sign-in information</li>
+            <li>Your research-use confirmation at checkout, with its date and time</li>
+            <li>Your marketing choices for email and WhatsApp, with the wording you agreed to and when</li>
+            <li>Messages you send us by email, the contact form or WhatsApp</li>
+            <li>Technical information such as IP address, browser and device type, and, if you allow it, analytics data</li>
           </ul>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          3. How We Use Personal Information
+          3. What we use your data for
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
-          <p>We use personal information for legitimate business purposes including:</p>
-
-          <ul className="space-y-3 list-disc pl-6">
-            <li>Processing and fulfilling orders</li>
-            <li>Providing customer support</li>
-            <li>Responding to enquiries</li>
-            <li>Preventing fraud and abuse</li>
-            <li>Improving website functionality and performance</li>
-            <li>Complying with legal and regulatory obligations</li>
-            <li>Maintaining security and platform integrity</li>
-            <li>Sending service-related communications</li>
-            <li>Sending marketing communications where legally permitted or consented to</li>
-          </ul>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          4. Lawful Basis for Processing
-        </h2>
-
-        <div className="space-y-5 text-neutral-600 leading-8">
-          <p>
-            Under UK GDPR and applicable data protection laws, we process
-            personal information on one or more of the following lawful
-            bases:
-          </p>
-
-          <ul className="space-y-3 list-disc pl-6">
-            <li>Performance of a contract</li>
-            <li>Compliance with legal obligations</li>
-            <li>Legitimate business interests</li>
-            <li>Consent where required</li>
-          </ul>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          5. Cookies & Tracking Technologies
-        </h2>
-
-        <div className="space-y-5 text-neutral-600 leading-8">
-          <p>
-            We use three kinds of cookies and similar storage. You choose the
-            optional ones in the cookie banner the first time you visit, and
-            can change your choice at any time with &ldquo;Cookie settings&rdquo; at the
-            bottom of every page.
-          </p>
-
-          <ul className="space-y-3 list-disc pl-6">
+          <ol className="space-y-3 list-decimal pl-6">
+            <li>To take, deliver and support your orders. This is necessary for our contract with you.</li>
+            <li>To keep tax, accounting and order records. This is a legal obligation.</li>
+            <li>To confirm research-use attestations and prevent fraud. This is our legitimate interest.</li>
             <li>
-              <strong>Essential (always on):</strong> your cart, sign-in,
-              age and market confirmation, and your cookie choice itself.
-              The site cannot work without these.
+              To send you marketing by email or WhatsApp, but <strong>only if you have opted in</strong> to
+              that channel. This is your consent.
             </li>
-            <li>
-              <strong>Analytics (optional):</strong> Google Analytics, to
-              understand which pages are used. Until you accept, Google
-              Analytics runs in a cookieless mode that stores nothing on your
-              device.
-            </li>
-            <li>
-              <strong>Marketing (optional):</strong> the Meta Pixel, which
-              tells Meta (Facebook and Instagram) when someone who saw one of
-              our ads visits the site or requests a guide, so we can measure
-              whether our ads work. It is not loaded at all unless you accept.
-              When you request a guide with marketing cookies accepted, a
-              one-way hashed (unreadable) copy of your email address is also
-              sent to Meta from our server to match that request to the ad.
-            </li>
-          </ul>
+          </ol>
+        </div>
+      </section>
 
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          4. Email and WhatsApp marketing
+        </h2>
+        <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            You can also clear or block cookies in your browser settings.
-            Blocking essential storage will stop the cart and sign-in from
-            working.
+            We send marketing only to people who have ticked the opt-in box for that channel or joined our
+            WhatsApp updates by messaging us. Each email has an unsubscribe link, and you can reply STOP on
+            WhatsApp at any time. Order and delivery messages are not marketing and are sent as part of your
+            order. We comply with the UK GDPR, the Data Protection Act 2018 and the Privacy and Electronic
+            Communications Regulations 2003, and for customers in the UAE, Federal Decree-Law No. 45 of 2021 on
+            the Protection of Personal Data.
           </p>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          6. Third-Party Service Providers
+          5. WhatsApp
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            We may engage trusted third-party providers to support our
-            operations, including:
+            If you message us on WhatsApp, WhatsApp (part of Meta Platforms) processes the message under its own
+            terms. We copy your name, number and opt-in status into our own customer records so that we can reach
+            you if our WhatsApp number changes.
           </p>
+        </div>
+      </section>
 
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          6. Cookies
+        </h2>
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>
+            We use essential storage to run the site: your cart, sign-in, age and market confirmation, and your
+            cookie choice. With your permission we also use Google Analytics to understand which pages are used;
+            until you accept, it runs in a cookieless mode that stores nothing on your device. We do not use
+            advertising cookies or advertising pixels. You can change your choice at any time with &ldquo;Cookie
+            settings&rdquo; at the bottom of every page.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
+          7. Who we share data with
+        </h2>
+        <div className="space-y-5 text-neutral-600 leading-8">
+          <p>We share only what each provider needs to do its job:</p>
           <ul className="space-y-3 list-disc pl-6">
-            <li>Payment processors</li>
-            <li>E-commerce infrastructure providers</li>
-            <li>Hosting providers</li>
-            <li>Analytics and advertising-measurement providers (Google, Meta)</li>
-            <li>Shipping and logistics partners</li>
-            <li>Email communication platforms</li>
+            <li>Our payment processor, to take payment</li>
+            <li>Our e-commerce and hosting providers, to run the shop and the site</li>
+            <li>Our delivery partners, to deliver your order</li>
+            <li>Our email provider, to send order emails and any marketing you opted in to</li>
+            <li>Google, for site analytics if you allow it</li>
           </ul>
-
-          <p>
-            These providers are contractually required to process data in
-            accordance with applicable privacy and security requirements.
-          </p>
+          <p>We do not sell, rent or trade personal data.</p>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          7. International Data Transfers
+          8. International transfers
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            Some service providers may process information outside the
-            United Kingdom or European Economic Area. Where such transfers
-            occur, appropriate safeguards will be implemented as required
-            by applicable data protection laws.
+            Some providers process data outside the United Kingdom. Where they do, we rely on the safeguards
+            required by UK data protection law, such as adequacy regulations or the international data transfer
+            agreement.
           </p>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          8. Data Retention
+          9. How long we keep data
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            Personal information is retained only for as long as
-            reasonably necessary to fulfil the purposes described in this
-            policy, comply with legal obligations, resolve disputes, and
-            enforce agreements.
+            Order and invoice records: 6 years from the end of the financial year, to meet HMRC requirements.
+            Marketing consent records: for as long as you are subscribed, plus 2 years after you withdraw, as
+            proof of consent. After you unsubscribe we keep only a scrambled (hashed) copy of your email address or
+            number, so that we never message you again.
           </p>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          9. Security Measures
+          10. Security
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            We maintain appropriate technical and organisational measures
-            designed to protect personal information against accidental
-            loss, unauthorised access, misuse, disclosure, alteration, or
-            destruction.
-          </p>
-
-          <p>
-            No internet transmission or storage system can be guaranteed
-            to be completely secure, and we cannot guarantee absolute
-            security.
+            We use technical and organisational measures to protect personal data against loss, unauthorised
+            access, misuse or disclosure. No system is completely secure, but access to customer data is limited to
+            the people who need it to run your order.
           </p>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          10. Your Privacy Rights
+          11. Your rights
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            Subject to applicable law, you may have the right to:
+            You can ask for a copy of your data, its correction or deletion, or object to marketing, by emailing{' '}
+            <a href="mailto:privacy@pepcolab.com" className="underline">privacy@pepcolab.com</a>. We reply within one
+            month. UK customers can complain to the Information Commissioner&apos;s Office (
+            <a href="https://ico.org.uk" className="underline" target="_blank" rel="noopener noreferrer">ico.org.uk</a>).
           </p>
-
-          <ul className="space-y-3 list-disc pl-6">
-            <li>Access personal information</li>
-            <li>Correct inaccurate information</li>
-            <li>Request deletion of information</li>
-            <li>Restrict processing</li>
-            <li>Object to processing</li>
-            <li>Request data portability</li>
-            <li>Withdraw consent where processing is based on consent</li>
-          </ul>
         </div>
       </section>
 
       <section>
         <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          11. Research Use Notice
+          12. Research use
         </h2>
-
         <div className="space-y-5 text-neutral-600 leading-8">
           <p>
-            Products offered by PepcoLab are supplied exclusively for
-            laboratory research purposes. Product purchases, enquiries,
-            and communications may be reviewed for compliance, fraud
-            prevention, safety, legal obligations, and operational
-            requirements.
-          </p>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-serif text-4xl text-neutral-950 mb-6">
-          12. Contact Information
-        </h2>
-
-        <div className="rounded-3xl border border-neutral-200 p-8">
-          <p className="text-neutral-600 leading-8">
-            Questions regarding this Privacy Policy or personal data
-            requests may be submitted through our Contact page or by
-            contacting our support team.
+            PepcoLab supplies materials for in-vitro laboratory research only. Orders and enquiries may be reviewed
+            for compliance, fraud prevention and legal obligations.
           </p>
         </div>
       </section>
@@ -362,8 +274,7 @@ export default function PrivacyPolicyPage() {
             </h2>
 
             <p className="text-white/60 max-w-2xl mx-auto mb-10 leading-8">
-              Our support team can help clarify how your information is handled
-              and stored.
+              Email privacy@pepcolab.com and we will reply within one month.
             </p>
 
             <Link

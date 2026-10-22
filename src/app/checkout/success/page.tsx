@@ -8,6 +8,8 @@ import { trackPurchaseFromPending, readPendingCheckout } from '@/lib/analytics'
 import { useCustomer } from '@/lib/customerContext'
 import { HEARD_FROM_OPTIONS } from '@/lib/heardFromOptions'
 import GoogleCustomerReviews from '@/components/GoogleCustomerReviews'
+import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
+import { isWhatsAppConfigured, whatsAppJoinLink } from '@/lib/whatsapp'
 
 type Pending = { ref: string; items: { name: string; quantity: number }[] }
 
@@ -102,6 +104,94 @@ function HeardFromCard({ pending }: { pending: Pending }) {
   )
 }
 
+// Optional updates opt-in (clean-up brief B4, post-purchase). Two unticked
+// boxes with the recorded wording; saved to the CRM against this order.
+function UpdatesCard({ pending }: { pending: Pending }) {
+  const [choice, setChoice] = useState<ConsentChoice>({ email: false, whatsapp: false })
+  const [state, setState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
+  const [needsPhone, setNeedsPhone] = useState(false)
+  const [savedWa, setSavedWa] = useState(false)
+
+  async function save() {
+    if (!choice.email && !choice.whatsapp) return
+    setState('saving')
+    try {
+      const res = await fetch('/api/checkout/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ref: pending.ref,
+          items: pending.items,
+          email: choice.email,
+          whatsapp: choice.whatsapp,
+          pageUrl: window.location.href.split('#')[0],
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setState('error'); return }
+      setNeedsPhone(Boolean(data?.needsPhone))
+      setSavedWa(choice.whatsapp)
+      setState('done')
+    } catch {
+      setState('error')
+    }
+  }
+
+  const card: React.CSSProperties = { background: '#fff', border: '1px solid rgba(13,13,13,.08)', borderRadius: 20, padding: '22px 24px', marginBottom: 28, textAlign: 'left' }
+
+  if (state === 'done') {
+    return (
+      <div style={card}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: '#0D0D0D', margin: '0 0 6px' }}>You&apos;re set.</p>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(13,13,13,.6)', margin: 0 }}>
+          We&apos;ll be in touch when new batches and certificates are released. You can change this any time from your account.
+        </p>
+        {savedWa && !needsPhone && isWhatsAppConfigured() && (
+          <div style={{ marginTop: 14 }}>
+            <a
+              href={whatsAppJoinLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-block', background: '#0D0D0D', color: '#fff', borderRadius: 999, padding: '10px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+            >
+              Open WhatsApp and send JOIN
+            </a>
+            <p style={{ fontSize: 12, color: 'rgba(13,13,13,.5)', margin: '8px 0 0' }}>
+              Send the message so our updates reach you, and save our number as PepcoLab.
+            </p>
+          </div>
+        )}
+        {savedWa && needsPhone && (
+          <p style={{ fontSize: 12, color: 'rgba(13,13,13,.5)', margin: '10px 0 0' }}>
+            We don&apos;t have your phone number yet. We&apos;ll add WhatsApp updates once we have it.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div style={card}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(13,13,13,.4)', marginBottom: 6 }}>
+        Optional
+      </div>
+      <p style={{ fontSize: 15, fontWeight: 600, color: '#0D0D0D', margin: '0 0 4px' }}>Want batch and certificate updates?</p>
+      <ConsentBoxes idPrefix="success-consent" tone="card" email={choice.email} whatsapp={choice.whatsapp} onChange={setChoice} disabled={state === 'saving'} />
+      <button
+        type="button"
+        onClick={save}
+        disabled={state === 'saving' || (!choice.email && !choice.whatsapp)}
+        style={{ marginTop: 12, border: 0, background: '#0D0D0D', color: '#fff', borderRadius: 999, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: !choice.email && !choice.whatsapp ? 0.4 : 1 }}
+      >
+        {state === 'saving' ? 'Saving…' : 'Save'}
+      </button>
+      {state === 'error' && (
+        <p role="alert" style={{ fontSize: 12, color: '#9b2c22', margin: '10px 0 0' }}>That didn&apos;t save — please try again.</p>
+      )}
+    </div>
+  )
+}
+
 export default function CheckoutSuccessPage() {
   // ANALYTICS: the purchase event.
   //
@@ -153,6 +243,7 @@ export default function CheckoutSuccessPage() {
           </div>
 
           {pending && <HeardFromCard pending={pending} />}
+          {pending && <UpdatesCard pending={pending} />}
           {pending && <GoogleCustomerReviews checkoutRef={pending.ref} items={pending.items} />}
 
           {/* A signed-in customer goes straight to their orders; there is no

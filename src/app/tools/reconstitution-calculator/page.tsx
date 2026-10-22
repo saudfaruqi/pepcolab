@@ -18,9 +18,9 @@ import { ChevronRight, ArrowRight } from 'lucide-react'
 const SITE_URL = 'https://www.pepcolab.com'
 
 export const metadata: Metadata = {
-  title: 'Peptide Reconstitution Calculator',
+  title: 'Peptide Concentration Calculator',
   description:
-    'Free peptide reconstitution calculator. Enter vial mass and target concentration to get the required diluent volume in mL and µL, with the underlying formula shown.',
+    'Free peptide concentration calculator. Enter vial mass and target concentration to get the required diluent volume in mL and µL, with the underlying formula shown.',
   alternates: {
     canonical: '/tools/reconstitution-calculator',
     languages: {
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Peptide Reconstitution Calculator | PepcoLab',
+    title: 'Peptide Concentration Calculator | PepcoLab',
     description:
       'Enter vial mass and target concentration to get the required diluent volume in mL and µL, with the underlying formula shown.',
     url: `${SITE_URL}/tools/reconstitution-calculator`,
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'Peptide Reconstitution Calculator',
+  name: 'Peptide Concentration Calculator',
   applicationCategory: 'CalculatorApplication',
   operatingSystem: 'Any (web-based)',
   url: `${SITE_URL}/tools/reconstitution-calculator`,
@@ -65,7 +65,7 @@ const howToJsonLd = {
     {
       '@type': 'HowToStep',
       name: 'Confirm the vial mass and target concentration',
-      text: 'Check the vial label or Certificate of Analysis for the peptide mass in mg, and decide the target concentration in mg/mL for the research protocol.',
+      text: 'Check the vial label or Certificate of Analysis for the peptide mass in mg, and decide the target concentration in mg/mL for the study.',
     },
     {
       '@type': 'HowToStep',
@@ -80,7 +80,7 @@ const howToJsonLd = {
     {
       '@type': 'HowToStep',
       name: 'Add diluent slowly, down the vial wall',
-      text: 'Insert the needle at an angle and let the diluent run down the inside wall of the vial rather than injecting it directly onto the lyophilised powder, to avoid disrupting the peptide structure.',
+      text: 'Using a calibrated micropipette, let the diluent run down the inside wall of the vial rather than dispensing it directly onto the lyophilised powder, to avoid disrupting the peptide structure.',
     },
     {
       '@type': 'HowToStep',
@@ -115,7 +115,7 @@ export default function ReconstitutionCalculatorPage() {
             <nav className="flex items-center gap-1.5 text-xs text-zinc-500 mb-6">
               <Link href="/tools" className="hover:text-zinc-900">Tools</Link>
               <ChevronRight size={12} />
-              <span className="text-zinc-900">Reconstitution Calculator</span>
+              <span className="text-zinc-900">Concentration Calculator</span>
             </nav>
 
             <span className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
@@ -123,7 +123,7 @@ export default function ReconstitutionCalculatorPage() {
             </span>
 
             <h1 className="mt-4 text-4xl lg:text-6xl font-serif">
-              Peptide Reconstitution Calculator
+              Peptide Concentration Calculator
             </h1>
 
             <p className="mt-6 text-lg text-zinc-600 leading-relaxed max-w-2xl">

@@ -104,14 +104,14 @@ export const PRODUCT_LABELS: Record<string, string> = {
   'ss-31': 'SS-31',
   'igf-1-lr3': 'IGF-1 LR3',
   tesamorelin: 'Tesamorelin',
-  retatrutide: 'Retatrutide',
-  cagrilintide: 'Cagrilintide',
   'bacteriostatic-water': 'Bacteriostatic Water',
-  'pharma-grade-bac-water': 'Pharma-Grade Bacteriostatic Water',
+  'pharma-grade-bac-water': 'Bacteriostatic Water USP',
   matrixyl: 'Matrixyl',
   'thymosin-alpha': 'Thymosin Alpha-1',
   ipamorelin: 'Ipamorelin',
   'cjc-no-dac': 'CJC-1295 (No DAC)',
+  'cjc-ipa': 'CJC-1295 + Ipamorelin',
+  'wolverine-stack': 'BPC-157 / TB-500 Blend',
   'snap-8': 'SNAP-8',
 }
 
@@ -362,26 +362,26 @@ export const COMPARISONS: Comparison[] = [
     metaDescription:
       'How BPC-157 and TB-500 differ in structure, proposed mechanism, and research literature focus — a research-profile comparison, not a usage guide.',
     intro:
-      'BPC-157 and TB-500 are frequently discussed together in musculoskeletal-recovery research literature, and are sometimes assumed to be interchangeable. Structurally and mechanistically, they are distinct compounds studied through different research lenses.',
+      'BPC-157 and TB-500 are frequently discussed together in musculoskeletal research literature, and are sometimes assumed to be interchangeable. Structurally and mechanistically, they are distinct compounds studied through different research lenses.',
     rows: [
       { label: 'Origin', a: 'Synthetic 15-amino-acid fragment derived from a protein found in gastric juice', b: 'Synthetic fragment of thymosin beta-4, a naturally occurring protein' },
       { label: 'Class', a: 'Body-protection compound (BPC) family', b: 'Actin-regulating peptide fragment' },
-      { label: 'Primary research focus', a: 'Gastrointestinal protection; musculoskeletal and tendon-ligament research', b: 'Cell migration, angiogenesis, and wound-healing research' },
-      { label: 'Proposed mechanism', a: 'Modulates growth factor pathways and nitric oxide signalling in preclinical models', b: 'Regulates actin polymerisation, implicated in cell motility during tissue repair models' },
+      { label: 'Primary research focus', a: 'Gastrointestinal protection; musculoskeletal and tendon-ligament research', b: 'Cell migration, angiogenesis, and wound-model research' },
+      { label: 'Proposed mechanism', a: 'Modulates growth factor pathways and nitric oxide signalling in preclinical models', b: 'Regulates actin polymerisation, implicated in cell motility in tissue-injury models' },
       { label: 'Stability profile', a: 'Reported to be relatively stable across a range of conditions in preclinical work', b: 'Similar handling considerations to other short peptide fragments — see our [storage guide](/guides/storage-conditions)' },
     ],
     takeaway:
-      'Both are studied in tissue-repair contexts but through different proposed mechanisms — BPC-157 research centres on gastroprotective and growth-factor pathways, TB-500 research centres on actin regulation and cell migration. Treat published comparisons of the two with appropriate scepticism; head-to-head preclinical data is limited.',
+      'Both are studied in tissue-injury models but through different proposed mechanisms — BPC-157 research centres on gastroprotective and growth-factor pathways, TB-500 research centres on actin regulation and cell migration. Treat published comparisons of the two with appropriate scepticism; head-to-head preclinical data is limited.',
     relatedResearchIds: ['bpc-157'],
-    relatedProductSlugs: ['bpc-157'],
+    relatedProductSlugs: ['bpc-157', 'wolverine-stack'],
     faq: [
       {
         q: 'Are BPC-157 and TB-500 the same thing?',
-        a: 'No. They are structurally unrelated. BPC-157 is a 15-amino-acid sequence derived from a protein found in gastric juice; TB-500 is a fragment of thymosin beta-4. They appear together in recovery-research literature because both are studied in tissue-repair models, not because they are variants of one compound.',
+        a: 'No. They are structurally unrelated. BPC-157 is a 15-amino-acid sequence derived from a protein found in gastric juice; TB-500 is a fragment of thymosin beta-4. They appear together in the same preclinical literature because both are studied in tissue models, not because they are variants of one compound.',
       },
       {
         q: 'Why are BPC-157 and TB-500 so often discussed together?',
-        a: 'Both appear in the same body of preclinical musculoskeletal and wound-healing literature, which leads to them being grouped in secondary sources and forum summaries. That grouping reflects a shared research context rather than a shared mechanism — the proposed pathways are different.',
+        a: 'Both appear in the same body of preclinical musculoskeletal and wound-model literature, which leads to them being grouped in secondary sources and forum summaries. That grouping reflects a shared research context rather than a shared mechanism — the proposed pathways are different.',
       },
       {
         q: 'Is there head-to-head research comparing BPC-157 and TB-500?',
@@ -389,7 +389,7 @@ export const COMPARISONS: Comparison[] = [
       },
       {
         q: 'Does PepcoLab sell TB-500 as a standalone compound?',
-        a: 'Not as a standalone vial. TB-500 appears only within a blend in our catalogue, which is why there is no standalone product link on this page. You can see what we do stock, with the batch certificate for each, on the [products page](/products).',
+        a: 'Not as a standalone vial. TB-500 appears only within the BPC-157 / TB-500 Blend and GLOW in our catalogue, which is why there is no standalone TB-500 link on this page. You can see what we do stock, with the batch certificate for each, on the [products page](/products).',
       },
     ],
     kind: 'compound',
@@ -406,7 +406,7 @@ export const COMPARISONS: Comparison[] = [
     rows: [
       { label: 'Structure', a: 'Tripeptide (glycyl-L-histidyl-L-lysine) complexed with copper', b: 'Palmitic acid conjugated to a synthetic five-amino-acid sequence' },
       { label: 'Class', a: 'Copper peptide complex, naturally occurring in human plasma', b: 'Lipidated (palmitoylated) synthetic pentapeptide' },
-      { label: 'Primary research focus', a: 'Extracellular matrix remodelling, wound-healing and anti-inflammatory research', b: 'Collagen-signalling research in dermal fibroblast models' },
+      { label: 'Primary research focus', a: 'Extracellular matrix remodelling, wound-model and anti-inflammatory research', b: 'Collagen-signalling research in dermal fibroblast models' },
       { label: 'Copper dependency', a: 'Mechanism is copper-dependent — the copper ion is integral to its proposed activity', b: 'No copper involvement; mechanism is independent of metal-ion binding' },
       { label: 'Typical research format', a: 'Supplied as a lyophilised copper-complexed peptide', b: 'Supplied as a lyophilised lipidated peptide' },
       { label: 'Not to be confused with', a: 'Collagen or “collagen peptides”, which are a mixture of protein fragments — see [collagen vs research peptides](/compare/collagen-peptides-vs-research-peptides)', b: 'Same — both of these are single defined sequences, not hydrolysed protein' },
@@ -451,7 +451,7 @@ export const COMPARISONS: Comparison[] = [
     ],
     takeaway:
       'They act on two different receptors within the same growth-hormone-release pathway rather than being alternative versions of the same mechanism, which is why research literature frequently studies them together rather than as substitutes for one another.',
-    relatedProductSlugs: ['ipamorelin', 'cjc-no-dac'],
+    relatedProductSlugs: ['cjc-ipa'],
     faq: [
       {
         q: 'What is the difference between a GHRH analogue and a secretagogue?',
@@ -459,7 +459,7 @@ export const COMPARISONS: Comparison[] = [
       },
       {
         q: 'What does "DAC" mean on a CJC-1295 label?',
-        a: 'DAC stands for Drug Affinity Complex, a modification reported to extend the compound\'s circulating half-life substantially in preclinical models. CJC-1295 is supplied both with and without it, and the two are not interchangeable in a research protocol — check which variant a certificate of analysis refers to. Our catalogue stocks the no-DAC form.',
+        a: 'DAC stands for Drug Affinity Complex, a modification reported to extend the compound\'s circulating half-life substantially in preclinical models. CJC-1295 is supplied both with and without it, and the two are not interchangeable in a study — check which variant a certificate of analysis refers to. In our catalogue CJC-1295 is supplied only within the CJC-1295 + Ipamorelin preparation, whose certificate states the form.',
       },
       {
         q: 'Are CJC-1295 and Ipamorelin on the WADA Prohibited List?',
@@ -531,19 +531,19 @@ export const COMPARISONS: Comparison[] = [
       { label: 'Sequence', a: 'Glycyl-L-histidyl-L-lysine (Gly-His-Lys), copper-complexed', b: 'Alanyl-L-histidyl-L-lysine (Ala-His-Lys), copper-complexed' },
       { label: 'Structural difference', a: 'Glycine at position 1 — the smallest amino acid, no side chain', b: 'Alanine at position 1 — glycine plus a single methyl group' },
       { label: 'Occurrence', a: 'Occurs naturally in human plasma; plasma concentration is reported to decline with age, which is the origin of much of the interest in it', b: 'Not established as a naturally occurring human plasma peptide in the same way; studied as a synthetic analogue' },
-      { label: 'Primary research focus', a: 'Extracellular matrix remodelling, collagen and glycosaminoglycan synthesis, wound-healing and antioxidant models; a notably broad gene-expression literature', b: 'Angiogenesis and vascular endothelial growth factor signalling; dermal papilla and hair-follicle models' },
+      { label: 'Primary research focus', a: 'Extracellular matrix remodelling, collagen and glycosaminoglycan synthesis, wound and antioxidant models; a notably broad gene-expression literature', b: 'Angiogenesis and vascular endothelial growth factor signalling; dermal papilla and hair-follicle models' },
       { label: 'Copper role', a: 'Copper is integral to the proposed mechanism, not a carrier — the apo-peptide and the complex are not treated as equivalent in the literature', b: 'Also studied as a copper complex, with the metal ion similarly treated as part of the active species' },
       { label: 'Literature volume', a: 'The larger body of work by a wide margin, spanning decades', b: 'Substantially smaller and more narrowly focused' },
       { label: 'Handling', a: 'Copper complexes are light- and oxidation-sensitive; see [storage conditions](/guides/storage-conditions) and [how long peptides last](/guides/how-long-do-peptides-last)', b: 'Same considerations as GHK-Cu — treat both as light-sensitive copper complexes' },
     ],
     takeaway:
-      'The two are not interchangeable despite being one methyl group apart. GHK-Cu carries the far larger literature and is studied principally for extracellular matrix and wound-repair biology; AHK-Cu research clusters instead around angiogenic signalling and follicular models. If a supplier listing, a formulation ingredient list or a secondary article uses the names loosely, assume it has not distinguished them deliberately and go back to the certificate of analysis — the sequence on the COA is the only thing that settles which compound is actually in the vial.',
+      'The two are not interchangeable despite being one methyl group apart. GHK-Cu carries the far larger literature and is studied principally in extracellular matrix and wound-model biology; AHK-Cu research clusters instead around angiogenic signalling and follicular models. If a supplier listing, a formulation ingredient list or a secondary article uses the names loosely, assume it has not distinguished them deliberately and go back to the certificate of analysis — the sequence on the COA is the only thing that settles which compound is actually in the vial.',
     relatedResearchIds: ['ghk-cu'],
     relatedProductSlugs: ['ghk-cu', 'ahk-cu'],
     faq: [
       {
         q: 'What is the difference between GHK-Cu and AHK-Cu?',
-        a: 'A single amino acid at the first position: glycine in GHK-Cu, alanine in AHK-Cu. Both are copper-complexed tripeptides ending in histidine-lysine. Despite that closeness, GHK-Cu research centres on extracellular matrix and wound-healing biology while AHK-Cu research centres on angiogenic signalling and hair-follicle models.',
+        a: 'A single amino acid at the first position: glycine in GHK-Cu, alanine in AHK-Cu. Both are copper-complexed tripeptides ending in histidine-lysine. Despite that closeness, GHK-Cu research centres on extracellular matrix and wound-model biology while AHK-Cu research centres on angiogenic signalling and hair-follicle models.',
       },
       {
         q: 'Is AHK-Cu just a cheaper version of GHK-Cu?',
@@ -576,7 +576,7 @@ export const COMPARISONS: Comparison[] = [
     rows: [
       { label: 'Length', a: 'Tripeptide — lysine-proline-valine (3 residues)', b: 'Pentadecapeptide (15 residues)' },
       { label: 'Parent molecule', a: 'The C-terminal fragment of alpha-melanocyte-stimulating hormone (α-MSH)', b: 'Derived from a sequence within body protection compound, a protein identified in gastric juice' },
-      { label: 'Primary research focus', a: 'Anti-inflammatory signalling; colitis and mucosal inflammation models', b: 'Gastroprotection; tendon, ligament and musculoskeletal repair models, alongside gastrointestinal work' },
+      { label: 'Primary research focus', a: 'Anti-inflammatory signalling; colitis and mucosal inflammation models', b: 'Gastroprotection; tendon, ligament and musculoskeletal injury models, alongside gastrointestinal work' },
       { label: 'Proposed mechanism', a: 'Reported to act on NF-κB-dependent inflammatory signalling; studied as a substrate of the PepT1 peptide transporter expressed in intestinal epithelium', b: 'Reported to modulate growth factor pathways, VEGF expression and nitric oxide signalling in preclinical models' },
       { label: 'Why they get compared', a: 'Both appear in intestinal-inflammation literature', b: 'Both appear in intestinal-inflammation literature' },
       { label: 'Mechanistic overlap', a: 'Minimal — the shared ground is the model system studied, not the pathway', b: 'Minimal — the shared ground is the model system studied, not the pathway' },

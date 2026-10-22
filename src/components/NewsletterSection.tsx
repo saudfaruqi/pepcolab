@@ -48,7 +48,7 @@ export default function NewsletterSection() {
             </button>
           </div>
         )}
-        <p className="mt-4 text-[11px] text-[var(--ink-40)]">No spam ever. Unsubscribe anytime.</p>
+        <p className="mt-4 text-[11px] text-[var(--ink-40)]">Email me PepcoLab research updates: new batches, certificate releases and restock notices. I can unsubscribe at any time.</p>
       </div>
     </section>
   )

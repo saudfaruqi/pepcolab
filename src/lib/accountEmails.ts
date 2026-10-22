@@ -124,6 +124,7 @@ export async function sendReorderReminderEmail(params: {
   `)
 
   await sendMailSafe({
+    stream: 'marketing',
     to,
     subject: 'Time for a fresh batch?',
     text:

@@ -43,7 +43,7 @@ const MAIN_OPTIONS: ChatOption[] = [
   { label: '🔬 Browse research compounds', next: 'categories' },
   { label: '📊 Certificates of Analysis (COAs)', next: 'coa' },
   { label: '📦 Shipping & cold-chain logistics', next: 'shipping' },
-  { label: '🧪 Research protocols & guides', next: 'research_guides' },
+  { label: '🧪 Research methods & guides', next: 'research_guides' },
   { label: '⚗️ Reconstitution & handling', next: 'reconstitution' },
   { label: '📋 Batch verification & lot lookup', next: 'batch_verify' },
   { label: '💰 Pricing & bulk orders', next: 'pricing' },
@@ -62,7 +62,7 @@ export const CHAT_NODES: Record<string, ChatNode> = {
   main: {
     id: 'main',
     message: [
-      "Welcome to PepcoLab's research assistant. I'm here to help you navigate our catalogue of research-grade compounds, understand our testing protocols, and provide technical guidance for your laboratory work.",
+      "Welcome to PepcoLab's research assistant. I'm here to help you navigate our catalogue of research-grade compounds, understand our testing methods, and provide technical guidance for your laboratory work.",
       "All products are sold strictly for in-vitro laboratory research and scientific study — not for human or veterinary use.",
       "How can I assist you today?"
     ],
@@ -159,7 +159,7 @@ export const CHAT_NODES: Record<string, ChatNode> = {
     options: [
       { label: '📦 View full shipping policy', href: '/shipping' },
       { label: '🔍 Track an existing order', next: 'track' },
-      { label: '🌡️ Cold-chain handling protocols', next: 'cold_chain' },
+      { label: '🌡️ Cold-chain handling', next: 'cold_chain' },
       { label: '← Back to main menu', next: 'main' }
     ],
     keywords: ['ship', 'shipping', 'delivery', 'deliver', 'dispatch', 'cold chain', 'temperature', 'packaging', 'tracking', 'courier'],
@@ -172,7 +172,7 @@ export const CHAT_NODES: Record<string, ChatNode> = {
   cold_chain: {
     id: 'cold_chain',
     message: [
-      "Our cold-chain protocol is designed to preserve compound integrity from our facility to your laboratory.",
+      "Our cold-chain process is designed to preserve compound integrity from our facility to your laboratory.",
       "",
       "**Packaging Standards:**",
       "• Insulated shipping containers with phase-change gel packs",
@@ -211,7 +211,7 @@ export const CHAT_NODES: Record<string, ChatNode> = {
       "Specific stability data is available on each product's COA."
     ],
     options: [
-      { label: '🧪 Reconstitution protocols', next: 'reconstitution' },
+      { label: '🧪 Solution preparation', next: 'reconstitution' },
       { label: '📋 Back to cold-chain info', next: 'cold_chain' },
       { label: '← Back to main menu', next: 'main' }
     ],
@@ -220,16 +220,16 @@ export const CHAT_NODES: Record<string, ChatNode> = {
   },
 
   // ============================================================
-  // RECONSTITUTION — Technical Protocols
+  // RECONSTITUTION — solution preparation
   // ============================================================
   reconstitution: {
     id: 'reconstitution',
     message: [
       "Reconstitution is the process of dissolving lyophilized peptide into solution for research use.",
       "",
-      "**General Protocol:**",
+      "**General method:**",
       "1. Equilibrate the vial to room temperature (avoid warming)",
-      "2. Use sterile, RNase-free water or the solvent specified in your research protocol",
+      "2. Use sterile, RNase-free water or the diluent specified in your study method",
       "3. Add the appropriate volume — use our calculator for precision",
       "4. Gently swirl (do not vortex) until fully dissolved",
       "5. Centrifuge briefly if needed to collect all liquid",
@@ -242,9 +242,9 @@ export const CHAT_NODES: Record<string, ChatNode> = {
       "Use our Reconstitution Calculator for precise volume calculations."
     ],
     options: [
-      { label: '🧮 Open Reconstitution Calculator', href: '/tools' },
+      { label: '🧮 Open Concentration Calculator', href: '/tools' },
       { label: '📋 Storage guidelines', next: 'storage' },
-      { label: '📖 Research protocols library', next: 'research_guides' },
+      { label: '📖 Research methods library', next: 'research_guides' },
       { label: '← Back to main menu', next: 'main' }
     ],
     keywords: ['reconstitut', 'dissolve', 'diluent', 'solvent', 'water', 'buffer', 'peptide', 'vial', 'volume', 'calculator'],
@@ -261,7 +261,7 @@ export const CHAT_NODES: Record<string, ChatNode> = {
       "",
       "**Available Resources:**",
       "• In-depth compound profiles with literature references",
-      "• Reconstitution and storage protocols",
+      "• Solution preparation and storage methods",
       "• Analytical method development guides",
       "• Stability and degradation studies",
       "• Citations of peer-reviewed research using each compound",
@@ -271,10 +271,10 @@ export const CHAT_NODES: Record<string, ChatNode> = {
     options: [
       { label: '📚 Visit the Research Hub', href: '/research' },
       { label: '📖 View our Guides', href: '/guides' },
-      { label: '🧪 Reconstitution protocols', next: 'reconstitution' },
+      { label: '🧪 Solution preparation', next: 'reconstitution' },
       { label: '← Back to main menu', next: 'main' }
     ],
-    keywords: ['guide', 'research', 'protocol', 'method', 'literature', 'reference', 'citation', 'study', 'experimental'],
+    keywords: ['guide', 'research', 'method', 'literature', 'reference', 'citation', 'study', 'experimental'],
     researchFocus: 'Research methodology education'
   },
 

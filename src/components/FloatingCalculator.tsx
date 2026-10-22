@@ -290,7 +290,7 @@ export default function FloatingCalculator() {
         }}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label="Reconstitution calculator"
+        aria-label="Concentration calculator"
         className={`fc-fab${mounted ? ' fc-in' : ''}${prompt && !open ? ' fc-attn' : ''}`}
       >
         {open ? <X size={22} /> : <Calculator size={22} />}

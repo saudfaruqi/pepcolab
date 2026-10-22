@@ -13,6 +13,7 @@
 // link) is not affected — customers always need those.
 
 import { redis } from '@/lib/redis'
+import { withdrawEmailByAddress, isEmailSuppressed } from '@/lib/crm/store'
 
 const SUPPRESSED_KEY = 'email:suppressed'
 
@@ -20,11 +21,21 @@ function normalise(email: string): string {
   return email.trim().toLowerCase()
 }
 
-/** Adds an address to the opt-out list. Idempotent. */
+/**
+ * Adds an address to the opt-out list. Idempotent. Every unsubscribe path
+ * (one-click links, the /unsubscribe page, newsletter opt-out) comes through
+ * here, so it also writes the CRM "withdrawn" consent event and suppression
+ * hash (lib/crm/store.ts) — honoured immediately, within the brief's 24 hours.
+ */
 export async function suppressMarketingEmail(email: string): Promise<void> {
   const value = normalise(email)
   if (!value) return
   await redis.zadd(SUPPRESSED_KEY, { score: Date.now(), member: value })
+  try {
+    await withdrawEmailByAddress(value, 'email_unsubscribe')
+  } catch (err) {
+    console.error('[emailPreferences] CRM withdrawal failed (legacy opt-out still recorded):', err)
+  }
 }
 
 /**
@@ -37,7 +48,8 @@ export async function isMarketingSuppressed(email: string): Promise<boolean> {
   if (!value) return true
   try {
     const score = await redis.zscore(SUPPRESSED_KEY, value)
-    return score !== null && score !== undefined
+    if (score !== null && score !== undefined) return true
+    return await isEmailSuppressed(value)
   } catch (err) {
     console.error('[emailPreferences] Could not read opt-out list — skipping send:', err)
     return true

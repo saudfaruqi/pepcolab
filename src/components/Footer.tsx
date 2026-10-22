@@ -1,55 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
+import { CONSENT_WORDING } from '@/lib/crm/types'
 
 /**
- * Brand marks are drawn inline rather than imported.
- *
- * lucide-react removed its brand icons (Instagram, Youtube and the rest) in
- * v1 — importing them builds fine against older versions and breaks on
- * upgrade, which is the worst kind of dependency. These are the same
- * stroke-style glyphs the rest of the footer uses, at 24×24, inheriting
- * `currentColor` so the hover and focus states below drive them.
+ * No social profile links (Oct 2026, clean-up brief A11): the Instagram and
+ * YouTube accounts were taken down, and the Organization schema carries no
+ * sameAs entries for them either.
  */
-type IconProps = { size?: number }
-
-function InstagramMark({ size = 17 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-  )
-}
-
-function YoutubeMark({ size = 17 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-      <path d="m10 15 5-3-5-3z" />
-    </svg>
-  )
-}
-
-/**
- * Social profiles (Sep 2026).
- *
- * Kept in one place because the same URLs also belong in the Organization
- * schema's `sameAs` (app/layout.tsx) — that is what lets Google tie these
- * profiles to the PepcoLab brand entity rather than treating them as three
- * unrelated things with similar names. Brand search is already the site's
- * strongest query cluster, so the linkage is worth having.
- *
- * Add a profile here and to SOCIAL_PROFILES in app/layout.tsx together.
- */
-const SOCIALS = [
-  { label: 'Instagram', href: 'https://www.instagram.com/pepcolab/', Icon: InstagramMark },
-  { label: 'YouTube',   href: 'https://www.youtube.com/@pepcolab',   Icon: YoutubeMark   },
-]
-
 const LINKS = {
   Products: [
     { label: 'All Compounds',    href: '/products'                       },
@@ -58,7 +16,7 @@ const LINKS = {
     { label: 'GH-Axis Peptides',  href: '/products/category/gh-axis-peptides'         },
     { label: 'Copper & Cosmetic', href: '/products/category/copper-cosmetic-peptides' },
     { label: 'Lab Supplies',      href: '/products/category/lab-supplies'             },
-    { label: 'Bundles & Stacks', href: '/bundles'               },
+    { label: 'Paired Sets',      href: '/bundles'               },
     { label: 'Wishlist',         href: '/wishlist'              },
   ],
   Research: [
@@ -111,10 +69,17 @@ export default function Footer() {
   const [submitting,  setSubmitting]  = useState(false)
   const [error,       setError]       = useState<string | null>(null)
 
+  const [consented, setConsented] = useState(false)
+
   async function handleSubscribe() {
     const trimmed = email.trim()
     if (!trimmed.includes('@') || !trimmed.includes('.')) {
       setError('Enter a valid email address.')
+      return
+    }
+    // Brief B4: the unticked email-v1 box is the consent; no tick, no signup.
+    if (!consented) {
+      setError('Tick the box to confirm you would like research updates.')
       return
     }
     setError(null)
@@ -129,7 +94,7 @@ export default function Footer() {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed }),
+        body: JSON.stringify({ email: trimmed, consent: true, pageUrl: window.location.href.split('#')[0] }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -138,6 +103,7 @@ export default function Footer() {
       }
       setSubbed(true)
       setEmail('')
+      setConsented(false)
     } catch {
       setError('Something went wrong. Please check your connection and try again.')
     } finally {
@@ -236,6 +202,20 @@ export default function Footer() {
           margin-top: 10px;
           line-height: 1.6;
         }
+        .footer-newsletter-consent {
+          display: grid;
+          grid-template-columns: 16px minmax(0, 1fr);
+          gap: 8px;
+          align-items: start;
+          cursor: pointer;
+          color: rgba(255,255,255,.45);
+        }
+        .footer-newsletter-consent input {
+          width: 14px;
+          height: 14px;
+          margin: 1px 0 0;
+          accent-color: #fff;
+        }
         .footer-newsletter-error {
           font-size: 11.5px;
           color: #f87171;
@@ -309,34 +289,6 @@ export default function Footer() {
           gap: 24px;
           flex-wrap: wrap;
         }
-        .footer-socials {
-          display: flex;
-          gap: 10px;
-          margin-top: 18px;
-        }
-        .footer-social {
-          width: 36px;
-          height: 36px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: rgba(255,255,255,.55);
-          border: 1px solid rgba(255,255,255,.14);
-          transition: color .2s ease, border-color .2s ease, background .2s ease;
-        }
-        .footer-social:hover {
-          color: #fff;
-          border-color: rgba(255,255,255,.4);
-          background: rgba(255,255,255,.06);
-        }
-        /* Keyboard users get the same affordance as a hover, not a default
-           browser outline that disappears against the dark footer. */
-        .footer-social:focus-visible {
-          outline: 2px solid rgba(255,255,255,.8);
-          outline-offset: 2px;
-        }
-
         .footer-bottom-text {
           font-size: 11px;
           color: rgba(255,255,255,.22);
@@ -434,34 +386,26 @@ export default function Footer() {
                     value={email}
                     disabled={submitting}
                     onChange={e => { setEmail(e.target.value); if (error) setError(null) }}
-                    onKeyDown={e => { if (e.key === 'Enter') handleSubscribe() }}
+                    onKeyDown={e => { if (e.key === 'Enter' && consented) handleSubscribe() }}
                   />
-                  <button onClick={handleSubscribe} disabled={submitting}>
+                  <button onClick={handleSubscribe} disabled={submitting || !consented}>
                     {submitting ? 'Subscribing…' : 'Subscribe'}
                   </button>
                 </div>
                 {error && <div className="footer-newsletter-error">{error}</div>}
-                <div className="footer-newsletter-note">Research updates, new compounds & batch COA alerts. No spam.</div>
+                <label htmlFor="footer-newsletter-consent" className="footer-newsletter-note footer-newsletter-consent">
+                  <input
+                    id="footer-newsletter-consent"
+                    type="checkbox"
+                    checked={consented}
+                    disabled={submitting}
+                    onChange={e => { setConsented(e.target.checked); if (error) setError(null) }}
+                  />
+                  <span>{CONSENT_WORDING['email-v1']}</span>
+                </label>
               </>
             )}
 
-            <div className="footer-socials">
-              {SOCIALS.map(({ label, href, Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  /* noopener/noreferrer on every outbound target="_blank" —
-                     without it the opened tab can reach back via window.opener. */
-                  rel="noopener noreferrer"
-                  aria-label={`PepcoLab on ${label}`}
-                  title={label}
-                  className="footer-social"
-                >
-                  <Icon size={17} />
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Link columns */}

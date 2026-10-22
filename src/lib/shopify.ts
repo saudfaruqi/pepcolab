@@ -1,5 +1,6 @@
 // src/lib/shopify.ts
 import { convertFromAed, convertOptional, currencyFor, marketQuery } from './pricing'
+import { isRetiredHandle, isWithdrawnDeviceTitle, PRODUCT_WITHDRAWAL_ACTIVE } from './retired-paths'
 import { classOf, getProductClass } from '@/lib/productClasses'
 
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
@@ -415,7 +416,73 @@ function pickRepresentativeVariant(
  * Omitting `market` leaves prices in AED untouched, which is what
  * generateStaticParams and sitemap.ts want.
  */
+/**
+ * LABORATORY FORMATS ONLY (brief A2). Pen and nasal-spray variants are being
+ * deleted in Shopify; until every one is gone, they are dropped here so the
+ * site never offers, prices or names a device. Also strips the device
+ * sentences from product copy ("Now available in the UAE in the following
+ * formats: Pen, Vial.", pen storage lines, "Discard 28 days after first
+ * use").
+ */
+function labVariantEdges(edges: { node: ShopifyProductVariant }[]) {
+  return edges.filter((e) => !isWithdrawnDeviceTitle(e.node.title || ''))
+}
+
+const DEVICE_SENTENCE_RES: RegExp[] = [
+  /[^.\n]*\bnow available in the (uae|uk)\b[^.\n]*\./gi,
+  /[^.\n]*\bavailable as (a )?(vial|pen|nasal spray)[^.\n]*\./gi,
+  /[^.\n]*\bpen\s*:[^.\n]*\.?/gi,
+  /[^.\n]*\bnasal spray\s*:[^.\n]*\.?/gi,
+  /[^.\n]*\bdiscard\s+\d+\s+days? after first use[^.\n]*\.?/gi,
+  /[^.\n]*\b(pens?|nasal sprays?)\b[^.\n]*\./gi,
+]
+
+export function stripDeviceCopy(text: string): string {
+  let out = text || ''
+  for (const re of DEVICE_SENTENCE_RES) out = out.replace(re, '')
+  return out.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim()
+}
+
+function stripDeviceHtml(html: string | undefined): string {
+  if (!html) return html ?? ''
+  // Remove whole block elements that mention a device, then sentences.
+  let out = html.replace(/<(p|li|h\d)[^>]*>(?:(?!<\/\1>)[\s\S])*?\b(pens?|nasal|spray|discard \d+ days)\b[\s\S]*?<\/\1>/gi, '')
+  out = out.replace(/<(p|li)[^>]*>\s*<\/\1>/gi, '')
+  return out
+}
+
+/** Product title without device format suffixes ("— Pen, Vial", "Pen / Vial"). */
+/** Renames decided in the clean-up brief (A7, A8), applied until Shopify carries them. */
+const TITLE_RENAMES: [RegExp, string][] = [
+  [/pharma[\s-]*grade\s+bac(teriostatic)?\s+water/i, 'Bacteriostatic Water USP'],
+  [/wolverine\s+stack/i, 'BPC-157 / TB-500 Blend'],
+]
+
+function renameTitle(title: string): string {
+  let t = title || ''
+  for (const [re, name] of TITLE_RENAMES) t = t.replace(re, name)
+  return t
+}
+
+function stripDeviceTitle(title: string): string {
+  return (title || '')
+    .replace(/\s*[—–-]\s*(pen|vial|nasal spray)(\s*[,/&]\s*(pen|vial|nasal spray))*\s*$/i, '')
+    .replace(/\b(pen|nasal spray)\s*[,/&]\s*/gi, '')
+    .trim()
+}
+
 export function normaliseProduct(node: ShopifyProduct, market?: string) {
+  // Device stripping only runs while product withdrawal is switched on
+  // (lib/retired-paths.ts PRODUCT_WITHDRAWAL_ACTIVE); the renames always run.
+  node = PRODUCT_WITHDRAWAL_ACTIVE
+    ? {
+        ...node,
+        title: stripDeviceTitle(renameTitle(node.title)),
+        description: stripDeviceCopy(node.description ?? ''),
+        descriptionHtml: stripDeviceHtml(node.descriptionHtml),
+        variants: { ...node.variants, edges: labVariantEdges(node.variants.edges) },
+      }
+    : { ...node, title: renameTitle(node.title) }
   const variant = pickRepresentativeVariant(node.variants.edges)
   const anyVariantAvailable = node.variants.edges.some((e) => e.node.availableForSale)
   const image = node.images.edges[0]?.node
@@ -456,10 +523,12 @@ export function normaliseProduct(node: ShopifyProduct, market?: string) {
     // productType field, separate from the body-system category tags
     // above. Not previously fetched at all, so "vials/pens" had no data
     // source anywhere in the app.
-    format: node.productType ?? '',
-    formatSlug: node.productType
-      ? node.productType.toLowerCase().replace(/\s+/g, '-')
-      : '',
+    format: isWithdrawnDeviceTitle(node.productType ?? '') ? 'Vial' : node.productType ?? '',
+    formatSlug: isWithdrawnDeviceTitle(node.productType ?? '')
+      ? 'vial'
+      : node.productType
+        ? node.productType.toLowerCase().replace(/\s+/g, '-')
+        : '',
 
     variantId: variant?.id ?? '',
     price: convertFromAed(parseFloat(variant?.price.amount ?? '0'), market),
@@ -537,7 +606,17 @@ export function normaliseProduct(node: ShopifyProduct, market?: string) {
 // homepage couldn't be safely server-rendered with correct prices without
 // this fix landing first. generateStaticParams-style callers that don't
 // care about country still work identically (buyerCountry stays undefined).
-export async function getProducts(first = 40, buyerCountry?: string) {
+/** Live catalogue: withdrawn products and products with no laboratory format removed. */
+function isListable(p: ReturnType<typeof normaliseProduct>): boolean {
+  return !isRetiredHandle(p.handle) && p.variants.length > 0
+}
+
+/**
+ * `includeRetired` is for the order pipeline only (STRABL webhook variant
+ * resolution), which must still recognise an in-flight order for a product
+ * withdrawn after it was paid for. Nothing customer-facing passes it.
+ */
+export async function getProducts(first = 40, buyerCountry?: string, opts: { includeRetired?: boolean } = {}) {
   // buyerCountry does two things: picks the display currency (always), and
   // picks the catalogue (only once UK_CATALOGUE_LIVE is true in pricing.ts —
   // until then marketQuery returns undefined and every market sees everything).
@@ -553,7 +632,8 @@ export async function getProducts(first = 40, buyerCountry?: string) {
       { first, query },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
-    return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
+    const all = data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
+    return opts.includeRetired ? all : all.filter(isListable)
   }
 
   // Client: always go through proxy with country
@@ -563,7 +643,8 @@ export async function getProducts(first = 40, buyerCountry?: string) {
     { first, query },
     buyerCountry
   )
-  return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
+  const all = data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
+  return opts.includeRetired ? all : all.filter(isListable)
 }
 
 // Extract the query string to reuse in both paths
@@ -722,7 +803,9 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
       { handle },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
-    return data.product ? normaliseProduct(data.product, buyerCountry) : null
+    if (!data.product) return null
+    const p = normaliseProduct(data.product, buyerCountry)
+    return isListable(p) ? p : null
   }
 
   // Client: was calling shopifyFetch directly, which hits Shopify's GraphQL
@@ -738,5 +821,7 @@ export async function getProductByHandle(handle: string, buyerCountry = 'AE') {
     { handle },
     buyerCountry
   )
-  return data.product ? normaliseProduct(data.product, buyerCountry) : null
+  if (!data.product) return null
+  const p = normaliseProduct(data.product, buyerCountry)
+  return isListable(p) ? p : null
 }

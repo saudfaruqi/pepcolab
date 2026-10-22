@@ -60,7 +60,7 @@ export function ToolCard({
 }
 
 /* ─────────────────────────────
-   RECONSTITUTION CALCULATOR
+   CONCENTRATION CALCULATOR
    Volume (mL) = (Peptide mg × 1000) / Desired concentration (mcg/mL)
 ───────────────────────────── */
 export function ReconstitutionCalculator({ standalone = false }: { standalone?: boolean }) {
@@ -117,7 +117,7 @@ export function ReconstitutionCalculator({ standalone = false }: { standalone?: 
   if (!standalone) {
     return (
       <ToolCard
-        title="Reconstitution Calculator"
+        title="Concentration Calculator"
         description="Diluent volume calculation (mcg/mL based)."
         icon={<FlaskConical size={20} />}
       >
@@ -136,7 +136,7 @@ export function ReconstitutionCalculator({ standalone = false }: { standalone?: 
           <FlaskConical size={24} />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-zinc-900">Reconstitution Calculator</h2>
+          <h2 className="text-xl font-semibold text-zinc-900">Concentration Calculator</h2>
           <p className="text-sm text-zinc-500">Diluent volume for a target concentration, based on vial mass.</p>
         </div>
       </div>

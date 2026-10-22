@@ -1,11 +1,10 @@
 'use client'
-// The guide request form. Posts to /api/learn/lead, fires the browser Lead
-// event (only if the visitor accepted marketing cookies — the Pixel is not
-// loaded otherwise), and moves to the thank-you page.
+// The guide request form. Posts to /api/learn/lead and moves to the
+// thank-you page. The optional opt-in uses the exact wording recorded as
+// consent version "email-v1" (clean-up brief B4).
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { hasMarketingConsent } from '@/lib/consent'
-import { newEventId, trackMetaLead, readMetaCookies } from '@/lib/metaPixel'
+import { EMAIL_OPT_IN_TEXT } from '@/lib/learnGuides'
 
 interface Props {
   guideSlug: string
@@ -40,8 +39,6 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
       return
     }
     setBusy(true)
-    const consent = hasMarketingConsent()
-    const eventId = newEventId('lead')
     try {
       const res = await fetch('/api/learn/lead', {
         method: 'POST',
@@ -53,11 +50,8 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
           source,
           researchArea: area,
           emailOptIn: optIn,
-          marketingConsent: consent,
-          eventId,
           pageUrl: window.location.href.split('#')[0],
           company,
-          ...(consent ? readMetaCookies() : {}),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -66,7 +60,6 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
         setBusy(false)
         return
       }
-      if (consent) trackMetaLead(eventId, { content_name: guideName })
       router.push(`/learn/${guideSlug}/thanks`)
     } catch {
       setError('Could not reach the server. Please check your connection and try again.')
@@ -123,12 +116,13 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
 
       <label className="lf-opt">
         <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
+        <span>{EMAIL_OPT_IN_TEXT}</span>
       </label>
 
       <button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email me the guide'}</button>
 
       <p className="lf-fine">
-        We use your email to send the guide{optIn ? ' and the follow-ups you asked for' : ''}. See our{' '}
+        We use your email to send the guide{optIn ? ' and the research updates you asked for' : ''}. See our{' '}
         <a href="/privacy">privacy policy</a>. For laboratory and research use only.
       </p>
     </form>

@@ -1,7 +1,7 @@
 // src/components/CartDrawer.tsx
 'use client'
 
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import { computeBundleSavings } from '@/lib/bundles'
 import Link from 'next/link'
 import {
@@ -10,6 +10,8 @@ import {
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
+import CheckoutAttestation from '@/components/CheckoutAttestation'
+import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 import { chargeNotice, displayedTotalToAed } from '@/lib/pricing'
@@ -51,7 +53,14 @@ export default function CartDrawer() {
   // useStrablCheckout() (src/lib/useStrablCheckout.ts) so this drawer and
   // the standalone /cart page share one implementation. See that file for
   // the full history/verification notes on the integration.
-  const handleCheckout = () => strablCheckout(lines, displayCurrency, detectedCountry)
+  // Required research attestation (brief A10) — ISO time ticked, or null.
+  const [attestedAt, setAttestedAt] = useState<string | null>(null)
+  const [attestPrompt, setAttestPrompt] = useState(false)
+  const [consents, setConsents] = useState<ConsentChoice>({ email: false, whatsapp: false })
+  const handleCheckout = () => {
+    if (!attestedAt) { setAttestPrompt(true); return }
+    strablCheckout(lines, displayCurrency, detectedCountry, null, attestedAt, consents)
+  }
 
   // Bundle saving is applied inside useStrablCheckout; shown here so the
   // drawer total matches what STRABL will charge.
@@ -264,12 +273,22 @@ export default function CartDrawer() {
               </p>
             )}
 
+            <CheckoutAttestation
+              tone="drawer"
+              attestedAt={attestedAt}
+              onChange={(v) => { setAttestedAt(v); if (v) { setAttestPrompt(false); clearSdkError() } }}
+              showError={attestPrompt}
+            >
+              <ConsentBoxes idPrefix="drawer-consent" email={consents.email} whatsapp={consents.whatsapp} onChange={setConsents} />
+            </CheckoutAttestation>
+
             {/* Checkout button */}
             <button
               onClick={handleCheckout}
               disabled={checkingOut || loading || !sdkReady}
+              aria-disabled={!attestedAt}
               className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all ${
-                checkingOut || loading || !sdkReady
+                checkingOut || loading || !sdkReady || !attestedAt
                   ? 'bg-gray-300 text-white/60 cursor-not-allowed'
                   : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30'
               }`}
@@ -305,7 +324,7 @@ export default function CartDrawer() {
                 style={{ borderColor: '#C7ECD3', color: '#128C4A', background: '#F0FDF4', textDecoration: 'none' }}
               >
                 <MessageCircle size={15} />
-                Order via WhatsApp instead
+                Questions? Message us on WhatsApp
               </a>
             )}
 

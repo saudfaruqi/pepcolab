@@ -128,6 +128,11 @@ export interface OrderRecord {
   //   /checkout/success (lib/heardFrom.ts). Optional; most never answer.
   checkoutRef?: string
   heardFrom?: { answer: string; detail?: string; at: string }
+
+  // RESEARCH ATTESTATION (Oct 2026 clean-up brief, A10): when the buyer
+  // ticked the required "18 or over, in-vitro laboratory research only"
+  // box at checkout. Copied from the checkout by the STRABL webhook.
+  researchAttestedAt?: string
 }
 
 export interface OrderAmendment {

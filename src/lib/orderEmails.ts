@@ -245,8 +245,10 @@ export async function sendOrderConfirmationEmail(params: {
   total: number
   currency: string
   customerName?: string
+  /** Opt-in request for customers with no current consent (lib/crm/optinLinks.ts). */
+  optIn?: { html: string; text: string } | null
 }) {
-  const { to, orderShortCode, products, total, currency, customerName } = params
+  const { to, orderShortCode, products, total, currency, customerName, optIn } = params
 
   const trackUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(orderShortCode)}`
 
@@ -336,6 +338,7 @@ export async function sendOrderConfirmationEmail(params: {
       <a href="mailto:hello@pepcolab.com" style="color:${INK_60};">hello@pepcolab.com</a>.<br />
       Supplied for in-vitro laboratory research use only. Not for human or veterinary consumption.
     </p>
+    ${optIn?.html ?? ''}
   `)
 
   const itemLines = products
@@ -360,7 +363,8 @@ export async function sendOrderConfirmationEmail(params: {
       `Track your order: ${trackUrl}\n` +
       `Open your account (one tap, no password — order history and reorder): ${accountUrl}\n\n` +
       `Questions? Reply to this email or contact hello@pepcolab.com\n\n` +
-      `Supplied for in-vitro laboratory research use only. Not for human or veterinary consumption.`,
+      `Supplied for in-vitro laboratory research use only. Not for human or veterinary consumption.` +
+      (optIn?.text ? `\n\n${optIn.text}` : ''),
     html,
   })
 }
@@ -520,6 +524,7 @@ export async function sendAbandonedCartEmail(params: {
     `\n\nCart ref ${params.orderShortCode}`
 
   await sendMailSafe({
+    stream: 'marketing',
     to: params.to,
     subject: isFinal ? `Final hold &mdash; your reserved samples (${params.orderShortCode})` : `Your samples are still reserved`,
     text,

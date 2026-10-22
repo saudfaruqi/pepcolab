@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "You're sending messages a little fast — please slow down, or reach us directly on WhatsApp or hello@pepcolab.com.",
+            "You're sending messages a little fast — please slow down, or email us at hello@pepcolab.com.",
         },
         { status: 429 }
       )
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Live chat isn't set up yet — but our team is happy to help directly. Try WhatsApp or hello@pepcolab.com.",
+            "Live chat isn't set up yet — but our team is happy to help directly. Email us at hello@pepcolab.com.",
         },
         { status: 503 }
       )
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Sorry, something went wrong on our end. Please try again, or reach us on WhatsApp / hello@pepcolab.com.",
+            "Sorry, something went wrong on our end. Please try again, or email us at hello@pepcolab.com.",
         },
         { status: 502 }
       )

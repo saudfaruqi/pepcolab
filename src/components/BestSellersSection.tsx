@@ -6,55 +6,58 @@ import Link from 'next/link'
 import { formatPrice, productHref } from '@/lib/utils'
 
 /**
- * Curated best-sellers rail. Replaces the old "Verified compounds / Published
- * data" block, which just showed products.slice(0, 4) — i.e. whatever order
- * Shopify happened to return, presented as if it were a considered selection.
+ * "What researchers order most" rail (Oct 2026, clean-up brief A8).
  *
- * Order here IS the ranking shown on the cards, so it's an editorial decision
- * rather than an accident of the API. Edit the array to re-rank.
+ * The five cards are the products with the most paid orders, ranked on the
+ * server from our own order records (app/page.tsx → popularHandles) with
+ * withdrawn products already excluded by getProducts(). When there is no
+ * order history to rank by (build time, a new store), FALLBACK_HANDLES fills
+ * the rail — a fixed list of products that are still listed.
  *
- * Handles must match Shopify exactly. Anything not found in `products` is
- * skipped silently rather than rendering an empty card — so a product going
- * out of stock or being renamed degrades gracefully.
+ * No rank badges ("Best seller", "Trending"…) and no editorial adjectives:
+ * each card shows the name, the vial size, the price and "COA published".
  */
-const FEATURED_HANDLES = [
-  'retatrutide-uae', // Retatrutide — Shopify's product TITLE was renamed to "GLP" at
-  // STRABL's request, but the handle/slug was not (and doesn't need to be —
-  // this is the one real handle; see the matching fix in restrictedCheckout.ts).
-  // "GLP" and "Retatrutide" refer to the same single product throughout this
-  // codebase, never two different ones.
-  'klow-uae',
-  'wolverine-stack-uae',
-  'glow-uae',
-  'selank-uae',
-]
+const FALLBACK_HANDLES = ['klow', 'glow', 'wolverine-stack', 'selank', 'ghk-cu', 'semax', 'mots-c']
 
-/** Short editorial line per product. Kept factual — format and composition,
- *  not effects. These sit on the most-viewed section of the site. */
-const FEATURED_COPY: Record<string, string> = {
-  'retatrutide-uae': 'GLP-1/GIP/glucagon triple agonist, single-vial format.',
-  'klow-uae': 'The flagship blend. Five peptides, one vial, published COA.',
-  'wolverine-stack-uae': 'Repair blend in pen or vial. Two formats, one batch record.',
-  'glow-uae': 'Three-peptide preparation, cold-chain dispatched.',
-  'selank-uae': 'Heptapeptide, available as vial, pen or nasal spray.',
+function baseHandle(h: string): string {
+  return (h || '').toLowerCase().replace(/-(uae|uk|ae|gb)$/, '')
 }
 
-const RANK_LABELS = ['Best seller', 'Most reordered', 'Staff pick', 'Trending', 'Popular']
+/** "Vial 10mg" / "10mg" / "Default Title" → "10mg vial" or "Single vial". */
+function vialSize(p: any): string {
+  const t = String(p.mg || p.variants?.[0]?.title || '')
+  const m = t.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|ml|%)/i)
+  if (m) return /ml|%/i.test(m[2]) ? `${m[1]}${m[2].toLowerCase()}` : `${m[1]}${m[2].toLowerCase()} vial`
+  return 'Single vial'
+}
 
 export default function BestSellersSection({
   products,
   loading,
+  popularHandles = [],
 }: {
   products: any[]
   loading?: boolean
+  /** Handles ranked by paid-order count, most first (server-computed). */
+  popularHandles?: string[]
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const featured = useMemo(() => {
-    return FEATURED_HANDLES
-      .map((handle) => products.find((p) => p.handle === handle || p.slug === handle))
-      .filter(Boolean)
-  }, [products])
+    const byBase = new Map<string, any>()
+    for (const p of products) byBase.set(baseHandle(p.handle || p.slug), p)
+    const picked: any[] = []
+    const seen = new Set<string>()
+    for (const h of [...popularHandles, ...FALLBACK_HANDLES]) {
+      const key = baseHandle(h)
+      const p = byBase.get(key)
+      if (!p || seen.has(key)) continue
+      seen.add(key)
+      picked.push(p)
+      if (picked.length === 5) break
+    }
+    return picked
+  }, [products, popularHandles])
 
   // Nothing matched — don't render a headline over an empty rail.
   if (!loading && featured.length === 0) return null
@@ -154,40 +157,7 @@ export default function BestSellersSection({
                     alignSelf: 'stretch',
                   }}
                 >
-                  {/* Rank chip */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      left: 8,
-                      zIndex: 2,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 3,
-                      padding: '2px 7px',
-                      borderRadius: 999,
-                      background: i === 0 ? '#C8992A' : 'rgba(255,255,255,.08)',
-                      border: i === 0 ? 'none' : '1px solid rgba(255,255,255,.12)',
-                      backdropFilter: 'blur(6px)',
-                    }}
-                  >
-                    <span
-                      style={{
-                        // Was 7.5px — measured as the smallest text on the
-                        // whole site. Uppercase at .06em tracking needs more
-                        // than that to be read at arm's length on a phone.
-                        fontSize: 10.5,
-                        fontWeight: 800,
-                        letterSpacing: '.06em',
-                        textTransform: 'uppercase',
-                        color: i === 0 ? '#0A0A0A' : 'rgba(255,255,255,.65)',
-                      }}
-                    >
-                      {RANK_LABELS[i] ?? 'Popular'}
-                    </span>
-                  </div>
-
-                  {/* Image container - fixed height so pens & vials sit at the same scale.
+                  {/* Image container - fixed height so every vial sits at the same scale.
                       Height/padding scale up on desktop via .bs-image-container media queries below. */}
                   <div
                     className="bs-image-container"
@@ -277,7 +247,7 @@ export default function BestSellersSection({
                         lineHeight: 1.4,
                         color: 'rgba(255,255,255,.4)',
                         margin: '0 0 10px',
-                        minHeight: '2.8em',
+                        minHeight: '1.4em',
                         flex: 1,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -285,7 +255,7 @@ export default function BestSellersSection({
                         overflow: 'hidden',
                       }}
                     >
-                      {FEATURED_COPY[p.handle] ?? 'Published COA for every batch.'}
+                      {vialSize(p)}
                     </p>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
@@ -300,7 +270,7 @@ export default function BestSellersSection({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {p.inStock === false ? 'Out' : 'In stock'}
+                        {p.inStock === false ? 'Out of stock' : 'COA published'}
                       </span>
                     </div>
                   </div>

@@ -24,13 +24,13 @@
 export type ActionKind = 'add-to-cart' | 'search' | 'view-cart' | 'reorder'
 
 export interface SearchFilters {
-  /** Body-system tag as used on the site: recovery, metabolic, cognitive… */
+  /** Compound-class slug (lib/productClasses.ts), e.g. 'gh-axis-peptides'. */
   category?: string
   /** pen | vial | nasal spray | powder */
   format?: string
   /** Upper price bound in the displayed currency. */
   maxPrice?: number
-  /** Sort cheapest first — "cheapest pen", "most affordable". */
+  /** Sort cheapest first — "cheapest vial", "most affordable". */
   cheapest?: boolean
   /** Free-text remainder, if any. */
   term?: string
@@ -59,14 +59,14 @@ export const MAX_ADD_QTY = 5
 // it would do it in the chat's own voice. Those words now fall through to an
 // ordinary product-name search.
 const CATEGORIES: Record<string, string> = {
+  incretin: 'incretin-analogues',
+  incretins: 'incretin-analogues',
+  amylin: 'incretin-analogues',
   secretagogue: 'gh-axis-peptides',
   secretagogues: 'gh-axis-peptides',
   ghrh: 'gh-axis-peptides',
   'gh axis': 'gh-axis-peptides',
   'gh-axis': 'gh-axis-peptides',
-  incretin: 'incretin-analogues',
-  incretins: 'incretin-analogues',
-  amylin: 'incretin-analogues',
   neuropeptide: 'neuropeptide-analogues',
   neuropeptides: 'neuropeptide-analogues',
   mitochondrial: 'mitochondrial-cofactors',
@@ -91,14 +91,16 @@ const CATEGORIES: Record<string, string> = {
 const FORMATS: Record<string, string> = {
   pen: 'pen',
   pens: 'pen',
-  vial: 'vial',
-  vials: 'vial',
   'nasal spray': 'nasal spray',
   'nasal sprays': 'nasal spray',
   spray: 'nasal spray',
   sprays: 'nasal spray',
+  vial: 'vial',
+  vials: 'vial',
   powder: 'powder',
   powders: 'powder',
+  lyophilised: 'powder',
+  lyophilized: 'powder',
 }
 
 /**
@@ -157,7 +159,7 @@ function findCategory(q: string): string | undefined {
 }
 
 function findFormat(q: string): string | undefined {
-  // Longest first, so "nasal spray" wins over "spray".
+  // Longest first, so a longer term always wins over a shorter one inside it.
   const terms = Object.keys(FORMATS).sort((a, b) => b.length - a.length)
   for (const term of terms) {
     if (new RegExp(`\\b${term.replace(/\s/g, '\\s')}\\b`, 'i').test(q)) return FORMATS[term]
@@ -194,7 +196,7 @@ export function detectAction(input: string): ActionRequest | null {
   const category = findCategory(raw)
   const format = findFormat(raw)
 
-  // "list all pens" and "show me recovery" name what they want without ever
+  // "list all vials" and "show me copper peptides" name what they want without ever
   // saying "stock" or "have", so a browse verb plus a category or format is
   // enough on its own.
   const browsing = /\b(show|list|browse|find|search)\b/i.test(raw) && Boolean(category || format)

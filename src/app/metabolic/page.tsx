@@ -9,5 +9,5 @@
 import { permanentRedirect } from 'next/navigation'
 
 export default function RetiredMetabolicHub() {
-  permanentRedirect('/products/category/incretin-analogues')
+  permanentRedirect('/products')
 }

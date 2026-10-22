@@ -8,25 +8,25 @@ import { getProducts } from '@/lib/shopify'
 import ProductCard from '@/components/ProductCard'
 import { useCountry } from '@/lib/countryContext'
 import { PRODUCT_CLASSES, LEGACY_CATEGORY_REDIRECTS, classOf } from '@/lib/productClasses'
+import { isWithdrawnDeviceTitle } from '@/lib/retired-paths'
 
 // ── Compound classes (Oct 2026) — see lib/productClasses.ts. These replaced
-// the health-goal tags (Metabolic, Recovery, Cognitive…). A stale ?cat= link
-// using an old goal slug is translated to its class below.
+// the old outcome-named tags. A stale ?cat= link using an old slug is
+// translated to its class below.
 const KNOWN_CATEGORIES: { slug: string; label: string }[] = PRODUCT_CLASSES.map((c) => ({ slug: c.slug, label: c.label }))
 
 const KNOWN_SLUGS = new Set(KNOWN_CATEGORIES.map(c => c.slug))
 
 // ── Format (Pen / Vial / Powder / Supply) — a second, independent filter
-// axis from the body-system categories above. This comes from Shopify's
-// productType field (see shopify.ts normaliseProduct → formatSlug), which
-// wasn't being fetched at all before, so there was no way to filter or even
-// see "vials" vs "pens" anywhere on the product page.
+// axis from the compound classes above, from Shopify's productType field
+// (see shopify.ts normaliseProduct → formatSlug). Device formats drop out
+// automatically if the withdrawal switch in lib/retired-paths.ts is on.
 const KNOWN_FORMATS: { slug: string; label: string }[] = [
   { slug: 'vial',   label: 'Vials'    },
   { slug: 'pen',    label: 'Pens'     },
   { slug: 'powder', label: 'Powder'   },
   { slug: 'supply', label: 'Supplies' },
-]
+].filter((f) => !isWithdrawnDeviceTitle(f.label))
 const KNOWN_FORMAT_SLUGS = new Set(KNOWN_FORMATS.map(f => f.slug))
 
 interface Props {

@@ -14,6 +14,7 @@
 //   4. Otherwise rendered for them and sent.
 import { sendMail } from '@/lib/mailer'
 import { isMarketingSuppressed } from '@/lib/emailPreferences'
+import { marketingBlockFor, recordMarketingSend } from '@/lib/marketingGate'
 import { resolveAudience } from './audience'
 import { renderCampaign, sampleRecipient } from './render'
 import {
@@ -130,11 +131,16 @@ export async function sendBatch(
     let processed = 0
     for (const recipient of pending.slice(0, batchSize)) {
       const at = new Date().toISOString()
+      let blockReason: Awaited<ReturnType<typeof marketingBlockFor>> = null
       let result: RecipientResult
       if (excluded.has(recipient.email)) {
         result = { email: recipient.email, status: 'skipped_excluded', at }
       } else if (await isMarketingSuppressed(recipient.email)) {
         result = { email: recipient.email, status: 'skipped_unsubscribed', at }
+      } else if ((blockReason = await marketingBlockFor(recipient.email)) === 'no_consent') {
+        result = { email: recipient.email, status: 'skipped_unsubscribed', detail: 'no current email opt-in', at }
+      } else if (blockReason === 'cadence') {
+        result = { email: recipient.email, status: 'skipped_recent', detail: '2 marketing emails already this week', at }
       } else {
         const last = minGapMs > 0 ? await lastMarketingSentAt(recipient.email) : null
         if (last && Date.now() - last < minGapMs) {
@@ -148,6 +154,7 @@ export async function sendBatch(
           try {
             const rendered = renderCampaign(campaign, recipient)
             await sendMail({
+              stream: 'marketing',
               to: recipient.email,
               subject: rendered.subject,
               html: rendered.html,
@@ -155,6 +162,7 @@ export async function sendBatch(
               headers: rendered.headers,
             })
             await markMarketingSent(recipient.email)
+            await recordMarketingSend(recipient.email)
             result = { email: recipient.email, status: 'sent', at }
           } catch (err) {
             result = {

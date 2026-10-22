@@ -1,11 +1,9 @@
 'use client'
 // src/components/ConsentBanner.tsx
 //
-// Cookie choice, shown once until answered (see lib/consent.ts for what each
-// category controls). Equal-weight Accept / Reject buttons — a reject that is
+// Cookie choice, shown once until answered (see lib/consent.ts). One optional
+// category — analytics. Equal-weight Accept / Reject buttons: a reject that is
 // harder to find than accept is not valid consent under UK guidance.
-// "Choose" opens the two toggles for someone who wants analytics but not
-// marketing.
 //
 // Sits under the 21+ gate (z-index 9999), so on a first visit the gate is
 // answered first and this appears behind it.
@@ -15,9 +13,6 @@ import { readConsent, saveConsent } from '@/lib/consent'
 
 export default function ConsentBanner() {
   const [show, setShow] = useState(false)
-  const [custom, setCustom] = useState(false)
-  const [analytics, setAnalytics] = useState(true)
-  const [marketing, setMarketing] = useState(false)
 
   useEffect(() => {
     if (!readConsent()) setShow(true)
@@ -28,10 +23,9 @@ export default function ConsentBanner() {
 
   if (!show) return null
 
-  const choose = (a: boolean, m: boolean) => {
-    saveConsent(a, m)
+  const choose = (a: boolean) => {
+    saveConsent(a)
     setShow(false)
-    setCustom(false)
   }
 
   const btn: React.CSSProperties = {
@@ -68,62 +62,22 @@ export default function ConsentBanner() {
     >
       <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Cookies</div>
       <p style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(13,13,13,.65)', margin: '0 0 14px' }}>
-        We use essential storage to run the site and your cart. With your permission we also use analytics (Google) to see
-        how the site is used, and marketing cookies (Meta) to measure our ads. See our{' '}
+        We use essential storage to run the site and your cart. With your permission we also use Google Analytics to
+        see which pages are used. We do not use advertising cookies. See our{' '}
         <Link href="/privacy" style={{ color: '#0D0D0D', fontWeight: 600 }}>
           privacy policy
         </Link>
         .
       </p>
 
-      {custom && (
-        <div style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
-          <label style={{ display: 'flex', gap: 10, fontSize: 13, alignItems: 'flex-start' }}>
-            <input type="checkbox" checked disabled style={{ marginTop: 3 }} />
-            <span>
-              <strong>Essential</strong> — cart, sign-in, age confirmation. Always on.
-            </span>
-          </label>
-          <label style={{ display: 'flex', gap: 10, fontSize: 13, alignItems: 'flex-start', cursor: 'pointer' }}>
-            <input type="checkbox" checked={analytics} onChange={(e) => setAnalytics(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>
-              <strong>Analytics</strong> — Google Analytics, to understand which pages are used.
-            </span>
-          </label>
-          <label style={{ display: 'flex', gap: 10, fontSize: 13, alignItems: 'flex-start', cursor: 'pointer' }}>
-            <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>
-              <strong>Marketing</strong> — Meta Pixel, to measure whether our Facebook and Instagram ads work.
-            </span>
-          </label>
-        </div>
-      )}
-
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {custom ? (
-          <button type="button" onClick={() => choose(analytics, marketing)} style={{ ...btn, background: '#0D0D0D', color: '#fff' }}>
-            Save choices
-          </button>
-        ) : (
-          <>
-            <button type="button" onClick={() => choose(false, false)} style={{ ...btn, background: '#fff', color: '#0D0D0D' }}>
-              Reject all
-            </button>
-            <button type="button" onClick={() => choose(true, true)} style={{ ...btn, background: '#0D0D0D', color: '#fff' }}>
-              Accept all
-            </button>
-          </>
-        )}
-      </div>
-      {!custom && (
-        <button
-          type="button"
-          onClick={() => setCustom(true)}
-          style={{ marginTop: 10, background: 'none', border: 0, padding: 0, fontSize: 12, color: 'rgba(13,13,13,.6)', textDecoration: 'underline', cursor: 'pointer' }}
-        >
-          Choose what to allow
+        <button type="button" onClick={() => choose(false)} style={{ ...btn, background: '#fff', color: '#0D0D0D' }}>
+          Reject analytics
         </button>
-      )}
+        <button type="button" onClick={() => choose(true)} style={{ ...btn, background: '#0D0D0D', color: '#fff' }}>
+          Accept analytics
+        </button>
+      </div>
     </div>
   )
 }

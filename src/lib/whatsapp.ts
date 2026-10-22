@@ -1,18 +1,20 @@
 // src/lib/whatsapp.ts
 //
-// Central place for the WhatsApp ordering number + link building, so the
-// floating button, product page, and cart/cart-drawer all stay in sync
-// instead of each hardcoding their own wa.me URL.
+// Central place for the WhatsApp number + link building, so every WhatsApp
+// link on the site is built from ONE environment variable (brief C1/C9):
+// NEXT_PUBLIC_WHATSAPP_NUMBER, full international format, digits only, no
+// "+" or spaces. A number change is a one-line env change and a redeploy.
+// When it is unset, every WhatsApp CTA renders nothing.
 //
-// TODO: set NEXT_PUBLIC_WHATSAPP_NUMBER in your env (Vercel + .env.local),
-// full international format, digits only, no leading "+" or "00"
-// (e.g. UAE mobile => "9715XXXXXXXX", UK mobile => "447XXXXXXXXX").
-// Until it's set, WhatsApp CTAs render disabled with a "coming soon" style
-// instead of linking to a broken wa.me/undefined URL.
+// WHATSAPP IS A SERVICE CHANNEL (brief C5, Oct 2026). Pre-filled messages
+// ask about an order, delivery or documentation. They never list products,
+// prices or totals, and never read as an order being placed: Meta's
+// commerce policy prohibits selling these products over WhatsApp, and the
+// number staying alive depends on it. Prices and offers go by email only.
 import type { CartLine } from '@/lib/cartContext'
 import type { WishlistItem } from '@/lib/wishlistContext'
 
-export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || ''
+export const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '').replace(/\D/g, '')
 
 export function isWhatsAppConfigured(): boolean {
   return WHATSAPP_NUMBER.trim().length > 0
@@ -42,46 +44,36 @@ function buildLink(message: string): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`
 }
 
+/**
+ * The opt-in join link (brief C4). The customer's own "JOIN PepcoLab updates"
+ * message is the consent; staff record it in the admin when it arrives.
+ * Used on the order-confirmed page, in transactional-email opt-in blocks and
+ * on the account page. Never used in ads.
+ */
+export function whatsAppJoinLink(): string {
+  return buildLink('JOIN PepcoLab updates')
+}
+
 export function whatsAppGeneralLink(): string {
-  return buildLink("Hi PepcoLab, I'd like to place an order.")
+  return buildLink('Hi PepcoLab, I have a question.')
 }
 
-export function whatsAppProductLink(productName: string, variantTitle?: string): string {
-  const strength = variantTitle ? ` (${variantTitle})` : ''
-  return buildLink(`Hi PepcoLab, I'd like to order ${productName}${strength}.`)
+/**
+ * Kept for the product page. The message is a question, not an order: it
+ * does not name a strength, a price or a quantity.
+ */
+export function whatsAppProductLink(_productName: string, _variantTitle?: string): string {
+  return buildLink('Hi PepcoLab, I have a question about a product’s documentation or delivery.')
 }
 
-export function whatsAppCartLink(lines: CartLine[], currencyCode: string): string {
-  if (lines.length === 0) return whatsAppGeneralLink()
-
-  const itemLines = lines
-    .map((l) => `• ${l.title}${l.variantTitle ? ` (${l.variantTitle})` : ''} x${l.quantity}`)
-    .join('\n')
-
-  const subtotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0)
-
-  const message =
-    `Hi PepcoLab, I'd like to order:\n${itemLines}\n\n` +
-    `Subtotal: ${currencyCode} ${subtotal.toFixed(2)}`
-
-  return buildLink(message)
+/** Kept for the cart. Never lists items or a subtotal (brief C5). */
+export function whatsAppCartLink(_lines: CartLine[], _currencyCode: string): string {
+  return buildLink('Hi PepcoLab, I have a question before I check out on the website.')
 }
 
-// Wishlist → WhatsApp: same "list + ask" pattern as whatsAppCartLink, kept
-// as its own function (rather than reusing CartLine) because wishlist
-// items aren't cart lines — no quantity, and the currency can vary per
-// item since it's read straight from each product's own currencyCode
-// rather than a single cart-wide one.
-export function whatsAppWishlistLink(items: WishlistItem[]): string {
-  if (items.length === 0) return whatsAppGeneralLink()
-
-  const itemLines = items
-    .map((i) => `• ${i.name}${i.mg ? ` (${i.mg})` : ''} — ${i.currencyCode ?? 'AED'} ${i.price.toFixed(2)}`)
-    .join('\n')
-
-  const message = `Hi PepcoLab, I'd like to ask about the items on my wishlist:\n${itemLines}`
-
-  return buildLink(message)
+/** Kept for the wishlist. Never lists items or prices (brief C5). */
+export function whatsAppWishlistLink(_items: WishlistItem[]): string {
+  return buildLink('Hi PepcoLab, I have a question about availability or documentation.')
 }
 
 // ChatWidget → WhatsApp handoff. Same "list + ask" pattern as the cart/

@@ -18,28 +18,13 @@ import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import ChatWidget from '@/components/ChatWidget'
 import AffiliateCapture from '@/components/AffiliateCapture'
 import ConsentBanner from '@/components/ConsentBanner'
-import MetaPixel from '@/components/MetaPixel'
 import { CONSENT_DEFAULT_SCRIPT } from '@/lib/consent'
 
 const siteUrl = 'https://www.pepcolab.com'
 
-/**
- * Social profiles, for the Organization schema's `sameAs` (Sep 2026).
- *
- * `sameAs` is how Google ties these accounts to the PepcoLab brand entity
- * rather than treating them as unrelated pages that happen to share a name.
- *
- * Brand queries are already this site's strongest cluster, so making the
- * entity unambiguous is worth the four lines.
- *
- * Keep in step with SOCIALS in components/Footer.tsx — the footer renders the
- * same profiles, and a link in one place but not the other is the thing that
- * quietly drifts.
- */
-const SOCIAL_PROFILES = [
-  'https://www.instagram.com/pepcolab/',
-  'https://www.youtube.com/@pepcolab',
-]
+// No social profiles are linked from the site or its structured data
+// (Oct 2026 clean-up brief, A11): Instagram and YouTube were taken down, and
+// the site must not link the domain to Meta or any social account.
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -213,7 +198,6 @@ export const metadata: Metadata = {
     title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
       'Research compounds with independently tested, batch-matched documentation and cold-chain dispatch.',
-    creator: '@pepcolab',
     images: ['/og-pepcolab.jpg'],
   },
 
@@ -231,12 +215,6 @@ export const metadata: Metadata = {
 
   other: {
     'msapplication-TileColor': '#050505',
-    // Meta Business Manager domain verification (Brand Safety > Domains).
-    // Set NEXT_PUBLIC_META_DOMAIN_VERIFICATION to the code Meta gives you,
-    // or verify by DNS TXT record instead and leave it unset.
-    ...(process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION
-      ? { 'facebook-domain-verification': process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION }
-      : {}),
   },
 }
 
@@ -305,7 +283,6 @@ export default function RootLayout({
               description:
                 'Supplier of research-grade peptides and laboratory compounds for in-vitro research use, with independently tested, batch-matched certificates of analysis.',
               email: 'hello@pepcolab.com',
-              sameAs: SOCIAL_PROFILES,
               areaServed: [
                 {
                   '@type': 'Country',
@@ -385,8 +362,7 @@ export default function RootLayout({
           `}
         </Script>
 
-        {/* Meta Pixel: loads only with marketing consent and a configured id. */}
-        <MetaPixel />
+        {/* Cookie choice: analytics only (lib/consent.ts). */}
         <ConsentBanner />
 
         <Script

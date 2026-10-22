@@ -1,25 +1,23 @@
 // src/app/api/learn/lead/route.ts
 //
-// POST from the /learn guide form. Saves the lead, emails the guide, and —
-// only when the visitor accepted marketing cookies — sends the server copy
-// of the Meta Lead event (same event_id as the browser Pixel, so Meta
-// de-duplicates them).
+// POST from the /learn guide form. Saves the lead and emails the guide.
+// The follow-up series runs only when the visitor ticked the email-v1 opt-in
+// (lib/learnGuides.ts EMAIL_OPT_IN_TEXT); the opt-in is stored with its
+// wording version and evidence (ip, user agent, page) on the lead record.
 //
-// Body: { email, firstName?, guide, source?, researchArea?, emailOptIn,
-//         marketingConsent, eventId?, fbp?, fbc?, pageUrl? }
+// Body: { email, firstName?, guide, source?, researchArea?, emailOptIn, pageUrl? }
 import { NextRequest, NextResponse } from 'next/server'
 import { getClientIp, isRateLimited } from '@/lib/rateLimit'
 import { getLead, saveLead, type LeadRecord } from '@/lib/leadStore'
-import { getLearnGuide, cleanSource, RESEARCH_AREAS } from '@/lib/learnGuides'
+import { getLearnGuide, cleanSource, RESEARCH_AREAS, EMAIL_OPT_IN_VERSION } from '@/lib/learnGuides'
 import { sendGuideEmail, NURTURE_OFFSETS_DAYS } from '@/lib/leadEmails'
-import { sendMetaEvent } from '@/lib/metaCapi'
 import { isMarketingSuppressed } from '@/lib/emailPreferences'
+import { syncLead } from '@/lib/crm/sync'
 
 export const dynamic = 'force-dynamic'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const DAY_MS = 24 * 60 * 60 * 1000
-const SITE_URL = (process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com').replace(/\/$/, '')
 
 function str(v: unknown, max: number): string {
   return typeof v === 'string' ? v.trim().slice(0, max) : ''
@@ -53,6 +51,15 @@ export async function POST(req: NextRequest) {
   const researchArea = RESEARCH_AREAS.some((a) => a.value === areaRaw) ? areaRaw : undefined
   const wantsSeries = body?.emailOptIn === true
   const now = new Date()
+  const optInEvidence = wantsSeries
+    ? {
+        at: now.toISOString(),
+        wording: EMAIL_OPT_IN_VERSION,
+        ip: ip && ip !== 'unknown' ? ip : undefined,
+        userAgent: (req.headers.get('user-agent') || '').slice(0, 300) || undefined,
+        pageUrl: str(body?.pageUrl, 500) || undefined,
+      }
+    : undefined
 
   const existing = await getLead(email)
   const suppressed = await isMarketingSuppressed(email).catch(() => false)
@@ -71,6 +78,7 @@ export async function POST(req: NextRequest) {
       guides: Array.from(new Set([...existing.guides, guide.slug])),
       emailOptIn: optIn,
       researchArea: researchArea || existing.researchArea,
+      optIn: startSeries ? optInEvidence : existing.optIn,
       step: startSeries ? 0 : existing.step,
       nextAt: !optIn
         ? null
@@ -91,10 +99,14 @@ export async function POST(req: NextRequest) {
       step: 0,
       nextAt: optIn ? now.getTime() + NURTURE_OFFSETS_DAYS[1] * DAY_MS : null,
       researchArea,
+      optIn: optIn ? optInEvidence : undefined,
     }
   }
 
   await saveLead(lead)
+  // Contact + email-v1 consent event in the CRM (best-effort; the lead
+  // record keeps the same evidence and the nightly sync retries).
+  await syncLead(email).catch((err) => console.error('[learn/lead] CRM sync failed:', err))
 
   // The guide itself is the service requested, so it is sent even to an
   // address that unsubscribed from marketing.
@@ -106,24 +118,6 @@ export async function POST(req: NextRequest) {
       { error: 'We saved your request but could not send the email just now. Please try again shortly.' },
       { status: 502 }
     )
-  }
-
-  if (body?.marketingConsent === true) {
-    const eventId = str(body?.eventId, 80)
-    if (eventId) {
-      const pageUrl = str(body?.pageUrl, 500)
-      await sendMetaEvent({
-        eventName: 'Lead',
-        eventId,
-        eventSourceUrl: pageUrl.startsWith(SITE_URL) ? pageUrl : `${SITE_URL}/learn/${guide.slug}`,
-        email,
-        clientIp: ip && ip !== 'unknown' ? ip : undefined,
-        userAgent: req.headers.get('user-agent') || undefined,
-        fbp: str(body?.fbp, 200) || undefined,
-        fbc: str(body?.fbc, 300) || undefined,
-        customData: { content_name: guide.shortName },
-      }).catch((err) => console.error('[learn/lead] CAPI failed:', err))
-    }
   }
 
   return NextResponse.json({ ok: true })

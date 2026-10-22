@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { Lock } from 'lucide-react'
 
 export default function AdminLoginPage() {
+  const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ name, password }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -29,7 +30,7 @@ export default function AdminLoginPage() {
       // server-side cookie check runs fresh against the cookie the
       // browser just received, rather than relying on a client-side
       // route transition to pick it up.
-      window.location.href = '/admin'
+      window.location.href = data.role === 'agent' ? '/admin/contacts' : '/admin'
     } catch {
       setErrorMsg('Something went wrong. Please try again.')
       setStatus('error')
@@ -52,13 +53,26 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
+        <label htmlFor="name" className="mb-1.5 block text-xs font-medium text-[#0D0D0D]/70">
+          Name
+        </label>
+        <input
+          id="name"
+          type="text"
+          autoFocus
+          autoComplete="username"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4 w-full rounded-lg border border-[#0D0D0D]/15 px-3 py-2.5 text-sm text-[#0D0D0D] outline-none focus:border-[#C8992A]"
+          placeholder="e.g. saud"
+        />
+
         <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-[#0D0D0D]/70">
           Password
         </label>
         <input
           id="password"
           type="password"
-          autoFocus
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

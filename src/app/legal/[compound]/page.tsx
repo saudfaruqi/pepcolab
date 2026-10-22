@@ -15,6 +15,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { LEGAL_NOTES, getLegalNoteBySlug } from '@/lib/legal-data'
 import { ArrowLeft, ChevronRight, ShieldAlert } from 'lucide-react'
+import { isRetiredHref } from '@/lib/retired-paths'
 
 const SITE_URL = 'https://www.pepcolab.com'
 
@@ -134,12 +135,12 @@ export default function LegalStatusPage({ params }: Props) {
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {note.relatedProductSlug && (
+            {note.relatedProductSlug && !isRetiredHref(`/products/${note.relatedProductSlug}`) && (
               <Link href={`/products/${note.relatedProductSlug}`} style={pillStyle}>
                 Shop {note.compound} <ChevronRight size={13} />
               </Link>
             )}
-            {note.relatedResearchId && (
+            {note.relatedResearchId && !isRetiredHref(`/research/${note.relatedResearchId}`) && (
               <Link href={`/research/${note.relatedResearchId}`} style={pillStyle}>
                 Research: {note.compound} <ChevronRight size={13} />
               </Link>

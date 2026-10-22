@@ -167,7 +167,7 @@ export function renderCampaign(campaign: Campaign, recipient: Recipient): Render
     ${trustStrip()}
     <div style="margin-top:24px; padding-top:18px; border-top:1px solid ${BORDER}; font-size:11.5px; line-height:1.7; color:${INK_40}; text-align:center;">
       Questions? Just reply, or write to <a href="mailto:${esc(SUPPORT_EMAIL)}" style="color:${INK_40};">${esc(SUPPORT_EMAIL)}</a>.<br />
-      You&rsquo;re receiving this because you ordered from, or started an order with, Pepco Lab.
+      PepcoLab is a trading name of SEE BEE DEE LIMITED (17072052). You&rsquo;re receiving this because you opted in to PepcoLab research updates.
       <a href="${esc(links.page)}" style="color:${INK_40};">Unsubscribe</a>.
     </div>
   `)
@@ -188,6 +188,7 @@ export function renderCampaign(campaign: Campaign, recipient: Recipient): Render
     '',
     `Questions? Reply to this email or write to ${SUPPORT_EMAIL}.`,
     'For laboratory and research purposes only. Not for human or veterinary use.',
+    "PepcoLab is a trading name of SEE BEE DEE LIMITED (17072052). You're receiving this because you opted in to PepcoLab research updates.",
     `Unsubscribe: ${links.page}`,
   ]
     .filter((l, i, arr) => !(l === '' && arr[i - 1] === ''))

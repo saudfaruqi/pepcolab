@@ -29,6 +29,8 @@ export interface LeadRecord {
   nextAt: number | null
   /** What the visitor said they research, from the optional dropdown. */
   researchArea?: string
+  /** Evidence for the email opt-in: when, which wording version, ip, user agent, page. */
+  optIn?: { at: string; wording: string; ip?: string; userAgent?: string; pageUrl?: string }
 }
 
 const KEY = (email: string) => `lead:${email.trim().toLowerCase()}`

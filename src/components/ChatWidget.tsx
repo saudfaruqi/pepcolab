@@ -259,7 +259,7 @@ export default function ChatWidget() {
     } catch {
       pushBot([
         'That didn\u2019t go into the cart \u2014 which is on us, not you.',
-        `You can add it from the ${card.title} page, or I\u2019ll get a person to take the order directly.`,
+        `You can add it from the ${card.title} page, or I\u2019ll get a person to help.`,
       ], [{ label: `Open ${card.title}`, href: card.href }],
         () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
     } finally {
@@ -270,7 +270,7 @@ export default function ChatWidget() {
   const describeCart = useCallback(() => {
     if (!cartLines || cartLines.length === 0) {
       pushBot(
-        ['Your cart is empty at the moment.', 'Tell me what you\u2019re after \u2014 a compound name, or something like "show me recovery pens" \u2014 and I\u2019ll pull it up.'],
+        ['Your cart is empty at the moment.', 'Tell me what you\u2019re after \u2014 a compound name, or something like "show me copper peptides" \u2014 and I\u2019ll pull it up.'],
         [{ label: 'Browse the catalogue', href: '/products' }],
         () => setSuggestions([FAQ_BY_ID['order-bundles'], FAQ_BY_ID['coa-what']].filter(Boolean)),
       )
@@ -537,12 +537,11 @@ export default function ChatWidget() {
     [bubbles]
   )
 
-  const handoffSummary = useMemo(() => {
-    const where = context.productSlug ? `Page: ${context.label} — ${context.productSlug}` : `Page: ${context.label}`
-    const asked = bubbles.filter(b => b.role === 'user').slice(-3).map(b => `• ${b.text}`).join('\n')
-    return [where, typeof window !== 'undefined' ? window.location.href : '', asked && `I asked about:\n${asked}`]
-      .filter(Boolean).join('\n')
-  }, [bubbles, context])
+  // The WhatsApp pre-fill carries only where the visitor was, never product
+  // names, links or what they typed: WhatsApp is a service channel and the
+  // number must stay clean (brief C5). The full conversation reaches the team
+  // by email through sendTranscript(), which runs on the same click.
+  const handoffSummary = useMemo(() => `Page: ${context.label}`, [context])
 
   const sendTranscript = useCallback(async (reason: string) => {
     if (transcript.length === 0) return
@@ -905,7 +904,7 @@ export default function ChatWidget() {
                       </button>
                     </div>
                     {handoffState === 'error' && (
-                      <p className="plc-err">That didn&apos;t send. Use WhatsApp or email us directly.</p>
+                      <p className="plc-err">That didn&apos;t send. {waConfigured ? 'Use WhatsApp or email us directly.' : 'Email us directly.'}</p>
                     )}
                   </>
                 )}

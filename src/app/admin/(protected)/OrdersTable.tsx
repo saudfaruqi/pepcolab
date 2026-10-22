@@ -680,6 +680,10 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
                             </div>
                             <div className="text-sm text-[#0D0D0D]/70">
                               {o.phone && <div>Phone: {o.phone}</div>}
+                              <div>
+                                Research attestation:{' '}
+                                {o.researchAttestedAt ? new Date(o.researchAttestedAt).toLocaleString('en-GB') : 'not recorded'}
+                              </div>
                               {o.heardFrom && (
                                 <div>
                                   Heard about us: {heardFromLabel(o.heardFrom.answer)}

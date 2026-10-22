@@ -2,7 +2,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { LEARN_GUIDES, getLearnGuide, YOUTUBE_URL } from '@/lib/learnGuides'
+import { LEARN_GUIDES, getLearnGuide } from '@/lib/learnGuides'
 
 interface Props {
   params: { slug: string }
@@ -39,7 +39,7 @@ export default function LearnThanksPage({ params }: Props) {
       <h1>Check your inbox</h1>
       <p className="lt-p">
         {guide.title} is on its way. It usually arrives within a minute — if it does not, check your spam or promotions
-        folder for an email from Pepco Lab.
+        folder for an email from PepcoLab.
       </p>
       <p className="lt-small">Nothing to wait for? Reply to any of our emails and a person will help.</p>
 
@@ -51,10 +51,10 @@ export default function LearnThanksPage({ params }: Props) {
             <span aria-hidden="true">→</span>
           </Link>
         ))}
-        <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer">
-          <span>Watch the explainers on YouTube</span>
-          <span aria-hidden="true">↗</span>
-        </a>
+        <Link href="/verify">
+          <span>Look up a batch certificate</span>
+          <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </section>
   )

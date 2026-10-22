@@ -30,9 +30,10 @@ import { classOf, getProductClass } from '@/lib/productClasses'
 import { getProducts } from '@/lib/shopify'
 import { getOrderRecord, getOrdersForEmail, type OrderRecord } from '@/lib/orderStore'
 import { COA_BATCHES } from '@/app/coaData'
-import { isPaymentLinkOnlyProduct } from '@/lib/restrictedCheckout'
 // chatContent.ts imports only chatActions.ts, so this does not create a cycle.
-import { NO_MATCH_ANSWER, type LookupIntent } from '@/lib/chatContent'
+import { NO_MATCH_ANSWER, NOT_SUPPLIED_ANSWER, namesNotSupplied, type LookupIntent } from '@/lib/chatContent'
+import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
+import { isPaymentLinkOnlyProduct } from '@/lib/restrictedCheckout'
 import type { SearchFilters } from '@/lib/chatActions'
 
 export interface LookupAnswer {
@@ -71,10 +72,9 @@ export interface ProductCard {
   image?: string
   inStock: boolean
   /**
-   * GLP is sold through fixed STRABL payment links and cannot go through the
-   * Shopify cart at all (lib/restrictedCheckout.ts). Its card links to the
-   * product page instead of offering an Add button — an Add that silently
-   * did nothing would be worse than no Add.
+   * A product that cannot go through the Shopify cart (lib/restrictedCheckout.ts).
+   * Its card links to the product page instead of offering an Add button —
+   * an Add that silently did nothing would be worse than no Add.
    */
   paymentLinkOnly: boolean
   variants: ProductCardVariant[]
@@ -258,8 +258,7 @@ const MAX_RESULTS = 6
 
 /**
  * Cheapest sellable variant, restricted to the requested format when there is
- * one. Without that restriction "cheapest pen" ranked PT-141 first on the
- * strength of its 500 vial, which is not a pen.
+ * one (e.g. a vial size or "powder").
  */
 function lowestPrice(p: CatalogueEntry, format?: string): number {
   let variants = (p.variants ?? []).filter(v => v.price > 0)
@@ -300,7 +299,7 @@ export function answerSearch(filters: SearchFilters, catalogue: CatalogueEntry[]
   }
 
   // Two clauses, because they attach to the headline differently: a format or
-  // category reads as "in pen", a price cap reads as "up to AED 800". Joining
+  // category reads as "in vial", a price cap reads as "up to AED 800". Joining
   // them into one string gave "in stock in up to AED 800".
   const describedIn = [filters.format, getProductClass(filters.category)?.label ?? filters.category].filter(Boolean).join(' ')
   // "up to", not "under": the filter is inclusive, because someone asking for
@@ -429,16 +428,34 @@ export async function answerReorder(email: string | null | undefined): Promise<L
     }
   }
 
-  const rebuildable = (last.products ?? []).filter(p => p.variantId)
-  const itemList = (last.products ?? [])
+  // Withdrawn products are never named or offered back (brief A1–A3).
+  const supplied = (last.products ?? []).filter(p => !namesNotSupplied(p.title) && !isWithdrawnDeviceTitle((p.variantOptions ?? []).join(' ')))
+  const withdrawnCount = (last.products ?? []).length - supplied.length
+  const rebuildable = supplied.filter(p => p.variantId)
+  const itemList = supplied
     .map(p => `${p.title}${p.quantity > 1 ? ` \u00d7 ${p.quantity}` : ''}`)
     .join(', ')
+  const withdrawnNote = withdrawnCount > 0
+    ? `${withdrawnCount === 1 ? 'One item' : `${withdrawnCount} items`} from that order ${withdrawnCount === 1 ? 'is' : 'are'} no longer supplied, so I\u2019ve left ${withdrawnCount === 1 ? 'it' : 'them'} out.`
+    : ''
+
+  if (supplied.length === 0) {
+    return {
+      lines: [
+        `The items in your last order (${last.orderShortCode}) are no longer supplied, so there is nothing to put back in your basket.`,
+        'The catalogue shows everything currently available, each with its batch certificate.',
+      ],
+      links: [{ label: 'Browse the catalogue', href: '/products' }],
+      related: ['contact-human'],
+    }
+  }
 
   if (rebuildable.length === 0) {
     return {
       lines: [
-        `Your last order (${last.orderShortCode}) was ${itemList}.`,
-        'That one was placed on a payment link rather than through the cart, so I can\u2019t rebuild it here \u2014 its product page has the strengths and quantities.',
+        `Your last order (${last.orderShortCode}) included ${itemList}.`,
+        ...(withdrawnNote ? [withdrawnNote] : []),
+        'That one was placed outside the cart, so I can\u2019t rebuild it here \u2014 the product page has the sizes and quantities.',
       ],
       links: [{ label: 'Your orders', href: '/account' }],
       related: ['order-payment', 'contact-human'],
@@ -447,7 +464,8 @@ export async function answerReorder(email: string | null | undefined): Promise<L
 
   return {
     lines: [
-      `Your last order (${last.orderShortCode}) was ${itemList}.`,
+      `Your last order (${last.orderShortCode}) included ${itemList}.`,
+      ...(withdrawnNote ? [withdrawnNote] : []),
       rebuildable.length < (last.products ?? []).length
         ? 'I can put the cart-eligible items back in your basket \u2014 open your orders to do it in one tap.'
         : 'Open your orders and Reorder puts the whole thing back in your basket in one tap.',
@@ -650,7 +668,15 @@ export async function resolveLookup(
   } = {}
 ): Promise<LookupAnswer> {
   if (intent === 'product' || intent === 'product-guess' || intent === 'search' || intent === 'add-to-cart') {
-    const catalogue = (await getProducts(100, 'AE')) as unknown as CatalogueEntry[]
+    // Withdrawn products and device formats get the neutral answer here too,
+    // so a request that bypasses the widget's own check still cannot get a
+    // product card for them (brief A1–A3).
+    const asked = [query, opts.filters?.term ?? '', opts.filters?.format ?? ''].join(' ')
+    if (namesNotSupplied(asked)) return { lines: [...NOT_SUPPLIED_ANSWER], links: [{ label: 'Browse the catalogue', href: '/products' }], related: ['coa-what', 'handling-storage'] }
+
+    const catalogue = ((await getProducts(100, 'AE')) as unknown as CatalogueEntry[])
+      .filter(p => !isRetiredHandle(p.handle))
+      .map(p => ({ ...p, variants: (p.variants ?? []).filter(v => !isWithdrawnDeviceTitle(v.title || '')) }))
     if (intent === 'search') return answerSearch(opts.filters ?? {}, catalogue)
     if (intent === 'add-to-cart') return answerAddToCart(query, opts.quantity ?? 1, catalogue)
     // A guess only speaks up when it actually found something. A miss must

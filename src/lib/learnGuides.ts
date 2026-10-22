@@ -1,17 +1,16 @@
 // src/lib/learnGuides.ts
 //
-// The three free guides behind /learn — the destinations for Meta ads
-// (PepcoLab Meta Ads Strategy, 12 Oct 2026, section 3).
+// The three free guides behind /learn: an email sign-up for visitors arriving
+// from search and the site's guides (no paid ads point here).
 //
 // RULES FOR ANYTHING ON /learn (why these pages look the way they do):
-//   - The ad promises a guide; the page is the guide. No shop button, no
+//   - The page is the guide. No shop button, no
 //     product grid, no prices, no compound names in headings.
 //   - Nothing about what any compound does in or to a body.
 //   - The guide is delivered by EMAIL, not as an on-page download, so a lead
 //     is a real, reachable address.
-//   - `source` is the hidden attribution value from the plan (fb-coa,
-//     fb-check, fb-store). It is overridden by ?src= on the URL when an ad
-//     set needs its own value. Keep health words out of it.
+//   - `source` is the hidden attribution value (learn-coa, learn-check,
+//     learn-store), overridable by ?src= on the URL. Keep health words out.
 
 export interface LearnGuide {
   slug: string
@@ -24,7 +23,7 @@ export interface LearnGuide {
   /** Public PDF path (public/downloads/…). */
   pdfPath: string
   pages: number
-  /** Short name used in emails and the Meta Lead event. */
+  /** Short name used in emails. */
   shortName: string
   seoDescription: string
 }
@@ -32,7 +31,7 @@ export interface LearnGuide {
 export const LEARN_GUIDES: LearnGuide[] = [
   {
     slug: 'coa-guide',
-    source: 'fb-coa',
+    source: 'learn-coa',
     title: 'How to read a certificate of analysis',
     headline: 'How to read a certificate of analysis',
     subhead:
@@ -59,7 +58,7 @@ export const LEARN_GUIDES: LearnGuide[] = [
   },
   {
     slug: 'vendor-checklist',
-    source: 'fb-check',
+    source: 'learn-check',
     title: 'The 5-point supplier checklist',
     headline: 'Five questions to ask any laboratory supplier',
     subhead:
@@ -86,7 +85,7 @@ export const LEARN_GUIDES: LearnGuide[] = [
   },
   {
     slug: 'storage-guide',
-    source: 'fb-store',
+    source: 'learn-store',
     title: 'Laboratory storage guide',
     headline: 'How to store lyophilised peptides in the lab',
     subhead:
@@ -123,7 +122,13 @@ export function cleanSource(raw: string | null | undefined, fallback: string): s
   return v || fallback
 }
 
-export const YOUTUBE_URL = 'https://www.youtube.com/@pepcolab'
+/**
+ * Consent wording, version "email-v1" (clean-up brief B4). Shown verbatim
+ * next to every optional email opt-in box and stored with the consent.
+ */
+export const EMAIL_OPT_IN_TEXT =
+  'Email me PepcoLab research updates: new batches, certificate releases and restock notices. I can unsubscribe at any time.'
+export const EMAIL_OPT_IN_VERSION = 'email-v1'
 
 /** Optional "what best describes your work?" dropdown on the guide form. */
 export const RESEARCH_AREAS: { value: string; label: string }[] = [

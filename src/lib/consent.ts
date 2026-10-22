@@ -1,30 +1,25 @@
 // src/lib/consent.ts
 //
-// COOKIE CONSENT (Oct 2026)
+// COOKIE CONSENT
 //
-// Until this existed, Google Analytics loaded for every visitor with no
-// choice offered, and the privacy policy only said cookies "may" be used.
-// UK PECR (and the UAE PDPL's consent rules for tracking) require a real,
-// prior choice for anything that is not strictly necessary — and the Meta
-// Pixel, which the ads plan needs, is the clearest case of all.
-//
-// Two optional categories:
-//   analytics — Google Analytics. Before consent GA still loads in Consent
-//               Mode with storage DENIED: no cookies, cookieless pings only.
-//   marketing — Meta Pixel (and the Conversions API on the server). Not
-//               loaded at all until accepted.
+// One optional category: analytics (Google Analytics). Before consent GA runs
+// in Consent Mode with storage DENIED — no cookies, cookieless pings only.
+// There is no marketing / advertising category: the Meta Pixel and
+// Conversions API were removed in the Oct 2026 clean-up (brief A11) and no
+// advertising tag is loaded on the site. Ad storage is always denied.
 //
 // The choice is stored in localStorage (no cookie needed to remember "no
-// cookies"), versioned so a policy change can ask again.
+// cookies"), versioned so a policy change asks again. Version 2 = the
+// analytics-only banner; anyone who answered the version-1 banner (which
+// listed Meta) is asked again.
 
 export const CONSENT_STORAGE_KEY = 'pepcolab_consent'
-export const CONSENT_VERSION = 1
+export const CONSENT_VERSION = 2
 export const CONSENT_EVENT = 'pepcolab:consent'
 
 export interface ConsentState {
   v: number
   analytics: boolean
-  marketing: boolean
   ts: number
 }
 
@@ -41,24 +36,15 @@ export function readConsent(): ConsentState | null {
   }
 }
 
-export function hasMarketingConsent(): boolean {
-  return Boolean(readConsent()?.marketing)
-}
-
-export function saveConsent(analytics: boolean, marketing: boolean): ConsentState {
-  const state: ConsentState = { v: CONSENT_VERSION, analytics, marketing, ts: Date.now() }
+export function saveConsent(analytics: boolean): ConsentState {
+  const state: ConsentState = { v: CONSENT_VERSION, analytics, ts: Date.now() }
   try {
     window.localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(state))
   } catch {
     // Private mode: the choice applies to this page view only.
   }
   try {
-    ;(window as any).gtag?.('consent', 'update', {
-      analytics_storage: analytics ? 'granted' : 'denied',
-      ad_storage: marketing ? 'granted' : 'denied',
-      ad_user_data: marketing ? 'granted' : 'denied',
-      ad_personalization: marketing ? 'granted' : 'denied',
-    })
+    ;(window as any).gtag?.('consent', 'update', { analytics_storage: analytics ? 'granted' : 'denied' })
   } catch {
     // gtag not loaded yet; the inline default reads storage on next load.
   }
@@ -68,7 +54,8 @@ export function saveConsent(analytics: boolean, marketing: boolean): ConsentStat
 
 /**
  * Inline script for <head>, run before gtag config: sets Consent Mode
- * defaults from any stored choice, denied otherwise.
+ * defaults from any stored choice, denied otherwise. Advertising storage is
+ * always denied — the site carries no advertising tags.
  */
 export const CONSENT_DEFAULT_SCRIPT = `
   window.dataLayer = window.dataLayer || [];
@@ -79,9 +66,9 @@ export const CONSENT_DEFAULT_SCRIPT = `
   var __ok = __c && __c.v === ${CONSENT_VERSION};
   gtag('consent', 'default', {
     analytics_storage: __ok && __c.analytics ? 'granted' : 'denied',
-    ad_storage: __ok && __c.marketing ? 'granted' : 'denied',
-    ad_user_data: __ok && __c.marketing ? 'granted' : 'denied',
-    ad_personalization: __ok && __c.marketing ? 'granted' : 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
     wait_for_update: 500
   });
 `

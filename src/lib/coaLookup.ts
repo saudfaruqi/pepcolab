@@ -105,8 +105,8 @@ export function allBatches(): CoaBatch[] {
  * Distinct compound names across all published certificates, for the
  * coverage statement on the lookup page.
  *
- * The product field carries the strength ("Tesamorelin 5mg", "GLP 30mg
- * (GLP3)"), so the strength and any parenthetical are trimmed off to get the
+ * The product field carries the strength ("Tesamorelin 5mg", "SS-31 50mg
+ * "), so the strength and any parenthetical are trimmed off to get the
  * compound itself. Two batches of the same compound at different strengths
  * are one entry here.
  */

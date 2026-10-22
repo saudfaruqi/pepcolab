@@ -8,10 +8,11 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { formatPrice } from '@/lib/utils'
+import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
 import { getVariantsByIds, type ReorderVariant } from '@/lib/shopify'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
-import { whatsAppCartLink } from '@/lib/whatsapp'
+import { whatsAppCartLink, isWhatsAppConfigured } from '@/lib/whatsapp'
 import { Search, Package, XCircle, RotateCcw, AlertTriangle, ArrowRight, Star, ShoppingBag, MessageCircle, CheckCircle2 } from 'lucide-react'
 
 interface OrderProduct {
@@ -247,7 +248,9 @@ function TrackOrderContent() {
       let skipped = 0
       for (const p of result.products) {
         const match = p.variantId ? byId.get(p.variantId) : undefined
-        if (!match || !match.availableForSale) {
+        // Withdrawn products / device formats are never re-added (only while
+        // the withdrawal switch in lib/retired-paths.ts is on).
+        if (!match || !match.availableForSale || isRetiredHandle(match.slug) || isWithdrawnDeviceTitle(match.variantTitle)) {
           skipped += 1
           continue
         }
@@ -264,7 +267,7 @@ function TrackOrderContent() {
       if (added > 0) setReorderDone(true)
       if (added === 0) {
         setReorderError(
-          "None of these items could be added automatically — they may no longer be available. Try Reorder via WhatsApp below instead."
+          "None of these items could be added automatically — they may no longer be available. Message us on WhatsApp below if you need help."
         )
       }
     } catch {
@@ -277,7 +280,7 @@ function TrackOrderContent() {
   // Built directly from the saved order record — doesn't depend on the
   // live catalogue at all, so this always works even for fully
   // discontinued products or if getVariantsByIds can't resolve anything.
-  const whatsAppReorderHref = result
+  const whatsAppReorderHref = result && isWhatsAppConfigured()
     ? whatsAppCartLink(
         result.products.map((p, i) => ({
           id: `reorder-${i}`,
@@ -587,6 +590,7 @@ function TrackOrderContent() {
                         </>
                       )}
                     </button>
+{whatsAppReorderHref && (
                     <a
                       href={whatsAppReorderHref}
                       target="_blank"
@@ -594,8 +598,9 @@ function TrackOrderContent() {
                       className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
                     >
                       <MessageCircle size={14} />
-                      Reorder via WhatsApp
+                      Questions? WhatsApp us
                     </a>
+                    )}
                   </div>
                 )}
                 {reorderError && (

@@ -6,7 +6,7 @@ import { LEARN_GUIDES } from '@/lib/learnGuides'
 export const metadata: Metadata = {
   title: 'Free laboratory guides',
   description:
-    'Free guides from Pepco Lab: reading a certificate of analysis, judging a laboratory supplier, and storing lyophilised peptides.',
+    'Free guides from PepcoLab: reading a certificate of analysis, judging a laboratory supplier, and storing lyophilised peptides.',
   alternates: { canonical: '/learn' },
 }
 

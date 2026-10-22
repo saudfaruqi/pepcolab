@@ -28,6 +28,7 @@
 // callers must check isMarketingSuppressed() first, and each carries an
 // opt-out link.
 
+import { optInBlockFor } from '@/lib/crm/optinLinks'
 import { sendMailSafe } from '@/lib/mailer'
 import {
   emailShell, primaryButton, productRows, trustStrip, preheader, refBox,
@@ -50,6 +51,7 @@ const RUO = 'Supplied for in-vitro laboratory research use only. Not for human o
 // quantity instead.
 const PAYMENT_LINK_PRODUCT_HANDLE = 'retatrutide-uae'
 const PAYMENT_LINK_TITLE_RE = /\b(glp|retatrutide|reta)\b/i
+
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                     */
@@ -148,21 +150,22 @@ function money(amount: number, currency: string): string {
 /* Personalised blocks                                                         */
 /* -------------------------------------------------------------------------- */
 
-const HANDLING: Record<Exclude<ProductFormat, 'supply'>, { title: string; html: string; text: string }> = {
+// Storage notes per format. No per-click or usage figures (Oct 2026 clean-up).
+const HANDLING: Record<'pen' | 'vial' | 'nasal' | 'powder', { title: string; html: string; text: string }> = {
   pen: {
     title: 'Pens',
-    html: `Keep refrigerated at 2&ndash;8&nbsp;&deg;C with the cap on, away from light. <strong style="color:${INK};">Don&rsquo;t freeze a pen</strong> &mdash; the liquid inside can be damaged. To see what each click contains, open the <strong style="color:${INK};">Calculator</strong> button on any page of our site and choose <em>Pen</em>.`,
-    text: `Pens: keep refrigerated at 2-8 C with the cap on, away from light. Don't freeze a pen. To see what each click contains, use the Calculator button on our site and choose Pen.`,
-  },
-  vial: {
-    title: 'Vials',
-    html: `Unopened: refrigerate at 2&ndash;8&nbsp;&deg;C, or freeze at &minus;20&nbsp;&deg;C for longer storage. Reconstitute with bacteriostatic water; once reconstituted, keep refrigerated and use within 28 days. Avoid repeated freeze&ndash;thaw. <a href="${SITE_URL}/guides/peptide-reconstitution" style="color:${INK}; font-weight:600;">Reconstitution guide</a> &middot; <a href="${SITE_URL}/tools/reconstitution-calculator" style="color:${INK}; font-weight:600;">Calculator</a>`,
-    text: `Vials: unopened, refrigerate at 2-8 C or freeze at -20 C for longer storage. Reconstitute with bacteriostatic water; once reconstituted, keep refrigerated and use within 28 days. Guide: ${SITE_URL}/guides/peptide-reconstitution`,
+    html: `Keep refrigerated at 2&ndash;8&nbsp;&deg;C with the cap on, away from light. <strong style="color:${INK};">Don&rsquo;t freeze a pen</strong> &mdash; the liquid inside can be damaged.`,
+    text: `Pens: keep refrigerated at 2-8 C with the cap on, away from light. Don't freeze a pen.`,
   },
   nasal: {
     title: 'Nasal sprays',
     html: `Store upright in the fridge at 2&ndash;8&nbsp;&deg;C with the cap on, away from light. Don&rsquo;t freeze.`,
     text: `Nasal sprays: store upright in the fridge at 2-8 C with the cap on, away from light. Don't freeze.`,
+  },
+  vial: {
+    title: 'Vials',
+    html: `Unopened: refrigerate at 2&ndash;8&nbsp;&deg;C, or freeze at &minus;20&nbsp;&deg;C for longer storage. Once reconstituted, keep refrigerated and avoid repeated freeze&ndash;thaw; follow the stability stated on the batch documentation. <a href="${SITE_URL}/guides/peptide-reconstitution" style="color:${INK}; font-weight:600;">Reconstitution guide</a> &middot; <a href="${SITE_URL}/tools" style="color:${INK}; font-weight:600;">Concentration calculator</a>`,
+    text: `Vials: unopened, refrigerate at 2-8 C or freeze at -20 C for longer storage. Once reconstituted, keep refrigerated and avoid repeated freeze-thaw. Guide: ${SITE_URL}/guides/peptide-reconstitution`,
   },
   powder: {
     title: 'Powders',
@@ -187,16 +190,17 @@ function handlingBlock(journey: OrderJourney): { html: string; text: string } {
   return { html, text: formats.map((f) => HANDLING[f].text).join('\n') }
 }
 
+// Service note only — no product link or price (brief B1: service messages
+// carry no promotion).
 function suppliesBlock(journey: OrderJourney): { html: string; text: string } {
   if (!journey.needsBacWater) return { html: '', text: '' }
-  const link = journey.bacWater
   const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px; background:${GOLD_TINT}; border-radius:14px;">
     <tr><td style="padding:14px 18px;">
-      <div style="font-size:13.5px; font-weight:700; color:${INK}; margin-bottom:4px;">You&rsquo;ll need bacteriostatic water</div>
-      <div style="font-size:13px; line-height:1.6; color:${INK_60};">Your vials are supplied as powder and need reconstituting. If you don&rsquo;t already have bacteriostatic water, ${link ? `<a href="${link.url}" style="color:${INK}; font-weight:700;">add it here</a> (${money(link.price, link.currency)})` : `<a href="${SITE_URL}/products" style="color:${INK}; font-weight:700;">find it in the catalogue</a>`}.</div>
+      <div style="font-size:13.5px; font-weight:700; color:${INK}; margin-bottom:4px;">Supplied lyophilised</div>
+      <div style="font-size:13px; line-height:1.6; color:${INK_60};">Your vials are supplied as powder. Use the solvent named on the batch documentation when you prepare a solution.</div>
     </td></tr>
   </table>`
-  const text = `You'll need bacteriostatic water to reconstitute your vials: ${link ? link.url : `${SITE_URL}/products`}`
+  const text = `Your vials are supplied as powder. Use the solvent named on the batch documentation when you prepare a solution.`
   return { html, text }
 }
 
@@ -263,6 +267,7 @@ export async function sendShippedEmail(order: OrderRecord, journey: OrderJourney
   const carrier = order.carrier ? escapeHtml(order.carrier) : ''
   const handling = handlingBlock(journey)
   const supplies = suppliesBlock(journey)
+  const optIn = await optInBlockFor(order.email)
 
   const trackingInner = hasTracking
     ? `<div style="font-size:13px; line-height:1.7; color:${INK_60};">
@@ -288,6 +293,7 @@ export async function sendShippedEmail(order: OrderRecord, journey: OrderJourney
     ${para(`Not arrived by <strong style="color:${INK};">${chaseBy}</strong>, or something not right &mdash; damaged packaging, a warm pack, a missing item? Reply to this email (a photo helps) and we&rsquo;ll sort it straight away.`, 0)}
     ${trustStrip()}
     ${footNote(RUO)}
+    ${optIn?.html ?? ''}
   `)
 
   await sendMailSafe({
@@ -303,7 +309,8 @@ export async function sendShippedEmail(order: OrderRecord, journey: OrderJourney
       `Items:\n${itemsText(order)}\n\n` +
       `When it arrives:\n${handling.text}\n` +
       (supplies.text ? `\n${supplies.text}\n` : '') +
-      `\nNot arrived by ${chaseBy}, or something not right? Reply to this email and we'll sort it.\n\n${RUO}`,
+      `\nNot arrived by ${chaseBy}, or something not right? Reply to this email and we'll sort it.\n\n${RUO}` +
+      (optIn?.text ? `\n\n${optIn.text}` : ''),
     html,
   })
 }
@@ -316,7 +323,7 @@ export async function sendAftercareEmail(order: OrderRecord, journey: OrderJourn
   const summary = productSummary(order)
   const handling = handlingBlock(journey)
   const supplies = suppliesBlock(journey)
-  const related = relatedBlock(journey.related, journey.categories[0] ? `More in ${journey.categories[0]}` : 'You might also like')
+  const optIn = await optInBlockFor(order.email)
 
   const html = emailShell(`
     ${preheader(`Checking your ${summary} arrived safely, plus handling notes`)}
@@ -328,9 +335,9 @@ export async function sendAftercareEmail(order: OrderRecord, journey: OrderJourn
     ${supplies.html}
     ${primaryButton('Storage & handling guide', `${SITE_URL}/guides/storage-conditions`, 12)}
     ${secondaryLink('Check order status', trackOrderUrl(order))}
-    ${related.html}
     ${trustStrip()}
     ${optOutNote(`Sent once, a few days after your order ${escapeHtml(order.orderShortCode)}.`, unsubscribeUrl)}
+    ${optIn?.html ?? ''}
   `)
 
   await sendMailSafe({
@@ -344,9 +351,9 @@ export async function sendAftercareEmail(order: OrderRecord, journey: OrderJourn
       (supplies.text ? `\n${supplies.text}\n` : '') +
       `\nStorage & handling guide: ${SITE_URL}/guides/storage-conditions\n` +
       `Order status: ${trackOrderUrl(order)}\n` +
-      (related.text ? `\n${related.text}\n` : '') +
       `\n${RUO}` +
-      (unsubscribeUrl ? `\n\nStop these emails: ${unsubscribeUrl}` : ''),
+      (unsubscribeUrl ? `\n\nStop these emails: ${unsubscribeUrl}` : '') +
+      (optIn?.text ? `\n\n${optIn.text}` : ''),
     html,
   })
 }
@@ -378,6 +385,7 @@ export async function sendCrossSellEmail(order: OrderRecord, journey: OrderJourn
   `)
 
   await sendMailSafe({
+    stream: 'marketing',
     to: order.email,
     replyTo: SUPPORT_EMAIL,
     subject: area ? `More from the ${area} range` : 'Picked for your next order',
@@ -420,6 +428,7 @@ export async function sendWinbackEmail(order: OrderRecord, journey: OrderJourney
   `)
 
   await sendMailSafe({
+    stream: 'marketing',
     to: order.email,
     replyTo: SUPPORT_EMAIL,
     subject: 'Anything we could do better?',

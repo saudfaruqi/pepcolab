@@ -24,6 +24,7 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isGonePath, normaliseRetiredPath, RETIRED_REDIRECTS } from './lib/retired-paths'
 
 // AE sells and ships. GB is a recognised market for content, currency
 // context and messaging, but has no catalogue and no checkout yet — see
@@ -200,6 +201,27 @@ const LEGACY_PRODUCT_UAE_RE = /^\/products\/([^/]+)-uae\/?$/i
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // WITHDRAWN PRODUCTS AND PAGES (brief A4) — first, so a withdrawn URL is
+  // never redirected, cookied or put behind the maintenance notice. 410 Gone
+  // tells crawlers it is permanently withdrawn (lib/retired-paths.ts).
+  if (isGonePath(pathname)) {
+    return new NextResponse('This item has been permanently withdrawn from PepcoLab.', {
+      status: 410,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'cache-control': 'public, max-age=3600',
+        'x-robots-tag': 'noindex, nofollow',
+      },
+    })
+  }
+  // Certificate PDFs only pass through for the withdrawn-file check above.
+  if (pathname.startsWith('/pdf/')) return NextResponse.next()
+
+  const retiredTarget = RETIRED_REDIRECTS[normaliseRetiredPath(pathname)]
+  if (retiredTarget) {
+    return NextResponse.redirect(new URL(retiredTarget, request.url), 301)
+  }
+
   // 0. MAINTENANCE GATE — before everything else, so no redirect or cookie
   //    work happens for a visitor who is only going to get the notice.
   if (MAINTENANCE_ON) { 
@@ -287,5 +309,5 @@ export const config = {
   // Excludes _next assets, the API surface, and static files with an
   // extension (images, PDFs, the video, robots.txt, sitemap.xml) so the
   // middleware doesn't run — and set a cookie — on every asset request.
-  matcher: ['/((?!_next|api|.*\\..*).*)'],
+  matcher: ['/((?!_next|api|.*\\..*).*)', '/pdf/:path*'],
 }

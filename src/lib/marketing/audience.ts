@@ -11,6 +11,7 @@
 import { listAllOrders, isPaidOrder, type OrderRecord } from '@/lib/orderStore'
 import { listSubscribers } from '@/lib/newsletterStore'
 import { listLeads } from '@/lib/leadStore'
+import { marketableEmails } from '@/lib/crm/store'
 import type { AudienceSpec, Recipient } from './types'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -101,12 +102,32 @@ function toRecipient(a: Accumulator): Recipient {
   }
 }
 
+/**
+ * Recipients for a campaign. Whatever the segment, only contacts with a
+ * current email opt-in in the CRM are returned (brief B6: segment pickers
+ * draw only from the marketable list). Suppression, exclusions and the
+ * weekly ceiling are applied again at send time.
+ */
 export async function resolveAudience(spec: AudienceSpec): Promise<Recipient[]> {
+  const [segment, marketable] = await Promise.all([resolveSegment(spec), marketableEmails()])
+  return segment.filter((r) => marketable.has(r.email))
+}
+
+async function resolveSegment(spec: AudienceSpec): Promise<Recipient[]> {
   const customers = await buildCustomerIndex()
   const exclude = new Set((spec.excludeEmails || []).map((e) => e.trim().toLowerCase()))
   const out: Recipient[] = []
 
-  if (spec.segment === 'leads') {
+  if (spec.segment === 'all_opted_in') {
+    const marketable = await marketableEmails()
+    for (const [email, c] of marketable) {
+      if (exclude.has(email)) continue
+      const r = toRecipient(customers.get(email) ?? newAcc(email))
+      if (!r.firstName && c.firstName) r.firstName = c.firstName
+      if (!r.name && c.firstName) r.name = [c.firstName, c.lastName].filter(Boolean).join(' ')
+      out.push(r)
+    }
+  } else if (spec.segment === 'leads') {
     // Only leads who ticked the opt-in. Everyone else asked for one guide,
     // which they were sent, and nothing more.
     const leads = await listLeads()

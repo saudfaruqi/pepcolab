@@ -17,12 +17,12 @@ const SITE_URL = 'https://www.pepcolab.com'
 export const metadata: Metadata = {
   title: 'Research Hub — Peptide Mechanisms & Preclinical Findings',
   description:
-    'In-depth research overviews of BPC-157, GLP-1 agonists, Epithalon, Semax and more — mechanisms, preclinical findings, and current evidence limitations.',
+    'In-depth research overviews of BPC-157, Epithalon, Semax, GHK-Cu and more — mechanisms, preclinical findings, and current evidence limitations.',
   alternates: { canonical: '/research' },
   openGraph: {
     title: 'Research Hub | PepcoLab',
     description:
-      'In-depth research overviews of BPC-157, GLP-1 agonists, Epithalon, Semax and more — mechanisms, preclinical findings, and current evidence limitations.',
+      'In-depth research overviews of BPC-157, Epithalon, Semax, GHK-Cu and more — mechanisms, preclinical findings, and current evidence limitations.',
     url: `${SITE_URL}/research`,
     type: 'website',
   },
@@ -75,7 +75,7 @@ export default function ResearchPage({ searchParams }: Props) {
             <p style={{ maxWidth: 640, fontSize: 14, lineHeight: 1.7, color: 'rgba(13,13,13,.6)' }}>
               Mechanism-level overviews of the compounds researchers ask about most — sourced from
               published preclinical literature, with explicit limitations noted throughout. Nothing here
-              is a health, dosing or treatment claim; it's a summary of what the current research does
+              is a health, usage or treatment claim; it's a summary of what the current research does
               and doesn't show.
             </p>
           </div>

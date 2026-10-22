@@ -201,24 +201,8 @@ export default function ProductCard({ product: p, featured = false }: Props) {
             </div>
           )}
 
-          {/* Badge */}
-          {p.badge && (
-            <div style={{
-              position: 'absolute',
-              top: 10, right: 10,
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '.1em',
-              textTransform: 'uppercase',
-              color: '#fff',
-              background: 'rgba(13,13,13,.55)',
-              backdropFilter: 'blur(6px)',
-              padding: '3px 9px',
-              borderRadius: 6,
-            }}>
-              {p.badge}
-            </div>
-          )}
+          {/* No merchandising badges ("Best seller", "Trending", …) — cards
+              show name, size, price and the certificate status only. */}
 
           {/* Purity chip */}
           {p.purity && (

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRecentlyViewed } from '@/lib/recentlyViewedContext'
 import { formatPrice, productHref } from '@/lib/utils'
+import { isRetiredHandle } from '@/lib/retired-paths'
 
 interface Props {
   // Exclude the product currently being viewed — seeing the page you're
@@ -14,7 +15,8 @@ interface Props {
 export default function RecentlyViewed({ excludeSlug }: Props) {
   const { items, hydrated } = useRecentlyViewed()
 
-  const visible = items.filter((i) => i.slug !== excludeSlug)
+  // Never link to a withdrawn product (lib/retired-paths.ts).
+  const visible = items.filter((i) => i.slug !== excludeSlug && !isRetiredHandle(i.slug))
 
   // Nothing recorded yet (or this is literally the only page they've
   // viewed) — render nothing rather than an empty shell. Also skip before

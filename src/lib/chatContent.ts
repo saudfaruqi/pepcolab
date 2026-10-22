@@ -63,6 +63,7 @@
 //    nothing before.
 
 import { detectAction, type ActionRequest } from '@/lib/chatActions'
+import { isRetiredHandle, PRODUCT_WITHDRAWAL_ACTIVE } from '@/lib/retired-paths'
 
 export type { ActionRequest } from '@/lib/chatActions'
 
@@ -99,7 +100,7 @@ export const TOPICS: { id: TopicId; label: string; blurb: string }[] = [
   { id: 'testing', label: 'Testing & COAs', blurb: 'Purity, batch certificates, lot lookup' },
   { id: 'ordering', label: 'Ordering & payment', blurb: 'Placing an order, prices, bundles' },
   { id: 'shipping', label: 'Shipping & tracking', blurb: 'Dispatch times, cold chain, where we ship' },
-  { id: 'handling', label: 'Storage & handling', blurb: 'Temperatures, reconstitution, pen clicks' },
+  { id: 'handling', label: 'Storage & handling', blurb: 'Temperatures, solutions, documentation' },
   { id: 'account', label: 'Orders & returns', blurb: 'Track an order, damaged items, refunds' },
   { id: 'compliance', label: 'Legal & research use', blurb: 'What research use only means' },
 ]
@@ -181,6 +182,20 @@ export const BLOCKED_PATTERNS: RegExp[] = [
   /\bdiagnos(e|is|ing)\b/i,
   /\bmy (doctor|gp|physician)\b/i,
 
+  // How to take or use something, effects, stacking (brief C6 /use)
+  /\bhow (do|should|would|can|could|to) (i|we|you)?\s*(take|use|run|apply|administer)\b/i,
+  /\bhow to (take|use|run|administer)\b/i,
+  /\b(what|which) (are the |is the )?effects?\b/i,
+  /\beffects? (of|on)\b/i,
+  /\bwhat (does|do|will|would) (it|this|that|they|these|[a-z0-9-]+) do\b/i,
+  /\bstack(s|ed|ing)?\b/i,
+  /\bsyringes?\b/i,
+  /\binsulin\b/i,
+  /\b\d+\s*(iu|units?)\b/i,
+  /\bis (it|this|that|they) safe\b/i,
+  /\bsafe for (me|people|humans?|a person|my|him|her|them|kids|children|pets?|dogs?|animals?)\b/i,
+  /\b(intranasal|orally|sublingual|under the tongue)\b/i,
+
   // Protocols and cycles
   /\b(my|a|the|first|next|second|beginner|starter) cycle\b/i,
   /\bcycle (length|support|on|off)\b/i,
@@ -198,10 +213,69 @@ export function isBlocked(input: string): boolean {
   return BLOCKED_PATTERNS.some(re => re.test(q))
 }
 
+/**
+ * The one reply to any question about amounts, how to take or use
+ * something, injection, effects, stacking, or safety for a person. Word for
+ * word the WhatsApp /use quick reply (brief C6), so every channel gives the
+ * same answer. It is never improvised.
+ */
 export const REFUSAL_ANSWER: string[] = [
-  'I can’t help with that one. Everything PepcoLab supplies is for in-vitro laboratory research only, so we don’t provide dosing, administration, protocol or human-use guidance — not through chat, not by email, and not over WhatsApp.',
-  'That isn’t us being unhelpful. It is the line that keeps the compounds available at all, and any supplier willing to cross it is telling you something about how they operate.',
-  'If your question is about the material itself — purity, batch documentation, storage temperatures, formats or supply — I can help with all of that.',
+  'We can’t help with that. PepcoLab supplies research materials for in-vitro laboratory use only, and we don’t give guidance on use in or on people or animals. For anything about your own health, please speak to a doctor or pharmacist. We’re happy to help with your order, the batch certificate or storage.',
+]
+
+/* -------------------------------------------------------------------------- */
+/* NOT SUPPLIED                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Withdrawn products and formats (brief A1–A3). A question naming one gets a
+ * neutral "not supplied" answer and never reaches a catalogue lookup, so no
+ * product card, price or add-to-cart button can ever be shown for it.
+ */
+const NOT_SUPPLIED_PATTERNS: RegExp[] = [
+  /\bglp(-?1)?\b/i,
+  /\breta\b/i,
+  /\bretatrut/i,
+  /\bcagri/i,
+  /\bsemaglut/i,
+  /\btirzepat/i,
+  /\b(ozempic|wegovy|mounjaro|zepbound|rybelsus|saxenda|liraglutide)\b/i,
+  /\bpens?\b/i,
+  /\bpre-?filled\b/i,
+  /\bnasal\b/i,
+  /\bsprays?\b/i,
+  /\bcartridges?\b/i,
+  /\bclicks?\b/i,
+  /\bdsip\b/i,
+  /\bslu[-\s]?pp/i,
+  /\bkisspeptin\b/i,
+  /\bnad\+?(?=\s|$|[?.!,])/i,
+  /\bigf[-\s]?1?\b/i,
+  /\baod(-?9604)?\b/i,
+  /\bcjc[-\s]?(1295\s*)?no[-\s]?dac\b/i,
+]
+
+/** "Ipamorelin" on its own is withdrawn; the CJC-1295 + Ipamorelin blend is not. */
+function namesRetiredIpamorelin(q: string): boolean {
+  return /\bipamorelin\b/i.test(q) && !/\bcjc\b/i.test(q)
+}
+
+/** BPC-157 on its own while no vial SKU is live; the BPC-157 / TB-500 Blend stays. */
+function namesRetiredBpc(q: string): boolean {
+  if (!isRetiredHandle('bpc-157')) return false
+  return /\bbpc\b/i.test(q) && !/\b(tb[-\s]?500|blend)\b/i.test(q)
+}
+
+export function namesNotSupplied(input: string): boolean {
+  // Only while products are withdrawn (lib/retired-paths.ts master switch).
+  if (!PRODUCT_WITHDRAWAL_ACTIVE) return false
+  const q = (input || '').toLowerCase()
+  return NOT_SUPPLIED_PATTERNS.some((re) => re.test(q)) || namesRetiredIpamorelin(q) || namesRetiredBpc(q)
+}
+
+export const NOT_SUPPLIED_ANSWER: string[] = [
+  'That isn’t something PepcoLab supplies. We supply research compounds as lyophilised powder in single vials, plus laboratory solvents, each with a published batch certificate.',
+  'I can help you find something in the current catalogue, or with an order, a certificate or storage.',
 ]
 
 /* -------------------------------------------------------------------------- */
@@ -239,10 +313,10 @@ const PRODUCT_INTENT_RE =
 /**
  * Words that look like a product to the extractor but are concepts we have a
  * written answer for. If nothing but these survives stopword removal, it is
- * not a catalogue lookup — "how much is each click" is a pen question.
+ * not a catalogue lookup — "how much is shipping" is a shipping question.
  */
 const CONCEPT_TERMS = new Set([
-  'click', 'clicks', 'shipping', 'delivery', 'postage', 'vat', 'tax', 'duty',
+  'shipping', 'delivery', 'postage', 'vat', 'tax', 'duty',
   'refund', 'returns', 'bundle', 'bundles', 'affiliate', 'discount', 'tracking',
 ])
 
@@ -349,7 +423,7 @@ export const FAQS: Faq[] = [
     question: 'How do I place an order?',
     answer: [
       'Add what you need to the cart and check out on the site — payment is handled by STRABL, and Visa, Mastercard and American Express are all accepted.',
-      'If you’d rather order through a person, or you’re ordering in volume, message us on WhatsApp and a representative will handle it with you directly.',
+      'For institutional or volume orders, use the bulk orders form and a member of the team will reply with a quote.',
     ],
     keywords: ['order', 'buy', 'purchase', 'checkout', 'how do i order', 'place an order'],
     links: [{ label: 'Browse the catalogue', href: '/products' }],
@@ -383,14 +457,10 @@ export const FAQS: Faq[] = [
     topic: 'ordering',
     question: 'Are there bundles or discounts?',
     answer: [
-      'Bundles combine commonly paired compounds at 10% off the individual prices. The discount is applied automatically in your cart once both items are in it — you don’t need a code.',
-      'There is also an affiliate programme: share your link, your contact gets 15% off their first order, and you get 20% credit on yours.',
+      'Bundles are pre-matched pairs of research compounds, supplied together at 10% below the individual prices. The saving is applied automatically in your cart once both items are in it — you don’t need a code.',
     ],
-    keywords: ['bundle', 'stack', 'discount', 'offer', 'deal', 'promo', 'code', 'coupon', 'affiliate', 'refer', 'cheaper', 'save'],
-    links: [
-      { label: 'See bundles', href: '/bundles' },
-      { label: 'Affiliate programme', href: '/affiliates' },
-    ],
+    keywords: ['bundle', 'bundles', 'set', 'pair', 'discount', 'offer', 'deal', 'promo', 'code', 'coupon', 'cheaper', 'save'],
+    links: [{ label: 'See bundles', href: '/bundles' }],
   },
 
   // ── Shipping ──────────────────────────────────────────────────────────────
@@ -426,7 +496,7 @@ export const FAQS: Faq[] = [
     question: 'How is the cold chain handled?',
     answer: [
       'Compounds are dispatched in temperature-controlled packaging. Lyophilised peptides are stable for the transit window under those conditions.',
-      'The handling and storage requirements for your specific compound are printed on the documentation supplied with the order — follow those rather than a general rule, because pens and vials differ.',
+      'The handling and storage requirements for your specific compound are printed on the documentation supplied with the order — follow those rather than a general rule.',
       'If a parcel arrives warm, or the packaging looks like it has been opened, photograph it before anything else and send it to us. That is a 48-hour claim window and the photos are what make it straightforward.',
     ],
     keywords: ['cold chain', 'cold-chain', 'temperature', 'ice', 'cool', 'packaging', 'transit', 'melt', 'warm', 'hot', 'summer'],
@@ -466,8 +536,9 @@ export const FAQS: Faq[] = [
     topic: 'handling',
     question: 'How should compounds be stored?',
     answer: [
-      'It depends on the format, and the exact requirement for your compound is printed on its documentation and shown on its product page.',
-      'As a general pattern: lyophilised vials are stored at −20 °C, desiccated and protected from light. Pre-filled pens and nasal sprays are kept at 2–8 °C and must not be frozen — freezing a pen can damage what is inside it. Once opened or reconstituted, material is held at 2–8 °C and used within 28 days, avoiding repeated freeze–thaw cycles.',
+      'The exact requirement for your compound is printed on its documentation and shown on its product page.',
+      'As a general pattern: lyophilised vials are stored sealed at −20 °C, desiccated and protected from light. Once reconstituted, solutions are held at 2–8 °C, divided into single-use aliquots, and kept away from repeated freeze–thaw cycles.',
+      'Pre-filled pens and nasal sprays are kept at 2–8 °C and must not be frozen.',
     ],
     keywords: ['store', 'storage', 'storing', 'fridge', 'freezer', 'freeze', 'frozen', 'temperature', 'shelf life', 'expiry', 'expire', 'how long does it last', 'keep'],
     links: [{ label: 'Storage & handling guide', href: '/guides/storage-conditions' }],
@@ -476,18 +547,18 @@ export const FAQS: Faq[] = [
   {
     id: 'handling-reconstitution',
     topic: 'handling',
-    question: 'How do I work out reconstitution volumes?',
+    question: 'How do I work out a solution’s concentration?',
     answer: [
-      'There is a reconstitution calculator on the site that works out concentrations from the vial contents and the volume of solvent added.',
-      'Bacteriostatic water and laboratory-grade acetic acid are both stocked as accessories for compounds with limited water solubility.',
-      'To be explicit: the calculator handles the arithmetic of preparing a solution for laboratory work. It is not a dosing tool and we don’t provide administration guidance.',
+      'The concentration calculator on the site works out mg/mL and mcg/mL from the vial contents and the diluent volume added.',
+      'Bacteriostatic water and 0.6% acetic acid are both stocked as laboratory supplies, the latter for sequences with limited aqueous solubility.',
+      'The calculator handles the arithmetic of preparing a laboratory solution and nothing else.',
     ],
     keywords: ['reconstitute', 'reconstitution', 'mix', 'dilute', 'dilution', 'solvent', 'bac water', 'bacteriostatic', 'water', 'calculator', 'concentration', 'ml'],
     links: [
-      { label: 'Reconstitution calculator', href: '/tools/reconstitution-calculator' },
-      { label: 'Solvents & accessories', href: '/products/category/lab-supplies' },
+      { label: 'Concentration calculator', href: '/tools/reconstitution-calculator' },
+      { label: 'Lab supplies', href: '/products/category/lab-supplies' },
     ],
-    related: ['handling-pen-clicks', 'handling-storage'],
+    related: ['handling-storage', 'shipping-cold'],
   },
 
   // ── Orders & returns ──────────────────────────────────────────────────────
@@ -537,7 +608,7 @@ export const FAQS: Faq[] = [
     question: 'What does "research use only" mean?',
     answer: [
       'It means every compound we supply is intended solely for in-vitro laboratory research. None of it is a medicine or a supplement, none of it is licensed by any medicines regulator, and none of it is for human or veterinary consumption.',
-      'It also means there are questions we won’t answer — dosing, administration, protocols, anything about use in a person. Buyers are responsible for ensuring their intended use is lawful where they are.',
+      'It also means there are questions we won’t answer — amounts, how to use something, or anything about use in people or animals. Buyers are responsible for ensuring their intended use is lawful where they are.',
     ],
     keywords: ['research use', 'ruo', 'what does research use only mean', 'in vitro', 'in-vitro'],
     links: [{ label: 'Legal status by compound', href: '/legal' }],
@@ -656,7 +727,7 @@ const CONTEXT_RULES: { match: (p: string) => boolean; context: PageContext }[] =
     match: p => p.startsWith('/products') || p.startsWith('/bundles'),
     context: {
       label: 'Catalogue',
-      greeting: 'Ask me what’s in stock, what something costs, or anything about testing, formats, shipping and bundles.',
+      greeting: 'Ask me what’s in stock, what something costs, or anything about testing, shipping and bundles.',
       suggested: ['coa-what', 'order-bundles', 'shipping-times', 'order-how'],
     },
   },
@@ -672,8 +743,8 @@ const CONTEXT_RULES: { match: (p: string) => boolean; context: PageContext }[] =
     match: p => p.startsWith('/tools'),
     context: {
       label: 'Tools',
-      greeting: 'The calculator handles reconstitution volumes and what each pen click contains. Ask if anything about it is unclear.',
-      suggested: ['handling-pen-clicks', 'handling-reconstitution', 'handling-storage', 'coa-what'],
+      greeting: 'The calculator works out a solution’s concentration from the vial contents and the diluent volume. Ask if anything about it is unclear.',
+      suggested: ['handling-reconstitution', 'handling-storage', 'coa-what', 'contact-human'],
     },
   },
   {
@@ -735,7 +806,7 @@ export function resolvePageContext(pathname: string): PageContext & { productSlu
       return {
         ...rule.context,
         productSlug: slug,
-        greeting: `Looking at ${name}? I can check its stock and price, pull its batch certificate, or cover storage, formats and shipping — or get a person to you.`,
+        greeting: `Looking at ${name}? I can check its stock and price, pull its batch certificate, or cover storage and shipping — or get a person to you.`,
       }
     }
     return rule.context
@@ -869,7 +940,7 @@ const SMALL_TALK_FILLER = new Set([
 
 const GREETING_REPLY = [
   'Hello — good to have you here.',
-  'Ask me what’s in stock, what something costs, or anything about testing, formats, shipping and bundles. I can also add things to your cart for you.',
+  'Ask me what’s in stock, what something costs, or anything about testing, shipping and bundles. I can also add things to your cart for you.',
 ]
 const THANKS_REPLY = [
   'You’re very welcome.',
@@ -911,7 +982,7 @@ const GUESS_NOISE = new Set([
  * The last thing tried before admitting defeat.
  *
  * A bare product name is the single most common thing typed into a support
- * box — "GLP", "BPC-157", "semax" — and until now every one of them fell
+ * box — "semax", "GHK-Cu", "KPV" — and until now every one of them fell
  * through to "I don't have a pre-written answer for that one", which is a
  * terrible reply to the name of something we sell.
  *
@@ -943,6 +1014,9 @@ export function matchFaq(input: string): MatchResult {
   // Safety first, and it cannot be bypassed by dressing a dosing question up
   // as a storage question.
   if (isBlocked(q)) return { kind: 'blocked' }
+
+  // Withdrawn products and formats: a neutral answer, never a product card.
+  if (namesNotSupplied(q)) return { kind: 'smalltalk', lines: NOT_SUPPLIED_ANSWER }
 
   const smallTalk = detectSmallTalk(input)
   if (smallTalk) return { kind: 'smalltalk', lines: smallTalk }

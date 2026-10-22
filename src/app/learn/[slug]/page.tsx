@@ -61,7 +61,7 @@ export default function LearnGuidePage({ params }: Props) {
             </li>
           ))}
         </ul>
-        <div className="lg-meta">Written by the Pepco Lab team. Emailed to you straight away — no account needed.</div>
+        <div className="lg-meta">Written by the PepcoLab team. Emailed to you straight away — no account needed.</div>
       </div>
 
       <div className="lg-card">

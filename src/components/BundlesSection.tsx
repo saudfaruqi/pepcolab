@@ -151,8 +151,8 @@ export default function BundlesSection() {
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
         <div ref={headerRef} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="section-label mb-2">Curated stacks</p>
-            <h2 className="font-serif text-[clamp(28px,4vw,44px)] tracking-[-0.03em] text-[var(--ink)]">Bundles &amp; protocols</h2>
+            <p className="section-label mb-2">Supplied together</p>
+            <h2 className="font-serif text-[clamp(28px,4vw,44px)] tracking-[-0.03em] text-[var(--ink)]">Paired research sets</h2>
           </div>
           <a href="/bundles" className="text-[13px] text-[var(--ink-60)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-colors group flex-shrink-0">
             View all bundles <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />

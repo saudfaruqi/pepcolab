@@ -4,6 +4,7 @@
     { "path": "/api/cron/abandoned-cart", "schedule": "0 11 * * *" },
     { "path": "/api/cron/reorder-reminder", "schedule": "0 9 * * *" },
     { "path": "/api/cron/customer-care", "schedule": "0 9 * * *" },
-    { "path": "/api/cron/lead-nurture", "schedule": "30 8 * * *" }
+    { "path": "/api/cron/lead-nurture", "schedule": "30 8 * * *" },
+    { "path": "/api/cron/crm-nightly", "schedule": "15 2 * * *" }
   ]
 }

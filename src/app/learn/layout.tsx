@@ -28,8 +28,8 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
 
       <header className="learn-head">
         <div className="learn-head-inner">
-          <Link href="/learn" aria-label="Pepco Lab free guides">
-            <Image src="/pepcologo.png" alt="Pepco Lab" width={144} height={36} priority />
+          <Link href="/learn" aria-label="PepcoLab free guides">
+            <Image src="/pepcologo.png" alt="PepcoLab" width={144} height={36} priority />
           </Link>
           <span className="learn-head-tag">Free laboratory guides</span>
         </div>
@@ -40,11 +40,11 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
       <footer className="learn-foot">
         <div className="learn-foot-inner">
           <div>
-            All Pepco Lab materials are supplied for laboratory and research use only. They are not medicines and are
+            All PepcoLab materials are supplied for laboratory and research use only. They are not medicines and are
             not for human or veterinary use. Our guides cover testing, documentation and storage — never use in or on a body.
           </div>
           <div style={{ marginTop: 8 }}>
-            SEE BEE DEE LIMITED, trading as Pepco Lab · Registered in England and Wales, company no. 17072052
+            SEE BEE DEE LIMITED, trading as PepcoLab · Registered in England and Wales, company no. 17072052
           </div>
           <div className="learn-foot-links">
             <Link href="/privacy">Privacy policy</Link>

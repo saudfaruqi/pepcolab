@@ -16,8 +16,8 @@ const POSTS = [
   {
     date: 'Apr 18, 2026',
     readTime: '8 min read',
-    title: 'Prescription vs OTC: What\'s the Real Difference?',
-    excerpt: 'Breaking down how prescription medications differ from over-the-counter options, and why it matters for your health.',
+    title: 'How to Read a Certificate of Analysis',
+    excerpt: 'What identity, purity and content results mean on a batch certificate, and how to check one against the vial label.',
     tag: 'Education',
     img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80&auto=format&fit=crop',
     color: '#E6F5EE',

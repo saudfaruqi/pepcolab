@@ -26,12 +26,9 @@ export default function FloatingWhatsApp() {
   if (HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))) return null
   if (!isWhatsAppConfigured()) return null // no number set yet — render nothing rather than a dead link
 
-  // Same logic as the cart page/drawer CTA: if the visitor already has
-  // items in their cart, prefill the message with those so the sales rep
-  // isn't starting from zero context. Previously this always sent the
-  // generic "I'd like to place an order" message regardless of cart state,
-  // even though whatsAppCartLink() (used everywhere else WhatsApp appears)
-  // already handled this — the floating button was the one CTA that didn't.
+  // WhatsApp is a service channel (brief C5): the pre-filled message is a
+  // question, never a list of products or a total. lib/whatsapp.ts builds
+  // both variants without item names or prices.
   const href = lines.length > 0 ? whatsAppCartLink(lines, currencyCode) : whatsAppGeneralLink()
 
   return (
@@ -40,7 +37,7 @@ export default function FloatingWhatsApp() {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Order via WhatsApp"
+        aria-label="Message us on WhatsApp"
         className={`fw-fab${mounted ? ' fw-in' : ''}`}
       >
         <MessageCircle size={20} />

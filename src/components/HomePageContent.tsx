@@ -8,6 +8,7 @@ import HeroCinematic from "@/components/HeroSections";
 import BrandFilm from "@/components/BrandFilm";
 import ProductCard from "@/components/ProductCard";
 import { getProducts as DATA_PRODUCTS } from "@/lib/shopify";
+import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from "@/lib/restrictedCheckout";
 import { useCart } from "@/lib/cartContext";
 import { formatPrice } from "@/lib/utils";
 import Footer from "@/components/Footer";
@@ -18,7 +19,6 @@ import Link from "next/link";
 // bundle.products / .price / .save. Those fields no longer exist on BundleDef,
 // which is what the fifteen type errors here were.
 import { BUNDLE_DEFS, resolveBundle, type ResolvedBundle } from "@/lib/bundles";
-import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from "@/lib/restrictedCheckout";
 
 
 import { useCountry } from '@/lib/countryContext'
@@ -349,9 +349,12 @@ function FadeUp({ children, delay = 0, style = {} }: { children: React.ReactNode
 export default function PepcoLabPage({
   initialProducts,
   initialCountry,
+  popularHandles = [],
 }: {
   initialProducts?: NormalisedProduct[]
   initialCountry?: string
+  /** Listed products ranked by paid-order count (app/page.tsx). */
+  popularHandles?: string[]
 }) {
   const [email,       setEmail]       = useState("");
   const [emailError,  setEmailError]  = useState<string | null>(null);
@@ -409,7 +412,7 @@ export default function PepcoLabPage({
         setProducts(raw.map((p: any) => ({
           ...p,
           currencyCode: p.currencyCode ?? 'AED',
-          badge: (p.badge && ["popular","new","sale","bestseller"].includes(p.badge) ? p.badge : undefined) as NormalisedProduct["badge"],
+          badge: undefined,
         })));
         setLoaded(true);
       })
@@ -449,7 +452,7 @@ export default function PepcoLabPage({
   }, [products])  
 
   const addToCart = useCallback((product: NormalisedProduct) => {
-    // RETA (payment-link-only) can't go through the cart — send the visitor
+    // GLP (payment-link-only) can't go through the cart — send the visitor
     // straight to its payment link instead. See lib/restrictedCheckout.ts.
     if (isPaymentLinkOnlyProduct(product.slug)) {
       const link = getPaymentLinkForVariant(product.mg)
@@ -482,7 +485,7 @@ export default function PepcoLabPage({
   // in, and the cart-side discount recognises the set.
   const addBundleToCart = useCallback((bundle: ResolvedBundle<NormalisedProduct>) => {
     bundle.lines
-      .filter(l => !isPaymentLinkOnlyProduct(l.product.slug)) // RETA can't go through the cart
+      .filter(l => !isPaymentLinkOnlyProduct(l.product.slug)) // payment-link products can't go through the cart
       .forEach(l =>
         addItem(l.variantId, l.product.title, l.variantTitle, l.price, l.product.slug, l.product.image)
       );
@@ -534,8 +537,11 @@ export default function PepcoLabPage({
     }
   };
 
-  const p1 = products[0];
-  const p2 = products[1];
+  // Laboratory supplies spotlight (brief A8): the two lab-supply products,
+  // so the "Laboratory supplies, batch-documented." line is always true.
+  const labSupplies = products.filter((p) => p.categorySlug === "lab-supplies");
+  const p1 = labSupplies[0];
+  const p2 = labSupplies[1];
 
   return (
     <div style={{ background: "#FAFAF8", color: "#0d0d0d", minHeight: "100vh" }}>
@@ -628,7 +634,7 @@ export default function PepcoLabPage({
       <HeroCinematic />
 
       {/* ── Products ── */}
-      <BestSellersSection products={products} loading={!loaded} />
+      <BestSellersSection products={products} loading={!loaded} popularHandles={popularHandles} />
 
       {/* ── Why choose us / how ordering works ── */}
       <FeaturesSection />
@@ -745,10 +751,10 @@ export default function PepcoLabPage({
             gap: "6px",
           }}>
             <h2 style={TYPOGRAPHY.headingLight}>
-              Purpose-built compound stacks
+              Paired research sets
             </h2>
             <p style={TYPOGRAPHY.subheadingLight}>
-              Curated combinations of research compounds, bundled for specific study objectives.
+              Pre-matched pairs of research compounds, supplied together for paired in-vitro studies.
               <span style={{ display: "block", color: "rgba(255,255,255,0.2)", fontSize: "0.9em", marginTop: 4 }}>
                 Save 10% vs. individual pricing
               </span>
@@ -763,7 +769,7 @@ export default function PepcoLabPage({
               fontSize: "14px",
             }}>
               <div style={{ fontSize: "28px", marginBottom: "12px" }}>⚠️</div>
-              Could not load stacks. Please refresh the page.
+              Could not load the paired sets. Please refresh the page.
             </div>
           ) : products.length === 0 ? (
             <div style={{
@@ -966,7 +972,7 @@ export default function PepcoLabPage({
                           e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
                         }}
                       >
-                        Add Stack
+                        Add Set
                         <svg
                           width="12"
                           height="12"
@@ -1186,7 +1192,7 @@ export default function PepcoLabPage({
           ...TYPOGRAPHY.subheading,
           fontSize: "clamp(14px, 1.5vw, 18px)",
         }}>
-          Two of our most widely researched compounds, independently tested and batch-documented.
+          Laboratory supplies, batch-documented.
         </p>
       </div>
 
@@ -1510,16 +1516,16 @@ export default function PepcoLabPage({
               margin: 0,
               fontWeight: 400,
             }}>
-              Unlock faster ordering, exclusive research access, full order tracking, and priority notifications.
+              Faster repeat ordering, full order tracking with batch certificates, and alerts when a new lot is published.
             </p>
           </FadeUp>
 
           <div style={{ display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:2, background:"rgba(255,255,255,.06)", borderRadius:20, overflow:"hidden", marginBottom:40 }}>
             {[
-              { title:"Private Consultations", desc:"One-on-one sessions with experienced research specialists." },
+              { title:"Batch Alerts",           desc:"Be told when a new lot is tested and its certificate is published." },
               { title:"Express Checkout",       desc:"Saved details for faster repeat ordering." },
               { title:"Research Tracking",      desc:"Full order history, COAs, batch verification anytime." },
-              { title:"Priority Alerts",        desc:"Instant notifications for restocks and new compounds." },
+              { title:"Restock Notices",        desc:"Know when a compound you follow is back in stock." },
             ].map((b) => (
               <div key={b.title} style={{ background:"#111", padding:"28px 8px" }}>
                 <div style={{ 

@@ -65,14 +65,7 @@ const nextConfig = {
       // The catalogue is grouped by compound class instead of health goal
       // (src/lib/productClasses.ts). Old goal-led category URLs and the goal
       // hub pages 301 to their nearest class so links and rankings carry over.
-      { source: '/products/category/metabolic', destination: '/products/category/incretin-analogues', permanent: true },
-      { source: '/products/category/hormonal', destination: '/products/category/gh-axis-peptides', permanent: true },
-      { source: '/products/category/cognitive', destination: '/products/category/neuropeptide-analogues', permanent: true },
-      { source: '/products/category/recovery', destination: '/products/category/bioregulator-peptides', permanent: true },
-      { source: '/products/category/anti-ageing', destination: '/products/category/copper-cosmetic-peptides', permanent: true },
-      { source: '/products/category/immune', destination: '/products/category/bioregulator-peptides', permanent: true },
-      { source: '/products/category/accessories', destination: '/products/category/lab-supplies', permanent: true },
-      { source: '/metabolic', destination: '/products/category/incretin-analogues', permanent: true },
+      { source: '/metabolic', destination: '/products', permanent: true },
       { source: '/recovery', destination: '/products/category/bioregulator-peptides', permanent: true },
       { source: '/cognitive', destination: '/products/category/neuropeptide-analogues', permanent: true },
       { source: '/longevity', destination: '/products/category/mitochondrial-cofactors', permanent: true },
@@ -104,7 +97,6 @@ const nextConfig = {
       { source: '/products/bpc-157-5mg', destination: '/products/bpc-157', permanent: true },
       { source: '/products/selank-5mg', destination: '/products/selank', permanent: true },
       { source: '/products/epithalon-5mg', destination: '/products/epithalon', permanent: true },
-      { source: '/products/ipamorelin-2mg', destination: '/products/ipamorelin', permanent: true },
 
       // Discontinued lines with no direct equivalent.
       //
@@ -120,8 +112,6 @@ const nextConfig = {
       // /products/category/metabolic. next.config.js redirects resolve before
       // middleware runs, so the middleware entry could never execute and the
       // two silently disagreed. Resolved here, and removed from middleware.
-      { source: '/products/tb-500-10mg', destination: '/products/category/recovery', permanent: true },
-      { source: '/products/glp-1-tera-5mg', destination: '/products/category/metabolic', permanent: true },
 
       { source: '/products/bac-water-30ml',  destination: '/products/bacteriostatic-water', permanent: true },
       { source: '/products/bac-water',       destination: '/products/bacteriostatic-water', permanent: true },

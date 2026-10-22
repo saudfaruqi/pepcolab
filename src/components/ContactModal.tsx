@@ -5,7 +5,7 @@
 //
 // WHY IN-CONTEXT MATTERS MORE THAN A CONTACT PAGE
 // The questions worth capturing are the ones people have while they are
-// looking at something specific: "does this come as a pen or a vial", "can I
+// looking at something specific: "which vial size is in stock", "can I
 // see the COA for the current lot", "my lot number isn't in the library". A
 // contact page is a destination you have to decide to visit, and by the time
 // someone has decided, most of them have simply left instead.
@@ -199,7 +199,7 @@ export default function ContactModal({
             )}
 
             <p style={{ fontSize: 11.5, lineHeight: 1.6, color: 'rgba(13,13,13,.42)', margin: '16px 0 0' }}>
-              We can&apos;t answer dosing, administration or protocol questions &mdash; everything
+              We can&apos;t answer questions about use in people or animals &mdash; everything
               we supply is for in-vitro laboratory research only.
             </p>
           </>

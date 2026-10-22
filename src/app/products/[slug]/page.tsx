@@ -100,7 +100,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // SEO FIX (Sep 2026): both of these used to be one template with the
   // product name slotted in, so all 37 product pages shared a single search
   // snippet. Search Console showed 216 non-brand page-1 impressions
-  // returning 2 clicks, with the bacteriostatic-water pages alone at 169
+  // returning 2 visits, with the bacteriostatic-water pages alone at 169
   // page-1 impressions and none. They are now built per product from
   // structured fields only — size, formats, price, dispatch market — which
   // keeps the no-claims guarantee above intact while making every snippet
@@ -175,7 +175,7 @@ function productClassSlug(p: { handle: string; tags?: string[] }): string {
 
 /**
  * Related products: same research category first, then anything else to fill
- * the row. The top-up matters — several categories (immune, accessories) have
+ * the row. The top-up matters — several classes (e.g. lab supplies) have
  * only 2-3 products, so a category-only match would render a lonely single
  * card or an empty section on those pages.
  */
@@ -280,7 +280,7 @@ function buildJsonLd(product: any, reviews: Review[] = []) {
     // OVER AED 80, so this is attached only to products priced above that —
     // at or below the threshold the field is omitted rather than claiming a
     // rate that isn't offered. Every product Search Console flagged (KLOW,
-    // GLOW, Selank, Wolverine Stack) is far above it.
+    // GLOW, Selank, the BPC-157 / TB-500 Blend) is far above it.
     //
     // handlingTime comes from /shipping: "Most orders are processed and
     // dispatched within 1 business day following payment confirmation".

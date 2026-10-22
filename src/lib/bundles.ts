@@ -21,6 +21,8 @@
 //    useStrablCheckout applies it to the price sent to STRABL, and the cart
 //    page and drawer show it.
 
+import { baseHandle, isRetiredHandle } from './retired-paths'
+
 export interface BundleItem {
   /** Shopify product handle */
   handle: string
@@ -40,14 +42,17 @@ export interface BundleDef {
   bg: string
 }
 
-export const BUNDLE_DEFS: BundleDef[] = [
+// Oct 2026 clean-up brief A7: outcome-named bundles renamed to what they
+// contain. The BPC-157 set is only offered while a BPC-157 vial is listed
+// (lib/retired-paths.ts); otherwise it is not offered at all.
+const ALL_BUNDLE_DEFS: BundleDef[] = [
   {
     id: 'b1',
-    name: 'Recovery Stack',
-    desc: 'BPC-157 10mg and Thymosin Alpha, supplied together.',
+    name: 'BPC-157 + Thymosin Alpha-1 Set',
+    desc: 'BPC-157 10mg vial and Thymosin Alpha-1, supplied together for paired in-vitro studies.',
     items: [
-      { handle: 'bpc-157-uae', variant: '10mg', label: 'BPC-157 · 10mg' },
-      { handle: 'thymosin-alpha-uae', variant: 'Default Title', label: 'Thymosin Alpha' },
+      { handle: 'bpc-157', variant: '10mg', label: 'BPC-157 · 10mg vial' },
+      { handle: 'thymosin-alpha', variant: 'Default Title', label: 'Thymosin Alpha-1' },
     ],
     discountPercent: 10,
     accent: '#0D7A45',
@@ -55,11 +60,11 @@ export const BUNDLE_DEFS: BundleDef[] = [
   },
   {
     id: 'b2',
-    name: 'Longevity Protocol',
-    desc: 'Epithalon and AHK-Cu, supplied together.',
+    name: 'Epithalon + AHK-Cu Set',
+    desc: 'Epithalon and AHK-Cu, supplied together for paired in-vitro studies.',
     items: [
-      { handle: 'epithalon-uae', variant: 'Default Title', label: 'Epithalon' },
-      { handle: 'ahk-cu-uae', variant: 'Default Title', label: 'AHK-Cu' },
+      { handle: 'epithalon', variant: 'Default Title', label: 'Epithalon' },
+      { handle: 'ahk-cu', variant: 'Default Title', label: 'AHK-Cu' },
     ],
     discountPercent: 10,
     accent: '#7C3AED',
@@ -67,17 +72,21 @@ export const BUNDLE_DEFS: BundleDef[] = [
   },
   {
     id: 'b3',
-    name: 'Cognitive Edge',
-    desc: 'Semax and Selank vials, supplied together.',
+    name: 'Semax + Selank Set',
+    desc: 'Semax and Selank vials, supplied together for paired in-vitro studies.',
     items: [
-      { handle: 'semax-uae', variant: 'Vial', label: 'Semax · Vial' },
-      { handle: 'selank-uae', variant: 'Vial', label: 'Selank · Vial' },
+      { handle: 'semax', variant: 'Vial', label: 'Semax · Vial' },
+      { handle: 'selank', variant: 'Vial', label: 'Selank · Vial' },
     ],
     discountPercent: 10,
     accent: '#BE185D',
     bg: '#FDF0F8',
   },
 ]
+
+export const BUNDLE_DEFS: BundleDef[] = ALL_BUNDLE_DEFS.filter(
+  (def) => !def.items.some((item) => isRetiredHandle(item.handle))
+)
 
 /** The largest discount offered on any bundle — for headings like "Save 10%". */
 export const MAX_BUNDLE_DISCOUNT = Math.max(...BUNDLE_DEFS.map((b) => b.discountPercent))
@@ -86,10 +95,19 @@ function norm(value: string | undefined | null): string {
   return (value || '').trim().toLowerCase()
 }
 
+/** Handle without the market suffix, so "semax-uae" and "semax" match. */
+function sameHandle(a: string | undefined | null, b: string | undefined | null): boolean {
+  return baseHandle(a || '') === baseHandle(b || '')
+}
+
 function variantMatches(itemVariant: string, variantTitle: string): boolean {
   const want = norm(itemVariant)
   const have = norm(variantTitle)
   if (want === have) return true
+  // "Vial" matches a vial variant with a strength ("Vial 10mg", "10mg Vial").
+  if (want === 'vial' && /\bvial\b/.test(have)) return true
+  // "10mg" matches "10mg Vial" / "Vial 10mg" once device variants are gone.
+  if (/^\d+(\.\d+)?mg$/.test(want) && have.split(/[\s/·-]+/).includes(want)) return true
   // Single-variant products may come through as "Default Title" or empty.
   return want === 'default title' && (have === '' || have === 'default title')
 }
@@ -142,7 +160,7 @@ export function resolveBundle<P extends BundleProductLike>(def: BundleDef, produ
   const missing: string[] = []
 
   for (const item of def.items) {
-    const product = products.find((p) => norm(p.slug) === norm(item.handle))
+    const product = products.find((p) => sameHandle(p.slug, item.handle))
     if (!product) { missing.push(`${item.handle} (product not found)`); continue }
 
     const variants = product.variants ?? []
@@ -216,7 +234,7 @@ export function computeBundleSavings(lines: CartLineLike[]): BundleSavings {
   for (const def of BUNDLE_DEFS) {
     const matched = def.items.map((item) =>
       Array.from(remaining.keys()).find(
-        (l) => norm(l.slug) === norm(item.handle) && variantMatches(item.variant, l.variantTitle)
+        (l) => sameHandle(l.slug, item.handle) && variantMatches(item.variant, l.variantTitle)
       )
     )
     if (matched.some((m) => !m)) continue

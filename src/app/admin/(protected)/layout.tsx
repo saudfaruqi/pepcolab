@@ -14,7 +14,7 @@
 // lib/adminAuth.ts's use of node:crypto.
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { verifySessionToken, ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
+import { getAdminSession, ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 import AdminShell from './AdminShell'
 
 export default async function ProtectedAdminLayout({
@@ -24,9 +24,14 @@ export default async function ProtectedAdminLayout({
 }) {
   const store = await cookies()
   const token = store.get(ADMIN_COOKIE_NAME)?.value
-  if (!verifySessionToken(token)) {
-    redirect('/admin/login')
-  }
+  const session = getAdminSession(token)
+  if (!session) redirect('/admin/login')
+  // Agents (the VA) work only in the Contacts area (app/admin/(crm)).
+  if (session.role === 'agent') redirect('/admin/contacts')
 
-  return <AdminShell>{children}</AdminShell>
+  return (
+    <AdminShell role={session.role} userName={session.name}>
+      {children}
+    </AdminShell>
+  )
 }

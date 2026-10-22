@@ -151,7 +151,7 @@ export default function CategoriesSection() {
               className="text-[clamp(24px,3.2vw,36px)] font-bold tracking-tight text-[var(--ink)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Popular Categories
+              Compound Classes
             </h2>
           </div>
           <a

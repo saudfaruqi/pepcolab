@@ -57,7 +57,7 @@ export default function ProcessSection() {
               your door in 4 steps.
             </h2>
             <p className="mt-3 text-[13.5px] text-[rgba(255,255,255,0.6)] max-w-md leading-relaxed">
-              Every batch is independently tested and published before it's listed — no prescriptions, no gatekeeping, just verifiable data.
+              Every batch is independently tested and its certificate published before it is listed.
             </p>
           </div>
           <a

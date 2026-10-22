@@ -11,6 +11,7 @@ export type AudienceSegment =
   | 'bought_product'  // paid for a product whose title contains `productQuery`
   | 'newsletter'      // newsletter sign-ups (footer / homepage form)
   | 'leads'           // /learn guide requests who ticked the follow-up opt-in
+  | 'all_opted_in'    // every contact with current email consent
 
 export interface AudienceSpec {
   segment: AudienceSegment
@@ -99,4 +100,5 @@ export const SEGMENT_LABELS: Record<AudienceSegment, string> = {
   bought_product: 'Bought a specific product',
   newsletter: 'Newsletter sign-ups',
   leads: 'Guide leads (opted in)',
+  all_opted_in: 'Everyone opted in to email',
 }

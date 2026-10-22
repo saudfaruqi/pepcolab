@@ -33,6 +33,7 @@
 // sendAbandonedCartEmail (lib/orderEmails.ts) was defined but never
 // actually called.
 import { NextRequest, NextResponse } from 'next/server'
+import { MARKETING_SENDS_PAUSED, MARKETING_PAUSED_REASON, marketingBlockFor, recordMarketingSend } from '@/lib/marketingGate'
 import { getAbandonedOrdersInWindow, saveOrderRecord, type OrderRecord } from '@/lib/orderStore'
 import { sendAbandonedCartEmail } from '@/lib/orderEmails'
 
@@ -50,6 +51,11 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Marketing: opted-in contacts only, within the weekly ceiling (lib/marketingGate.ts).
+  if (MARKETING_SENDS_PAUSED) {
+    return NextResponse.json({ success: true, paused: true, reason: MARKETING_PAUSED_REASON })
   }
 
   // Manual backfill support: hitting this route with ?lookbackDays=90 (auth'd
@@ -77,6 +83,8 @@ export async function GET(req: NextRequest) {
     if (stageSent === 0 && hoursElapsed >= STAGE1_DELAY_HOURS) stageToSend = 1
     else if (stageSent === 1 && hoursElapsed >= STAGE2_DELAY_HOURS) stageToSend = 2
     if (!stageToSend) continue
+    // Opted-in contacts only (consent ticked at checkout counts), weekly ceiling.
+    if (await marketingBlockFor(order.email)) continue
 
     try {
       await sendAbandonedCartEmail({
@@ -87,6 +95,7 @@ export async function GET(req: NextRequest) {
         currency: order.currency,
         stage: stageToSend,
       })
+      await recordMarketingSend(order.email)
       await saveOrderRecord({ ...order, recoveryEmailStage: stageToSend })
       if (stageToSend === 1) stage1Sent++
       else stage2Sent++

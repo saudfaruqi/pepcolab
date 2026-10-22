@@ -4,8 +4,8 @@ import { ArrowRight, Calculator, FileSearch, BookOpen, FlaskConical } from 'luci
 const TOOLS = [
   {
     icon: Calculator,
-    name: 'Reconstitution Calculator',
-    desc: 'Instantly compute exact dilution volumes for any peptide. Enter your vial size, concentration target, and solvent — get precise measurements.',
+    name: 'Concentration Calculator',
+    desc: 'Work out the concentration of a laboratory solution from the vial content and diluent volume, in mg/mL and mcg/mL.',
     href: '/tools/reconstitution-calculator',
     tag: 'Interactive',
   },
@@ -18,15 +18,15 @@ const TOOLS = [
   },
   {
     icon: FlaskConical,
-    name: 'Dose & Purity Calculators',
-    desc: 'Additional reference calculators for common peptide parameters, alongside the full reconstitution tool.',
+    name: 'Purity & Concentration Calculators',
+    desc: 'Reference calculators for net peptide content and solution concentration, alongside the full concentration tool.',
     href: '/tools',
     tag: 'Reference',
   },
   {
     icon: BookOpen,
     name: 'Research Hub',
-    desc: 'Curated guides, storage protocols, reconstitution methods, and links to published research for each peptide in our catalogue.',
+    desc: 'Guides on storage, reconstitution methods and certificate reading, with links to the published research behind each compound.',
     href: '/research',
     tag: 'Education',
   },

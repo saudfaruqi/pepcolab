@@ -16,6 +16,25 @@
 // browser history entry.
 import { NextRequest, NextResponse } from 'next/server'
 import { getOrderRecord, isPaidOrder } from '@/lib/orderStore'
+import { PRODUCT_WITHDRAWAL_ACTIVE, RETIRED_HANDLES, isWithdrawnDeviceTitle, bpc157VialLive } from '@/lib/retired-paths'
+
+/**
+ * A saved line for a product withdrawn from the catalogue, or for a device
+ * format. Records only hold the title, so the title is slugified and
+ * compared with the withdrawn handles ("Reta+Cagri 20mg" → "reta-cagri-20mg").
+ */
+function isWithdrawnItem(p: { title: string; variantOptions?: string[] }): boolean {
+  // Dormant while the withdrawal switch (lib/retired-paths.ts) is off.
+  if (!PRODUCT_WITHDRAWAL_ACTIVE) return false
+  const text = [p.title, ...(p.variantOptions || [])].join(' ')
+  if (isWithdrawnDeviceTitle(text) || /\bglp\b/i.test(text)) return true
+  const slug = (p.title || '').toLowerCase().replace(/\+/g, '-').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  for (const h of RETIRED_HANDLES) {
+    if (slug === h || slug.startsWith(`${h}-`)) return true
+  }
+  if (!bpc157VialLive() && (slug === 'bpc-157' || /^bpc-157-\d/.test(slug))) return true
+  return false
+}
 
 export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
   const code = (params.code || '').trim()
@@ -35,7 +54,8 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
     return NextResponse.json({ items: [], currency: 'AED' })
   }
 
-  const items = record.products
+  const available = record.products.filter((p) => !isWithdrawnItem(p))
+  const items = available
     .filter((p) => Boolean(p.variantId))
     .map((p) => ({ variantId: p.variantId as string, quantity: p.quantity }))
 
@@ -44,6 +64,8 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
   // customer "we restored most of it" instead of just silently dropping
   // items with no explanation.
   const skipped = record.products.length - items.length
+  // Withdrawn products are never restored; they count as skipped so the
+  // customer is told part of the order could not be brought back.
 
   return NextResponse.json({ items, skipped, currency: record.currency })
 }
