@@ -192,7 +192,7 @@ export default function HeroCinematic() {
               Research compounds verified through independent third-party
               laboratory testing, with batch-matched certificates of analysis
               and lot traceability to the vial. Temperature-controlled
-              fulfilment across the UAE — United Kingdom launching soon.
+              fulfilment, ordering in the UAE and the United Kingdom.
             </p>
 
             {/* CTA Buttons */}

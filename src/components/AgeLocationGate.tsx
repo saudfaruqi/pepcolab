@@ -52,9 +52,9 @@ const MARKET_OPTIONS: { code: GateMarket; label: string }[] = [
 
 const MARKET_NOTE: Record<GateMarket, string | null> = {
   AE: null,
-  GB: 'PepcoLab does not dispatch to the UK yet. You can browse the full catalogue and every published certificate, and join the launch list to be told when UK ordering opens.',
+  GB: null,
   OTHER:
-    'PepcoLab currently dispatches within the UAE only. You are welcome to browse, but checkout will not be available for your location.',
+    'PepcoLab currently sells to the UAE and the UK only. You are welcome to browse, but we cannot deliver to your location.',
 }
 
 export default function AgeLocationGate() {
@@ -272,12 +272,6 @@ export default function AgeLocationGate() {
               {market && MARKET_NOTE[market] && (
                 <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.42)', marginTop: 10, lineHeight: 1.65 }}>
                   {MARKET_NOTE[market]}
-                  {market === 'GB' && (
-                    <>
-                      {' '}
-                      <a href="/uk" className="gate-link">More on the UK launch</a>.
-                    </>
-                  )}
                 </p>
               )}
             </div>

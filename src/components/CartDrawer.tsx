@@ -14,7 +14,8 @@ import CheckoutAttestation from '@/components/CheckoutAttestation'
 import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
-import { chargeNotice, displayedTotalToAed } from '@/lib/pricing'
+import { chargeNotice } from '@/lib/pricing'
+import { aedChargeTotal } from '@/lib/chargeTotal'
 
 export default function CartDrawer() {
   const {
@@ -66,6 +67,7 @@ export default function CartDrawer() {
   // drawer total matches what STRABL will charge.
   const bundleSavings = useMemo(() => computeBundleSavings(lines), [lines])
   const drawerTotal = Math.max(0, Math.round((subtotal - bundleSavings.amount) * 100) / 100)
+  const ukNotice = chargeNotice(aedChargeTotal(lines, detectedCountry), detectedCountry)
 
   const whatsAppEnabled = isWhatsAppConfigured()
 
@@ -267,9 +269,9 @@ export default function CartDrawer() {
               </strong>
             </div>
 
-            {chargeNotice(displayedTotalToAed(drawerTotal, detectedCountry), detectedCountry) && (
-              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-2 mb-4 leading-relaxed">
-                {chargeNotice(displayedTotalToAed(drawerTotal, detectedCountry), detectedCountry)}
+            {ukNotice && (
+              <p className="text-[11px] text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">
+                {ukNotice}
               </p>
             )}
 

@@ -277,16 +277,7 @@ export default function ProductVariantView({ product }: Props) {
 
         <div style={{ height: 1, background: '#f0f0f0', margin: '18px 0' }} />
 
-        {/* MarketGuard is a real guard again (Sep 2026): UAE visitors get the
-            buy controls, UK visitors get a launch-list capture in their place
-            while the rest of the page — description, COA, purity, schema —
-            stays fully visible and indexable.
-
-            productSlug/productName are passed so UK interest is recorded per
-            compound rather than as one undifferentiated list. That turns the
-            pre-launch period into demand data: the admin notify view will show
-            which compounds UK researchers actually asked for, which is the
-            input you want when placing a UK opening order. */}
+        {/* MarketGuard renders the buy controls for every live market. */}
         <MarketGuard
           tags={product.tags ?? []}
           productSlug={product.handle}

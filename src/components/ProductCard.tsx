@@ -7,7 +7,8 @@ import { ShoppingCart, CheckCircle, CreditCard } from 'lucide-react'
 import Vial from '@/components/Vial'
 import WishlistButton from '@/components/WishlistButton'
 import { useCart } from '@/lib/cartContext'
-import { formatPrice, stripLeadingName, productHref } from '@/lib/utils'
+import { stripLeadingName, productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import NotifyMeModal from '@/components/NotifyMeModal'
 import { isPaymentLinkOnlyProduct } from '@/lib/restrictedCheckout'
 import type { Product } from '@/app/data'
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function ProductCard({ product: p, featured = false }: Props) {
+  const money = useMoney()
   // NOTIFY ME FROM THE CARD (Sep 2026).
   //
   // The out-of-stock overlay told people the answer was no and gave them
@@ -307,7 +309,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
                 display: 'block',
                 marginBottom: 1,
               }}>
-                {formatPrice(p.oldPrice, currencyCode)}
+                {money(p.oldPrice, currencyCode)}
               </span>
             )}
             <span style={{
@@ -316,7 +318,7 @@ export default function ProductCard({ product: p, featured = false }: Props) {
               lineHeight: 1,
               color: '#0d0d0d',
             }}>
-              {formatPrice(p.price, currencyCode)}
+              {money(p.price, currencyCode)}
             </span>
           </div>
 

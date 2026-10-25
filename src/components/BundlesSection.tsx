@@ -10,7 +10,8 @@ import { useRef, useEffect, useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProducts } from '@/lib/shopify'
-import { formatPrice, productHref } from '@/lib/utils'
+import { productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import { useCart } from '@/lib/cartContext'
 import { BUNDLE_DEFS, resolveBundle, type ResolvedBundle, type BundleDef } from '@/lib/bundles'
 import Vial from '@/components/Vial'
@@ -56,6 +57,7 @@ function SkeletonCard({ def }: { def: BundleDef }) {
 }
 
 export default function BundlesSection() {
+  const money = useMoney()
   const headerRef = useRef<HTMLDivElement>(null)
   const [products, setProducts] = useState<Product[] | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
@@ -187,7 +189,7 @@ export default function BundlesSection() {
                     <BundleImageCollage bundle={bundle} height={160} />
                   </div>
                   <div className="absolute top-3 right-3 text-[10px] font-semibold text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    Save {bundle.def.discountPercent}% · {formatPrice(bundle.save, bundle.currency)}
+                    Save {bundle.def.discountPercent}% · {money(bundle.save, bundle.currency)}
                   </div>
                 </button>
 
@@ -207,15 +209,15 @@ export default function BundlesSection() {
                     {bundle.lines.map((l) => (
                       <li key={l.variantId} className="flex justify-between gap-2">
                         <span>{l.item.label}</span>
-                        <span className="text-[var(--ink-30)]">{formatPrice(l.price, bundle.currency)}</span>
+                        <span className="text-[var(--ink-30)]">{money(l.price, bundle.currency)}</span>
                       </li>
                     ))}
                   </ul>
 
                   <div className="flex items-baseline justify-between mb-3">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-serif text-[19px] tracking-tight text-[var(--ink)]">{formatPrice(bundle.price, bundle.currency)}</span>
-                      <span className="text-[12px] text-[var(--ink-30)] line-through">{formatPrice(bundle.total, bundle.currency)}</span>
+                      <span className="font-serif text-[19px] tracking-tight text-[var(--ink)]">{money(bundle.price, bundle.currency)}</span>
+                      <span className="text-[12px] text-[var(--ink-30)] line-through">{money(bundle.total, bundle.currency)}</span>
                     </div>
                     <button
                       type="button"
@@ -325,7 +327,7 @@ export default function BundlesSection() {
                       </div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', flexShrink: 0 }}>
-                      {formatPrice(l.price, openBundle.currency)}
+                      {money(l.price, openBundle.currency)}
                     </div>
                   </Link>
                 ))}
@@ -333,13 +335,13 @@ export default function BundlesSection() {
 
               <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
                 <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-.03em', color: '#0d0d0d' }}>
-                  {formatPrice(openBundle.price, openBundle.currency)}
+                  {money(openBundle.price, openBundle.currency)}
                 </span>
                 <span style={{ fontSize: 14, color: 'rgba(13,13,13,.35)', textDecoration: 'line-through' }}>
-                  {formatPrice(openBundle.total, openBundle.currency)}
+                  {money(openBundle.total, openBundle.currency)}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#0A7B45' }}>
-                  Save {formatPrice(openBundle.save, openBundle.currency)} ({openBundle.def.discountPercent}%)
+                  Save {money(openBundle.save, openBundle.currency)} ({openBundle.def.discountPercent}%)
                 </span>
               </div>
               <p style={{ fontSize: 12, color: 'rgba(13,13,13,.45)', margin: '0 0 16px' }}>

@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   // `template: '%s | PepcoLab'` appends it once. Setting it here too
   // double-suffixed the tag and got truncated by Google at ~60 chars.
   title: 'Research Peptides for Sale — UAE & UK',
-  description: 'Browse research-grade peptides for laboratory use. Every batch supplied with a certificate of analysis matched to the lot number on the vial. Cold-chain dispatch across the UAE; United Kingdom launching soon.',
+  description: 'Browse research-grade peptides for laboratory use. Every batch supplied with a certificate of analysis matched to the lot number on the vial. Cold-chain dispatch. Ordering in the UAE and the UK.',
   alternates: { canonical: '/products' },
   openGraph: {
     title: 'Research Peptides for Sale — UAE & UK | PepcoLab',
-    description: 'Browse research-grade peptides for laboratory use. Batch-matched certificates of analysis, lot traceability and cold-chain dispatch. UAE now, UK launching soon.',
+    description: 'Browse research-grade peptides for laboratory use. Batch-matched certificates of analysis, lot traceability and cold-chain dispatch. Ordering in the UAE and the UK.',
     type: 'website',
   },
 }

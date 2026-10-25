@@ -10,7 +10,7 @@ import ProductCard from "@/components/ProductCard";
 import { getProducts as DATA_PRODUCTS } from "@/lib/shopify";
 import { isPaymentLinkOnlyProduct, getPaymentLinkForVariant, isPlaceholderLink } from "@/lib/restrictedCheckout";
 import { useCart } from "@/lib/cartContext";
-import { formatPrice } from "@/lib/utils";
+import { useMoney } from "@/lib/useMoney";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 // MIGRATION COMPLETED (Sep 2026). lib/bundles.ts became the single source of
@@ -121,7 +121,7 @@ type NormalisedProduct = {
 const TRUST_ITEMS = [
   "HPLC-Verified Purity", "Freedom Diagnostics Tested", "Cold-Chain Dispatch",
   "Batch COA Published", "Verify Any Lot Number", "Lot-Traced to the Vial",
-  "Usually Next Working Day", "Free Shipping", "UK Dispatch Launching Soon",
+  "Usually Next Working Day", "Free Shipping", "Now Ordering in the UK",
 ];
 
 interface RealReview {
@@ -356,6 +356,7 @@ export default function PepcoLabPage({
   /** Listed products ranked by paid-order count (app/page.tsx). */
   popularHandles?: string[]
 }) {
+  const money = useMoney()
   const [email,       setEmail]       = useState("");
   const [emailError,  setEmailError]  = useState<string | null>(null);
   const [subbed,      setSubbed]      = useState(false);
@@ -926,14 +927,14 @@ export default function PepcoLabPage({
                           gap: "6px",
                         }}>
                           <span style={TYPOGRAPHY.priceLight}>
-                            {formatPrice(b.price, b.currency)}
+                            {money(b.price, b.currency)}
                           </span>
                           <span style={{
                             ...TYPOGRAPHY.smallLight,
                             textDecoration: "line-through",
                             color: "rgba(255,255,255,0.2)",
                           }}>
-                            {formatPrice(b.total, b.currency)}
+                            {money(b.total, b.currency)}
                           </span>
                         </div>
                         <span style={{
@@ -1314,7 +1315,7 @@ export default function PepcoLabPage({
                   fontWeight: 600,
                   flexShrink: 0,
                 }}>
-                  {formatPrice(p.price, p.currencyCode ?? storeCurrency)}
+                  {money(p.price, p.currencyCode ?? storeCurrency)}
                 </span>
 
                 <button

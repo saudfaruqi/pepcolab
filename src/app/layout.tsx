@@ -43,10 +43,9 @@ export const metadata: Metadata = {
   // schema blocks — while individual product pages already emitted an en-GB
   // hreflang. Google was getting two contradictory answers about who this
   // site is for. Everything below now says the same thing: one organisation,
-  // two markets, shipping live in the UAE and announced for the UK.
+  // two markets, both ordering live.
   //
-  // Nothing here claims UK fulfilment. UK is described as launching, which
-  // is both true and the claim the /uk page is built to support.
+  // Oct 2026: UK ordering is live (lib/pricing.ts, UK_CHECKOUT_LIVE).
 
   title: {
     default:
@@ -55,7 +54,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    'Research-grade peptides and laboratory compounds with independently tested, batch-matched certificates of analysis and cold-chain dispatch. Shipping across the UAE; United Kingdom launching soon. Supplied for in-vitro research use only.',
+    'Research-grade peptides and laboratory compounds with independently tested, batch-matched certificates of analysis and cold-chain dispatch. Ordering in the UAE and the United Kingdom. Supplied for in-vitro research use only.',
 
   applicationName: 'PepcoLab',
   referrer: 'origin-when-cross-origin',
@@ -173,7 +172,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Independently tested, batch-matched certificates of analysis and cold-chain dispatch. UAE now, UK launching soon.',
+      'Independently tested, batch-matched certificates of analysis and cold-chain dispatch. Ordering in the UAE and the UK.',
     url: siteUrl,
     siteName: 'PepcoLab',
     locale: 'en_AE',
@@ -312,8 +311,7 @@ export default function RootLayout({
         />
 
         {/* STORE SCHEMA
-            Deliberately NOT extended to the UK. The organisation serves both
-            markets; the store currently transacts in one. */}
+            Both markets transact. Payment is processed in AED for both. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -330,7 +328,7 @@ export default function RootLayout({
                 '@type': 'PostalAddress',
                 addressCountry: 'AE',
               },
-              areaServed: ['United Arab Emirates'],
+              areaServed: ['United Arab Emirates', 'United Kingdom'],
             }),
           }}
         />

@@ -64,11 +64,24 @@ const COUNTRY_CODE_ALIASES: Record<string, string> = {
   'UNITED ARAB EMIRATES': 'AE',
   KSA: 'SA',
   'SAUDI ARABIA': 'SA',
+  // UK orders: 'UK' is not an ISO code (GB is), so it is mapped before the
+  // two-letter pass-through below.
+  UK: 'GB',
+  'U.K.': 'GB',
+  'U.K': 'GB',
+  'UNITED KINGDOM': 'GB',
+  'GREAT BRITAIN': 'GB',
+  BRITAIN: 'GB',
+  ENGLAND: 'GB',
+  SCOTLAND: 'GB',
+  WALES: 'GB',
+  'NORTHERN IRELAND': 'GB',
 }
 
 function normalizeCountryCode(raw: string | undefined): string {
   const value = (raw || '').trim().toUpperCase()
   if (!value) return 'AE'
+  if (COUNTRY_CODE_ALIASES[value]) return COUNTRY_CODE_ALIASES[value]
   if (value.length === 2) return value // already alpha-2
   return COUNTRY_CODE_ALIASES[value] || 'AE' // unknown format — fall back rather than let it reach Shopify and throw
 }

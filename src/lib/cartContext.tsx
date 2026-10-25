@@ -33,7 +33,10 @@ export interface CartLine {
   variantId: string
   title: string
   variantTitle: string
+  /** Display price, in the visitor's currency. */
   price: number
+  /** Shopify's AED price; what STRABL charges. Absent on optimistic lines. */
+  priceAed?: number
   image?: string
   slug: string
 }
@@ -146,7 +149,7 @@ function applyCart(cart: ShopifyCart, market?: string) {
   const lines = cart.lines.edges
     .map(({ node }) => {
       const line = mapLine(node)
-      return { ...line, price: convertFromAed(line.price, market) }
+      return { ...line, priceAed: line.price, price: convertFromAed(line.price, market) }
     })
     .filter((l) => !isWithdrawnLine(l))
   const qty = lines.reduce((s, l) => s + l.quantity, 0)

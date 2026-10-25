@@ -5,7 +5,8 @@ import { ShoppingCart, Download, CheckCircle, ShieldCheck, FileText, ExternalLin
 import { resolveLocalCoa } from '@/lib/coaIndex'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
-import { formatPrice } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
+import { chargeNotice } from '@/lib/pricing'
 import {
   isPaymentLinkOnlyProduct,
   getPaymentLinkForVariant,
@@ -35,11 +36,12 @@ const CERT_TAB_INDEX = TABS.indexOf('Certificate')
 const CART_MAX_QTY = 10
 
 export default function ProductActions({ product: initialProduct, selectedVariantId, onSelectVariant }: Props) {
+  const money = useMoney()
   const [added,     setAdded]     = useState(false)
   const [activeTab, setActiveTab] = useState(0)
   const [quantity,  setQuantity]  = useState(1)
   const { addItem } = useCart()
-  const { ready } = useCountry()
+  const { ready, country } = useCountry()
 
   const p = initialProduct
 
@@ -379,11 +381,11 @@ export default function ProductActions({ product: initialProduct, selectedVarian
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           {selectedVariant.compareAtPrice && (
             <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#AAB3C8' }}>
-              {formatPrice(selectedVariant.compareAtPrice, selectedVariant.currencyCode ?? currencyCode)}
+              {money(selectedVariant.compareAtPrice, selectedVariant.currencyCode ?? currencyCode)}
             </span>
           )}
           <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.04em', color: '#0D0F14', lineHeight: 1 }}>
-            {formatPrice(selectedVariant.price, selectedVariant.currencyCode ?? currencyCode)}
+            {money(selectedVariant.price, selectedVariant.currencyCode ?? currencyCode)}
           </span>
           {paymentLinkOnly && (
             <span style={{ fontSize: 12, fontWeight: 600, color: '#AAB3C8' }}>each</span>
@@ -444,7 +446,12 @@ export default function ProductActions({ product: initialProduct, selectedVarian
             </div>
             {paymentLinkOnly && retaTotal != null && (
               <span style={{ fontSize: 13, fontWeight: 700, color: '#0D0F14' }}>
-                Total {formatPrice(retaTotal, currencyCode)}
+                Total {money(retaTotal, 'AED')}
+                {chargeNotice(retaTotal, country) && (
+                  <span style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#5A6378', marginTop: 4, maxWidth: 320, lineHeight: 1.5 }}>
+                    {chargeNotice(retaTotal, country)}
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -483,7 +490,7 @@ export default function ProductActions({ product: initialProduct, selectedVarian
             {paymentLinkIsPlaceholder
               ? 'Payment link coming soon'
               : retaTotal != null
-                ? `Pay ${formatPrice(retaTotal, currencyCode)}`
+                ? `Pay ${money(retaTotal, 'AED')}`
                 : 'Order via Payment Link'}
           </a>
         ) : (

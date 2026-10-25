@@ -3,7 +3,8 @@
 
 import { useMemo, useRef } from 'react'
 import Link from 'next/link'
-import { formatPrice, productHref } from '@/lib/utils'
+import { productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 
 /**
  * "What researchers order most" rail (Oct 2026, clean-up brief A8).
@@ -41,6 +42,7 @@ export default function BestSellersSection({
   /** Handles ranked by paid-order count, most first (server-computed). */
   popularHandles?: string[]
 }) {
+  const money = useMoney()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const featured = useMemo(() => {
@@ -260,7 +262,7 @@ export default function BestSellersSection({
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
                       <span style={{ fontSize: 'clamp(15px, 1.2vw, 18px)', fontWeight: 800, color: '#fff', letterSpacing: '-.02em' }}>
-                        {formatPrice(p.price, p.currencyCode ?? 'AED')}
+                        {money(p.price, p.currencyCode ?? 'AED')}
                       </span>
                       <span
                         style={{

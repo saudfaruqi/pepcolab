@@ -50,7 +50,7 @@ const GROUPS = [
     title: 'Buying and legal',
     items: [
       { href: '/bulk-orders', label: 'Bulk & institutional orders', d: 'Quotations, purchase orders and invoicing.' },
-      { href: '/uk', label: 'UK availability', d: 'Where UK dispatch has got to, and the launch list.' },
+      { href: '/uk', label: 'Ordering from the UK', d: 'Prices in pounds and how UK payment works.' },
       { href: '/legal', label: 'Legal status by compound', d: 'What research use only means, compound by compound.' },
       { href: '/faq', label: 'Full FAQ', d: 'Everything else, at length.' },
     ],

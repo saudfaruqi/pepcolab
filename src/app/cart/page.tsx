@@ -15,13 +15,17 @@ import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice } from '@/lib/utils'
 import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag, MessageCircle } from 'lucide-react'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
-import { chargeNotice, displayedTotalToAed } from '@/lib/pricing'
+import { chargeNotice, convertFromAed } from '@/lib/pricing'
+import { aedChargeTotal } from '@/lib/chargeTotal'
 
 interface AppliedDiscount {
   code: string
   type: 'percent' | 'fixed'
   value: number
+  /** Display currency. */
   discountAmount: number
+  /** Gateway currency (AED); what checkout deducts. */
+  discountAmountAed: number
 }
 
 export default function CartPage() {
@@ -93,19 +97,16 @@ function CartPageInner() {
   // pre-cart-load fallback.
   const displayCurrency = currencyCode || detectedCurrency || 'AED'
 
-  // KNOWN SIMPLIFICATION: subtotal here is already converted into
-  // displayCurrency (AED or GBP depending on market — see cartContext).
-  // Percent discounts are currency-agnostic so this is fine, but a
-  // "fixed" discount code's value is applied as-is in whatever currency
-  // is currently showing, not converted — a 10-unit fixed code is 10 AED
-  // off on the UAE market and 10 GBP off on the UK market. Fine for
-  // percent-only codes; worth knowing before creating fixed-value codes
-  // for a multi-currency launch.
+  // Discount codes are stored and validated in AED (fixed values and
+  // minimum subtotals are AED amounts), so the AED subtotal is sent and the
+  // AED discount returned is converted for display. Checkout deducts the
+  // AED figure itself.
   // Bundle saving (lib/bundles.ts) — applied automatically whenever a
   // complete bundle is in the cart. Discount codes are validated against the
   // amount after this saving, so the two never overlap on the same money.
   const bundleSavings = useMemo(() => computeBundleSavings(lines), [lines])
   const subtotalAfterBundles = Math.max(0, Math.round((subtotal - bundleSavings.amount) * 100) / 100)
+  const aedSubtotalAfterBundles = useMemo(() => aedChargeTotal(lines, detectedCountry), [lines, detectedCountry])
 
   const [discountCode, setDiscountCode] = useState('')
   const [discountApplying, setDiscountApplying] = useState(false)
@@ -150,7 +151,7 @@ function CartPageInner() {
       const res = await fetch('/api/discounts/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, subtotal: subtotalAfterBundles }),
+        body: JSON.stringify({ code, subtotal: aedSubtotalAfterBundles }),
       })
       const data = await res.json()
       if (!res.ok || !data.valid) {
@@ -162,7 +163,8 @@ function CartPageInner() {
         code: data.code,
         type: data.type,
         value: data.value,
-        discountAmount: data.discountAmount,
+        discountAmount: convertFromAed(data.discountAmount, detectedCountry),
+        discountAmountAed: data.discountAmount,
       })
     } catch {
       setDiscountError('Something went wrong. Please try again.')
@@ -196,7 +198,7 @@ function CartPageInner() {
         const res = await fetch('/api/discounts/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: appliedDiscount.code, subtotal: subtotalAfterBundles }),
+          body: JSON.stringify({ code: appliedDiscount.code, subtotal: aedSubtotalAfterBundles }),
         })
         const data = await res.json()
         if (cancelled) return
@@ -207,7 +209,7 @@ function CartPageInner() {
         }
         setAppliedDiscount((prev) =>
           prev && prev.code === data.code
-            ? { ...prev, discountAmount: data.discountAmount, value: data.value, type: data.type }
+            ? { ...prev, discountAmount: convertFromAed(data.discountAmount, detectedCountry), discountAmountAed: data.discountAmount, value: data.value, type: data.type }
             : prev
         )
       } catch {
@@ -222,11 +224,12 @@ function CartPageInner() {
     // to react to subtotal changes for an already-applied discount, not to
     // re-fire every time it sets appliedDiscount itself (that would loop).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotalAfterBundles])
+  }, [aedSubtotalAfterBundles])
 
   const total = appliedDiscount
     ? Math.max(0, subtotalAfterBundles - appliedDiscount.discountAmount)
     : subtotalAfterBundles
+  const ukNotice = chargeNotice(aedChargeTotal(lines, detectedCountry, appliedDiscount?.discountAmountAed ?? 0), detectedCountry)
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -458,9 +461,9 @@ function CartPageInner() {
                 </strong>
               </div>
 
-              {chargeNotice(displayedTotalToAed(total, detectedCountry), detectedCountry) && (
-                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-2 mb-1 mt-3 leading-relaxed">
-                  {chargeNotice(displayedTotalToAed(total, detectedCountry), detectedCountry)}
+              {ukNotice && (
+                <p className="text-[11px] text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-1 mt-3 leading-relaxed">
+                  {ukNotice}
                 </p>
               )}
 

@@ -1,27 +1,14 @@
 // src/app/uk/page.tsx
 //
-// UK MARKET ENTRY (Sep 2026)
+// UK MARKET (live, Oct 2026)
 // --------------------------
-// PepcoLab does not yet dispatch to the United Kingdom. This page exists so
-// that the brand is discoverable, credible and capturable in UK search
-// BEFORE fulfilment goes live, rather than starting from zero authority on
-// launch day. Domain and page authority take months to accumulate; the
-// catalogue can be switched on in an afternoon.
+// UK ordering is open. UK visitors see prices in pounds, converted from the
+// AED price list at the rate in lib/pricing.ts; the card is charged in AED
+// and the cart says so beside the total.
 //
 // WHAT THIS PAGE DELIBERATELY DOES NOT DO:
-//   - claim UK shipping, UK stock, or a UK entity that dispatches goods
-//   - show GBP prices that checkout cannot honour
-//   - offer a buy button
 //   - claim any regulatory approval, MHRA registration or medicine status
-//
-// Every claim below is one PepcoLab can substantiate today: independent
-// third-party batch testing, batch-matched COAs, lot traceability,
-// cold-chain handling, and a UK-registered company. The research-use-only
-// framing is stated in the copy, not buried in a footer, because the whole
-// page is read by UK visitors for whom that distinction is the legal one
-// that matters.
-//
-// Compliance note: nothing here describes what any compound does in a body.
+//   - describe what any compound does in a body
 // All claims sit on the supply axis — purity, documentation, traceability,
 // handling. Keep it that way when editing.
 
@@ -29,15 +16,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import UkLaunchForm from '@/components/UkLaunchForm'
+import { AED_PER_GBP } from '@/lib/pricing'
 
 const SITE_URL = 'https://www.pepcolab.com'
 const CANONICAL = '/uk'
 
 export const metadata: Metadata = {
-  title: 'Research Peptides in the UK | Launching Soon',
+  title: 'Research Peptides in the UK | Order Online',
   description:
-    'PepcoLab supplies research-grade peptides with independently tested, batch-matched certificates of analysis and cold-chain handling. UK dispatch is launching soon — join the list for GBP pricing and UK delivery at release. For in-vitro research use only.',
+    'PepcoLab supplies research-grade peptides with independently tested, batch-matched certificates of analysis and cold-chain handling. Now ordering in the UK, priced in pounds. For in-vitro research use only.',
   alternates: {
     canonical: CANONICAL,
     languages: {
@@ -47,9 +34,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'PepcoLab UK | Research-Grade Peptides, Launching Soon',
+    title: 'PepcoLab UK | Research-Grade Peptides',
     description:
-      'Independently tested, batch-matched COAs and lot-traced supply. UK dispatch launching soon.',
+      'Independently tested, batch-matched COAs and lot-traced supply. Now ordering in the UK.',
     url: `${SITE_URL}${CANONICAL}`,
     type: 'website',
     images: [{ url: '/og-pepcolab.jpg', width: 1200, height: 630, alt: 'PepcoLab' }],
@@ -64,11 +51,11 @@ export const revalidate = 86400
 const FAQ = [
   {
     q: 'Does PepcoLab ship to the United Kingdom?',
-    a: 'Not yet. PepcoLab currently dispatches from the UAE only. UK supply is in preparation and will be announced to the launch list first. Nothing on this site can be purchased for UK delivery today.',
+    a: 'Yes. UK orders are open. Add products to your cart and check out as normal; you receive a confirmation email with your order number, and a dispatch email when it ships.',
   },
   {
     q: 'Is PepcoLab a UK company?',
-    a: 'Yes. PepcoLab is the trading name of SEE BEE DEE LIMITED, registered in England and Wales, company number 17072052. UK registration is a matter of corporate structure — it is separate from, and does not by itself establish, the ability to dispatch goods within the UK, which is why UK ordering is not open yet.',
+    a: 'Yes. PepcoLab is the trading name of SEE BEE DEE LIMITED, registered in England and Wales, company number 17072052.',
   },
   {
     q: 'What does "research use only" mean?',
@@ -83,8 +70,8 @@ const FAQ = [
     a: 'Lyophilised peptides are shipped in temperature-controlled packaging and are stable for the transit window under those conditions. Handling and storage requirements for each compound are printed on the documentation supplied with the order.',
   },
   {
-    q: 'Will UK prices be in pounds?',
-    a: 'Yes. At UK release, UK visitors will see GBP pricing and UK delivery estimates. Until then the catalogue displays UAE dirhams, because that is the currency actually charged at checkout, and showing a converted figure the payment provider could not honour would be misleading.',
+    q: 'Are UK prices in pounds?',
+    a: `Yes. UK visitors see prices in pounds, converted from our UAE dirham price list at £1 = AED ${AED_PER_GBP.toFixed(2)}. Payments are processed in UAE dirhams, so your card is charged the AED amount shown beside your cart total and your card provider converts it; its rate may differ slightly from ours.`,
   },
 ]
 
@@ -126,7 +113,7 @@ export default function UkPage() {
               marginBottom: 18,
             }}
           >
-            United Kingdom · Launching soon
+            United Kingdom · Now ordering
           </div>
 
           <h1
@@ -155,19 +142,46 @@ export default function UkPage() {
           >
             PepcoLab supplies research-grade peptides with independently
             tested, batch-matched certificates of analysis, lot traceability
-            to the vial, and cold-chain handling. We dispatch from the UAE
-            today. UK dispatch is in preparation — join the list and we will
-            tell you the day it opens.
+            to the vial, and cold-chain handling. UK ordering is open, with
+            prices shown in pounds.
           </p>
 
-          <div style={{ maxWidth: 520, marginBottom: 20 }}>
-            <UkLaunchForm />
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link
+              href="/products"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 50,
+                padding: '0 26px',
+                borderRadius: 999,
+                background: '#101010',
+                color: '#FAFAF8',
+                fontSize: 14,
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Shop the catalogue
+            </Link>
+            <Link
+              href="/certificates"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 50,
+                padding: '0 26px',
+                borderRadius: 999,
+                border: '1px solid rgba(0,0,0,.15)',
+                color: '#101010',
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              See the certificates
+            </Link>
           </div>
-
-          <p style={{ fontSize: 12.5, color: 'rgba(0,0,0,.45)', lineHeight: 1.7, maxWidth: 520 }}>
-            One email at launch. No newsletter, no sequence, no sharing your
-            address with anyone.
-          </p>
         </section>
 
         {/* ── Why it matters ───────────────────────────────────────────── */}
@@ -269,7 +283,7 @@ export default function UkPage() {
           </div>
         </section>
 
-        {/* ── Meanwhile ────────────────────────────────────────────────── */}
+        {/* ── Start here ───────────────────────────────────────────────── */}
         <section style={{ padding: SECTION_PAD, maxWidth: 1200, margin: '0 auto' }}>
           <h2
             style={{
@@ -280,7 +294,7 @@ export default function UkPage() {
               margin: '0 0 18px',
             }}
           >
-            While you wait
+            Before you order
           </h2>
 
           <p
@@ -292,10 +306,9 @@ export default function UkPage() {
               margin: '0 0 30px',
             }}
           >
-            The catalogue, the published certificates and the research
-            library are all open to browse from the UK. You cannot order for
-            UK delivery yet, but you can see exactly what the documentation
-            looks like before deciding whether we are worth switching to.
+            Every published certificate and the full research library are
+            open to read, so you can see exactly what the documentation looks
+            like before you place an order.
           </p>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

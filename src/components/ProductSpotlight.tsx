@@ -11,11 +11,13 @@ import {
 } from 'lucide-react'
 
 import { getProducts } from '@/lib/shopify'
-import { formatPrice, productHref } from '@/lib/utils'
+import { productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import Vial from '@/components/Vial'
 import { useCountry } from '@/lib/countryContext'
 
 export default function ProductSpotlight() {
+  const money = useMoney()
   const [featured, setFeatured] = useState<any>(null)
   const [purity,   setPurity]   = useState(99)
   const { country, ready } = useCountry()
@@ -166,7 +168,7 @@ export default function ProductSpotlight() {
                       textDecoration: 'line-through',
                     }}
                   >
-                    {formatPrice(featured.oldPrice, currencyCode)}
+                    {money(featured.oldPrice, currencyCode)}
                   </div>
                 )}
                 <div
@@ -178,7 +180,7 @@ export default function ProductSpotlight() {
                     color: '#0d0d0d',
                   }}
                 >
-                  {formatPrice(featured.price, currencyCode)}
+                  {money(featured.price, currencyCode)}
                 </div>
               </div>
 

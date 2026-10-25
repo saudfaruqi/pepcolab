@@ -26,12 +26,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isGonePath, normaliseRetiredPath, RETIRED_REDIRECTS } from './lib/retired-paths'
 
-// AE sells and ships. GB is a recognised market for content, currency
-// context and messaging, but has no catalogue and no checkout yet — see
-// lib/pricing.ts (UK_CHECKOUT_LIVE) for the single switch that turns UK
-// selling on. Keeping GB here rather than collapsing it to AE is what lets
-// a UK visitor be told the truth ("not dispatching to the UK yet") instead
-// of being silently relabelled as a UAE customer.
+// AE and GB are both live markets (lib/pricing.ts, UK_CHECKOUT_LIVE).
+// Anything else is treated as AE for currency and copy.
 const SUPPORTED_COUNTRIES = new Set(['AE', 'GB'])
 
 const DEFAULT_COUNTRY = 'AE'

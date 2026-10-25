@@ -34,10 +34,7 @@ interface Props {
  * once useCountry() resolves and normaliseProduct() converts at that point, so
  * the page stays statically rendered — no cookie read on the server.
  *
- * Market gating is client-side for the same reason. While UK_CATALOGUE_LIVE is
- * false (pricing.ts) every product is sold in both markets and MarketGuard is
- * inert. Once it's true, a visitor who lands on a product from the other
- * catalogue gets a notice instead of a buy button.
+ * Both markets sell the full catalogue, so there is no per-market gating.
  *
  * Deliberately NOT a server-side cookie read + notFound(): that would make
  * every product page dynamic, and it would 404 the page for Googlebot, which

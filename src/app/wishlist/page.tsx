@@ -11,11 +11,13 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { isRetiredHandle } from '@/lib/retired-paths'
 import { getProductByHandle } from '@/lib/shopify'
-import { formatPrice, productHref } from '@/lib/utils'
+import { productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import { isWhatsAppConfigured, whatsAppWishlistLink } from '@/lib/whatsapp'
 import { Heart, ShoppingCart, Trash2, ArrowRight, MessageCircle, CheckCircle } from 'lucide-react'
 
 export default function WishlistPage() {
+  const money = useMoney()
   const { items, hydrated, remove, clear } = useWishlist()
   const { addItem } = useCart()
   const { country } = useCountry()
@@ -215,11 +217,11 @@ export default function WishlistPage() {
                       <div className="text-right">
                         {item.oldPrice && (
                           <div className="text-[11px] text-gray-300 line-through">
-                            {formatPrice(item.oldPrice, item.currencyCode ?? 'AED')}
+                            {money(item.oldPrice, item.currencyCode ?? 'AED')}
                           </div>
                         )}
                         <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                          {formatPrice(item.price, item.currencyCode ?? 'AED')}
+                          {money(item.price, item.currencyCode ?? 'AED')}
                         </span>
                       </div>
 
@@ -266,7 +268,7 @@ export default function WishlistPage() {
               <div className="flex justify-between text-sm text-gray-600 mb-5">
                 <span>{items.length} item{items.length !== 1 ? 's' : ''}</span>
                 <span>
-                  {formatPrice(
+                  {money(
                     resolvedItems.reduce((sum, i) => sum + i.price, 0),
                     resolvedItems[0]?.currencyCode ?? 'AED'
                   )}

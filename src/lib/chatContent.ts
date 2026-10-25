@@ -507,11 +507,11 @@ export const FAQS: Faq[] = [
     topic: 'shipping',
     question: 'Do you ship to the UK?',
     answer: [
-      'Not yet. PepcoLab currently dispatches from the UAE. UK supply is in preparation and will be announced to the launch list first.',
-      'You can browse the full catalogue and every published certificate from the UK now, and join the list to be told the day UK ordering opens — with GBP pricing and UK delivery estimates.',
+      'Yes. UK ordering is open, and UK visitors see prices in pounds.',
+      'Payments are processed in UAE dirhams, so your card is charged the AED amount shown beside your cart total and your card provider converts it. Other countries: we currently sell to the UAE and the UK only.',
     ],
     keywords: ['uk', 'united kingdom', 'britain', 'british', 'england', 'london', 'international', 'worldwide', 'abroad', 'ship to', 'europe', 'usa', 'america', 'saudi', 'ksa', 'qatar', 'kuwait', 'oman', 'bahrain'],
-    links: [{ label: 'UK launch details', href: '/uk' }],
+    links: [{ label: 'Ordering from the UK', href: '/uk' }],
     related: ['shipping-times', 'compliance-where'],
   },
 
@@ -735,7 +735,7 @@ const CONTEXT_RULES: { match: (p: string) => boolean; context: PageContext }[] =
     match: p => p.startsWith('/uk'),
     context: {
       label: 'UK',
-      greeting: 'UK dispatch isn’t open yet, but everything else is. Ask me anything about how we test and document batches — or join the launch list.',
+      greeting: 'UK ordering is open. Ask me what’s in stock, what something costs in pounds, or how we test and document batches.',
       suggested: ['shipping-uk', 'coa-what', 'compliance-where', 'contact-human'],
     },
   },

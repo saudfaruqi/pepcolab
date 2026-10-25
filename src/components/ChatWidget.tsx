@@ -45,6 +45,7 @@ import { trackChatHandoff } from '@/lib/analytics'
 import { useCustomer } from '@/lib/customerContext'
 import { useCart } from '@/lib/cartContext'
 import { formatPrice } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import { claimNudgeSlot, releaseNudgeSlot } from '@/lib/nudgeCoordinator'
 
 // /learn: ad landing pages carry no shop furniture (Meta ads plan, Oct 2026).
@@ -87,6 +88,7 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export default function ChatWidget() {
+  const money = useMoney()
   const pathname = usePathname() || '/'
   const context = useMemo(() => resolvePageContext(pathname), [pathname])
 
@@ -946,7 +948,7 @@ export default function ChatWidget() {
                                     {sellable.length > 0 && (
                                       <span className="plc-card-price">
                                         {sellable.length > 1 ? 'from ' : ''}
-                                        {formatPrice(Math.min(...sellable.map(v => v.price)), card.currency)}
+                                        {money(Math.min(...sellable.map(v => v.price)), card.currency)}
                                       </span>
                                     )}
                                   </div>

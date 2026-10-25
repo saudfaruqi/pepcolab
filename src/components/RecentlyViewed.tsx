@@ -2,7 +2,8 @@
 'use client'
 import Link from 'next/link'
 import { useRecentlyViewed } from '@/lib/recentlyViewedContext'
-import { formatPrice, productHref } from '@/lib/utils'
+import { productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import { isRetiredHandle } from '@/lib/retired-paths'
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function RecentlyViewed({ excludeSlug }: Props) {
+  const money = useMoney()
   const { items, hydrated } = useRecentlyViewed()
 
   // Never link to a withdrawn product (lib/retired-paths.ts).
@@ -69,7 +71,7 @@ export default function RecentlyViewed({ excludeSlug }: Props) {
                 {item.name}
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#626A85' }}>
-                {formatPrice(item.price, item.currencyCode ?? 'AED')}
+                {money(item.price, item.currencyCode ?? 'AED')}
               </div>
             </Link>
           ))}

@@ -101,18 +101,9 @@ export default function AboutPage() {
       name: 'PepcoLab',
       legalName: 'SEE BEE DEE LIMITED',
       url: SITE_URL,
-      // TODO: 'value' is blank — emitting a PropertyValue with an empty
-      // value is invalid/incomplete structured data. Fill in the real
-      // Companies House registration number here, or remove this
-      // identifier entirely until it's available. Not fabricating a
-      // number to fill the gap.
-      identifier: { '@type': 'PropertyValue', name: 'Companies House', value: '' },
-      // FIX (Aug 2026): was ['United Kingdom', 'United Arab Emirates'] —
-      // false. areaServed must match where the business actually fulfils
-      // orders, and PepcoLab is UAE-only right now (SEE BEE DEE LIMITED
-      // being UK-registered is a company-registration fact, not a served
-      // market).
-      areaServed: ['United Arab Emirates'],
+      identifier: { '@type': 'PropertyValue', name: 'Companies House', value: '17072052' },
+      // Both live markets (lib/pricing.ts, UK_CHECKOUT_LIVE).
+      areaServed: ['United Arab Emirates', 'United Kingdom'],
     },
   }
 

@@ -6,6 +6,8 @@ import { computeBundleSavings } from '@/lib/bundles'
 import { useEffect, useState } from 'react'
 import type { CartLine } from '@/lib/cartContext'
 import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
+import { toAedLines } from '@/lib/chargeTotal'
+import { displayedTotalToAed } from '@/lib/pricing'
 
 /** Shown when checkout is attempted without the research attestation. */
 export const ATTESTATION_REQUIRED_MESSAGE =
@@ -126,9 +128,12 @@ export function useStrablCheckout() {
 
   const handleCheckout = async (
     lines: CartLine[],
-    displayCurrency: string,
+    // Display currency of the cart. Not sent: STRABL is always charged AED.
+    _displayCurrency: string,
     detectedCountry?: string | null,
-    appliedDiscount?: { code: string; discountAmount: number } | null,
+    // discountAmountAed is the gateway amount; discountAmount (display
+    // currency) is converted back only when the AED figure is missing.
+    appliedDiscount?: { code: string; discountAmount: number; discountAmountAed?: number } | null,
     // RESEARCH ATTESTATION (brief A10): ISO time the customer ticked the
     // required confirmation. Checkout refuses to proceed without it — this
     // is enforced here, not only by a disabled button.
@@ -144,12 +149,17 @@ export function useStrablCheckout() {
     // Withdrawn products / device formats never reach payment (dormant while
     // the withdrawal switch in lib/retired-paths.ts is off).
     lines = lines.filter((l) => !(l.slug && isRetiredHandle(l.slug)) && !isWithdrawnDeviceTitle(l.variantTitle || ''))
+    // STRABL charges AED only. Every price sent from here on is the AED
+    // Shopify price, whatever currency the visitor was shown.
+    lines = toAedLines(lines, detectedCountry)
     // BUNDLE SAVINGS (Sep 2026): complete bundle sets in the cart earn their
     // bundle discount (lib/bundles.ts) wherever checkout is started from —
     // cart page or drawer. Combined with any discount code into the single
     // reduction applied to line prices below.
     const bundleSavings = computeBundleSavings(lines)
-    const codeAmount = appliedDiscount?.discountAmount ?? 0
+    const codeAmount = appliedDiscount
+      ? appliedDiscount.discountAmountAed ?? displayedTotalToAed(appliedDiscount.discountAmount, detectedCountry)
+      : 0
     const totalDiscount = Math.round((bundleSavings.amount + codeAmount) * 100) / 100
     const discountCode = appliedDiscount?.code
     if (lines.length === 0) return
@@ -171,7 +181,7 @@ export function useStrablCheckout() {
       }
 
       const baseUrl = process.env.NEXT_PUBLIC_SERVER_BASE_URL || window.location.origin
-      const currency = displayCurrency || 'AED'
+      const currency = 'AED'
 
       // lineItems: required fields per the actual SDK validation are title,
       // price, quantity>0, productId, variantId — everything else is

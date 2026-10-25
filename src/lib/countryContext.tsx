@@ -1,42 +1,25 @@
 // src/lib/countryContext.tsx
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { canCheckoutIn, currencyFor } from './pricing'
 
 const COUNTRY_KEY = 'pepcolab_country'
 
-// DUAL MARKET (Sep 2026): GB is back as a recognised country, but on
-// different terms than the version removed in August.
-//
-// The August removal was correct about the underlying problem — GB was being
-// offered a currency switcher and a checkout path that did not work — and
-// solved it by pretending UK visitors were in the UAE. That silently
-// mislabels real people, loses the ability to say anything UK-specific, and
-// makes it impossible to capture UK demand ahead of launch.
-//
-// The fix here separates two things the old code conflated:
-//   - which country a visitor is IN            (AE or GB, honestly recorded)
-//   - whether we can SELL to them              (canCheckout / pricing.ts)
-//
-// UK visitors are correctly identified as GB, see UK-specific messaging and
-// the /uk page, and are offered the launch list instead of a buy button.
-// Prices stay in AED for everyone because AED is what STRABL actually
-// charges — showing a converted GBP figure we cannot honour at checkout was
-// one of the original sins here and is not being reintroduced.
+// Two live markets: AE and GB. A visitor's country decides the display
+// currency (AED or GBP); both can buy. Currency and selling rules live in
+// lib/pricing.ts and are read from there, so they cannot drift apart.
 const SUPPORTED_COUNTRIES = ['AE', 'GB'] as const
 type SupportedCountry = (typeof SUPPORTED_COUNTRIES)[number]
 
-// AED for both markets: it is the currency charged, so it is the currency
-// displayed. When UK fulfilment goes live and a GBP price list exists in
-// Shopify, change GB here and in lib/pricing.ts together.
 const COUNTRY_CURRENCY: Record<SupportedCountry, string> = {
-  AE: 'AED',
-  GB: 'AED',
+  AE: currencyFor('AE'),
+  GB: currencyFor('GB'),
 }
 
 /** Markets that can currently complete a purchase. */
 const CHECKOUT_ENABLED: Record<SupportedCountry, boolean> = {
-  AE: true,
-  GB: false,
+  AE: canCheckoutIn('AE'),
+  GB: canCheckoutIn('GB'),
 }
 
 function normaliseCountry(input: string | null | undefined): SupportedCountry {

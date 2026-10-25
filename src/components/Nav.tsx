@@ -8,7 +8,8 @@ import { useWishlist } from '@/lib/wishlistContext'
 import { useCustomer } from '@/lib/customerContext'
 import SignInModal from '@/components/SignInModal'
 import { getProducts } from '@/lib/shopify'
-import { formatPrice, productHref } from '@/lib/utils'
+import { productHref } from '@/lib/utils'
+import { useMoney } from '@/lib/useMoney'
 import { useCountry } from '@/lib/countryContext'
 
 type Product = {
@@ -55,6 +56,7 @@ const ChevronDown = ({ open }: { open: boolean }) => (
 )
 
 export default function Nav() {
+  const money = useMoney()
   const { totalQuantity, openCart } = useCart()
   const { count: wishlistCount } = useWishlist()
   const { signedIn, firstName, orderCount } = useCustomer()
@@ -234,7 +236,7 @@ export default function Nav() {
                       <div style={{ fontSize: 11, color: 'rgba(13,13,13,.4)' }}>{p.category}</div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', flexShrink: 0 }}>
-                      {formatPrice(p.price, (p as any).currencyCode ?? 'AED')}
+                      {money(p.price, (p as any).currencyCode ?? 'AED')}
                     </div>
                   </a>
                 ))}
