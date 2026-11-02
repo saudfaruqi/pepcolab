@@ -119,7 +119,7 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
         <span>{EMAIL_OPT_IN_TEXT}</span>
       </label>
 
-      <button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email me the guide'}</button>
+      <button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Email me the guide'}</button> 
 
       <p className="lf-fine">
         We use your email to send the guide{optIn ? ' and the research updates you asked for' : ''}. See our{' '}
