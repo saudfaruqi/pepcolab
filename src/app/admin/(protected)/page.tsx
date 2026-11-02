@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic' // always fresh — this is an admin dash
 // picker — the orders list must still load.
 async function loadCatalogueVariants(): Promise<CatalogueVariant[]> {
   try {
-    const products = (await getProducts(250, 'AE')) as any[]
+    const products = (await getProducts(250, 'AE', { allMarkets: true })) as any[]
     const out: CatalogueVariant[] = []
     for (const p of products) {
       for (const v of p.variants || []) {

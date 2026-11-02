@@ -37,7 +37,7 @@ export default async function CertificatesPage() {
           makes the page worth indexing and what matches the "kpv coa",
           "epithalon coa" and "ahk-cu coa" queries already showing in Search
           Console. */}
-      <CertificateIndex />
+      <CertificateIndex country={country} />
     </>
   )
 }

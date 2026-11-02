@@ -78,7 +78,7 @@ export default function SignInModal({ open, onClose, reason }: Props) {
       aria-labelledby="plsi-title"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .plsi { position: fixed; inset: 0; z-index: 1200;
                 display: flex; align-items: center; justify-content: center; padding: 20px;
                 background: rgba(13,13,13,.5); backdrop-filter: blur(3px);
@@ -115,7 +115,7 @@ export default function SignInModal({ open, onClose, reason }: Props) {
         .plsi-ok { display: flex; gap: 11px; align-items: flex-start; }
         .plsi :focus-visible { outline: 2px solid #0D0D0D; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { .plsi, .plsi-card { animation: none } }
-      `}</style>
+      ` }} />
 
       <div className="plsi-card" ref={cardRef}>
         <button className="plsi-x" onClick={onClose} aria-label="Close">

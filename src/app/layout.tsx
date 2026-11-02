@@ -4,6 +4,25 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 
+// Self-hosted fonts (Nov 2026). Google Fonts was a render-blocking request
+// to a third-party origin (~750 ms on mobile in PageSpeed). These are the
+// same families and weights, bundled into the site's own CSS with
+// font-display: swap, so the family names used across the site are unchanged.
+import '@fontsource/inter/latin-300.css'
+import '@fontsource/inter/latin-400.css'
+import '@fontsource/inter/latin-500.css'
+import '@fontsource/inter/latin-600.css'
+import '@fontsource/inter/latin-700.css'
+import '@fontsource/inter/latin-800.css'
+import '@fontsource/dm-sans/latin-300.css'
+import '@fontsource/dm-sans/latin-400.css'
+import '@fontsource/dm-sans/latin-500.css'
+import '@fontsource/dm-sans/latin-600.css'
+import '@fontsource/dm-sans/latin-700.css'
+import '@fontsource/dm-serif-display/latin-400.css'
+import '@fontsource/dm-serif-display/latin-400-italic.css'
+import '@fontsource/dm-mono/latin-400.css'
+import '@fontsource/dm-mono/latin-500.css'
 import './globals.css'
 
 import { CartProvider } from '@/lib/cartContext'
@@ -225,28 +244,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-        />
-
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-
-        <link
-          rel="preconnect"
-          href="https://unpkg.com"
-          crossOrigin="anonymous"
-        />
-
         {/* Shopify CDN serves every product image — resolving DNS and TLS
             up front removes a round-trip from the first product card paint. */}
         <link

@@ -12,7 +12,7 @@ import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import CheckoutAttestation from '@/components/CheckoutAttestation'
 import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, shopifyImg } from '@/lib/utils'
 import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag, MessageCircle } from 'lucide-react'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 import { chargeNotice, convertFromAed } from '@/lib/pricing'
@@ -313,7 +313,7 @@ function CartPageInner() {
                   <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-blue-50/50 border border-blue-100/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {line.image ? (
                       <img
-                        src={line.image}
+                        src={shopifyImg(line.image, 200)}
                         alt={line.title}
                         className="w-full h-full object-contain p-2"
                       />

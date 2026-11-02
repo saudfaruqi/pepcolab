@@ -1,6 +1,7 @@
 // src/lib/shopify.ts
 import { convertFromAed, convertOptional, currencyFor, marketQuery } from './pricing'
 import { isRetiredHandle, isWithdrawnDeviceTitle, PRODUCT_WITHDRAWAL_ACTIVE } from './retired-paths'
+import { isUaeRestrictedHandle, isUaeRestrictedVariant, restrictsMarket, uaeRestrictedOnClient } from './uaeRestrictions'
 import { classOf, getProductClass } from '@/lib/productClasses'
 
 const DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
@@ -471,16 +472,22 @@ function stripDeviceTitle(title: string): string {
     .trim()
 }
 
-export function normaliseProduct(node: ShopifyProduct, market?: string) {
-  // Device stripping only runs while product withdrawal is switched on
-  // (lib/retired-paths.ts PRODUCT_WITHDRAWAL_ACTIVE); the renames always run.
-  node = PRODUCT_WITHDRAWAL_ACTIVE
+export function normaliseProduct(node: ShopifyProduct, market?: string, opts: { uaeCatalogue?: boolean } = {}) {
+  // Device stripping runs while product withdrawal is switched on
+  // (lib/retired-paths.ts PRODUCT_WITHDRAWAL_ACTIVE), and for the UAE
+  // catalogue (lib/uaeRestrictions.ts); the renames always run.
+  node = PRODUCT_WITHDRAWAL_ACTIVE || opts.uaeCatalogue
     ? {
         ...node,
         title: stripDeviceTitle(renameTitle(node.title)),
         description: stripDeviceCopy(node.description ?? ''),
         descriptionHtml: stripDeviceHtml(node.descriptionHtml),
-        variants: { ...node.variants, edges: labVariantEdges(node.variants.edges) },
+        variants: {
+          ...node.variants,
+          edges: labVariantEdges(node.variants.edges).filter(
+            (e) => !opts.uaeCatalogue || !isUaeRestrictedVariant(e.node.title || '')
+          ),
+        },
       }
     : { ...node, title: renameTitle(node.title) }
   const variant = pickRepresentativeVariant(node.variants.edges)
@@ -611,12 +618,23 @@ function isListable(p: ReturnType<typeof normaliseProduct>): boolean {
   return !isRetiredHandle(p.handle) && p.variants.length > 0
 }
 
+/** Listable in the UAE catalogue (lib/uaeRestrictions.ts). */
+function isUaeListable(p: ReturnType<typeof normaliseProduct>): boolean {
+  return isListable(p) && !isUaeRestrictedHandle(p.handle)
+}
+
 /**
  * `includeRetired` is for the order pipeline only (STRABL webhook variant
  * resolution), which must still recognise an in-flight order for a product
  * withdrawn after it was paid for. Nothing customer-facing passes it.
  */
-export async function getProducts(first = 40, buyerCountry?: string, opts: { includeRetired?: boolean } = {}) {
+export async function getProducts(
+  first = 40,
+  buyerCountry?: string,
+  // allMarkets: admin screens, which must see every product whatever the
+  // admin's own location. includeRetired implies it.
+  opts: { includeRetired?: boolean; allMarkets?: boolean } = {}
+) {
   // buyerCountry does two things: picks the display currency (always), and
   // picks the catalogue (only once UK_CATALOGUE_LIVE is true in pricing.ts —
   // until then marketQuery returns undefined and every market sees everything).
@@ -632,8 +650,10 @@ export async function getProducts(first = 40, buyerCountry?: string, opts: { inc
       { first, query },
       { revalidate: 60, serverSide: true, buyerCountry }
     )
-    const all = data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
-    return opts.includeRetired ? all : all.filter(isListable)
+    if (opts.includeRetired) return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
+    const uae = !opts.allMarkets && restrictsMarket(buyerCountry)
+    const all = data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry, { uaeCatalogue: uae }))
+    return all.filter(uae ? isUaeListable : isListable)
   }
 
   // Client: always go through proxy with country
@@ -643,8 +663,12 @@ export async function getProducts(first = 40, buyerCountry?: string, opts: { inc
     { first, query },
     buyerCountry
   )
-  const all = data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
-  return opts.includeRetired ? all : all.filter(isListable)
+  if (opts.includeRetired) return data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry))
+  // In the browser the visitor's real location counts too: someone in the
+  // UAE who picked "United Kingdom" still gets the UAE catalogue.
+  const uae = !opts.allMarkets && (restrictsMarket(buyerCountry) || uaeRestrictedOnClient())
+  const all = data.products.edges.map(({ node }) => normaliseProduct(node, buyerCountry, { uaeCatalogue: uae }))
+  return all.filter(uae ? isUaeListable : isListable)
 }
 
 // Extract the query string to reuse in both paths

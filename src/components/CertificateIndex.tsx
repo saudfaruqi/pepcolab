@@ -25,14 +25,19 @@
 // sees it.
 
 import { COA_BATCHES } from '@/app/coaData'
+import { isUaeRestrictedBatch, restrictsMarket } from '@/lib/uaeRestrictions'
 
 const INK = '#0D0D0D'
 const BORDER = 'rgba(13,13,13,.08)'
 
-export default function CertificateIndex() {
+export default function CertificateIndex({ country }: { country?: string }) {
   // Newest report first — the most recent batch is the one someone holding a
-  // fresh vial is most likely looking for.
-  const batches = [...COA_BATCHES].sort((a, b) => (a.reported < b.reported ? 1 : -1))
+  // fresh vial is most likely looking for. The UAE catalogue leaves out
+  // certificates for products it does not carry (lib/uaeRestrictions.ts).
+  const uae = restrictsMarket(country)
+  const batches = [...COA_BATCHES]
+    .filter((b) => !uae || !isUaeRestrictedBatch(b))
+    .sort((a, b) => (a.reported < b.reported ? 1 : -1))
 
   if (batches.length === 0) return null
 

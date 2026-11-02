@@ -28,12 +28,13 @@ export interface CatalogueVariant {
 // Admin list views (Oct 2026). The list now holds every order of any status,
 // so these split it the way it gets worked: what to send out, what is paid,
 // and the attempts worth a follow-up call.
-type ViewKey = 'all' | 'to_ship' | 'paid' | 'awaiting_payment' | 'failed' | 'abandoned' | 'refunded' | 'topups'
+type ViewKey = 'all' | 'to_ship' | 'paid' | 'awaiting_payment' | 'held_market' | 'failed' | 'abandoned' | 'refunded' | 'topups'
 const VIEWS: { key: ViewKey; label: string; test: (o: OrderRecord) => boolean }[] = [
   { key: 'all', label: 'All', test: () => true },
   { key: 'to_ship', label: 'To ship', test: (o) => isLiveOrder(o) && !o.shippedAt },
   { key: 'paid', label: 'Paid', test: (o) => isLiveOrder(o) },
   { key: 'awaiting_payment', label: 'Awaiting payment', test: (o) => o.status === 'awaiting_payment' },
+  { key: 'held_market', label: 'Held: refund (UAE)', test: (o) => o.status === 'held_market' },
   { key: 'failed', label: 'Failed', test: (o) => o.status === 'failed' },
   { key: 'abandoned', label: 'Abandoned', test: (o) => o.status === 'abandoned' },
   { key: 'refunded', label: 'Refunded / chargeback', test: (o) => o.status === 'refunded' || o.status === 'chargeback' },
@@ -499,6 +500,7 @@ const STATUS_STYLE: Record<OrderStatus, string> = {
   awaiting_payment_mark: 'bg-[#C8992A]/15 text-[#8A6A1E]',
   processing: 'bg-[#C8992A]/15 text-[#8A6A1E]',
   awaiting_payment: 'bg-[#0D0D0D]/10 text-[#0D0D0D]/60',
+  held_market: 'bg-red-100 text-red-700',
   failed: 'bg-red-100 text-red-700',
   abandoned: 'bg-[#0D0D0D]/10 text-[#0D0D0D]/60',
   refunded: 'bg-[#0D0D0D]/10 text-[#0D0D0D]/60',

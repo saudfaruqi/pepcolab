@@ -138,14 +138,14 @@ export default function FaqSection({
           and modern Chrome. This also swaps the + for a − when open, which
           is otherwise impossible without client JS.
           NOTE: no backticks anywhere inside this template literal. */}
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .faq-row > summary { list-style: none; }
         .faq-row > summary::-webkit-details-marker { display: none; }
         .faq-row > summary::marker { content: ''; }
         .faq-row[open] > summary .faq-sign { transform: rotate(45deg); }
         .faq-row > summary .faq-sign { transition: transform .18s ease; }
         .faq-row > summary:focus-visible { outline: 2px solid #3b5bdb; outline-offset: 3px; border-radius: 4px; }
-      `}</style>
+      ` }} />
 
       <h2
         style={{

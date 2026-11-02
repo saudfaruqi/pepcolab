@@ -10,6 +10,7 @@ import { useWishlist, type WishlistItem } from '@/lib/wishlistContext'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { isRetiredHandle } from '@/lib/retired-paths'
+import { isUaeRestrictedHandle, uaeRestrictedOnClient } from '@/lib/uaeRestrictions'
 import { getProductByHandle } from '@/lib/shopify'
 import { productHref } from '@/lib/utils'
 import { useMoney } from '@/lib/useMoney'
@@ -33,12 +34,14 @@ export default function WishlistPage() {
   const [movedAll, setMovedAll] = useState(false)
 
   // Withdrawn products are dropped from a saved wishlist — they can no
-  // longer be bought, and the list must not link to their pages.
+  // longer be bought, and the list must not link to their pages. In the UAE
+  // the same applies to products outside the UAE catalogue.
   useEffect(() => {
     if (!hydrated) return
-    for (const item of items) if (isRetiredHandle(item.slug)) remove(item.slug)
+    const uae = uaeRestrictedOnClient()
+    for (const item of items) if (isRetiredHandle(item.slug) || (uae && isUaeRestrictedHandle(item.slug))) remove(item.slug)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, items.length])
+  }, [hydrated, items.length, country])
 
   useEffect(() => {
     if (!hydrated || items.length === 0) return

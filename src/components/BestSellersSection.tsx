@@ -3,7 +3,7 @@
 
 import { useMemo, useRef } from 'react'
 import Link from 'next/link'
-import { productHref } from '@/lib/utils'
+import { productHref, shopifyImg } from '@/lib/utils'
 import { useMoney } from '@/lib/useMoney'
 
 /**
@@ -176,7 +176,7 @@ export default function BestSellersSection({
                   >
                     {p.image ? (
                       <img
-                        src={p.image}
+                        src={shopifyImg(p.image, 200)}
                         alt={p.imageAlt || p.title}
                         loading={i < 2 ? 'eager' : 'lazy'}
                         className="bs-img"
@@ -287,7 +287,7 @@ export default function BestSellersSection({
         </div>
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .bs-wrapper {
           position: relative;
         }
@@ -430,7 +430,7 @@ export default function BestSellersSection({
             opacity: 0.25;
           }
         }
-      `}</style>
+      ` }} />
     </section>
   )
 }

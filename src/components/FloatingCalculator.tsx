@@ -297,7 +297,7 @@ export default function FloatingCalculator() {
         <span className="fc-fab-label">Calculator</span>
       </button>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         /* ---------- MOBILE FIRST: base = phone ---------- */
 
         .fc-fab {
@@ -548,7 +548,7 @@ export default function FloatingCalculator() {
         }
 
         @media print { .fc-fab, .fc-panel, .fc-backdrop, .fc-prompt { display: none !important } }
-      `}</style>
+      ` }} />
     </>
   )
 }

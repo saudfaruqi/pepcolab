@@ -113,7 +113,7 @@ export default function Footer() {
 
   return (
     <footer style={{ background: '#0a0a0a', color: '#fff' }}>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .footer-inner {
           max-width: 1400px;
           margin: 0 auto;
@@ -358,7 +358,7 @@ export default function Footer() {
           border-radius: 6px;
           letter-spacing: .01em;
         }
-      `}</style>
+      ` }} />
 
       {/* ── Top section ── */}
       <div className="footer-inner">

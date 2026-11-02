@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
 
   let products: Awaited<ReturnType<typeof getProducts>> = []
   try {
-    products = await getProducts(250)
+    // UAE visitors get the UAE catalogue (lib/uaeRestrictions.ts). Location
+    // is the IP country Vercel reports, then the cookie middleware.ts sets.
+    const geo = req.headers.get('x-vercel-ip-country') || req.cookies.get('pepcolab_country')?.value || 'AE'
+    products = await getProducts(250, geo === 'GB' ? 'GB' : 'AE')
   } catch (err) {
     // Partial results beat an error page: someone searching a lot number
     // doesn't need Shopify to be up.

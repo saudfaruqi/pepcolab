@@ -291,10 +291,10 @@ export default function Nav() {
       {/* ── Mobile slide-in panel ── */}
       <div className={`mobile-menu${mobileOpen ? ' open' : ''}`}>
         <div className="mob-header">
-          <a href="/" className="mob-logo" onClick={() => setMobileOpen(false)}>
+          <a href="/" className="mob-logo" aria-label="PepcoLab home" onClick={() => setMobileOpen(false)}>
             <Image src="/pepcologo.png" className="h-10 w-auto" alt="" width={160} height={40} />
           </a>
-          <button className="nav-icon-btn" onClick={() => setMobileOpen(false)}><CloseIcon /></button>
+          <button className="nav-icon-btn" aria-label="Close menu" onClick={() => setMobileOpen(false)}><CloseIcon /></button>
         </div>
 
         <button className="mob-search" onClick={() => { setMobileOpen(false); setSearchOpen(true) }}>

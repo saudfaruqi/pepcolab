@@ -11,7 +11,7 @@ import CookieSettingsButton from './CookieSettingsButton'
 export default function LearnLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="learn-root">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .learn-root { min-height: 100vh; display: flex; flex-direction: column; background: #f7f6f3; color: #0d0d0d; font-family: 'DM Sans', system-ui, sans-serif; }
         .learn-head { border-bottom: 1px solid rgba(13,13,13,.08); background: #fff; }
         .learn-head-inner { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -24,7 +24,7 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
         .learn-foot-links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; }
         .learn-foot-links button { background: none; border: 0; padding: 0; font: inherit; color: rgba(13,13,13,.65); text-decoration: underline; cursor: pointer; }
         @media (max-width: 520px) { .learn-head-tag { display: none; } }
-      `}</style>
+      ` }} />
 
       <header className="learn-head">
         <div className="learn-head-inner">

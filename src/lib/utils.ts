@@ -146,3 +146,21 @@ export function stripLeadingName(
   }
   return trimmed
 }
+/**
+ * A Shopify CDN image resized by Shopify to `width` pixels (keeps aspect
+ * ratio). Product vial images are stored at ~400x860 and were downloaded in
+ * full for thumbnails a tenth of that size. Pass roughly twice the displayed
+ * width so they stay sharp on high-density screens. Non-Shopify URLs and
+ * empty values are returned unchanged.
+ */
+export function shopifyImg(url: string | undefined | null, width: number): string {
+  if (!url) return url ?? ''
+  try {
+    const u = new URL(url)
+    if (u.hostname !== 'cdn.shopify.com') return url
+    u.searchParams.set('width', String(Math.round(width)))
+    return u.toString()
+  } catch {
+    return url
+  }
+}

@@ -25,6 +25,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isGonePath, normaliseRetiredPath, RETIRED_REDIRECTS } from './lib/retired-paths'
+import { isUaeRestrictedPath } from './lib/uaeRestrictions'
 
 // AE and GB are both live markets (lib/pricing.ts, UK_CHECKOUT_LIVE).
 // Anything else is treated as AE for currency and copy.
@@ -210,6 +211,17 @@ export function middleware(request: NextRequest) {
       },
     })
   }
+  // UAE CATALOGUE (lib/uaeRestrictions.ts). A visitor on a UAE IP address is
+  // sent away from GLP and pen-only products, the incretin class page and
+  // their certificates. Keyed on the real IP country, never the default, so
+  // crawlers outside the UAE still reach the UK pages. 307, not 301: the
+  // page exists, it is just not offered in this market.
+  if (request.headers.get('x-vercel-ip-country') === 'AE' && isUaeRestrictedPath(pathname)) {
+    const res = NextResponse.redirect(new URL('/products', request.url), 307)
+    res.headers.set('cache-control', 'private, no-store')
+    return res
+  }
+
   // Certificate PDFs only pass through for the withdrawn-file check above.
   if (pathname.startsWith('/pdf/')) return NextResponse.next()
 

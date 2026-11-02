@@ -69,7 +69,7 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
 
   return (
     <form onSubmit={submit} noValidate className="lf">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .lf h2 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.12; margin: 0 0 6px; }
         .lf-sub { font-size: 13.5px; color: rgba(13,13,13,.55); margin: 0 0 20px; line-height: 1.6; }
         .lf label { display: block; font-size: 12px; font-weight: 600; color: rgba(13,13,13,.7); margin: 0 0 6px; }
@@ -84,7 +84,7 @@ export default function LeadForm({ guideSlug, guideName, defaultSource, areas }:
         .lf-fine { font-size: 11.5px; line-height: 1.6; color: rgba(13,13,13,.45); margin-top: 14px; }
         .lf-fine a { color: rgba(13,13,13,.6); }
         .lf-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-      `}</style>
+      ` }} />
       <h2>Get the free guide</h2>
       <p className="lf-sub">We will email {guideName} to you now.</p>
 

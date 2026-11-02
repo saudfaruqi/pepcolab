@@ -37,7 +37,10 @@ import type { CleanAddress } from '@/lib/addressNormalise'
 // second one.
 // 'awaiting_payment' (Oct 2026): STRABL sent order_created/updated but its
 // payment status was not paid. Not a paid order — see the webhook route.
-export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'awaiting_payment' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
+// 'held_market' (Oct 2026): paid, but it ships to the UAE and contains an
+// item outside the UAE catalogue (lib/uaeRestrictions.ts). Not sent to
+// Shopify or a driver; to be refunded. Not counted as a paid order.
+export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'awaiting_payment' | 'held_market' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
 
 export interface OrderRecord {
   orderShortCode: string

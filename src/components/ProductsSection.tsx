@@ -462,7 +462,7 @@ export default function ProductsSection({ showAll = false, initialProducts, init
         )}
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .products-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -478,7 +478,7 @@ export default function ProductsSection({ showAll = false, initialProducts, init
           0%, 100% { opacity: 1; }
           50% { opacity: .45; }
         }
-      `}</style>
+      ` }} />
     </section>
   )
 }

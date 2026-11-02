@@ -23,6 +23,7 @@ import {
 } from '@/lib/shopify'
 import { useCountry } from '@/lib/countryContext'
 import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
+import { isUaeRestrictedHandle, isUaeRestrictedVariant, uaeRestrictedOnClient } from '@/lib/uaeRestrictions'
 import { convertFromAed, currencyFor } from '@/lib/pricing'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -165,11 +166,13 @@ function applyCart(cart: ShopifyCart, market?: string) {
  * load and never reach checkout.
  */
 function isWithdrawnLine(line: Pick<CartLine, 'slug' | 'variantTitle'>): boolean {
-  return (Boolean(line.slug) && isRetiredHandle(line.slug)) || isWithdrawnDeviceTitle(line.variantTitle || '')
+  if ((Boolean(line.slug) && isRetiredHandle(line.slug)) || isWithdrawnDeviceTitle(line.variantTitle || '')) return true
+  // Outside the UAE catalogue, for a visitor in the UAE (lib/uaeRestrictions.ts).
+  return uaeRestrictedOnClient() && ((Boolean(line.slug) && isUaeRestrictedHandle(line.slug)) || isUaeRestrictedVariant(line.variantTitle || ''))
 }
 
 const WITHDRAWN_NOTICE = (names: string[]) =>
-  `${names.join(', ')} ${names.length === 1 ? 'is' : 'are'} no longer available and ${names.length === 1 ? 'was' : 'were'} removed from your cart.`
+  `${names.join(', ')} ${names.length === 1 ? 'is' : 'are'} not available in your location and ${names.length === 1 ? 'was' : 'were'} removed from your cart.`
 
 function computeTotals(lines: CartLine[]) {
   return {
@@ -305,7 +308,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     image?: string,
   ) => {
     if (isWithdrawnLine({ slug, variantTitle })) {
-      dispatch({ type: 'SET_ERROR', error: `${title || 'This item'} is no longer available.` })
+      dispatch({ type: 'SET_ERROR', error: `${title || 'This item'} is not available in your location.` })
       return
     }
     dispatch({ type: 'SET_LOADING', loading: true })

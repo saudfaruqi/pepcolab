@@ -99,6 +99,9 @@ function statusLabel(o: AccountOrder): { label: string; color: string; tint: str
     case 'awaiting_payment':
       // Oct 2026: STRABL reported the order but the payment had not cleared.
       return { label: 'Awaiting payment', color: '#8A6A1E', tint: 'rgba(200,153,42,.12)' }
+    case 'held_market':
+      // Oct 2026: not deliverable to the UAE; being refunded.
+      return { label: 'Refund in progress', color: '#4A4A4A', tint: 'rgba(13,13,13,.06)' }
     default:
       return { label: 'Received', color: '#8A6A1E', tint: 'rgba(200,153,42,.12)' }
   }

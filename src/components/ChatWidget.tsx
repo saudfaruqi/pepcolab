@@ -572,7 +572,7 @@ export default function ChatWidget() {
 
   return (
     <>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .plc, .plc * { box-sizing: border-box; }
         .plc {
           --ink: #0D0D0D;
@@ -804,7 +804,7 @@ export default function ChatWidget() {
           .plc-nudge { opacity: 1; transform: none }
           .plc * { transition: none !important }
         }
-      `}</style>
+      ` }} />
 
       {!open && nudge && (
         <div className="plc plc-nudge" role="status">

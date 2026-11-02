@@ -115,7 +115,7 @@ export default function ContactModal({
       role="dialog" aria-modal="true" aria-labelledby="plcm-title"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .plcm { position: fixed; inset: 0; z-index: 1200; display: flex;
                 align-items: center; justify-content: center; padding: 20px;
                 background: rgba(13,13,13,.5); backdrop-filter: blur(3px);
@@ -148,7 +148,7 @@ export default function ContactModal({
         .plcm-go:disabled { background: rgba(13,13,13,.15); cursor: not-allowed; }
         .plcm :focus-visible { outline: 2px solid #0D0D0D; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) { .plcm, .plcm-card { animation: none } }
-      `}</style>
+      ` }} />
 
       <div className="plcm-card">
         <button className="plcm-x" onClick={onClose} aria-label="Close"><X size={18} aria-hidden="true" /></button>

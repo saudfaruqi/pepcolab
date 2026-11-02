@@ -2,9 +2,11 @@
 'use client'
 import Link from 'next/link'
 import { useRecentlyViewed } from '@/lib/recentlyViewedContext'
-import { productHref } from '@/lib/utils'
+import { productHref, shopifyImg } from '@/lib/utils'
 import { useMoney } from '@/lib/useMoney'
 import { isRetiredHandle } from '@/lib/retired-paths'
+import { isUaeRestrictedHandle } from '@/lib/uaeRestrictions'
+import { useUaeRestricted } from '@/lib/useUaeRestricted'
 
 interface Props {
   // Exclude the product currently being viewed — seeing the page you're
@@ -16,9 +18,13 @@ interface Props {
 export default function RecentlyViewed({ excludeSlug }: Props) {
   const money = useMoney()
   const { items, hydrated } = useRecentlyViewed()
+  const uae = useUaeRestricted()
 
-  // Never link to a withdrawn product (lib/retired-paths.ts).
-  const visible = items.filter((i) => i.slug !== excludeSlug && !isRetiredHandle(i.slug))
+  // Never link to a withdrawn product (lib/retired-paths.ts), or, in the UAE,
+  // to one outside the UAE catalogue (lib/uaeRestrictions.ts).
+  const visible = items.filter(
+    (i) => i.slug !== excludeSlug && !isRetiredHandle(i.slug) && !(uae && isUaeRestrictedHandle(i.slug))
+  )
 
   // Nothing recorded yet (or this is literally the only page they've
   // viewed) — render nothing rather than an empty shell. Also skip before
@@ -56,7 +62,7 @@ export default function RecentlyViewed({ excludeSlug }: Props) {
               }}>
                 {item.image ? (
                   <img
-                    src={item.image}
+                    src={shopifyImg(item.image, 240)}
                     alt={item.imageAlt ?? item.name}
                     style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 10 }}
                   />

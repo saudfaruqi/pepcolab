@@ -12,6 +12,8 @@ import ContactModal from '@/components/ContactModal'
 import WishlistButton from '@/components/WishlistButton'
 import ShareButton from '@/components/ShareButton'
 import { useRecordRecentlyViewed } from '@/lib/recentlyViewedContext'
+import { useUaeRestricted } from '@/lib/useUaeRestricted'
+import { isUaeRestrictedHandle, isUaeRestrictedVariant } from '@/lib/uaeRestrictions'
 
 interface Props {
   // Loosely typed to match the rest of the codebase's pragmatic handling of
@@ -28,7 +30,23 @@ interface Props {
  * lived inside ProductActions — two separate places with no way to talk to
  * each other. This component is the shared client boundary between them.
  */
-export default function ProductVariantView({ product }: Props) {
+export default function ProductVariantView({ product: rawProduct }: Props) {
+  // UAE catalogue (lib/uaeRestrictions.ts): pen / nasal-spray variants are
+  // hidden, and a restricted product offers no buy controls.
+  const uae = useUaeRestricted()
+  const product = useMemo(() => {
+    if (!uae) return rawProduct
+    const variants = (rawProduct.variants ?? []).filter((v: any) => !isUaeRestrictedVariant(v.title || ''))
+    const keep = variants.some((v: any) => v.id === rawProduct.variantId)
+    const first = variants[0]
+    return {
+      ...rawProduct,
+      variants,
+      variantId: keep ? rawProduct.variantId : first?.id ?? '',
+      price: keep ? rawProduct.price : first?.price ?? rawProduct.price,
+    }
+  }, [rawProduct, uae])
+  const unavailableHere = uae && (isUaeRestrictedHandle(product.handle ?? '') || (product.variants ?? []).length === 0)
   const images: { url: string; alt: string }[] = product.images ?? []
 
   // ANALYTICS: view_item. Keyed on the handle so navigating between products
@@ -279,6 +297,7 @@ export default function ProductVariantView({ product }: Props) {
 
         {/* MarketGuard renders the buy controls for every live market. */}
         <MarketGuard
+          unavailable={unavailableHere}
           tags={product.tags ?? []}
           productSlug={product.handle}
           productName={product.title}

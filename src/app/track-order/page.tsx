@@ -9,6 +9,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { formatPrice } from '@/lib/utils'
 import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
+import { isUaeRestrictedHandle, isUaeRestrictedVariant, uaeRestrictedOnClient } from '@/lib/uaeRestrictions'
 import { getVariantsByIds, type ReorderVariant } from '@/lib/shopify'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
@@ -250,7 +251,11 @@ function TrackOrderContent() {
         const match = p.variantId ? byId.get(p.variantId) : undefined
         // Withdrawn products / device formats are never re-added (only while
         // the withdrawal switch in lib/retired-paths.ts is on).
-        if (!match || !match.availableForSale || isRetiredHandle(match.slug) || isWithdrawnDeviceTitle(match.variantTitle)) {
+        if (
+          !match || !match.availableForSale || isRetiredHandle(match.slug) || isWithdrawnDeviceTitle(match.variantTitle) ||
+          // Outside the UAE catalogue, for a visitor in the UAE (lib/uaeRestrictions.ts).
+          (uaeRestrictedOnClient() && (isUaeRestrictedHandle(match.slug) || isUaeRestrictedVariant(match.variantTitle)))
+        ) {
           skipped += 1
           continue
         }

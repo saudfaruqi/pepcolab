@@ -44,7 +44,7 @@ export default function FloatingWhatsApp() {
         <span className="fw-fab-label">WhatsApp</span>
       </a>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .fw-fab {
           position: fixed;
           left: 20px;
@@ -88,7 +88,7 @@ export default function FloatingWhatsApp() {
         }
 
         @media print { .fw-fab { display: none !important; } }
-      `}</style>
+      ` }} />
     </>
   )
 }

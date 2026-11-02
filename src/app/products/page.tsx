@@ -59,7 +59,7 @@ export default async function ProductsPage() {
     <>
       <Nav />
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         /* ── Reset ── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -390,7 +390,7 @@ export default async function ProductsPage() {
           font-weight: 600;
           margin-bottom: 2px;
         }
-      `}</style>
+      ` }} />
 
       <main style={{ background: '#fff', overflowX: 'hidden' }}>
 

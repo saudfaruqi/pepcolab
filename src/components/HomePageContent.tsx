@@ -1,6 +1,7 @@
 // components/HomePageContent.tsx
 
 "use client";
+import { shopifyImg } from '@/lib/utils'
 import { PRODUCT_CLASSES } from '@/lib/productClasses'
 import Nav from "@/components/Nav";
 import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react";
@@ -547,7 +548,7 @@ export default function PepcoLabPage({
   return (
     <div style={{ background: "#FAFAF8", color: "#0d0d0d", minHeight: "100vh" }}>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes ticker    { 0%{transform:translateX(0)}      100%{transform:translateX(-33.33%)} }
         @keyframes marquee   { 0%{transform:translateX(0)}      100%{transform:translateX(-50%)} }
         @keyframes pulse     { 0%,100%{opacity:.5}              50%{opacity:.8} }
@@ -608,7 +609,7 @@ export default function PepcoLabPage({
         @media(max-width:480px) {
           .diff-grid { grid-template-columns:1fr; }
         }
-      `}</style>
+      ` }} />
 
       {/* ── Trust ticker ── */}
       <div className="scrollbar-hidden" style={{ background: "#0d0d0d", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
@@ -848,7 +849,7 @@ export default function PepcoLabPage({
                       >
                         {l.product.image ? (
                           <img
-                            src={l.product.image}
+                            src={shopifyImg(l.product.image, 120)}
                             alt={l.product.title}
                             style={{
                               width: "70%",
@@ -1239,7 +1240,7 @@ export default function PepcoLabPage({
             }}>
               {p.image ? (
                 <img
-                  src={p.image}
+                  src={shopifyImg(p.image, 160)}
                   alt={p.title}
                   style={{
                     height: "clamp(60px, 12vw, 120px)",

@@ -147,7 +147,7 @@ export default async function CategoryPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .cp-hero {
@@ -237,7 +237,7 @@ export default async function CategoryPage({ params }: Props) {
           transition: border-color .15s, background .15s;
         }
         .cp-related-link:hover { border-color: rgba(13,13,13,.4); background: #f7f7f5; }
-      `}</style>
+      ` }} />
 
       <section className="cp-hero">
         <div className="cp-hero-inner">

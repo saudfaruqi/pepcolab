@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import type { CartLine } from '@/lib/cartContext'
 import { isRetiredHandle, isWithdrawnDeviceTitle } from '@/lib/retired-paths'
 import { toAedLines } from '@/lib/chargeTotal'
+import { isUaeRestrictedHandle, isUaeRestrictedVariant, uaeRestrictedOnClient } from '@/lib/uaeRestrictions'
 import { displayedTotalToAed } from '@/lib/pricing'
 
 /** Shown when checkout is attempted without the research attestation. */
@@ -149,6 +150,11 @@ export function useStrablCheckout() {
     // Withdrawn products / device formats never reach payment (dormant while
     // the withdrawal switch in lib/retired-paths.ts is off).
     lines = lines.filter((l) => !(l.slug && isRetiredHandle(l.slug)) && !isWithdrawnDeviceTitle(l.variantTitle || ''))
+    // UAE catalogue (lib/uaeRestrictions.ts): nothing outside it is sent to
+    // payment from a browser in the UAE.
+    if (uaeRestrictedOnClient() || detectedCountry === 'AE') {
+      lines = lines.filter((l) => !(l.slug && isUaeRestrictedHandle(l.slug)) && !isUaeRestrictedVariant(l.variantTitle || ''))
+    }
     // STRABL charges AED only. Every price sent from here on is the AED
     // Shopify price, whatever currency the visitor was shown.
     lines = toAedLines(lines, detectedCountry)

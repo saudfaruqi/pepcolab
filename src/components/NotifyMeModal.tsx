@@ -74,7 +74,7 @@ export default function NotifyMeModal({ open, onClose, productName, productSlug 
       role="dialog" aria-modal="true" aria-labelledby="plnm-title"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .plnm { position: fixed; inset: 0; z-index: 1200; display: flex;
                 align-items: center; justify-content: center; padding: 20px;
                 background: rgba(13,13,13,.5); backdrop-filter: blur(3px);
@@ -95,7 +95,7 @@ export default function NotifyMeModal({ open, onClose, productName, productSlug 
                    font-size: 13.5px; font-weight: 700; cursor: pointer; }
         .plnm-go:disabled { background: rgba(13,13,13,.15); cursor: not-allowed; }
         .plnm :focus-visible { outline: 2px solid #0D0D0D; outline-offset: 2px; }
-      `}</style>
+      ` }} />
 
       <div className="plnm-card">
         <button className="plnm-x" onClick={onClose} aria-label="Close"><X size={17} aria-hidden="true" /></button>

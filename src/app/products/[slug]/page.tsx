@@ -576,7 +576,7 @@ export default async function ProductPage({ params }: Props) {
 
         {/* Layout classes used by ProductVariantView live here so the grid
             stays with the route rather than being duplicated per component. */}
-        <style>{`
+        <style dangerouslySetInnerHTML={{ __html: `
           *, *::before, *::after { box-sizing: border-box; }
 
           .pp-outer {
@@ -668,7 +668,7 @@ export default async function ProductPage({ params }: Props) {
           .shopify-desc td { padding: 9px 12px; color: #626A85; border-bottom: 1px solid #F3F5FB; vertical-align: top; line-height: 1.6; }
           .shopify-desc td:first-child { font-weight: 600; color: #0D0F14; width: 36%; }
           .shopify-desc tr:last-child td { border-bottom: none; }
-        `}</style>
+        ` }} />
       </main>
 
       <Footer />

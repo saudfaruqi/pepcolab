@@ -16,7 +16,8 @@ import crypto from 'crypto'
 import { createShopifyOrder, markShopifyOrderPaid, type AdminLineItemInput } from '@/lib/shopifyAdmin'
 import { saveOrderRecord, getOrderRecord, type OrderRecord } from '@/lib/orderStore'
 import { normaliseAddress } from '@/lib/addressNormalise'
-import { sendMailSafe } from '@/lib/mailer'
+import { sendMail, sendMailSafe } from '@/lib/mailer'
+import { isUaeRestrictedOrderLine } from '@/lib/uaeRestrictions'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
 import { incrementRedemption } from '@/lib/discountStore'
 import { getProducts } from '@/lib/shopify'
@@ -667,6 +668,67 @@ Products: ${JSON.stringify(resolvedProducts, null, 2)}
 If STRABL later confirms the payment, the order is created automatically. If the customer says they paid, check the STRABL dashboard before arranging delivery.`,
             })
           }
+          break
+        }
+
+        // UAE CATALOGUE BACKSTOP (Oct 2026, lib/uaeRestrictions.ts). The site
+        // never offers GLP products, pens or sprays to the UAE, but a payment
+        // link or an old cart can still produce one. A paid order that ships
+        // to the UAE and contains such an item is HELD: no Shopify order, no
+        // driver, the customer is told it will be refunded, and an alert
+        // goes out. Once held, later events for the order stop here too.
+        if (existing?.status === 'held_market') {
+          console.info(`[webhook] ${orderShortCode} is held (UAE catalogue) — not creating an order`)
+          break
+        }
+        const uaeRestrictedLines = (resolvedProducts || []).filter((item: any) =>
+          isUaeRestrictedOrderLine(String(item?.title || ''), Array.isArray(item?.extra) ? item.extra.map(String) : [])
+        )
+        if (resolvedCustomer.countryCode === 'AE' && uaeRestrictedLines.length > 0) {
+          console.warn(`[webhook] ${orderShortCode} ships to the UAE with restricted items — holding for refund`)
+          const held = await buildOrderRecord('held_market')
+          await saveOrderRecord(held)
+          const names = Array.from(new Set(uaeRestrictedLines.map((i: any) => String(i.title || 'Product'))))
+          if (held.email) {
+            try {
+              await sendMail({
+                to: held.email,
+                replyTo: 'hello@pepcolab.com',
+                subject: `Your PepcoLab order ${orderShortCode}: refund`,
+                text: `Hello${held.customerName && /[a-z]/i.test(held.customerName) ? ' ' + held.customerName.split(' ')[0] : ''},
+
+Thank you for your order ${orderShortCode}.
+
+We are not able to deliver ${names.join(', ')} to the United Arab Emirates, so this order will not be dispatched. We will refund your payment in full to the card you paid with, and email you when the refund has been processed.
+
+If you have any questions, reply to this email.
+
+PepcoLab`,
+              })
+            } catch (err) {
+              console.error(`[webhook] Could not email held-order notice for ${orderShortCode}:`, err)
+            }
+          }
+          await sendMailSafe({
+            to: ALERT_EMAIL,
+            subject: `⛔ REFUND NEEDED — UAE order with a restricted item, NOT sent for delivery (${orderShortCode})`,
+            text: `Order ${orderShortCode} was paid and ships to the UAE, but contains items outside the UAE catalogue (GLP products, pens or nasal sprays):
+
+${names.join('\n')}
+
+No Shopify order was created and nothing was sent to Orcaflo. The customer ${held.email ? 'has been emailed that the order will be refunded' : 'has NO email address on the order — contact them by phone'}.
+
+To do:
+1. Refund the full payment in the STRABL dashboard.
+2. Tell the customer once it is done.
+
+Customer: ${held.customerName || '(no name)'}
+Email: ${held.email || '(none)'}
+Phone: ${resolvedCustomer.phone || '(none)'}
+Address country recorded: ${resolvedCustomer.countryCode}
+
+If the delivery address is in fact outside the UAE, do not refund: create the order in Shopify by hand instead.`,
+          })
           break
         }
 

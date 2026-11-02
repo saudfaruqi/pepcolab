@@ -1,4 +1,5 @@
 'use client'
+import { shopifyImg } from '@/lib/utils'
 import { useRef, useEffect, useMemo, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { getProducts } from '@/lib/shopify'
@@ -197,7 +198,7 @@ export default function CategoriesSection() {
                 >
                   {cat.img ? (
                     <img
-                      src={cat.img}
+                      src={shopifyImg(cat.img, 240)}
                       alt=""
                       aria-hidden
                       loading="lazy"
@@ -222,13 +223,13 @@ export default function CategoriesSection() {
         </div>
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media (min-width: 1024px) {
           section .grid.grid-cols-2 {
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
           }
         }
-      `}</style>
+      ` }} />
     </section>
   )
 }

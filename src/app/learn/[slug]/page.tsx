@@ -30,7 +30,7 @@ export default function LearnGuidePage({ params }: Props) {
 
   return (
     <section className="lg">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .lg { max-width: 1080px; margin: 0 auto; padding: clamp(32px,6vw,80px) 20px clamp(48px,7vw,96px); display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); gap: clamp(28px,5vw,64px); align-items: start; }
         @media (max-width: 860px) { .lg { grid-template-columns: minmax(0,1fr); } }
         .lg-eyebrow { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8a6d2f; font-weight: 700; margin-bottom: 14px; }
@@ -44,7 +44,7 @@ export default function LearnGuidePage({ params }: Props) {
         .lg-meta { font-size: 12.5px; color: rgba(13,13,13,.5); }
         .lg-card { background: #fff; border: 1px solid rgba(13,13,13,.08); border-radius: 22px; padding: clamp(22px,3vw,32px); box-shadow: 0 18px 50px -30px rgba(13,13,13,.35); }
         @media (min-width: 861px) { .lg-card { position: sticky; top: 24px; } }
-      `}</style>
+      ` }} />
 
       <div>
         <div className="lg-eyebrow">Free guide · {guide.pages}-page PDF</div>

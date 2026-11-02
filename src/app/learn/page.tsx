@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function LearnIndexPage() {
   return (
     <section className="li">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .li { max-width: 1080px; margin: 0 auto; padding: clamp(40px,7vw,88px) 20px clamp(48px,7vw,96px); }
         .li-eyebrow { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #8a6d2f; font-weight: 700; margin-bottom: 14px; }
         .li h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: clamp(36px,6vw,60px); line-height: 1; letter-spacing: -.03em; margin: 0 0 16px; }
@@ -25,7 +25,7 @@ export default function LearnIndexPage() {
         .li-card h2 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 25px; line-height: 1.12; margin: 0 0 10px; }
         .li-card p { font-size: 14px; line-height: 1.65; color: rgba(13,13,13,.6); margin: 0 0 22px; flex: 1; }
         .li-go { font-size: 13px; font-weight: 600; }
-      `}</style>
+      ` }} />
       <div className="li-eyebrow">Free guides</div>
       <h1>Know what you are buying.</h1>
       <p className="li-lead">

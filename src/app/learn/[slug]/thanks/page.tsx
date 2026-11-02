@@ -24,7 +24,7 @@ export default function LearnThanksPage({ params }: Props) {
 
   return (
     <section className="lt">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .lt { max-width: 720px; margin: 0 auto; padding: clamp(48px,8vw,104px) 20px clamp(56px,8vw,104px); text-align: center; }
         .lt-tick { width: 56px; height: 56px; border-radius: 50%; background: #0d0d0d; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 22px; }
         .lt h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: clamp(34px,5.5vw,52px); line-height: 1.04; letter-spacing: -.03em; margin: 0 0 14px; }
@@ -34,7 +34,7 @@ export default function LearnThanksPage({ params }: Props) {
         .lt-more h2 { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: rgba(13,13,13,.45); margin: 0 0 12px; font-weight: 700; }
         .lt-more a { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(13,13,13,.07); color: #0d0d0d; text-decoration: none; font-weight: 600; font-size: 15px; }
         .lt-more a:first-of-type { border-top: 0; }
-      `}</style>
+      ` }} />
       <div className="lt-tick" aria-hidden="true">✓</div>
       <h1>Check your inbox</h1>
       <p className="lt-p">

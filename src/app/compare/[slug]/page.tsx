@@ -132,7 +132,7 @@ export default function ComparisonPage({ params }: Props) {
           because an inline style wins against a class selector regardless of
           media query — padding set inline on a <td> would silently defeat
           every mobile rule below. */}
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .cmp-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
         .cmp-table th {
           text-align: left;
@@ -184,7 +184,7 @@ export default function ComparisonPage({ params }: Props) {
             margin-bottom: 5px;
           }
         }
-      `}</style>
+      ` }} />
 
       <main style={{ background: '#fff', minHeight: '100vh' }}>
         <div style={{ borderBottom: '1px solid rgba(13,13,13,.07)', padding: '16px 24px' }}>

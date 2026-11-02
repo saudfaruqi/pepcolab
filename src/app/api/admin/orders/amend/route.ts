@@ -76,7 +76,7 @@ function numericId(id: string): string {
 
 /** Finds a variant in the live catalogue by Storefront GID or numeric id. */
 async function findCatalogueVariant(variantId: string) {
-  const products = (await getProducts(250, 'AE')) as any[]
+  const products = (await getProducts(250, 'AE', { allMarkets: true })) as any[]
   const want = numericId(variantId)
   for (const p of products) {
     for (const v of p.variants || []) {

@@ -12,7 +12,7 @@ import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import CheckoutAttestation from '@/components/CheckoutAttestation'
 import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, shopifyImg } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 import { chargeNotice } from '@/lib/pricing'
 import { aedChargeTotal } from '@/lib/chargeTotal'
@@ -181,7 +181,7 @@ export default function CartDrawer() {
                     <div className="w-16 h-16 rounded-xl bg-blue-50/50 border border-blue-100/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {line.image ? (
                         <img
-                          src={line.image}
+                          src={shopifyImg(line.image, 160)}
                           alt={line.title}
                           className="w-full h-full object-contain p-1.5"
                         />

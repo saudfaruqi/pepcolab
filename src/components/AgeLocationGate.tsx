@@ -169,7 +169,7 @@ export default function AgeLocationGate() {
         padding: 20,
       }}
     >
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .gate-btn { transition: background .15s, border-color .15s, opacity .15s, transform .1s; }
         .gate-btn:hover:not(:disabled) { border-color: rgba(255,255,255,.4); }
         .gate-btn.gate-market:hover:not(:disabled) { background: rgba(255,255,255,.06); }
@@ -179,7 +179,7 @@ export default function AgeLocationGate() {
         .gate-btn:focus-visible { outline: 2px solid rgba(255,255,255,.85); outline-offset: 2px; }
         .gate-checkbox:focus-visible { outline: 2px solid rgba(255,255,255,.85); outline-offset: 3px; }
         .gate-link { color: rgba(255,255,255,.75); text-decoration: underline; }
-      `}</style>
+      ` }} />
 
       <div
         ref={dialogRef}
