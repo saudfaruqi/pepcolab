@@ -108,12 +108,7 @@ export default function CartDrawer() {
         {/* Header */}
         <div className="bg-[#0b0b0b] text-white px-6 py-5 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">
-                Research Order
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight mt-0.5">Cart</h2>
-            </div>
+            <h2 className="text-2xl font-bold tracking-tight">Cart</h2>
 
             <div className="flex items-center gap-3">
               {totalQuantity > 0 && (
@@ -130,13 +125,6 @@ export default function CartDrawer() {
               </button>
             </div>
           </div>
-
-          {/* Shipping is free on every order — no threshold, nothing to unlock */}
-          {totalQuantity > 0 && (
-            <div className="mt-4 flex items-center gap-1.5 text-xs text-emerald-400/90 font-semibold">
-              ✓ Free shipping on every order
-            </div>
-          )}
         </div>
 
         {/* Error banner */}
@@ -275,7 +263,7 @@ export default function CartDrawer() {
                   {bundleSavings.amount > 0 ? 'Total' : 'Subtotal'}
                 </div>
                 <div className="text-[10px] text-emerald-600 font-medium">
-                  Free shipping included
+                  Free shipping
                 </div>
               </div>
               <strong className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -332,36 +320,31 @@ export default function CartDrawer() {
             </button>
 
             {codEligible && (
-              <>
-                <button
-                  onClick={handleCod}
-                  disabled={anyCheckingOut || loading}
-                  aria-disabled={!attestedAt}
-                  className={`w-full h-12 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-2.5 ${
-                    anyCheckingOut || loading || !attestedAt
-                      ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                      : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {checkingOutCod ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
-                      Redirecting…
-                    </>
-                  ) : (
-                    <>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="6" width="20" height="12" rx="2" />
-                        <circle cx="12" cy="12" r="2.5" />
-                      </svg>
-                      Cash on Delivery
-                    </>
-                  )}
-                </button>
-                <p className="text-center text-[11px] text-gray-400 mt-2">
-                  Pay in cash when your order arrives — UAE only
-                </p>
-              </>
+              <button
+                onClick={handleCod}
+                disabled={anyCheckingOut || loading}
+                aria-disabled={!attestedAt}
+                className={`w-full h-12 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-2.5 ${
+                  anyCheckingOut || loading || !attestedAt
+                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                    : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {checkingOutCod ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+                    Redirecting…
+                  </>
+                ) : (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="6" width="20" height="12" rx="2" />
+                      <circle cx="12" cy="12" r="2.5" />
+                    </svg>
+                    Cash on Delivery (UAE)
+                  </>
+                )}
+              </button>
             )}
 
             {whatsAppEnabled && (
@@ -390,26 +373,8 @@ export default function CartDrawer() {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              Card payments are securely completed by STRABL
+              Secure card checkout
             </p>
-
-            {/* Trust badges */}
-            <div className="flex justify-center items-center gap-3 flex-wrap mt-3">
-              {[
-                { label: 'Visa', style: 'font-serif italic font-bold text-[13px] tracking-tight' },
-                { label: 'Mastercard', style: 'font-bold text-[11px]' },
-                { label: 'Amex', style: 'font-bold text-[11px]' },
-                { label: 'Apple Pay', style: 'font-semibold text-[11px]' },
-              ].map((m) => (
-                <span
-                  key={m.label}
-                  className={`${m.style} text-gray-400 border border-gray-200 rounded-md px-2.5 py-1 bg-white`}
-                >
-                  {m.label}
-                </span>
-              ))}
-            </div>
-            <p className="text-center text-[10px] text-gray-300 mt-2">Powered by STRABL · PCI-DSS compliant</p>
           </div>
         )}
       </aside>

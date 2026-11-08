@@ -548,16 +548,10 @@ function CartPageInner() {
                         <rect x="2" y="6" width="20" height="12" rx="2" />
                         <circle cx="12" cy="12" r="2.5" />
                       </svg>
-                      Cash on Delivery
+                      Cash on Delivery (UAE)
                     </>
                   )}
                 </button>
-              )}
-
-              {codEligible && (
-                <p className="text-center text-[11px] text-gray-400 mt-2">
-                  Pay in cash when your order arrives — UAE only
-                </p>
               )}
 
               {isWhatsAppConfigured() && (
@@ -578,25 +572,8 @@ function CartPageInner() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                Card payments are securely completed by STRABL
+                Secure card checkout
               </p>
-
-              <div className="flex justify-center items-center gap-3 flex-wrap mt-4">
-                {[
-                  { label: 'Visa', style: 'font-serif italic font-bold text-[13px] tracking-tight' },
-                  { label: 'Mastercard', style: 'font-bold text-[11px]' },
-                  { label: 'Amex', style: 'font-bold text-[11px]' },
-                  { label: 'Apple Pay', style: 'font-semibold text-[11px]' },
-                ].map((m) => (
-                  <span
-                    key={m.label}
-                    className={`${m.style} text-gray-400 border border-gray-200 rounded-md px-2.5 py-1 bg-white`}
-                  >
-                    {m.label}
-                  </span>
-                ))}
-              </div>
-              <p className="text-center text-[10px] text-gray-300 mt-2">Powered by STRABL · PCI-DSS compliant</p>
             </div>
           </div>
         )}
