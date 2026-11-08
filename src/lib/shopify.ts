@@ -381,6 +381,55 @@ export async function getCartCheckoutUrl(cartId: string): Promise<string> {
   return data.cart.checkoutUrl
 }
 
+export interface CartAttribute {
+  key: string
+  value: string
+}
+
+/**
+ * Attach note attributes to a Shopify cart and return its checkout URL.
+ *
+ * CASH ON DELIVERY (Nov 2026). COD is completed in Shopify's own checkout
+ * rather than STRABL, so the things the rest of the system needs to know
+ * about that checkout — the research attestation time, the checkout
+ * reference (for consent/attribution), and the fact that this is a COD
+ * checkout — have to travel THROUGH Shopify. Cart attributes become order
+ * note_attributes, which the orders/create webhook reads back.
+ *
+ * Server-only in practice: the COD API route calls this so the customer's
+ * cart is stamped immediately before the redirect. Using the private token
+ * when configured keeps it off the client.
+ */
+export async function cartAttributesUpdate(
+  cartId: string,
+  attributes: CartAttribute[]
+): Promise<{ id: string; checkoutUrl: string }> {
+  const data = await shopifyFetch<{
+    cartAttributesUpdate: {
+      cart: { id: string; checkoutUrl: string } | null
+      userErrors: { field?: string[] | null; message: string }[]
+    }
+  }>(
+    /* GraphQL */ `
+      mutation cartAttributesUpdate($cartId: ID!, $attributes: [AttributeInput!]!) {
+        cartAttributesUpdate(cartId: $cartId, attributes: $attributes) {
+          cart { id checkoutUrl }
+          userErrors { field message }
+        }
+      }
+    `,
+    { cartId, attributes },
+    { serverSide: true }
+  )
+
+  const errors = data.cartAttributesUpdate.userErrors
+  if (errors?.length) throw new Error(errors[0].message)
+
+  const cart = data.cartAttributesUpdate.cart
+  if (!cart?.checkoutUrl) throw new Error('Shopify did not return a checkout URL')
+  return cart
+}
+
 // ─── Product queries ───────────────────────────────────────────────────────
 
 /**

@@ -40,7 +40,14 @@ import type { CleanAddress } from '@/lib/addressNormalise'
 // 'held_market' (Oct 2026): paid, but it ships to the UAE and contains an
 // item outside the UAE catalogue (lib/uaeRestrictions.ts). Not sent to
 // Shopify or a driver; to be refunded. Not counted as a paid order.
-export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'awaiting_payment' | 'held_market' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
+// 'cod_pending' (Nov 2026): a Cash on Delivery order placed through Shopify's
+// own checkout. The address is real, the parcel should ship, but no money has
+// been taken yet — so it is a live order (admin "to ship") yet NOT a paid
+// order for revenue, CRM LTV or the post-purchase email crons.
+// 'cod_collected' (Nov 2026): the courier collected the cash and the order was
+// marked paid in Shopify (orders/paid webhook). From then on it behaves like
+// any other paid order.
+export type OrderStatus = 'created' | 'updated' | 'awaiting_payment_mark' | 'processing' | 'awaiting_payment' | 'held_market' | 'failed' | 'abandoned' | 'refunded' | 'chargeback' | 'cod_pending' | 'cod_collected'
 
 export interface OrderRecord {
   orderShortCode: string
@@ -136,6 +143,16 @@ export interface OrderRecord {
   // ticked the required "18 or over, in-vitro laboratory research only"
   // box at checkout. Copied from the checkout by the STRABL webhook.
   researchAttestedAt?: string
+
+  // CASH ON DELIVERY (Nov 2026). COD orders are placed in Shopify's own
+  // checkout (not STRABL), so this record is written by the Shopify
+  // orders/create webhook. `codCollectedAt` is stamped when orders/paid
+  // arrives and the status moves to 'cod_collected'.
+  paymentMethod?: 'cod'
+  codCollectedAt?: string
+  // Guards the branded order-confirmation email: the Shopify webhook can be
+  // retried, and a customer should never receive the same confirmation twice.
+  confirmationEmailSentAt?: string
 }
 
 export interface OrderAmendment {
@@ -162,6 +179,8 @@ export const PAID_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set<OrderStatus
   'updated',
   'awaiting_payment_mark',
   'processing',
+  // COD money only counts as paid once it has actually been collected.
+  'cod_collected',
 ])
 
 /**
@@ -226,7 +245,7 @@ export async function saveOrderRecord(record: OrderRecord): Promise<void> {
   }
   try {
     await redis.set(keyFor(record.orderShortCode), record, { ex: RECORD_TTL_SECONDS })
-    if (record.status === 'created' || record.status === 'updated') {
+    if (record.status === 'created' || record.status === 'updated' || record.status === 'cod_collected') {
       await redis.zadd(COMPLETED_INDEX_KEY, {
         score: new Date(record.createdAt).getTime() || Date.now(),
         member: record.orderShortCode.trim().toUpperCase(),

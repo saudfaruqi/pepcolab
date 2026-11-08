@@ -10,6 +10,7 @@ import Footer from '@/components/Footer'
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
+import { useCodCheckout } from '@/lib/useCodCheckout'
 import CheckoutAttestation from '@/components/CheckoutAttestation'
 import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice, shopifyImg } from '@/lib/utils'
@@ -46,6 +47,7 @@ function CartPageInner() {
   } = useCart()
   const { country: detectedCountry, currency: detectedCurrency } = useCountry()
   const { sdkReady, sdkError, checkingOut, handleCheckout, clearSdkError } = useStrablCheckout()
+  const { checkingOutCod, codError, handleCodCheckout, clearCodError } = useCodCheckout()
   // Required research attestation (brief A10) — ISO time ticked, or null.
   const [attestedAt, setAttestedAt] = useState<string | null>(null)
   const [attestPrompt, setAttestPrompt] = useState(false)
@@ -231,6 +233,15 @@ function CartPageInner() {
     : subtotalAfterBundles
   const ukNotice = chargeNotice(aedChargeTotal(lines, detectedCountry, appliedDiscount?.discountAmountAed ?? 0), detectedCountry)
 
+  // CASH ON DELIVERY (Nov 2026): Shopify's COD checkout charges catalogue
+  // prices and does not know about our Redis discount codes or automatic
+  // bundle saving. Offering COD while either is active would quote one total
+  // in the cart and charge another at the door, so hide it until the cart is
+  // back to plain catalogue pricing.
+  const codEligible = detectedCountry === 'AE' && !appliedDiscount && bundleSavings.amount === 0
+
+  const anyCheckingOut = checkingOut || checkingOutCod
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Nav />
@@ -269,11 +280,11 @@ function CartPageInner() {
           </div>
         )}
 
-        {(error || sdkError) && (
+        {(error || sdkError || codError) && (
           <div className="bg-red-50 border border-red-200/50 rounded-xl px-5 py-3 mb-6 flex items-center justify-between gap-3">
-            <span className="text-sm text-red-700">{sdkError || error}</span>
+            <span className="text-sm text-red-700">{sdkError || codError || error}</span>
             <button
-              onClick={() => { clearError(); clearSdkError() }}
+              onClick={() => { clearError(); clearSdkError(); clearCodError() }}
               className="text-red-600 hover:text-red-800 p-1 flex-shrink-0"
               aria-label="Dismiss error"
             >
@@ -482,10 +493,10 @@ function CartPageInner() {
                   if (!attestedAt) { setAttestPrompt(true); return }
                   handleCheckout(lines, displayCurrency, detectedCountry, appliedDiscount, attestedAt, consents)
                 }}
-                disabled={checkingOut || loading || !sdkReady}
+                disabled={anyCheckingOut || loading || !sdkReady}
                 aria-disabled={!attestedAt}
                 className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-1 ${
-                  checkingOut || loading || !sdkReady || !attestedAt
+                  anyCheckingOut || loading || !sdkReady || !attestedAt
                     ? 'bg-gray-300 text-white/60 cursor-not-allowed'
                     : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30'
                 }`}
@@ -506,11 +517,48 @@ function CartPageInner() {
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
-                    Proceed to Checkout
+                    Pay online
                     <ArrowRight size={14} />
                   </>
                 )}
               </button>
+
+              {codEligible && (
+                <button
+                  onClick={() => {
+                    if (!attestedAt) { setAttestPrompt(true); return }
+                    handleCodCheckout(lines, displayCurrency, detectedCountry, appliedDiscount, attestedAt, consents)
+                  }}
+                  disabled={anyCheckingOut || loading}
+                  aria-disabled={!attestedAt}
+                  className={`w-full h-12 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-2.5 ${
+                    anyCheckingOut || loading || !attestedAt
+                      ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                      : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {checkingOutCod ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+                      Redirecting…
+                    </>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2" />
+                        <circle cx="12" cy="12" r="2.5" />
+                      </svg>
+                      Cash on Delivery
+                    </>
+                  )}
+                </button>
+              )}
+
+              {codEligible && (
+                <p className="text-center text-[11px] text-gray-400 mt-2">
+                  Pay in cash when your order arrives — UAE only
+                </p>
+              )}
 
               {isWhatsAppConfigured() && (
                 <a
@@ -530,7 +578,7 @@ function CartPageInner() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                You'll be securely redirected to STRABL to complete payment
+                Card payments are securely completed by STRABL
               </p>
 
               <div className="flex justify-center items-center gap-3 flex-wrap mt-4">

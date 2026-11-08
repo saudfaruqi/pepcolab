@@ -74,7 +74,14 @@ export async function POST(req: NextRequest) {
 
   if (orderCode && email) {
     const order = await getOrderRecord(orderCode)
-    if (order && order.email === email && (order.status === 'created' || order.status === 'updated')) {
+    if (
+      order &&
+      order.email === email &&
+      (order.status === 'created' ||
+        order.status === 'updated' ||
+        order.status === 'cod_pending' ||
+        order.status === 'cod_collected')
+    ) {
       verified = true
       orderShortCode = orderCode
       authorName = toDisplayName(order.customerName)

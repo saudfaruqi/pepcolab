@@ -83,7 +83,7 @@ export interface ProductCard {
 // Deliberately inlined rather than imported: lib/orderStore.ts in production
 // does not export a paid-status helper, and this file must not depend on a
 // change that has not shipped yet.
-const PAID_STATUSES = new Set(['created', 'updated', 'awaiting_payment_mark', 'processing'])
+const PAID_STATUSES = new Set(['created', 'updated', 'awaiting_payment_mark', 'processing', 'cod_pending', 'cod_collected'])
 const isPaid = (r: OrderRecord) => PAID_STATUSES.has(r.status)
 
 const SITE_CURRENCY_FALLBACK = 'AED'
@@ -621,7 +621,9 @@ export function answerOrder(record: OrderRecord): LookupAnswer {
   return {
     lines: [
       `${code} is confirmed and being packed. It hasn’t left us yet.`,
-      'Orders are dispatched within one business day of payment clearing, and we email you the moment yours goes out.',
+      record.status === 'cod_pending'
+        ? 'Orders are dispatched within one business day, and cash is collected when your order arrives.'
+        : 'Orders are dispatched within one business day of payment clearing, and we email you the moment yours goes out.',
     ],
     links: [{ label: 'Your orders', href: '/account' }],
     related: ['shipping-times', 'shipping-tracking'],

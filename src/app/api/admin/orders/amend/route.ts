@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
   // ── Change item ───────────────────────────────────────────────────────
   if (order.topUpFor) return fail(`${orderShortCode} is a top-up payment for ${order.topUpFor}. Change the item on ${order.topUpFor} instead.`)
-  if (!PAID_ORDER_STATUSES.has(order.status)) return fail(`Only paid orders can be changed (this one is "${order.status}").`)
+  if (!PAID_ORDER_STATUSES.has(order.status) && order.status !== 'cod_pending') return fail(`Only live orders can be changed (this one is "${order.status}").`)
   if (order.shippedAt) return fail('This order is already marked as dispatched. Undo dispatch first if it has not actually left.')
 
   const productIndex = Number(body?.productIndex)

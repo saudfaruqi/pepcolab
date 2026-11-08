@@ -7,8 +7,16 @@ import type { OrderRecord, OrderStatus } from '@/lib/orderStore'
 import { heardFromLabel } from '@/lib/heardFromOptions'
 
 // Mirrors lib/orderStore.ts PAID_ORDER_STATUSES (kept local: this is a client
-// component and orderStore imports the Redis client).
-const PAID: ReadonlySet<OrderStatus> = new Set<OrderStatus>(['created', 'updated', 'awaiting_payment_mark', 'processing'])
+// component and orderStore imports the Redis client). COD orders are included
+// as live parcels even while cash is still pending, because they must ship.
+const PAID: ReadonlySet<OrderStatus> = new Set<OrderStatus>([
+  'created',
+  'updated',
+  'awaiting_payment_mark',
+  'processing',
+  'cod_pending',
+  'cod_collected',
+])
 
 // Mirrors lib/orderStore.ts isPaidOrder(): paid AND a real parcel. A top-up
 // payment (topUpFor set) is paid but is never shipped on its own.
@@ -28,11 +36,12 @@ export interface CatalogueVariant {
 // Admin list views (Oct 2026). The list now holds every order of any status,
 // so these split it the way it gets worked: what to send out, what is paid,
 // and the attempts worth a follow-up call.
-type ViewKey = 'all' | 'to_ship' | 'paid' | 'awaiting_payment' | 'held_market' | 'failed' | 'abandoned' | 'refunded' | 'topups'
+type ViewKey = 'all' | 'to_ship' | 'paid' | 'cod' | 'awaiting_payment' | 'held_market' | 'failed' | 'abandoned' | 'refunded' | 'topups'
 const VIEWS: { key: ViewKey; label: string; test: (o: OrderRecord) => boolean }[] = [
   { key: 'all', label: 'All', test: () => true },
   { key: 'to_ship', label: 'To ship', test: (o) => isLiveOrder(o) && !o.shippedAt },
   { key: 'paid', label: 'Paid', test: (o) => isLiveOrder(o) },
+  { key: 'cod', label: 'COD to collect', test: (o) => o.status === 'cod_pending' },
   { key: 'awaiting_payment', label: 'Awaiting payment', test: (o) => o.status === 'awaiting_payment' },
   { key: 'held_market', label: 'Held: refund (UAE)', test: (o) => o.status === 'held_market' },
   { key: 'failed', label: 'Failed', test: (o) => o.status === 'failed' },
@@ -56,7 +65,7 @@ function topUpCandidates(order: OrderRecord, all: OrderRecord[]): OrderRecord[] 
   const from = new Date(order.createdAt).getTime()
   return all.filter((o) => {
     if (o.orderShortCode === order.orderShortCode) return false
-    if (!PAID.has(o.status) || o.shippedAt || o.amendments?.length) return false
+    if (!PAID.has(o.status) || o.status === 'cod_pending' || o.shippedAt || o.amendments?.length) return false
     if (o.topUpFor && o.topUpFor !== order.orderShortCode) return false
     if (new Date(o.createdAt).getTime() < from) return false
     const sameEmail = Boolean(email) && (o.email || '').toLowerCase() === email
@@ -505,6 +514,8 @@ const STATUS_STYLE: Record<OrderStatus, string> = {
   abandoned: 'bg-[#0D0D0D]/10 text-[#0D0D0D]/60',
   refunded: 'bg-[#0D0D0D]/10 text-[#0D0D0D]/60',
   chargeback: 'bg-red-100 text-red-700',
+  cod_pending: 'bg-[#C8992A]/15 text-[#8A6A1E]',
+  cod_collected: 'bg-[#0A7B45]/10 text-[#0A7B45]',
 }
 
 function formatMoney(total: number, currency: string) {
@@ -643,6 +654,11 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
                           <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLE[o.status]}`}>
                             {o.status.replace(/_/g, ' ')}
                           </span>
+                          {o.paymentMethod === 'cod' && (
+                            <span className="rounded-full bg-[#0D0D0D]/10 px-2.5 py-1 text-xs font-medium text-[#0D0D0D]/70">
+                              COD
+                            </span>
+                          )}
                           {o.topUpFor && (
                             <span className="rounded-full bg-[#0D0D0D]/10 px-2.5 py-1 text-xs font-medium text-[#0D0D0D]/70">
                               top-up for {o.topUpFor}
@@ -693,6 +709,14 @@ export default function OrdersTable({ orders, catalogue = [] }: { orders: OrderR
                                 </div>
                               )}
                               {o.shopifyOrderId && <div>Shopify order ID: {o.shopifyOrderId}</div>}
+                              {o.paymentMethod === 'cod' && (
+                                <div>
+                                  Cash on delivery
+                                  {o.codCollectedAt
+                                    ? ` — collected ${new Date(o.codCollectedAt).toLocaleString('en-GB')}`
+                                    : ' — cash not collected yet'}
+                                </div>
+                              )}
                               {o.failureReason && (
                                 <div className="text-red-700">Failure reason: {o.failureReason}</div>
                               )}

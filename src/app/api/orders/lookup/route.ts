@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const orderCode = String(body.orderCode || '').trim()
+  // COD orders use Shopify's numeric order name ("1001"); customers copying
+  // it from Shopify's own screen often include the leading "#". Our records
+  // store it without one, so normalise here rather than making them guess.
+  const orderCode = String(body.orderCode || '').trim().replace(/^#/, '')
   const email = String(body.email || '').trim().toLowerCase()
 
   if (!orderCode || !email) {

@@ -26,7 +26,7 @@ interface OrderProduct {
 
 interface OrderResult {
   orderShortCode: string
-  status: 'created' | 'updated' | 'failed' | 'abandoned' | 'refunded' | 'chargeback'
+  status: 'created' | 'updated' | 'failed' | 'abandoned' | 'refunded' | 'chargeback' | 'cod_pending' | 'cod_collected'
   failureReason: string | null
   customerName: string | null
   products: OrderProduct[]
@@ -50,6 +50,8 @@ const STATUS_DISPLAY: Record<OrderResult['status'], { label: string; color: stri
   abandoned: { label: 'Not Completed', color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200/60', icon: XCircle },
   refunded: { label: 'Refunded', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200/60', icon: RotateCcw },
   chargeback: { label: 'Chargeback', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200/60', icon: AlertTriangle },
+  cod_pending: { label: 'Order Placed · Pay on delivery', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200/60', icon: Package },
+  cod_collected: { label: 'Confirmed', color: 'text-green-700', bg: 'bg-green-50 border-green-200/60', icon: Package },
 }
 
 // Human-readable versions of STRABL's failureReason enum values. Falls back
@@ -510,7 +512,7 @@ function TrackOrderContent() {
               </strong>
             </div>
 
-            {(result.status === 'created' || result.status === 'updated') && (
+            {(result.status === 'created' || result.status === 'updated' || result.status === 'cod_pending' || result.status === 'cod_collected') && (
               <div className="border-t border-gray-100 pt-5 mt-5">
                 {/* DISPATCH (Sep 2026). Shown only once the order has
                     genuinely been marked dispatched in admin — never inferred
@@ -626,7 +628,7 @@ function TrackOrderContent() {
           </div>
         )}
 
-        {result && (result.status === 'created' || result.status === 'updated') && (
+        {result && (result.status === 'created' || result.status === 'updated' || result.status === 'cod_pending' || result.status === 'cod_collected') && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-5">
             {reviewSubmitted ? (
               <div className="text-center py-4">

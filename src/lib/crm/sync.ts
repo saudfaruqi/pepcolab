@@ -38,7 +38,10 @@ function splitName(full?: string): { firstName?: string; lastName?: string } {
 }
 
 function orderSource(order: OrderRecord): ContactSource {
-  if (!isPaidOrder(order) && order.status !== 'refunded' && order.status !== 'chargeback') return 'checkout'
+  // COD orders are real Shopify orders even while cash is still pending, so
+  // they belong in the shopify_order source rather than the 'checkout' bucket.
+  const isShopifyOrder = isPaidOrder(order) || order.status === 'cod_pending' || order.status === 'cod_collected'
+  if (!isShopifyOrder && order.status !== 'refunded' && order.status !== 'chargeback') return 'checkout'
   return order.products?.some((p) => p.variantId) ? 'shopify_order' : 'strabl_link'
 }
 

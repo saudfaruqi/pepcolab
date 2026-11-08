@@ -247,8 +247,14 @@ export async function sendOrderConfirmationEmail(params: {
   customerName?: string
   /** Opt-in request for customers with no current consent (lib/crm/optinLinks.ts). */
   optIn?: { html: string; text: string } | null
+  /**
+   * 'cod' switches the copy from "payment confirmed" to "order placed, pay on
+   * delivery". Used by the Shopify COD webhook. Defaults to online payment.
+   */
+  paymentMethod?: 'online' | 'cod'
 }) {
   const { to, orderShortCode, products, total, currency, customerName, optIn } = params
+  const isCod = params.paymentMethod === 'cod'
 
   const trackUrl = `${SITE_URL}/track-order?code=${encodeURIComponent(orderShortCode)}`
 
@@ -277,10 +283,12 @@ export async function sendOrderConfirmationEmail(params: {
 
   const html = emailShell(`
     ${preheader(`Order ${orderShortCode} confirmed \u00b7 dispatched within 1 business day, cold-chain packed`)}
-    <div style="margin-bottom:24px;">${statusPill('&#10003; Order Confirmed', GREEN, GREEN_TINT)}</div>
+    <div style="margin-bottom:24px;">${statusPill(isCod ? '&#10003; Order Placed' : '&#10003; Order Confirmed', GREEN, GREEN_TINT)}</div>
     <h1 style="font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1.1; color:${INK}; margin:0 0 12px;">${greeting}</h1>
     <p style="font-size:15px; line-height:1.65; color:${INK_55}; margin:0 0 28px;">
-      Payment confirmed. We&rsquo;re preparing your order now &mdash; batch-documented and packed for cold-chain dispatch.
+      ${isCod
+        ? 'Your order is confirmed. Payment is due in cash on delivery &mdash; please have the full amount ready when the courier arrives.'
+        : 'Payment confirmed. We&rsquo;re preparing your order now &mdash; batch-documented and packed for cold-chain dispatch.'}
     </p>
 
     ${refBox(
@@ -353,7 +361,9 @@ export async function sendOrderConfirmationEmail(params: {
     subject: `Order confirmed \u2014 ${orderShortCode}`,
     text:
       `${greeting}\n\n` +
-      `Payment confirmed. We're preparing your order now, batch-documented and packed for cold-chain dispatch.\n\n` +
+      (isCod
+        ? `Your order is confirmed. Payment is due in cash on delivery — please have the full amount ready when the courier arrives.\n\n`
+        : `Payment confirmed. We're preparing your order now, batch-documented and packed for cold-chain dispatch.\n\n`) +
       `ORDER ${orderShortCode}\n${itemLines}\nTotal: ${currency} ${total.toFixed(2)}\n\n` +
       `WHAT HAPPENS NEXT\n` +
       `1. Dispatch within 1 business day (next business day if placed after hours, at weekends or on a public holiday).\n` +

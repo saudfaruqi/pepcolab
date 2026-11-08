@@ -10,6 +10,7 @@ import {
 import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
+import { useCodCheckout } from '@/lib/useCodCheckout'
 import CheckoutAttestation from '@/components/CheckoutAttestation'
 import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice, shopifyImg } from '@/lib/utils'
@@ -24,6 +25,7 @@ export default function CartDrawer() {
   } = useCart()
   const { country: detectedCountry, currency: detectedCurrency } = useCountry()
   const { sdkReady, sdkError, checkingOut, handleCheckout: strablCheckout, clearSdkError } = useStrablCheckout()
+  const { checkingOutCod, codError, handleCodCheckout, clearCodError } = useCodCheckout()
 
   const drawerRef = useRef<HTMLDivElement>(null)
 
@@ -63,11 +65,22 @@ export default function CartDrawer() {
     strablCheckout(lines, displayCurrency, detectedCountry, null, attestedAt, consents)
   }
 
+  const handleCod = () => {
+    if (!attestedAt) { setAttestPrompt(true); return }
+    handleCodCheckout(lines, displayCurrency, detectedCountry, null, attestedAt, consents)
+  }
+
   // Bundle saving is applied inside useStrablCheckout; shown here so the
   // drawer total matches what STRABL will charge.
   const bundleSavings = useMemo(() => computeBundleSavings(lines), [lines])
   const drawerTotal = Math.max(0, Math.round((subtotal - bundleSavings.amount) * 100) / 100)
   const ukNotice = chargeNotice(aedChargeTotal(lines, detectedCountry), detectedCountry)
+
+  // CASH ON DELIVERY (Nov 2026): Shopify's checkout charges catalogue prices
+  // and knows nothing about our automatic bundle saving, so only offer COD
+  // when no bundle discount is active. See app/cart/page.tsx for the same rule.
+  const codEligible = detectedCountry === 'AE' && bundleSavings.amount === 0
+  const anyCheckingOut = checkingOut || checkingOutCod
 
   const whatsAppEnabled = isWhatsAppConfigured()
 
@@ -127,18 +140,19 @@ export default function CartDrawer() {
         </div>
 
         {/* Error banner */}
-        {(error || sdkError) && (
+        {(error || sdkError || codError) && (
           <div className="bg-red-50 border-b border-red-200/50 px-5 py-3 flex items-center justify-between gap-3 flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-4 h-4 rounded-full border-2 border-red-500 flex items-center justify-center flex-shrink-0">
                 <div className="w-1 h-1 bg-red-500 rounded-full" />
               </div>
-              <span className="text-sm text-red-700">{sdkError || error}</span>
+              <span className="text-sm text-red-700">{sdkError || codError || error}</span>
             </div>
             <button
               onClick={() => {
                 clearError()
                 clearSdkError()
+                clearCodError()
               }}
               className="text-red-600 hover:text-red-800 p-1"
             >
@@ -287,10 +301,10 @@ export default function CartDrawer() {
             {/* Checkout button */}
             <button
               onClick={handleCheckout}
-              disabled={checkingOut || loading || !sdkReady}
+              disabled={anyCheckingOut || loading || !sdkReady}
               aria-disabled={!attestedAt}
               className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all ${
-                checkingOut || loading || !sdkReady || !attestedAt
+                anyCheckingOut || loading || !sdkReady || !attestedAt
                   ? 'bg-gray-300 text-white/60 cursor-not-allowed'
                   : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30'
               }`}
@@ -311,11 +325,44 @@ export default function CartDrawer() {
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                   </svg>
-                  Proceed to Checkout
+                  Pay online
                   <ArrowRight size={14} />
                 </>
               )}
             </button>
+
+            {codEligible && (
+              <>
+                <button
+                  onClick={handleCod}
+                  disabled={anyCheckingOut || loading}
+                  aria-disabled={!attestedAt}
+                  className={`w-full h-12 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-2.5 ${
+                    anyCheckingOut || loading || !attestedAt
+                      ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                      : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {checkingOutCod ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+                      Redirecting…
+                    </>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2" />
+                        <circle cx="12" cy="12" r="2.5" />
+                      </svg>
+                      Cash on Delivery
+                    </>
+                  )}
+                </button>
+                <p className="text-center text-[11px] text-gray-400 mt-2">
+                  Pay in cash when your order arrives — UAE only
+                </p>
+              </>
+            )}
 
             {whatsAppEnabled && (
               <a
@@ -343,7 +390,7 @@ export default function CartDrawer() {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              You'll be securely redirected to STRABL to complete payment
+              Card payments are securely completed by STRABL
             </p>
 
             {/* Trust badges */}

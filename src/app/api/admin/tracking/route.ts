@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       emailSkippedReason = 'Customer was already emailed for this order.'
     } else if (!updated.email) {
       emailSkippedReason = 'Order has no email address.'
-    } else if (!isPaidOrder(updated)) {
+    } else if (!isPaidOrder(updated) && updated.status !== 'cod_pending') {
       emailSkippedReason = `Order status is "${updated.status}", so no dispatch email was sent.`
     } else {
       const catalogue = await loadCatalogue(updated.currency)

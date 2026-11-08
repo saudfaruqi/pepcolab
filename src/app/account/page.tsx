@@ -82,13 +82,17 @@ const BORDER = 'rgba(13,13,13,.08)'
  *  detail that costs a customer's trust exactly once. No tracking logged
  *  means the order reads as Confirmed, which remains true either way. */
 function statusLabel(o: AccountOrder): { label: string; color: string; tint: string } {
-  const paid = ['created', 'updated', 'processing', 'awaiting_payment_mark'].includes(o.status)
+  const paid = ['created', 'updated', 'processing', 'awaiting_payment_mark', 'cod_pending', 'cod_collected'].includes(o.status)
   if (paid && (o.shippedAt || o.trackingNumber)) return { label: 'Dispatched', color: '#0A7B45', tint: 'rgba(10,123,69,.1)' }
   switch (o.status) {
     case 'created':
     case 'updated':
     case 'processing':
+    case 'cod_collected':
       return { label: 'Confirmed', color: '#0A7B45', tint: 'rgba(10,123,69,.1)' }
+    case 'cod_pending':
+      // Nov 2026: COD order placed, cash collected on delivery.
+      return { label: 'Confirmed · Pay on delivery', color: '#8A6A1E', tint: 'rgba(200,153,42,.12)' }
     case 'refunded':
       return { label: 'Refunded', color: '#4A4A4A', tint: 'rgba(13,13,13,.06)' }
     case 'failed':
