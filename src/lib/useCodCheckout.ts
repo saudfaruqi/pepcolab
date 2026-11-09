@@ -16,7 +16,6 @@ import type { CartLine } from '@/lib/cartContext'
 import { useCart } from '@/lib/cartContext'
 import { trackBeginCheckout, lineToItem } from '@/lib/analytics'
 import type { ConsentChoice } from '@/components/ConsentBoxes'
-import { ATTESTATION_REQUIRED_MESSAGE } from '@/lib/useStrablCheckout'
 
 export function useCodCheckout() {
   const { cartId } = useCart()
@@ -28,13 +27,9 @@ export function useCodCheckout() {
     _displayCurrency: string,
     _detectedCountry: string | null | undefined,
     appliedDiscount: { code: string } | null | undefined,
-    researchAttestedAt: string | null | undefined,
-    consents: ConsentChoice
+    researchAttestedAt?: string | null,
+    consents?: ConsentChoice | null
   ) => {
-    if (!researchAttestedAt || !Number.isFinite(new Date(researchAttestedAt).getTime())) {
-      setCodError(ATTESTATION_REQUIRED_MESSAGE)
-      return
-    }
     if (!cartId) {
       setCodError('Your cart is not ready yet. Please refresh and try again.')
       return
@@ -59,8 +54,8 @@ export function useCodCheckout() {
         body: JSON.stringify({
           cartId,
           ref,
-          attestedAt: researchAttestedAt,
-          consents: { email: Boolean(consents.email), whatsapp: Boolean(consents.whatsapp) },
+          ...(researchAttestedAt ? { attestedAt: researchAttestedAt } : {}),
+          consents: { email: Boolean(consents?.email), whatsapp: Boolean(consents?.whatsapp) },
           pageUrl: window.location.href.split('#')[0],
         }),
       })

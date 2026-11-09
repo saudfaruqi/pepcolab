@@ -143,10 +143,12 @@ export function useStrablCheckout() {
     // Sent with the attestation; written to the CRM when the order exists.
     consents?: { email: boolean; whatsapp: boolean } | null
   ) => {
-    if (!researchAttestedAt || !Number.isFinite(new Date(researchAttestedAt).getTime())) {
-      setSdkError(ATTESTATION_REQUIRED_MESSAGE)
-      return
-    }
+    // Optional research attestation. The cart no longer collects it, so
+    // checkout must proceed without one; if a caller still supplies a valid
+    // time it is recorded and sent exactly as before.
+    const hasAttestation = Boolean(
+      researchAttestedAt && Number.isFinite(new Date(researchAttestedAt).getTime())
+    )
     // Withdrawn products / device formats never reach payment (dormant while
     // the withdrawal switch in lib/retired-paths.ts is off).
     lines = lines.filter((l) => !(l.slug && isRetiredHandle(l.slug)) && !isWithdrawnDeviceTitle(l.variantTitle || ''))
@@ -229,25 +231,28 @@ export function useStrablCheckout() {
       )
 
       // Record the attestation server-side under this checkout reference so
-      // the order webhook can attach it (lib/attestation.ts). It also travels
+      // the order webhook can attach it (lib/attestation.ts). Only when one
+      // was actually supplied: the cart no longer asks for it. It also travels
       // in cart.extra below; a slow or failed call here never blocks payment.
-      try {
-        const controller = new AbortController()
-        const timer = setTimeout(() => controller.abort(), 3000)
-        await fetch('/api/checkout/attest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ref: checkoutRef,
-            attestedAt: researchAttestedAt,
-            consents: { email: Boolean(consents?.email), whatsapp: Boolean(consents?.whatsapp) },
-            pageUrl: window.location.href.split('#')[0],
-          }),
-          signal: controller.signal,
-          keepalive: true,
-        }).finally(() => clearTimeout(timer))
-      } catch (err) {
-        console.error('[useStrablCheckout] attestation record failed:', err)
+      if (hasAttestation) {
+        try {
+          const controller = new AbortController()
+          const timer = setTimeout(() => controller.abort(), 3000)
+          await fetch('/api/checkout/attest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ref: checkoutRef,
+              attestedAt: researchAttestedAt,
+              consents: { email: Boolean(consents?.email), whatsapp: Boolean(consents?.whatsapp) },
+              pageUrl: window.location.href.split('#')[0],
+            }),
+            signal: controller.signal,
+            keepalive: true,
+          }).finally(() => clearTimeout(timer))
+        } catch (err) {
+          console.error('[useStrablCheckout] attestation record failed:', err)
+        }
       }
 
       // HONESTY NOTE: STRABL's checkoutWithRedirect has no dedicated
@@ -305,7 +310,7 @@ export function useStrablCheckout() {
           // Joins the success-page "How did you hear about us?" answer to
           // this order (lib/heardFrom.ts).
           ref: checkoutRef,
-          researchAttestedAt,
+          ...(hasAttestation ? { researchAttestedAt } : {}),
           ...(discountCode ? { discountCode } : {}),
           ...(bundleSavings.bundles.length ? { bundles: bundleSavings.bundles.map(b => `${b.id}x${b.sets}`).join(',') } : {}),
         },

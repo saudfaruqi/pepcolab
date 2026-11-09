@@ -11,8 +11,6 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { useCodCheckout } from '@/lib/useCodCheckout'
-import CheckoutAttestation from '@/components/CheckoutAttestation'
-import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice, shopifyImg } from '@/lib/utils'
 import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag, MessageCircle } from 'lucide-react'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
@@ -48,10 +46,6 @@ function CartPageInner() {
   const { country: detectedCountry, currency: detectedCurrency } = useCountry()
   const { sdkReady, sdkError, checkingOut, handleCheckout, clearSdkError } = useStrablCheckout()
   const { checkingOutCod, codError, handleCodCheckout, clearCodError } = useCodCheckout()
-  // Required research attestation (brief A10) — ISO time ticked, or null.
-  const [attestedAt, setAttestedAt] = useState<string | null>(null)
-  const [attestPrompt, setAttestPrompt] = useState(false)
-  const [consents, setConsents] = useState<ConsentChoice>({ email: false, whatsapp: false })
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -478,25 +472,13 @@ function CartPageInner() {
                 </p>
               )}
 
-              <div className="mt-3">
-                <CheckoutAttestation
-                  attestedAt={attestedAt}
-                  onChange={(v) => { setAttestedAt(v); if (v) { setAttestPrompt(false); clearSdkError() } }}
-                  showError={attestPrompt}
-                >
-                  <ConsentBoxes idPrefix="cart-consent" email={consents.email} whatsapp={consents.whatsapp} onChange={setConsents} />
-                </CheckoutAttestation>
-              </div>
-
               <button
                 onClick={() => {
-                  if (!attestedAt) { setAttestPrompt(true); return }
-                  handleCheckout(lines, displayCurrency, detectedCountry, appliedDiscount, attestedAt, consents)
+                  handleCheckout(lines, displayCurrency, detectedCountry, appliedDiscount)
                 }}
                 disabled={anyCheckingOut || loading || !sdkReady}
-                aria-disabled={!attestedAt}
                 className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-1 ${
-                  anyCheckingOut || loading || !sdkReady || !attestedAt
+                  anyCheckingOut || loading || !sdkReady
                     ? 'bg-gray-300 text-white/60 cursor-not-allowed'
                     : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30'
                 }`}
@@ -526,13 +508,11 @@ function CartPageInner() {
               {codEligible && (
                 <button
                   onClick={() => {
-                    if (!attestedAt) { setAttestPrompt(true); return }
-                    handleCodCheckout(lines, displayCurrency, detectedCountry, appliedDiscount, attestedAt, consents)
+                    handleCodCheckout(lines, displayCurrency, detectedCountry, appliedDiscount)
                   }}
                   disabled={anyCheckingOut || loading}
-                  aria-disabled={!attestedAt}
                   className={`w-full h-12 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-2.5 ${
-                    anyCheckingOut || loading || !attestedAt
+                    anyCheckingOut || loading
                       ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                       : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
                   }`}

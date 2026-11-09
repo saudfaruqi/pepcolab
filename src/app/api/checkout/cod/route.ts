@@ -45,15 +45,16 @@ export async function POST(req: NextRequest) {
   if (!cartId.startsWith('gid://shopify/Cart/')) {
     return NextResponse.json({ error: 'Invalid cart.' }, { status: 400 })
   }
-  if (!isCheckoutRef(ref) || !attestedAt) {
-    return NextResponse.json({ error: 'Research confirmation is required.' }, { status: 400 })
+  if (!isCheckoutRef(ref)) {
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   try {
-    // Record the attestation + any optional consent before the handoff, so a
-    // webhook failure cannot lose the compliance record. The reference also
-    // travels in the cart attributes below.
-    await saveAttestation(ref, attestedAt)
+    // Attestation is optional now that the cart no longer collects it. When a
+    // caller still supplies one, record it before the handoff so a webhook
+    // failure cannot lose it. The reference also travels in the cart
+    // attributes below.
+    if (attestedAt) await saveAttestation(ref, attestedAt)
     const ip = getClientIp(req)
     const evidence = {
       ip: ip && ip !== 'unknown' ? ip : undefined,
@@ -73,10 +74,10 @@ export async function POST(req: NextRequest) {
     const attributes: CartAttribute[] = [
       { key: 'checkout_channel', value: 'cod' },
       { key: 'checkout_ref', value: ref },
-      { key: 'research_attested_at', value: attestedAt },
       { key: 'consent_email', value: String(body?.consents?.email === true) },
       { key: 'consent_whatsapp', value: String(body?.consents?.whatsapp === true) },
     ]
+    if (attestedAt) attributes.push({ key: 'research_attested_at', value: attestedAt })
 
     const cart = await cartAttributesUpdate(cartId, attributes)
     return NextResponse.json({ checkoutUrl: cart.checkoutUrl })

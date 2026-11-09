@@ -11,8 +11,6 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { useCodCheckout } from '@/lib/useCodCheckout'
-import CheckoutAttestation from '@/components/CheckoutAttestation'
-import ConsentBoxes, { type ConsentChoice } from '@/components/ConsentBoxes'
 import { formatPrice, shopifyImg } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 import { chargeNotice } from '@/lib/pricing'
@@ -56,18 +54,12 @@ export default function CartDrawer() {
   // useStrablCheckout() (src/lib/useStrablCheckout.ts) so this drawer and
   // the standalone /cart page share one implementation. See that file for
   // the full history/verification notes on the integration.
-  // Required research attestation (brief A10) — ISO time ticked, or null.
-  const [attestedAt, setAttestedAt] = useState<string | null>(null)
-  const [attestPrompt, setAttestPrompt] = useState(false)
-  const [consents, setConsents] = useState<ConsentChoice>({ email: false, whatsapp: false })
   const handleCheckout = () => {
-    if (!attestedAt) { setAttestPrompt(true); return }
-    strablCheckout(lines, displayCurrency, detectedCountry, null, attestedAt, consents)
+    strablCheckout(lines, displayCurrency, detectedCountry, null)
   }
 
   const handleCod = () => {
-    if (!attestedAt) { setAttestPrompt(true); return }
-    handleCodCheckout(lines, displayCurrency, detectedCountry, null, attestedAt, consents)
+    handleCodCheckout(lines, displayCurrency, detectedCountry, null)
   }
 
   // Bundle saving is applied inside useStrablCheckout; shown here so the
@@ -277,22 +269,12 @@ export default function CartDrawer() {
               </p>
             )}
 
-            <CheckoutAttestation
-              tone="drawer"
-              attestedAt={attestedAt}
-              onChange={(v) => { setAttestedAt(v); if (v) { setAttestPrompt(false); clearSdkError() } }}
-              showError={attestPrompt}
-            >
-              <ConsentBoxes idPrefix="drawer-consent" email={consents.email} whatsapp={consents.whatsapp} onChange={setConsents} />
-            </CheckoutAttestation>
-
             {/* Checkout button */}
             <button
               onClick={handleCheckout}
               disabled={anyCheckingOut || loading || !sdkReady}
-              aria-disabled={!attestedAt}
               className={`w-full h-12 rounded-xl border-0 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all ${
-                anyCheckingOut || loading || !sdkReady || !attestedAt
+                anyCheckingOut || loading || !sdkReady
                   ? 'bg-gray-300 text-white/60 cursor-not-allowed'
                   : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30'
               }`}
@@ -323,9 +305,8 @@ export default function CartDrawer() {
               <button
                 onClick={handleCod}
                 disabled={anyCheckingOut || loading}
-                aria-disabled={!attestedAt}
                 className={`w-full h-12 rounded-xl border font-semibold text-sm flex items-center justify-center gap-2.5 transition-all mt-2.5 ${
-                  anyCheckingOut || loading || !attestedAt
+                  anyCheckingOut || loading
                     ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                     : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
                 }`}
