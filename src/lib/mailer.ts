@@ -45,7 +45,10 @@ function getTransporter(stream: MailStream) {
       port: cfg.port,
       secure: cfg.port === 465,
       auth: { user: cfg.user, pass: cfg.pass },
-      tls: { rejectUnauthorized: false },
+      // GoDaddy's smtpout.secureserver.net resets TLS 1.3 handshakes
+      // (ECONNRESET on both 465 and 587). Node 20 negotiates TLS 1.3 by
+      // default, so every send timed out. Capping at TLS 1.2 is required.
+      tls: { rejectUnauthorized: false, maxVersion: 'TLSv1.2' },
       connectionTimeout: 30000,
       socketTimeout: 30000,
     })
