@@ -68,28 +68,58 @@ export default async function AdminEmailsPage() {
     return acc
   }, {})
 
+  // A failure stays in the log forever (until it rolls out of the 300 cap),
+  // so the raw failed count keeps looking alarming long after SMTP is fixed.
+  // What matters is whether anything failed AFTER the newest successful send.
+  const newestSentAt = entries
+    .filter(e => e.status === 'sent')
+    .map(e => e.sentAt)
+    .sort()
+    .at(-1)
+  const failuresSinceLastSuccess = newestSentAt
+    ? failed.filter(e => new Date(e.sentAt).getTime() > new Date(newestSentAt).getTime()).length
+    : failed.length
+  const smtpHealthy = Boolean(newestSentAt) && failuresSinceLastSuccess === 0
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-lg font-semibold text-[#0D0D0D]">Emails</h1>
         <p className="text-sm text-[#0D0D0D]/50">
           {entries.length} recorded &mdash; {last24h.length} in the last 24 hours
-          {failed.length > 0 && <>, <span className="font-semibold text-red-700">{failed.length} failed</span></>}.
+          {failed.length > 0 && (
+            <>
+              , <span className={`font-semibold ${smtpHealthy ? 'text-[#0D0D0D]/50' : 'text-red-700'}`}>{failed.length} failed</span>
+              {smtpHealthy && <span className="text-[#0D0D0D]/40"> (all historical)</span>}
+            </>
+          )}.
           Keeps the most recent 300.
         </p>
       </div>
 
       {failed.length > 0 && (
-        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="text-[13px] font-semibold text-red-900">
-            {failed.length} email{failed.length === 1 ? '' : 's'} failed to send
-          </p>
-          <p className="mt-1 text-[13px] leading-relaxed text-red-800">
-            Most recent: {failed[0].subject} to {failed[0].to} &mdash; {failed[0].error || 'no error recorded'}.
-            A repeated failure across every type usually means SMTP credentials; failures on one
-            type only usually mean bad data on those records.
-          </p>
-        </div>
+        smtpHealthy ? (
+          <div className="mb-5 rounded-xl border border-[#0A7B45]/20 bg-[#0A7B45]/5 p-4">
+            <p className="text-[13px] font-semibold text-[#0A7B45]">
+              SMTP is working — no failures since the last successful send
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#0D0D0D]/60">
+              Last sent: {new Date(newestSentAt!).toLocaleString('en-GB')}. The {failed.length} failed
+              entr{failed.length === 1 ? 'y' : 'ies'} below predate that and are kept as history only.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="text-[13px] font-semibold text-red-900">
+              {failuresSinceLastSuccess} email{failuresSinceLastSuccess === 1 ? '' : 's'} failed since the last successful send
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-red-800">
+              Most recent: {failed[0].subject} to {failed[0].to} &mdash; {failed[0].error || 'no error recorded'}.
+              A repeated failure across every type usually means SMTP credentials; failures on one
+              type only usually mean bad data on those records.
+            </p>
+          </div>
+        )
       )}
 
       <OutboxTable entries={outbox} />
