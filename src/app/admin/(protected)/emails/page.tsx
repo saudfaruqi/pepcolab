@@ -7,8 +7,9 @@
 // why hasn't this person had their sign-in link, is SMTP working at all.
 // Before this, a failed send logged to a server console nobody reads and a
 // successful one left no trace whatsoever.
-import { listEmailLog } from '@/lib/emailLog'
+import { listEmailLog, listFailedEmails } from '@/lib/emailLog'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import OutboxTable from './OutboxTable'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,7 @@ function categorise(subject: string): string {
 
 export default async function AdminEmailsPage() {
   let entries: Awaited<ReturnType<typeof listEmailLog>> = []
+  let outbox: Awaited<ReturnType<typeof listFailedEmails>> = []
   let loadError: string | null = null
 
   try {
@@ -47,6 +49,12 @@ export default async function AdminEmailsPage() {
   } catch (err) {
     console.error('[admin/emails] Failed to load:', err)
     loadError = 'Could not load the email log — check the server logs.'
+  }
+
+  try {
+    outbox = await listFailedEmails(100)
+  } catch (err) {
+    console.error('[admin/emails] Failed to load outbox:', err)
   }
 
   const failed = entries.filter(e => e.status === 'failed')
@@ -83,6 +91,8 @@ export default async function AdminEmailsPage() {
           </p>
         </div>
       )}
+
+      <OutboxTable entries={outbox} />
 
       {Object.keys(byType).length > 0 && (
         <div className="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

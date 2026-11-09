@@ -94,3 +94,101 @@ export async function listEmailLog(limit = 200): Promise<EmailLogEntry[]> {
     return []
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   FAILED-SEND OUTBOX (Nov 2026)
+
+   The log above deliberately keeps only a short preview, because full bodies
+   can contain account sign-in links. That makes a failed send impossible to
+   retry. This outbox stores the FULL payload, but ONLY when a send fails, in
+   a separate key with a short TTL, and an admin-only "Resend" action reads it.
+
+   Bounds:
+     - only failures, never successful mail
+     - 7-day TTL
+     - capped at MAX_OUTBOX entries
+   ────────────────────────────────────────────────────────────────────────── */
+
+const OUTBOX_KEY = (id: string) => `email:outbox:${id}`
+const OUTBOX_INDEX_KEY = 'email:outbox-index'
+const OUTBOX_TTL_SECONDS = 60 * 60 * 24 * 7
+const MAX_OUTBOX = 200
+
+export interface FailedEmailEntry {
+  id: string
+  to: string
+  subject: string
+  text: string
+  html?: string
+  replyTo?: string
+  headers?: Record<string, string>
+  stream: 'transactional' | 'marketing'
+  error?: string
+  failedAt: string
+}
+
+/** Store a failed send so it can be retried from admin. Best-effort. */
+export async function saveFailedEmail(entry: {
+  id?: string
+  to: string
+  subject: string
+  text: string
+  html?: string
+  replyTo?: string
+  headers?: Record<string, string>
+  stream: 'transactional' | 'marketing'
+  error?: string
+}): Promise<string> {
+  const id = entry.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  try {
+    const record: FailedEmailEntry = {
+      id,
+      to: entry.to,
+      subject: entry.subject,
+      text: entry.text,
+      html: entry.html,
+      replyTo: entry.replyTo,
+      headers: entry.headers,
+      stream: entry.stream,
+      error: entry.error ? String(entry.error).slice(0, 300) : undefined,
+      failedAt: new Date().toISOString(),
+    }
+    await redis.set(OUTBOX_KEY(id), record, { ex: OUTBOX_TTL_SECONDS })
+    await redis.zadd(OUTBOX_INDEX_KEY, { score: Date.now(), member: id })
+    await redis.zremrangebyrank(OUTBOX_INDEX_KEY, 0, -(MAX_OUTBOX + 1))
+    await redis.expire(OUTBOX_INDEX_KEY, OUTBOX_TTL_SECONDS)
+  } catch (err) {
+    console.error('[emailLog] Failed to save outbox entry:', err)
+  }
+  return id
+}
+
+export async function getFailedEmail(id: string): Promise<FailedEmailEntry | null> {
+  try {
+    return (await redis.get<FailedEmailEntry>(OUTBOX_KEY(id))) ?? null
+  } catch (err) {
+    console.error('[emailLog] Failed to read outbox entry:', err)
+    return null
+  }
+}
+
+export async function deleteFailedEmail(id: string): Promise<void> {
+  try {
+    await redis.del(OUTBOX_KEY(id))
+    await redis.zrem(OUTBOX_INDEX_KEY, id)
+  } catch (err) {
+    console.error('[emailLog] Failed to delete outbox entry:', err)
+  }
+}
+
+export async function listFailedEmails(limit = 100): Promise<FailedEmailEntry[]> {
+  try {
+    const ids = (await redis.zrange(OUTBOX_INDEX_KEY, 0, limit - 1, { rev: true })) as string[]
+    if (!ids?.length) return []
+    const entries = await Promise.all(ids.map(id => getFailedEmail(id)))
+    return entries.filter((e): e is FailedEmailEntry => Boolean(e?.id))
+  } catch (err) {
+    console.error('[emailLog] Failed to list outbox:', err)
+    return []
+  }
+}

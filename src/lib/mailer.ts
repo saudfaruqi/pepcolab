@@ -5,7 +5,7 @@
 // rather than introducing a second email provider/dependency for order
 // alerts and the newsletter.
 import nodemailer from 'nodemailer'
-import { recordEmail } from '@/lib/emailLog'
+import { recordEmail, saveFailedEmail } from '@/lib/emailLog'
 
 // TWO SENDING STREAMS (Oct 2026 clean-up brief, B8).
 //
@@ -72,6 +72,12 @@ export async function sendMail(opts: {
   headers?: Record<string, string>
   /** 'marketing' for campaigns, lifecycle and follow-up emails; default 'transactional'. */
   stream?: MailStream
+  /**
+   * Internal: when a failed send is retried from the admin outbox, reuse its
+   * id so the retry updates the same outbox entry instead of creating a new
+   * one if it fails again.
+   */
+  outboxId?: string
 }) {
   const { transporter, from: smtpFrom } = getTransporter(opts.stream ?? 'transactional')
   if (!smtpFrom) throw new Error('SMTP configuration is missing (SMTP_FROM)')
@@ -95,12 +101,26 @@ export async function sendMail(opts: {
   } catch (err) {
     // Recorded BEFORE rethrowing, so a failure is visible in the admin log
     // even when the caller swallows it.
+    const error = err instanceof Error ? err.message : String(err)
     await recordEmail({
       to: opts.to,
       subject: opts.subject,
       status: 'failed',
-      error: err instanceof Error ? err.message : String(err),
+      error,
       text: opts.text,
+    })
+    // Store the FULL payload only on failure, so admin can retry it. Kept in
+    // a separate short-lived outbox; the log above still holds no bodies.
+    await saveFailedEmail({
+      id: opts.outboxId,
+      to: opts.to,
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+      replyTo: opts.replyTo,
+      headers: opts.headers,
+      stream: opts.stream ?? 'transactional',
+      error,
     })
     throw err
   }
