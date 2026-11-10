@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendMailSafe } from '@/lib/mailer'
 import { emailShell, primaryButton, INK, INK_60, INK_40 } from '@/lib/orderEmails'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
+import { sendWhatsApp } from '@/lib/ownerAlert'
 
 const ADMIN_EMAIL = process.env.ORDER_ALERT_EMAIL || 'hello@pepcolab.com'
 const MAX_SUBMISSIONS = 10
@@ -107,6 +108,13 @@ export async function POST(req: NextRequest) {
           </div>
         </div>`,
     })
+
+    // Owner's WhatsApp (lib/ownerAlert.ts) — only when configured.
+    await sendWhatsApp(
+      `💬 Chat: ${contact.name || 'visitor'} wants a person\n` +
+        `${[contact.email, contact.phone].filter(Boolean).join(' · ') || 'No contact details'}\n\n` +
+        plainTranscript.slice(-700)
+    )
 
     // Visitor confirmation — best-effort, only if they gave an email.
     if (contact.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {

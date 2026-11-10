@@ -183,7 +183,36 @@ export default function ChatWidget() {
    */
   const [pendingLookup, setPendingLookup] = useState<LookupRequest | null>(null)
 
-  const runLookup = useCallback(async (request: LookupRequest, email?: string) => {
+  // Set once runAgent exists (below); lets a missed product guess hand the
+  // visitor's original message to the AI agent.
+  const agentRef = useRef<((text: string) => Promise<void>) | null>(null)
+
+  const runLookup = useCallback(async (request: LookupRequest, email?: string, originalText?: string) => {
+    // A product guess that finds nothing goes to the agent instead of the
+    // "no answer" reply, with the visitor's full message rather than the
+    // trimmed guess.
+    if (request.intent === 'product-guess' && originalText && agentRef.current) {
+      try {
+        const res = await fetch('/api/chat/lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ intent: request.intent, query: request.query, email: null }),
+        })
+        const data = await res.json().catch(() => null)
+        const answer = data?.answer as { lines?: string[]; links?: { label: string; href: string }[]; related?: string[]; cards?: ProductCard[]; quantity?: number } | undefined
+        const missed = !answer?.lines?.length || answer.lines.join(' ') === NO_MATCH_ANSWER.join(' ')
+        if (missed) { await agentRef.current(originalText); return }
+        pushBot(
+          answer!.lines!,
+          answer!.links,
+          () => setSuggestions((answer!.related ?? []).map(id => FAQ_BY_ID[id]).filter(Boolean)),
+          { cards: answer!.cards, quantity: answer!.quantity },
+        )
+      } catch {
+        await agentRef.current(originalText)
+      }
+      return
+    }
     pushBot([LOOKUP_PENDING_ANSWER])
     try {
       const res = await fetch('/api/chat/lookup', {
@@ -342,6 +371,58 @@ export default function ChatWidget() {
     }
   }, [describeCart, openCart, customerEmail, pushBot, setSuggestions])
 
+  /* ── AI AGENT (Nov 2026) ─────────────────────────────────────────────
+   *
+   * Messages the written answers and lookups above do not recognise go to
+   * the agent (app/api/chat/agent, lib/chatAgent.ts) instead of ending in
+   * "I don't have an answer for that". It answers from the live catalogue,
+   * certificates and order records, shows product cards with Add buttons,
+   * takes leads and alerts a person. Refusals still happen before it is
+   * called (matchFaq 'blocked' above) and again on the server.
+   */
+  const bubblesRef = useRef<Bubble[]>([])
+  useEffect(() => { bubblesRef.current = bubbles }, [bubbles])
+
+  const runAgent = useCallback(async (text: string) => {
+    const history = bubblesRef.current
+      .filter(b => b.text && b.text !== LOOKUP_PENDING_ANSWER)
+      .map(b => ({ role: b.role === 'user' ? 'user' as const : 'assistant' as const, content: b.text }))
+    const lastHistory = history[history.length - 1]
+    if (!lastHistory || lastHistory.role !== 'user' || lastHistory.content !== text) history.push({ role: 'user', content: text })
+
+    setTyping(true)
+    try {
+      const res = await fetch('/api/chat/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history.slice(-24), pageUrl: typeof window !== 'undefined' ? window.location.href : pathname }),
+      })
+      const data = await res.json().catch(() => null)
+      const answer = data?.answer as
+        | { lines?: string[]; links?: { label: string; href: string }[]; cards?: ProductCard[]; quantity?: number; alerted?: boolean }
+        | undefined
+      setTyping(false)
+      if (!answer?.lines?.length) {
+        pushBot(NO_MATCH_ANSWER, undefined, () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+        return
+      }
+      pushBot(
+        answer.lines,
+        answer.links,
+        () => setSuggestions(
+          data?.fallback || !answer.alerted
+            ? [FAQ_BY_ID['contact-human']].filter(Boolean)
+            : []
+        ),
+        { cards: answer.cards, quantity: answer.quantity },
+      )
+    } catch {
+      setTyping(false)
+      pushBot(NO_MATCH_ANSWER, undefined, () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
+    }
+  }, [pathname, pushBot])
+  useEffect(() => { agentRef.current = runAgent }, [runAgent])
+
   const handleSelect = useCallback((faq: Faq) => { pushUser(faq.question); answerFaq(faq) }, [pushUser, answerFaq])
 
   const handleSubmit = useCallback((raw: string) => {
@@ -366,7 +447,7 @@ export default function ChatWidget() {
       return
     }
     if (result.kind === 'action') { void runAction(result.request); return }
-    if (result.kind === 'lookup') { void runLookup(result.request, customerEmail || undefined); return }
+    if (result.kind === 'lookup') { void runLookup(result.request, customerEmail || undefined, text); return }
     if (result.kind === 'smalltalk') {
       pushBot(result.lines, undefined, () =>
         setSuggestions([FAQ_BY_ID['order-how'], FAQ_BY_ID['coa-what'], FAQ_BY_ID['shipping-times']].filter(Boolean)))
@@ -377,8 +458,8 @@ export default function ChatWidget() {
       pushBot(['A few things could match that — which did you mean?'], undefined, () => setSuggestions(result.faqs))
       return
     }
-    pushBot(NO_MATCH_ANSWER, undefined, () => setSuggestions([FAQ_BY_ID['contact-human']].filter(Boolean)))
-  }, [pushUser, pushBot, answerFaq, pendingLookup, runLookup, runAction, customerEmail])
+    void runAgent(text)
+  }, [pushUser, pushBot, answerFaq, pendingLookup, runLookup, runAction, customerEmail, runAgent])
 
   /* ── open / close ─────────────────────────────────────────────────────── */
 

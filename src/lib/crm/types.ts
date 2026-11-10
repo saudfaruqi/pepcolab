@@ -16,6 +16,7 @@ export const CONTACT_SOURCES = [
   'checkout',
   'account',
   'learn_form',
+  'website_chat',
 ] as const
 export type ContactSource = (typeof CONTACT_SOURCES)[number]
 
@@ -116,6 +117,7 @@ export const SOURCE_LABELS: Record<ContactSource, string> = {
   checkout: 'Checkout',
   account: 'Account',
   learn_form: 'Free guide',
+  website_chat: 'Website chat',
 }
 
 export const CAPTURE_LABELS: Record<CapturePoint, string> = {
