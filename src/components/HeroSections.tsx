@@ -157,7 +157,7 @@ export default function HeroCinematic() {
                 marginBottom: 14,
               }}
             >
-              Research Without Compromise · UAE & UK
+              Research Without Compromise · UAE
             </div>
 
             <h1

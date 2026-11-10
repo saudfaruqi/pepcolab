@@ -13,12 +13,12 @@ export const metadata: Metadata = {
   // Page-level title left without the brand suffix — root layout's
   // `template: '%s | PepcoLab'` appends it once. Setting it here too
   // double-suffixed the tag and got truncated by Google at ~60 chars.
-  title: 'Research Peptides for Sale — UAE & UK',
-  description: 'Browse research-grade peptides for laboratory use. Every batch supplied with a certificate of analysis matched to the lot number on the vial. Cold-chain dispatch. Ordering in the UAE and the UK.',
+  title: 'Research Peptides for Sale — UAE',
+  description: 'Browse research-grade peptides for laboratory use. Every batch supplied with a certificate of analysis matched to the lot number on the vial. Cold-chain dispatch. Delivering across the UAE.',
   alternates: { canonical: '/products' },
   openGraph: {
-    title: 'Research Peptides for Sale — UAE & UK | PepcoLab',
-    description: 'Browse research-grade peptides for laboratory use. Batch-matched certificates of analysis, lot traceability and cold-chain dispatch. Ordering in the UAE and the UK.',
+    title: 'Research Peptides for Sale — UAE | PepcoLab',
+    description: 'Browse research-grade peptides for laboratory use. Batch-matched certificates of analysis, lot traceability and cold-chain dispatch. Delivering across the UAE.',
     type: 'website',
   },
 }

@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
   // UK launch signups share this store under a "uk-launch:" prefix. See the
   // note on the alert below — they must never be treated as restock requests.
   const isUkLaunch = productSlug.startsWith('uk-launch:')
+  const isIntlLaunch = productSlug.startsWith('intl-launch:')
+  const intlProduct = isIntlLaunch && productSlug.slice('intl-launch:'.length) !== 'general' ? productSlug.slice('intl-launch:'.length) : ''
   const ukProductName = isUkLaunch
     ? (productSlug.slice('uk-launch:'.length) || 'catalogue')
     : productName
@@ -67,10 +69,21 @@ export async function POST(req: NextRequest) {
         // someone "PT-141 is back in stock" when what they actually asked was
         // when you'll ship to the UK. Wrong message, to someone already
         // waiting on you. The two are now labelled and instructed separately.
-        subject: isUkLaunch
+        // "intl-launch:" (Nov 2026): a visitor outside the UAE asked to be
+        // told when we deliver to them (components/DeliveryNotice.tsx, the
+        // product page notice). Same rule: not a restock request.
+        subject: isIntlLaunch
+          ? `🌍 Delivery interest from outside the UAE${intlProduct ? `: ${intlProduct}` : ''}`
+          : isUkLaunch
           ? `🇬🇧 UK launch interest: ${ukProductName}`
           : `🔔 Back-in-stock request: ${productName}`,
-        text: isUkLaunch
+        text: isIntlLaunch
+          ? `${email} wants to be told when PepcoLab delivers to their country (they were outside the UAE when they asked).\n\n` +
+            `${intlProduct ? `Product they were looking at: ${intlProduct}\n` : ''}` +
+            `${count} request${count === 1 ? '' : 's'} recorded under ${productSlug}.\n\n` +
+            `DO NOT run the restock trigger for this — it would send a "back in stock" email, which is not what they asked.\n` +
+            `Contact them when international delivery reopens.`
+          : isUkLaunch
           ? `${email} wants to be told when PepcoLab opens UK dispatch.\n\n` +
             `Compound of interest: ${ukProductName}\n` +
             `${count} total UK request${count === 1 ? '' : 's'} recorded against this compound.\n\n` +

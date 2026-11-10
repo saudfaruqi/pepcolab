@@ -11,6 +11,7 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { useCodCheckout } from '@/lib/useCodCheckout'
+import DeliveryNotice from '@/components/DeliveryNotice'
 import { formatPrice, shopifyImg } from '@/lib/utils'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
 import { chargeNotice } from '@/lib/pricing'
@@ -118,6 +119,9 @@ export default function CartDrawer() {
             </div>
           </div>
         </div>
+
+        {/* Ordering refused outside the delivery countries (lib/delivery.ts) */}
+        <DeliveryNotice compact />
 
         {/* Error banner */}
         {(error || sdkError || codError) && (

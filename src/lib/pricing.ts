@@ -15,11 +15,34 @@
 //
 // To change the rate, set NEXT_PUBLIC_AED_PER_GBP in Vercel and redeploy.
 // To pause UK selling, set UK_CHECKOUT_LIVE to false.
+//
+// UAE ONLY (10 Nov 2026): UK selling is paused and nothing is sold outside
+// the UAE. DELIVERY_COUNTRIES below is the list checkout enforces — see
+// lib/delivery.ts (browser) and app/api/checkout/cod (server). To reopen the
+// UK, set UK_CHECKOUT_LIVE back to true; GB then rejoins the list.
 
 export type Market = 'AE' | 'GB'
 
 /** Master switch for UK selling. false shows UK visitors AED and no buy button. */
-export const UK_CHECKOUT_LIVE = true
+export const UK_CHECKOUT_LIVE = false
+
+/** Countries (ISO codes) we deliver to. Checkout is refused everywhere else. */
+export const DELIVERY_COUNTRIES: readonly string[] = UK_CHECKOUT_LIVE ? ['AE', 'GB'] : ['AE']
+
+/** Shown wherever ordering is refused because of the visitor's location. */
+export const DELIVERY_NOTICE = UK_CHECKOUT_LIVE
+  ? 'We currently deliver within the UAE and the UK only.'
+  : 'We currently deliver within the UAE only.'
+
+/**
+ * True when we deliver to this country. An unknown country (no geo data,
+ * e.g. local development) is allowed: the address checks after payment are
+ * the backstop there.
+ */
+export function deliversTo(countryCode?: string | null): boolean {
+  if (!countryCode) return true
+  return DELIVERY_COUNTRIES.includes(countryCode.toUpperCase())
+}
 
 /**
  * Dirhams per pound used for UK display prices. Published beside every UK

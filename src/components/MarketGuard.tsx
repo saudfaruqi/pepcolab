@@ -6,25 +6,32 @@
  * the buy controls when the product is not sold where the visitor is:
  *   - `unavailable` — set by ProductVariantView for products outside the
  *     UAE catalogue (lib/uaeRestrictions.ts) when the visitor is in the UAE
- *   - UK_CHECKOUT_LIVE false in lib/pricing.ts — UK visitors
+ *   - the visitor is outside the delivery countries (lib/delivery.ts — UAE
+ *     only since 10 Nov 2026; UK selling paused via UK_CHECKOUT_LIVE in
+ *     lib/pricing.ts). They can leave an email to hear when we deliver to them.
  */
 
 import Link from 'next/link'
 import { useCountry } from '@/lib/countryContext'
 import { isInMarket } from '@/lib/pricing'
+import { useCanDeliver } from '@/lib/delivery'
+import DeliveryNotice from '@/components/DeliveryNotice'
 
 interface Props {
   tags: string[]
   /** Not sold in the visitor's market. */
   unavailable?: boolean
   children: React.ReactNode
-  /** Kept for call-site compatibility. */
+  /** Kept for call-site compatibility; also tags delivery-interest signups. */
   productSlug?: string
   productName?: string
 }
 
-export default function MarketGuard({ tags, children, unavailable = false }: Props) {
+export default function MarketGuard({ tags, children, unavailable = false, productSlug }: Props) {
   const { country, ready } = useCountry()
+  const canDeliver = useCanDeliver()
+
+  if (!unavailable && canDeliver === false) return <DeliveryNotice slug={productSlug || 'general'} />
   if (!unavailable && (!ready || isInMarket(tags, country))) return <>{children}</>
   return (
     <div style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: '16px 18px', fontSize: 13.5, lineHeight: 1.6, color: '#374151' }}>

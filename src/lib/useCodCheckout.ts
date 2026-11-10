@@ -16,6 +16,7 @@ import type { CartLine } from '@/lib/cartContext'
 import { useCart } from '@/lib/cartContext'
 import { trackBeginCheckout, lineToItem } from '@/lib/analytics'
 import type { ConsentChoice } from '@/components/ConsentBoxes'
+import { canDeliverHere, deliveryRefusal } from '@/lib/delivery'
 
 export function useCodCheckout() {
   const { cartId } = useCart()
@@ -30,6 +31,12 @@ export function useCodCheckout() {
     researchAttestedAt?: string | null,
     consents?: ConsentChoice | null
   ) => {
+    // UAE ONLY (Nov 2026): refused outside the delivery countries; the
+    // server checks again (app/api/checkout/cod).
+    if (!canDeliverHere()) {
+      setCodError(deliveryRefusal())
+      return
+    }
     if (!cartId) {
       setCodError('Your cart is not ready yet. Please refresh and try again.')
       return

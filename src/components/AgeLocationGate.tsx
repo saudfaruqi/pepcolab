@@ -50,11 +50,14 @@ const MARKET_OPTIONS: { code: GateMarket; label: string }[] = [
   { code: 'OTHER', label: 'Somewhere else' },
 ]
 
+// UAE ONLY (10 Nov 2026): UK selling is paused and nothing ships outside the
+// UAE. Choosing UK or "Somewhere else" here also stops checkout
+// (lib/delivery.ts reads this choice).
 const MARKET_NOTE: Record<GateMarket, string | null> = {
   AE: null,
-  GB: null,
+  GB: 'UK delivery is paused for now. You are welcome to browse, but we can only take orders for delivery within the UAE.',
   OTHER:
-    'PepcoLab currently sells to the UAE and the UK only. You are welcome to browse, but we cannot deliver to your location.',
+    'PepcoLab currently delivers within the UAE only. You are welcome to browse, but we cannot take orders for your location.',
 }
 
 export default function AgeLocationGate() {

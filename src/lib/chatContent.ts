@@ -434,7 +434,7 @@ export const FAQS: Faq[] = [
     topic: 'ordering',
     question: 'What payment methods do you take?',
     answer: [
-      'Card payments through STRABL — Visa, Mastercard and American Express. Prices and charges are in UAE dirhams (AED).',
+      'Card payments through STRABL — Visa, Mastercard and American Express — or cash on delivery, which you can choose in the cart. Prices and charges are in UAE dirhams (AED).',
       'One compound, GLP, is sold through a direct payment link rather than the normal cart. If you’re ordering that one and the checkout looks different, that is expected — the quantity is fixed into the link, so pick your quantity on the product page before you click through.',
     ],
     keywords: ['pay', 'payment', 'card', 'visa', 'mastercard', 'amex', 'currency', 'aed', 'dirham', 'gbp', 'pound', 'strabl', 'crypto', 'secure', 'safe payment'],
@@ -505,13 +505,14 @@ export const FAQS: Faq[] = [
   {
     id: 'shipping-uk',
     topic: 'shipping',
-    question: 'Do you ship to the UK?',
+    // UAE ONLY (10 Nov 2026): UK and international delivery paused. The id
+    // stays 'shipping-uk' so existing links and menus keep working.
+    question: 'Do you deliver outside the UAE?',
     answer: [
-      'Yes. UK ordering is open, and UK visitors see prices in pounds.',
-      'Payments are processed in UAE dirhams, so your card is charged the AED amount shown beside your cart total and your card provider converts it. Other countries: we currently sell to the UAE and the UK only.',
+      'Not at the moment. We currently deliver within the UAE only — UK and international delivery are paused, and orders can’t be placed from outside the UAE.',
+      'If you’re outside the UAE, leave your email in the cart and we’ll let you know as soon as we deliver to you again.',
     ],
     keywords: ['uk', 'united kingdom', 'britain', 'british', 'england', 'london', 'international', 'worldwide', 'abroad', 'ship to', 'europe', 'usa', 'america', 'saudi', 'ksa', 'qatar', 'kuwait', 'oman', 'bahrain'],
-    links: [{ label: 'Ordering from the UK', href: '/uk' }],
     related: ['shipping-times', 'compliance-where'],
   },
 

@@ -1,10 +1,11 @@
 // src/app/uk/page.tsx
 //
-// UK MARKET (live, Oct 2026)
-// --------------------------
-// UK ordering is open. UK visitors see prices in pounds, converted from the
-// AED price list at the rate in lib/pricing.ts; the card is charged in AED
-// and the cart says so beside the total.
+// UK MARKET — PAUSED (10 Nov 2026)
+// --------------------------------
+// UK ordering opened in Oct 2026 and is paused from 10 Nov 2026
+// (UK_CHECKOUT_LIVE = false in lib/pricing.ts). The page stays up for search
+// and collects a launch list (UkLaunchForm). When UK selling reopens, restore
+// the "Now ordering" copy below and remove the form.
 //
 // WHAT THIS PAGE DELIBERATELY DOES NOT DO:
 //   - claim any regulatory approval, MHRA registration or medicine status
@@ -16,6 +17,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import UkLaunchForm from '@/components/UkLaunchForm'
 import { AED_PER_GBP } from '@/lib/pricing'
 
 const SITE_URL = 'https://www.pepcolab.com'
@@ -24,7 +26,7 @@ const CANONICAL = '/uk'
 export const metadata: Metadata = {
   title: 'Research Peptides in the UK | Order Online',
   description:
-    'PepcoLab supplies research-grade peptides with independently tested, batch-matched certificates of analysis and cold-chain handling. Now ordering in the UK, priced in pounds. For in-vitro research use only.',
+    'PepcoLab supplies research-grade peptides with independently tested, batch-matched certificates of analysis and cold-chain handling. UK delivery is paused for now — join the list to hear when it reopens. For in-vitro research use only.',
   alternates: {
     canonical: CANONICAL,
     languages: {
@@ -36,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PepcoLab UK | Research-Grade Peptides',
     description:
-      'Independently tested, batch-matched COAs and lot-traced supply. Now ordering in the UK.',
+      'Independently tested, batch-matched COAs and lot-traced supply. UK delivery paused for now — join the list.',
     url: `${SITE_URL}${CANONICAL}`,
     type: 'website',
     images: [{ url: '/og-pepcolab.jpg', width: 1200, height: 630, alt: 'PepcoLab' }],
@@ -51,7 +53,7 @@ export const revalidate = 86400
 const FAQ = [
   {
     q: 'Does PepcoLab ship to the United Kingdom?',
-    a: 'Yes. UK orders are open. Add products to your cart and check out as normal; you receive a confirmation email with your order number, and a dispatch email when it ships.',
+    a: 'Not at the moment. UK delivery is paused and orders can only be placed for delivery within the UAE. Leave your email on this page and we will tell you as soon as UK delivery reopens.',
   },
   {
     q: 'Is PepcoLab a UK company?',
@@ -71,7 +73,7 @@ const FAQ = [
   },
   {
     q: 'Are UK prices in pounds?',
-    a: `Yes. UK visitors see prices in pounds, converted from our UAE dirham price list at £1 = AED ${AED_PER_GBP.toFixed(2)}. Payments are processed in UAE dirhams, so your card is charged the AED amount shown beside your cart total and your card provider converts it; its rate may differ slightly from ours.`,
+    a: `When UK delivery reopens, UK visitors will see prices in pounds, converted from our UAE dirham price list (currently £1 = AED ${AED_PER_GBP.toFixed(2)}). Payments are processed in UAE dirhams, so the card is charged the AED amount shown beside the cart total and the card provider converts it.`,
   },
 ]
 
@@ -113,7 +115,7 @@ export default function UkPage() {
               marginBottom: 18,
             }}
           >
-            United Kingdom · Now ordering
+            United Kingdom · Delivery paused
           </div>
 
           <h1
@@ -142,9 +144,13 @@ export default function UkPage() {
           >
             PepcoLab supplies research-grade peptides with independently
             tested, batch-matched certificates of analysis, lot traceability
-            to the vial, and cold-chain handling. UK ordering is open, with
-            prices shown in pounds.
+            to the vial, and cold-chain handling. UK delivery is paused for
+            now — leave your email and we&apos;ll tell you the day it reopens.
           </p>
+
+          <div style={{ maxWidth: 520, marginBottom: 28 }}>
+            <UkLaunchForm />
+          </div>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <Link

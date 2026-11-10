@@ -17,6 +17,7 @@
 // path uses via /api/checkout/attest), keyed by the checkout reference. The
 // cart attributes carry the reference through Shopify so the webhook can pick
 // them up again.
+import { deliversTo, DELIVERY_NOTICE } from '@/lib/pricing'
 import { NextRequest, NextResponse } from 'next/server'
 import { cartAttributesUpdate, type CartAttribute } from '@/lib/shopify'
 import { getClientIp, isRateLimited } from '@/lib/rateLimit'
@@ -29,6 +30,16 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   if (isRateLimited('checkout-cod', getClientIp(req), 20, 10 * 60 * 1000)) {
     return NextResponse.json({ error: 'Too many requests.' }, { status: 429 })
+  }
+
+  // UAE ONLY (Nov 2026): no checkout from a connection outside the delivery
+  // countries (lib/pricing.ts → DELIVERY_COUNTRIES).
+  const ipCountry = req.headers.get('x-vercel-ip-country')
+  if (!deliversTo(ipCountry)) {
+    return NextResponse.json(
+      { error: `${DELIVERY_NOTICE} We can’t take orders from your location right now. If you are in the UAE and using a VPN, switch it off and try again.` },
+      { status: 403 }
+    )
   }
 
   let body: any

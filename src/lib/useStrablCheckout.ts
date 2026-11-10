@@ -1,6 +1,7 @@
 // src/lib/useStrablCheckout.ts
 'use client'
 
+import { canDeliverHere, deliveryRefusal } from '@/lib/delivery'
 import { trackBeginCheckout, lineToItem } from '@/lib/analytics'
 import { computeBundleSavings } from '@/lib/bundles'
 import { useEffect, useState } from 'react'
@@ -149,6 +150,12 @@ export function useStrablCheckout() {
     const hasAttestation = Boolean(
       researchAttestedAt && Number.isFinite(new Date(researchAttestedAt).getTime())
     )
+    // UAE ONLY (Nov 2026): no payment is started from outside the delivery
+    // countries (lib/delivery.ts).
+    if (!canDeliverHere()) {
+      setSdkError(deliveryRefusal())
+      return
+    }
     // Withdrawn products / device formats never reach payment (dormant while
     // the withdrawal switch in lib/retired-paths.ts is off).
     lines = lines.filter((l) => !(l.slug && isRetiredHandle(l.slug)) && !isWithdrawnDeviceTitle(l.variantTitle || ''))

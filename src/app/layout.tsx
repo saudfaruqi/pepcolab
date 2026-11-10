@@ -64,16 +64,17 @@ export const metadata: Metadata = {
   // site is for. Everything below now says the same thing: one organisation,
   // two markets, both ordering live.
   //
-  // Oct 2026: UK ordering is live (lib/pricing.ts, UK_CHECKOUT_LIVE).
+  // Oct 2026: UK ordering went live; paused 10 Nov 2026 (lib/pricing.ts,
+  // UK_CHECKOUT_LIVE) — copy below says UAE only until it reopens.
 
   title: {
     default:
-      'PepcoLab | Research-Grade Peptides & Laboratory Compounds — UAE & UK',
+      'PepcoLab | Research-Grade Peptides & Laboratory Compounds — UAE',
     template: '%s | PepcoLab',
   },
 
   description:
-    'Research-grade peptides and laboratory compounds with independently tested, batch-matched certificates of analysis and cold-chain dispatch. Ordering in the UAE and the United Kingdom. Supplied for in-vitro research use only.',
+    'Research-grade peptides and laboratory compounds with independently tested, batch-matched certificates of analysis and cold-chain dispatch. Delivering across the UAE. Supplied for in-vitro research use only.',
 
   applicationName: 'PepcoLab',
   referrer: 'origin-when-cross-origin',
@@ -191,7 +192,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PepcoLab | Research-Grade Peptides & Laboratory Compounds',
     description:
-      'Independently tested, batch-matched certificates of analysis and cold-chain dispatch. Ordering in the UAE and the UK.',
+      'Independently tested, batch-matched certificates of analysis and cold-chain dispatch. Delivering across the UAE.',
     url: siteUrl,
     siteName: 'PepcoLab',
     locale: 'en_AE',
@@ -284,10 +285,6 @@ export default function RootLayout({
                   '@type': 'Country',
                   name: 'United Arab Emirates',
                 },
-                {
-                  '@type': 'Country',
-                  name: 'United Kingdom',
-                },
               ],
             }),
           }}
@@ -325,7 +322,7 @@ export default function RootLayout({
                 '@type': 'PostalAddress',
                 addressCountry: 'AE',
               },
-              areaServed: ['United Arab Emirates', 'United Kingdom'],
+              areaServed: ['United Arab Emirates'],
             }),
           }}
         />

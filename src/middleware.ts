@@ -310,6 +310,15 @@ export function middleware(request: NextRequest) {
     sameSite: 'lax',
   })
 
+  // The visitor's REAL country, before the AE fallback above. Checkout reads
+  // it to refuse orders from outside the delivery countries (lib/delivery.ts).
+  // Session-length on purpose: it follows the connection, so it is refreshed
+  // on every page view and never outlives a trip.
+  const ipCountry = request.headers.get('x-vercel-ip-country')
+  if (ipCountry && /^[A-Z]{2}$/i.test(ipCountry)) {
+    response.cookies.set('pepcolab_ip_country', ipCountry.toUpperCase(), { path: '/', sameSite: 'lax' })
+  }
+
   return response
 }
 

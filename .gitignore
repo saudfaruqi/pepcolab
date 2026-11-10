@@ -38,3 +38,4 @@ next-env.d.ts
 # never commit archives
 *.zip
 .DS_Store
+_to_delete/

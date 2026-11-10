@@ -38,7 +38,7 @@ const LINKS = {
     // reported it as "Discovered — currently not indexed" with no crawl ever
     // attempted. A page in the sitemap and nowhere else tells Google it
     // exists and that nothing on the site considers it worth pointing at.
-    { label: 'UK Orders',      href: '/uk'            },
+    { label: 'UK (paused)',    href: '/uk'            },
     // /dubai (Oct 2026): identical situation to /uk above — in the sitemap,
     // zero internal links, reported "Discovered — currently not indexed" with
     // no crawl ever attempted. It is the page aimed at the market that

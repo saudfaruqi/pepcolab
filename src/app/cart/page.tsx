@@ -11,6 +11,7 @@ import { useCart } from '@/lib/cartContext'
 import { useCountry } from '@/lib/countryContext'
 import { useStrablCheckout } from '@/lib/useStrablCheckout'
 import { useCodCheckout } from '@/lib/useCodCheckout'
+import DeliveryNotice from '@/components/DeliveryNotice'
 import { formatPrice, shopifyImg } from '@/lib/utils'
 import { Minus, Plus, ArrowRight, ShoppingBag, Trash2, X, Tag, MessageCircle } from 'lucide-react'
 import { isWhatsAppConfigured, whatsAppCartLink } from '@/lib/whatsapp'
@@ -299,6 +300,8 @@ function CartPageInner() {
             We couldn't restore your saved cart automatically — please re-add your items below, or message us on WhatsApp and we'll sort it out.
           </div>
         )}
+
+        <DeliveryNotice />
 
         {(error || sdkError || codError) && (
           <div className="bg-red-50 border border-red-200/50 rounded-xl px-5 py-3 mb-6 flex items-center justify-between gap-3">

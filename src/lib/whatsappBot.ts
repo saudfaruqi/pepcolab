@@ -14,7 +14,8 @@
 //   - A product comes as its photo, price and stock with an "Order now"
 //     button that opens the website cart with it already in. Several sizes →
 //     pick one from a list, then the button. Payment stays on the website.
-//   - UK numbers (+44) see GBP prices; everyone else sees AED.
+//   - Prices in AED; UK numbers see GBP only while UK selling is live
+//     (UK_CHECKOUT_LIVE in lib/pricing.ts — paused since 10 Nov 2026).
 //   - Typos in product names are tolerated (lib/chatLookup.ts).
 //   - A lot number gives its certificate; an order code (then the order
 //     email) gives the order's status.
@@ -32,6 +33,7 @@ import { alertOwner } from '@/lib/ownerAlert'
 import { isUaeRestrictedHandle, isUaeRestrictedVariant } from '@/lib/uaeRestrictions'
 import { shopifyImg } from '@/lib/utils'
 import { toPlainText, type OutMessage } from '@/lib/kapso'
+import { UK_CHECKOUT_LIVE } from '@/lib/pricing'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com').replace(/\/$/, '')
 const MENU_TTL = 24 * 60 * 60
@@ -93,7 +95,7 @@ const SHORT_LABEL: Record<string, string> = {
   'shipping-times': 'Delivery times',
   'shipping-tracking': 'Tracking',
   'shipping-cold': 'Cold chain',
-  'shipping-uk': 'UK delivery',
+  'shipping-uk': 'Outside the UAE?',
   'handling-pen-clicks': 'Pen contents',
   'handling-storage': 'Storage',
   'handling-reconstitution': 'Concentration maths',
@@ -224,7 +226,7 @@ function orderButton(card: ProductCard, v: ProductCardVariant, qty: number, with
     body: [`*${card.title}*${label ? ` — ${label}` : ''}`, price, `In stock · ${TRUST_LINE.toLowerCase()}`].join('\n'),
     buttonText: 'Order now',
     url: id ? cartLink(id, qty) : fullUrl(card.href),
-    footer: 'Opens your cart — you pay on the website',
+    footer: UK_CHECKOUT_LIVE ? 'Opens your cart — you pay on the website' : 'UAE delivery only · you pay on the website',
   }
 }
 
@@ -366,7 +368,7 @@ async function answerLookup(ctx: Ctx, answer: LookupAnswer, quantity?: number): 
 async function welcome(ctx: Ctx, opener?: Pick<Opener, 'intro' | 'faqIds'>): Promise<BotReply> {
   const name = firstName(ctx.name)
   const hello = `Hi${name ? ` ${name}` : ''} 👋`
-  const intro = opener?.intro || 'Welcome to PepcoLab. I can show prices and stock, send you a link to order, find a batch certificate or check on your order.'
+  const intro = opener?.intro || `Welcome to PepcoLab. I can show prices and stock, send you a link to order, find a batch certificate or check on your order.${UK_CHECKOUT_LIVE ? '' : ' We currently deliver within the UAE only.'}`
   const ids = opener?.faqIds.length ? opener.faqIds : popularIds()
   return {
     messages: [
@@ -479,8 +481,9 @@ export async function handOff(phone: string, name: string, reason: string): Prom
 
 /* ── entry point ────────────────────────────────────────────────────────── */
 
+/** GBP for UK numbers only while UK selling is live (lib/pricing.ts). */
 export function marketForPhone(phone: string): Market {
-  return phone.replace(/\D/g, '').startsWith('44') ? 'GB' : 'AE'
+  return UK_CHECKOUT_LIVE && phone.replace(/\D/g, '').startsWith('44') ? 'GB' : 'AE'
 }
 
 export async function botReply(input: BotInput): Promise<BotReply> {
