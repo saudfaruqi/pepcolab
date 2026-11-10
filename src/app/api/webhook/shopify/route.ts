@@ -29,6 +29,7 @@ import { takeAttestation } from '@/lib/attestation'
 import { syncContactFromOrder } from '@/lib/crm/sync'
 import { optInBlockFor } from '@/lib/crm/optinLinks'
 import { sendOrderConfirmationEmail } from '@/lib/orderEmails'
+import { notifyOrderConfirmedWhatsApp } from '@/lib/whatsappOrderUpdates'
 
 export const dynamic = 'force-dynamic'
 
@@ -238,6 +239,10 @@ async function handleCodCreated(order: any): Promise<void> {
   } catch (err) {
     console.error('[shopify-webhook] CRM sync failed (order unaffected):', err)
   }
+
+  // WhatsApp "order confirmed" — independent of the email setting below, only
+  // to customers who agreed to WhatsApp messages, at most once per order.
+  if (record.status === 'cod_pending') await notifyOrderConfirmedWhatsApp(record)
 
   // Shopify already sends its own order confirmation unless it has been
   // disabled. Sending ours as well would duplicate the email, so this is

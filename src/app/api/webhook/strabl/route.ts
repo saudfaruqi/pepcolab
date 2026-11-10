@@ -19,6 +19,7 @@ import { normaliseAddress } from '@/lib/addressNormalise'
 import { sendMail, sendMailSafe } from '@/lib/mailer'
 import { isUaeRestrictedOrderLine } from '@/lib/uaeRestrictions'
 import { sendOrderConfirmationEmail, sendPaymentFailedEmail } from '@/lib/orderEmails'
+import { notifyOrderConfirmedWhatsApp } from '@/lib/whatsappOrderUpdates'
 import { incrementRedemption } from '@/lib/discountStore'
 import { getProducts } from '@/lib/shopify'
 import { resolveVariantFromTitle, toNumericVariantId } from '@/lib/variantResolver'
@@ -775,6 +776,9 @@ If the delivery address is in fact outside the UAE, do not refund: create the or
               optIn: await optInBlockFor(record.email),
             })
           }
+          // WhatsApp "order confirmed" — only to customers who agreed to
+          // WhatsApp messages; at most once per order (lib/whatsappOrderUpdates).
+          await notifyOrderConfirmedWhatsApp(record)
           await sendMailSafe({
             to: ALERT_EMAIL,
             subject: `⚠️ Order needs MANUAL Shopify creation — no usable price (${orderShortCode})`,
@@ -858,6 +862,9 @@ Please create this order manually in Shopify and mark it paid. The customer has 
             optIn: await optInBlockFor(record.email),
           })
         }
+        // WhatsApp "order confirmed" — only to customers who agreed to
+        // WhatsApp messages; at most once per order (lib/whatsappOrderUpdates).
+        await notifyOrderConfirmedWhatsApp(record)
 
         // Best-effort, and deliberately only on 'order_created' (not
         // 'order_updated') to avoid double-counting the same order if it

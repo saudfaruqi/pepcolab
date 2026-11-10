@@ -9,9 +9,11 @@
 //
 // What it does on WhatsApp
 //   - Product questions, prices and stock from the live catalogue.
-//   - Takes orders: each product option comes with a link that opens the
-//     website cart with that item in it (/cart?add=…). Payment, the research-
-//     use confirmation and cash on delivery all stay on the website.
+//   - Takes orders: tappable menus, product photos and an "Order now" button
+//     that opens the website cart with the item in it (/cart?add=…).
+//     Payment, the research-use confirmation and cash on delivery all stay
+//     on the website. Messages are built in lib/whatsappBot.ts and sent by
+//     lib/kapso.ts; the customer sees "typing…" while the answer is built.
 //   - Order status (order code + the email it was placed with), certificates.
 //   - Quotes and bulk enquiries become CRM leads and an alert to the owner.
 //   - "Talk to a person": the owner is alerted and the assistant goes quiet
@@ -34,7 +36,9 @@ import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
 import { redis } from '@/lib/redis'
-import { botReply } from '@/lib/whatsappBot'
+import { botReply, marketForPhone } from '@/lib/whatsappBot'
+import { sendMessages, markReadTyping, rememberPhoneNumberId, type OutMessage } from '@/lib/kapso'
+import { markWhatsAppContact, ensureOrderTemplates } from '@/lib/whatsappOrderUpdates'
 import { alertOwner } from '@/lib/ownerAlert'
 import { isRateLimited } from '@/lib/rateLimit'
 import { upsertContact, grantConsent, withdrawConsent, logInteraction } from '@/lib/crm/store'
@@ -43,7 +47,6 @@ import { WHATSAPP_WORDING_VERSION } from '@/lib/crm/types'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const KAPSO_BASE = 'https://api.kapso.ai/meta/whatsapp/v24.0'
 const HUMAN_PAUSE_SECONDS = 12 * 60 * 60
 
 const K = {
@@ -63,24 +66,7 @@ function verifySignature(raw: string, header: string | null): boolean {
 }
 
 async function sendText(phoneNumberId: string, to: string, body: string): Promise<void> {
-  const key = process.env.KAPSO_API_KEY
-  if (!key) throw new Error('KAPSO_API_KEY is not set')
-  // WhatsApp text messages are limited to 4096 characters.
-  const chunks = body.match(/[\s\S]{1,3900}(?=\s|$)|[\s\S]{1,3900}/g) ?? [body]
-  for (const chunk of chunks) {
-    const res = await fetch(`${KAPSO_BASE}/${encodeURIComponent(phoneNumberId)}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': key },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to,
-        type: 'text',
-        text: { body: chunk.trim(), preview_url: true },
-      }),
-    })
-    if (!res.ok) throw new Error(`Kapso send failed ${res.status}: ${(await res.text().catch(() => '')).slice(0, 300)}`)
-  }
+  await sendMessages(phoneNumberId, to, [{ kind: 'text', text: body }])
 }
 
 /* ── inbound shape ──────────────────────────────────────────────────────── */
@@ -105,16 +91,17 @@ function textOf(m: NonNullable<InboundEvent['message']>): string {
     m.interactive?.button_reply?.title ||
     m.interactive?.list_reply?.title ||
     m.button?.text ||
-    (m.type === 'text' ? m.kapso?.content : '') ||
+    (m.type === 'text' || m.type === 'interactive' ? m.kapso?.content : '') ||
     ''
   ).trim()
 }
 
-/* ── one message ────────────────────────────────────────────────────────── */
-
-function marketForPhone(phone: string): 'AE' | 'GB' {
-  return phone.startsWith('44') ? 'GB' : 'AE'
+/** The id of a tapped reply button or list row. */
+function replyIdOf(m: NonNullable<InboundEvent['message']>): string | undefined {
+  return m.interactive?.button_reply?.id || m.interactive?.list_reply?.id || undefined
 }
+
+/* ── one message ────────────────────────────────────────────────────────── */
 
 async function handleMessage(ev: InboundEvent): Promise<void> {
   const m = ev.message
@@ -134,8 +121,13 @@ async function handleMessage(ev: InboundEvent): Promise<void> {
     if (!first) return
   }
 
+  await rememberPhoneNumberId(phoneNumberId)
+  // This customer has messaged us, so order updates may go to them here.
+  await markWhatsAppContact(phone)
+
   const name = ev.conversation?.contact_name || ''
   const text = textOf(m)
+  const replyId = replyIdOf(m)
 
   // CRM: every sender is a contact (source WhatsApp inbound). No marketing
   // consent is implied by messaging us.
@@ -159,7 +151,7 @@ async function handleMessage(ev: InboundEvent): Promise<void> {
     console.error('[whatsapp/kapso] CRM write failed:', err)
   }
 
-  if (!text) {
+  if (!text && !replyId) {
     await sendText(phoneNumberId, phone, 'Thanks — I can read text messages only. Please type your question, or write "person" to reach the team.')
     return
   }
@@ -181,21 +173,24 @@ async function handleMessage(ev: InboundEvent): Promise<void> {
 
   if (isRateLimited('whatsapp', phone, 20, 10 * 60 * 1000)) return
 
-  let reply: string
+  // Blue ticks and "typing…" straight away; the answer follows.
+  if (m.id) await markReadTyping(phoneNumberId, m.id)
+
+  let messages: OutMessage[]
   try {
-    const answer = await botReply(phone, name, text.slice(0, 1500))
-    reply = answer.text
+    const answer = await botReply({ phone, name, text: text.slice(0, 1500), replyId })
+    messages = answer.messages
     if (answer.handoff) await redis.set(K.human(phone), '1', { ex: HUMAN_PAUSE_SECONDS })
   } catch (err) {
     console.error('[whatsapp/kapso] reply failed:', err)
-    reply = 'Sorry — something went wrong on our side. A member of the PepcoLab team will reply here shortly.'
+    messages = [{ kind: 'text', text: 'Sorry — something went wrong on our side. A member of the PepcoLab team will reply here shortly.' }]
     await alertOwner({
       title: `⚠️ WhatsApp assistant failed — +${phone}`,
       body: `The assistant could not answer this message, so please reply from the Kapso inbox.\n\nCustomer: ${name || '(no name)'} +${phone}\nMessage: ${text}`,
     })
   }
 
-  await sendText(phoneNumberId, phone, reply)
+  await sendMessages(phoneNumberId, phone, messages)
 }
 
 /* ── webhook ────────────────────────────────────────────────────────────── */
@@ -231,6 +226,8 @@ export async function POST(req: NextRequest) {
     const key = String(ev.message?.from || ev.conversation?.phone_number || ev.conversation?.id || 'unknown')
     bySender.set(key, [...(bySender.get(key) ?? []), ev])
   }
+  // Once a day: make sure the order-update templates are submitted to Meta.
+  waitUntil(ensureOrderTemplates().catch((err) => console.error('[whatsapp/kapso] template check failed:', err)))
   waitUntil(
     Promise.all(
       Array.from(bySender.values()).map(async (list) => {

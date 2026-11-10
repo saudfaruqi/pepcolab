@@ -29,6 +29,7 @@ import { getOrderRecord, saveOrderRecord, isPaidOrder } from '@/lib/orderStore'
 import { verifySessionToken as verifyAdminSession, ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 import { formatAddressLines } from '@/lib/addressNormalise'
 import { sendShippedEmail } from '@/lib/lifecycleEmails'
+import { notifyOrderShippedWhatsApp } from '@/lib/whatsappOrderUpdates'
 import { loadCatalogue, buildJourney } from '@/lib/customerJourney'
 
 const CARRIER_URLS: Record<string, (ref: string) => string> = {
@@ -131,6 +132,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // WhatsApp "on its way", on the same "notify the customer" tick. Only to
+  // customers who agreed to WhatsApp messages; at most once per order.
+  let whatsapped = false
+  if (notifyCustomer && (isPaidOrder(updated) || updated.status === 'cod_pending')) {
+    whatsapped = await notifyOrderShippedWhatsApp(updated)
+  }
+
   return NextResponse.json({
     success: true,
     orderShortCode,
@@ -139,6 +147,7 @@ export async function POST(req: NextRequest) {
     trackingUrl: updated.trackingUrl || null,
     linked: Boolean(updated.trackingUrl),
     emailed,
+    whatsapped,
     emailSkippedReason,
   })
 }

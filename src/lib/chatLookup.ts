@@ -54,6 +54,11 @@ export interface LookupAnswer {
   cards?: ProductCard[]
   /** Units to pre-select on the card's Add button. */
   quantity?: number
+  /**
+   * When a name matches several products: those products, so a channel that
+   * can offer a pick-list (WhatsApp) does. The website widget ignores it.
+   */
+  choices?: ProductCard[]
 }
 
 export interface ProductCardVariant {
@@ -173,7 +178,61 @@ export function resolveProduct(term: string, catalogue: CatalogueEntry[]): Catal
     const best = sorted.find(p => normalise(p.title).startsWith(key))
     return best ?? 'ambiguous'
   }
-  return null
+  return closestByTypo(key, catalogue)
+}
+
+/** Products whose name contains the term — the options behind 'ambiguous'. */
+export function matchingProducts(term: string, catalogue: CatalogueEntry[]): CatalogueEntry[] {
+  const key = normalise(term)
+  if (key.length < 2) return []
+  return catalogue.filter(p => {
+    const t = normalise(p.title)
+    return t.includes(key) || key.includes(t) || normalise(p.handle).includes(key)
+  })
+}
+
+/**
+ * Typo tolerance (Nov 2026): "tesamorlin", "retatrutid", "semoglutide".
+ * Compared against the whole name and the name's first word, allowing one
+ * slip for short names and two for longer ones — and only when exactly one
+ * product is that close, so a typo never silently picks between two.
+ */
+function closestByTypo(key: string, catalogue: CatalogueEntry[]): CatalogueEntry | null {
+  if (key.length < 4) return null
+  const allowed = key.length >= 8 ? 2 : 1
+  const hits = new Map<string, { p: CatalogueEntry; d: number }>()
+  for (const p of catalogue) {
+    const names = new Set([normalise(p.title), normalise(p.handle.replace(/-uae$/i, '')), normalise(p.title.split(/[\s(]/)[0])])
+    for (const name of names) {
+      if (name.length < 4 || Math.abs(name.length - key.length) > allowed) continue
+      const d = editDistance(key, name, allowed)
+      if (d <= allowed) {
+        const prev = hits.get(p.handle)
+        if (!prev || d < prev.d) hits.set(p.handle, { p, d })
+      }
+    }
+  }
+  if (hits.size === 0) return null
+  const ranked = Array.from(hits.values()).sort((a, b) => a.d - b.d)
+  if (ranked.length > 1 && ranked[1].d === ranked[0].d) return null
+  return ranked[0].p
+}
+
+/** Levenshtein distance with an early exit once it passes `max`. */
+function editDistance(a: string, b: string, max: number): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]
+    let rowMin = i
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+      if (cur[j] < rowMin) rowMin = cur[j]
+    }
+    if (rowMin > max) return max + 1
+    prev = cur
+  }
+  return prev[b.length]
 }
 
 function formatSummary(p: CatalogueEntry): string {
@@ -205,6 +264,7 @@ export function answerProduct(term: string, catalogue: CatalogueEntry[]): Lookup
       ],
       links: [{ label: 'Browse the catalogue', href: '/products' }],
       related: ['contact-human'],
+      choices: matchingProducts(term, catalogue).slice(0, 10).map(toCard),
     }
   }
 
@@ -667,6 +727,8 @@ export async function resolveLookup(
     providedEmail?: string | null
     filters?: SearchFilters
     quantity?: number
+    /** Whose prices to show: 'GB' for UK customers (GBP), default the UAE. */
+    market?: 'AE' | 'GB'
   } = {}
 ): Promise<LookupAnswer> {
   if (intent === 'product' || intent === 'product-guess' || intent === 'search' || intent === 'add-to-cart') {
@@ -676,7 +738,7 @@ export async function resolveLookup(
     const asked = [query, opts.filters?.term ?? '', opts.filters?.format ?? ''].join(' ')
     if (namesNotSupplied(asked)) return { lines: [...NOT_SUPPLIED_ANSWER], links: [{ label: 'Browse the catalogue', href: '/products' }], related: ['coa-what', 'handling-storage'] }
 
-    const catalogue = ((await getProducts(100, 'AE')) as unknown as CatalogueEntry[])
+    const catalogue = ((await getProducts(100, opts.market ?? 'AE')) as unknown as CatalogueEntry[])
       .filter(p => !isRetiredHandle(p.handle))
       .map(p => ({ ...p, variants: (p.variants ?? []).filter(v => !isWithdrawnDeviceTitle(v.title || '')) }))
     if (intent === 'search') return answerSearch(opts.filters ?? {}, catalogue)
