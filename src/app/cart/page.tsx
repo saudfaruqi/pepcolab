@@ -59,6 +59,32 @@ function CartPageInner() {
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'done' | 'partial' | 'empty' | 'error'>('idle')
 
   useEffect(() => {
+    // WHATSAPP ORDER LINKS (Nov 2026): the WhatsApp assistant
+    // (app/api/whatsapp/kapso) sends /cart?add=<variantId>:<qty>,... so a
+    // customer who chose products in WhatsApp lands here with them in the
+    // cart and pays through the normal checkout. Numeric Shopify variant ids;
+    // at most 10 lines, 1–10 units each.
+    const add = searchParams.get('add')
+    if (add) {
+      const items = add
+        .split(',')
+        .map((part) => {
+          const [id, q] = part.split(':')
+          const numeric = (id || '').replace(/\D/g, '')
+          const quantity = Math.min(Math.max(parseInt(q || '1', 10) || 1, 1), 10)
+          return numeric ? { variantId: `gid://shopify/ProductVariant/${numeric}`, quantity } : null
+        })
+        .filter((x): x is { variantId: string; quantity: number } => Boolean(x))
+        .slice(0, 10)
+      if (items.length === 0) { router.replace('/cart'); return }
+      setRestoreStatus('loading')
+      restoreItems(items)
+        .then((added) => setRestoreStatus(added < items.length ? 'partial' : 'done'))
+        .catch(() => setRestoreStatus('error'))
+        .finally(() => router.replace('/cart'))
+      return
+    }
+
     const code = searchParams.get('restore')
     if (!code) return
 

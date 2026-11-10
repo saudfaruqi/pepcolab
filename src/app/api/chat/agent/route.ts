@@ -3,13 +3,14 @@
 // Backend for the chat widget's AI agent (lib/chatAgent.ts). The widget only
 // calls this for messages its written answers and lookups do not cover.
 //
-// REQUIRED ENV VAR: ANTHROPIC_API_KEY (server-side only).
+// OPTIONAL ENV VAR: ANTHROPIC_API_KEY (server-side only). Not set = off.
 // OPTIONAL: CHAT_AGENT_MODEL to change the model; OWNER_WHATSAPP_PHONE and
 // CALLMEBOT_APIKEY for WhatsApp alerts (see lib/ownerAlert.ts).
 import { NextRequest, NextResponse } from 'next/server'
 import { runChatAgent, type AgentMessage } from '@/lib/chatAgent'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 import { verifySessionToken, CUSTOMER_COOKIE_NAME } from '@/lib/customerAuth'
+import { NO_MATCH_ANSWER } from '@/lib/chatContent'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -27,6 +28,12 @@ const FALLBACK = {
 }
 
 export async function POST(req: NextRequest) {
+  // The AI agent is optional. Without ANTHROPIC_API_KEY the chat behaves
+  // exactly as before it existed: the written "no answer" reply plus the
+  // "talk to a person" option.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ answer: { lines: [...NO_MATCH_ANSWER] } })
+  }
   const ip = getClientIp(req)
   if (isRateLimited('chat-agent', ip, MAX_PER_WINDOW, WINDOW_MS)) {
     return NextResponse.json(

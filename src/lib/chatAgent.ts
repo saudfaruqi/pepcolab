@@ -53,6 +53,10 @@ export interface AgentContext {
   ip: string
   sessionEmail: string | null
   pageUrl: string
+  /** 'whatsapp' replies through the WhatsApp assistant: no cards, a checkout link instead. */
+  channel?: 'web' | 'whatsapp'
+  /** WhatsApp sender, E.164 without +, used for leads and handoffs. */
+  phone?: string
 }
 
 export interface AgentReply {
@@ -62,6 +66,10 @@ export interface AgentReply {
   quantity?: number
   /** True once a person has been alerted (lead or handoff). */
   alerted?: boolean
+  /** True when the visitor asked for / needs a person (request_human). */
+  handoff?: boolean
+  /** WhatsApp: the cart link made this turn (make_checkout_link). */
+  checkoutLink?: string
 }
 
 /* ── catalogue ──────────────────────────────────────────────────────────── */
@@ -186,12 +194,48 @@ const TOOLS = [
   },
 ] as const
 
+const SITE_URL = (process.env.NEXT_PUBLIC_SERVER_BASE_URL || 'https://www.pepcolab.com').replace(/\/$/, '')
+
+/** WhatsApp has no Add buttons: the assistant sends a link that fills the cart. */
+const CHECKOUT_LINK_TOOL = {
+  name: 'make_checkout_link',
+  description:
+    'Create a link that opens the PepcoLab cart with the chosen products already in it; the customer pays on the website. Use it when the customer has decided what they want. Choose the option (e.g. "Vial / 20mg") exactly as search_products listed it.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      items: {
+        type: 'array',
+        maxItems: 10,
+        items: {
+          type: 'object',
+          properties: {
+            handle: { type: 'string' },
+            option: { type: 'string' },
+            quantity: { type: 'integer', minimum: 1, maximum: 10 },
+          },
+          required: ['handle', 'quantity'],
+        },
+      },
+    },
+    required: ['items'],
+  },
+} as const
+
+function toolsFor(ctx: AgentContext) {
+  return ctx.channel === 'whatsapp'
+    ? [...TOOLS.filter((t) => t.name !== 'show_products'), CHECKOUT_LINK_TOOL]
+    : TOOLS
+}
+
 interface ToolState {
   catalogue: Entry[] | null
   cards: ProductCard[]
   quantity?: number
   links: { label: string; href: string }[]
   alerted: boolean
+  handoff: boolean
+  checkoutLink?: string
 }
 
 function transcriptText(messages: AgentMessage[]): string {
@@ -218,6 +262,39 @@ async function runTool(
     const found = searchCatalogue(state.catalogue, str('query', 80))
     if (!found.length) return JSON.stringify({ results: [], note: 'Nothing in the catalogue matches. Do not suggest products that are not listed.' })
     return JSON.stringify({ results: found.map(describeForModel) })
+  }
+
+  if (name === 'make_checkout_link') {
+    state.catalogue ??= await loadCatalogue(ctx.market)
+    const items = Array.isArray(input.items) ? (input.items as Record<string, unknown>[]).slice(0, 10) : []
+    const parts: string[] = []
+    const lines: string[] = []
+    const problems: string[] = []
+    for (const it of items) {
+      const handle = String(it.handle ?? '')
+      const p = state.catalogue.find((x) => x.handle === handle || x.handle.replace(/-uae$/i, '') === handle)
+      if (!p) { problems.push(`${handle}: not in the catalogue`); continue }
+      const wanted = norm(String(it.option ?? ''))
+      const variants = (p.variants ?? []).filter((v) => v.id)
+      const v = (wanted && variants.find((x) => norm(x.title) === wanted))
+        || (wanted && variants.find((x) => norm(x.title).includes(wanted) || wanted.includes(norm(x.title))))
+        || (variants.length === 1 ? variants[0] : undefined)
+      if (!v) { problems.push(`${p.title}: say which option (${variants.map((x) => x.title).join(', ')})`); continue }
+      if (!v.availableForSale) { problems.push(`${p.title} ${v.title}: out of stock`); continue }
+      const q = Math.min(Math.max(Math.round(Number(it.quantity) || 1), 1), 10)
+      const numeric = String(v.id).match(/(\d+)$/)?.[1]
+      if (!numeric) { problems.push(`${p.title}: cannot be linked`); continue }
+      parts.push(`${numeric}:${q}`)
+      lines.push(`${q} × ${p.title}${v.title && v.title.toLowerCase() !== 'default title' ? ` (${v.title})` : ''} — ${v.price} ${p.currencyCode} each`)
+    }
+    if (!parts.length) return JSON.stringify({ link: null, problems })
+    state.checkoutLink = `${SITE_URL}/cart?add=${parts.join(',')}`
+    return JSON.stringify({
+      link: state.checkoutLink,
+      items: lines,
+      problems,
+      note: 'Send this link exactly. It opens the cart with these items; the customer checks out and pays on the website. Card payment, or cash on delivery in the UAE where offered at checkout.',
+    })
   }
 
   if (name === 'show_products') {
@@ -268,7 +345,7 @@ async function runTool(
     }
     const contactName = str('name', 80)
     const email = str('email', 254).toLowerCase()
-    const phone = str('phone', 30)
+    const phone = str('phone', 30) || (ctx.phone ? `+${ctx.phone}` : '')
     const text = name === 'capture_lead' ? str('request', 600) : str('summary', 600)
     const validEmail = EMAIL_RE.test(email) ? email : ''
 
@@ -312,6 +389,7 @@ async function runTool(
       replyTo: validEmail || undefined,
     })
     state.alerted = true
+    if (name === 'request_human') state.handoff = true
     console.info(`[chatAgent] ${name} alert sent (whatsapp: ${whatsapp})`)
     return JSON.stringify({
       ok: true,
@@ -333,7 +411,9 @@ function agentPrompt(ctx: AgentContext): string {
 - Never state a price, stock level, product option or lot detail without getting it from a tool in this conversation. If a tool returns nothing, say so; never invent a product.
 - Only offer products that search_products returns. If asked for something it does not return, say it is not in the current catalogue.
 - The "Not supplied" list above is not offered through this chat. If a visitor asks about one of those products, do not say PepcoLab does not supply it; say only: "I can't help with that product in this chat. For anything else — an order, a certificate or storage — I'm happy to help." Never discuss what those products do.
-- Selling: when the customer wants something, find it with search_products, then call show_products so they get Add to cart buttons. Then tell them to press Add and check out from the cart. You cannot add items, take payment or place an order yourself, so never say you have.
+${ctx.channel === 'whatsapp'
+  ? '- Selling (WhatsApp): find products with search_products, confirm the option and quantity with the customer, then call make_checkout_link and send the link. They pay on the website. You cannot take payment or place the order yourself, so never say it is placed or paid.'
+  : '- Selling: when the customer wants something, find it with search_products, then call show_products so they get Add to cart buttons. Then tell them to press Add and check out from the cart. You cannot add items, take payment or place an order yourself, so never say you have.'}
 - Order status: call track_order. It needs the order code and the email the order was placed with; ask for whichever is missing.
 - Bulk, institutional, quotes or callbacks: collect a name and an email or phone, ask whether the team may contact them about this request, and only then call capture_lead.
 - If the customer is unhappy, has a problem with an order or payment, or asks for a person, call request_human with a short summary.
@@ -341,7 +421,9 @@ function agentPrompt(ctx: AgentContext): string {
 - You may ask for an email, phone or order code only for order tracking, a lead or a handoff. Never ask for card or payment details.
 
 # Reply format
-Plain text for a small chat window: at most three short paragraphs, no headings, no markdown tables, no bold. A short list with "- " is fine. Refer to pages by path, e.g. /cart, /bulk-orders, /certificates.`
+${ctx.channel === 'whatsapp'
+  ? 'WhatsApp message: at most three short paragraphs, no headings or tables. A short list with "- " is fine. Use full links, e.g. https://www.pepcolab.com/certificates, never bare paths. The customer\'s WhatsApp number is already known; do not ask for it.'
+  : 'Plain text for a small chat window: at most three short paragraphs, no headings, no markdown tables, no bold. A short list with "- " is fine. Refer to pages by path, e.g. /cart, /bulk-orders, /certificates.'}`
 }
 
 /* ── loop ───────────────────────────────────────────────────────────────── */
@@ -408,7 +490,7 @@ export async function runChatAgent(messages: AgentMessage[], ctx: AgentContext):
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
 
-  const state: ToolState = { catalogue: null, cards: [], links: [], alerted: false }
+  const state: ToolState = { catalogue: null, cards: [], links: [], alerted: false, handoff: false }
   const convo: { role: 'user' | 'assistant'; content: unknown }[] = messages.map((m) => ({ role: m.role, content: m.content }))
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
@@ -419,7 +501,7 @@ export async function runChatAgent(messages: AgentMessage[], ctx: AgentContext):
         model: MODEL,
         max_tokens: MAX_TOKENS,
         system: agentPrompt(ctx),
-        tools: TOOLS,
+        tools: toolsFor(ctx),
         // Last round: force a text answer so the loop always ends.
         ...(round === MAX_TOOL_ROUNDS ? { tool_choice: { type: 'none' } } : {}),
         messages: convo,
@@ -459,7 +541,7 @@ export async function runChatAgent(messages: AgentMessage[], ctx: AgentContext):
     // model that drifts into dosing, use or outcome language is replaced by
     // the standard refusal rather than shown.
     if (!text || replyBlocked(text, state.catalogue)) {
-      return { lines: [...REFUSAL_ANSWER], alerted: state.alerted }
+      return { lines: [...REFUSAL_ANSWER], alerted: state.alerted, handoff: state.handoff }
     }
 
     const links = [...state.links]
@@ -470,6 +552,8 @@ export async function runChatAgent(messages: AgentMessage[], ctx: AgentContext):
       cards: state.cards.length ? state.cards : undefined,
       quantity: state.quantity,
       alerted: state.alerted,
+      handoff: state.handoff,
+      checkoutLink: state.checkoutLink,
     }
   }
   throw new Error('Agent did not finish')
