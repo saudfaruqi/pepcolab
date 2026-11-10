@@ -51,6 +51,67 @@ const PERSON_RE = /^(person|human|agent|team|staff|someone|representative|suppor
 const GREETING_RE = /^(hi|hello|hey|hiya|menu|start|help|options|salam|salaam|assalam[a-z ]*|good (morning|afternoon|evening))[!. ]*$/i
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
+/* ── openers ────────────────────────────────────────────────────────────── */
+// "Hi PepcoLab, I have a question before I check out on the website." is the
+// message the website's own WhatsApp buttons pre-fill (lib/whatsapp.ts), so it
+// must never get "Sorry, I don't have an answer". The greeting and "I have a
+// question" lead are taken off; what is left is answered, and a message that
+// is only an opener gets a welcome suited to where the customer came from.
+const OPENER_RE = /^(hi|hello|hey|hiya|dear|(as+)?sala+m[a-z]*(\s+(wa\s*)?[ao]?la[iy]kum)?|good\s+(morning|afternoon|evening))\b[\s,!.:-]*((pepco\s?lab|team|there|all)\b[\s,!.:-]*)?/i
+const QUESTION_LEAD_RE = /^(i\s+(have|had|got)\s+(a\s+)?(quick\s+|small\s+)?(question|query|enquiry|inquiry)s?|quick question|(can|could|may)\s+i\s+ask(\s+(you|something|a question))?|i'?d\s+like\s+to\s+ask(\s+something|\s+a question)?)[\s,!.:?-]*/i
+
+interface Opener {
+  /** What is left after the greeting and question lead; '' when nothing. */
+  rest: string
+  intro: string
+  faqIds: string[]
+  /** Came from the website chat's "continue on WhatsApp" button. */
+  handoff?: boolean
+}
+
+const OPENER_CONTEXTS: { test: RegExp; intro: string; faqIds: string[]; handoff?: boolean }[] = [
+  {
+    test: /chatting with your website assistant|continue here/i,
+    intro: '',
+    faqIds: [],
+    handoff: true,
+  },
+  {
+    test: /^(about\s+)?before\s+i\s+check\s*out\b.*$/i,
+    intro: 'Hi — happy to help before you check out. Ask about payment, delivery or anything in your cart, or type a product name for its prices and stock.',
+    faqIds: ['order-payment', 'shipping-times', 'shipping-uk', 'order-how'],
+  },
+  {
+    test: /^about\s+(a\s+)?product.?s?\s+documentation\s+or\s+delivery\b.*$/i,
+    intro: 'Hi — happy to help with documentation or delivery. Send a lot number for its certificate, or type a product name for its prices and stock.',
+    faqIds: ['coa-find', 'coa-what', 'shipping-times', 'shipping-uk'],
+  },
+  {
+    test: /^about\s+availability\s+or\s+documentation\b.*$/i,
+    intro: 'Hi — happy to help. Type a product name for its stock and prices, or send a lot number for its certificate.',
+    faqIds: ['coa-find', 'coa-what', 'shipping-times', 'order-how'],
+  },
+]
+
+function parseOpener(msg: string): Opener | null {
+  const normalised = msg.replace(/[’‘]/g, "'").trim()
+  const greeted = normalised.match(OPENER_RE)
+  let rest = greeted ? normalised.slice(greeted[0].length) : normalised
+  // "I'm Sarah." after the greeting is a name, not a question.
+  rest = rest.replace(/^(i'?m|i\s+am|this\s+is|my\s+name\s+is)\s+[^.,!?]{1,40}[.,!]\s*/i, '')
+  const lead = rest.match(QUESTION_LEAD_RE)
+  if (lead) rest = rest.slice(lead[0].length)
+  if (!greeted && !lead) return null
+
+  for (const ctx of OPENER_CONTEXTS) {
+    if (ctx.test.test(rest) || (ctx.handoff && ctx.test.test(normalised))) {
+      return { rest: '', intro: ctx.intro, faqIds: ctx.faqIds, handoff: ctx.handoff }
+    }
+  }
+  rest = rest.replace(/^[\s,!.:?-]+|[\s.!]+$/g, '').replace(/^(about|regarding|on)\s+/i, '').trim()
+  return { rest, intro: '', faqIds: [] }
+}
+
 /* ── formatting ─────────────────────────────────────────────────────────── */
 
 function fullUrl(href: string): string {
@@ -130,7 +191,9 @@ const NOT_ON_WHATSAPP = 'I can’t help with that product here. For anything els
 async function answerLookup(phone: string, answer: LookupAnswer, quantity?: number): Promise<BotReply> {
   const cards = allowedCards(answer.cards)
   if (answer.cards?.length && !cards.length) return { text: NOT_ON_WHATSAPP }
-  answer = { ...answer, cards }
+  // The option list already shows each price; drop the "Priced …" summary.
+  const lines = cards.length ? answer.lines.map((l) => l.replace(/\s*Priced .*?\.(?=\s|$)/, '')) : answer.lines
+  answer = { ...answer, cards, lines }
   const related = (answer.related ?? []).map((id) => FAQ_BY_ID[id]).filter(Boolean)
   return {
     text: join(
@@ -143,12 +206,12 @@ async function answerLookup(phone: string, answer: LookupAnswer, quantity?: numb
   }
 }
 
-async function welcome(phone: string): Promise<BotReply> {
-  const ctx = resolvePageContext('/')
-  const faqs = ctx.suggested.map((id) => FAQ_BY_ID[id]).filter(Boolean)
+async function welcome(phone: string, opener?: Pick<Opener, 'intro' | 'faqIds'>): Promise<BotReply> {
+  const ids = opener?.faqIds.length ? opener.faqIds : resolvePageContext('/').suggested
+  const faqs = ids.map((id) => FAQ_BY_ID[id]).filter(Boolean)
   return {
     text: join(
-      'Hi — this is PepcoLab. I can show prices and stock, send you a link to order, find a batch certificate, or check where your order is.',
+      opener?.intro || 'Hi — this is PepcoLab. I can show prices and stock, send you a link to order, find a batch certificate, or check where your order is.',
       'Type a product name (e.g. "tesamorelin"), a lot number, or your order code (SOR-…).',
       await menu(phone, faqs, 'Or reply with a number:'),
       'Type "person" at any time to reach the team.'
@@ -183,7 +246,8 @@ export async function botReply(phone: string, name: string, text: string): Promi
   return reply
 }
 
-async function route(phone: string, name: string, msg: string): Promise<BotReply> {
+async function route(phone: string, name: string, original: string): Promise<BotReply> {
+  let msg = original
   // A number answers the last menu.
   if (/^\d{1,2}$/.test(msg)) {
     const ids = (await redis.get<string[]>(K.menu(phone))) ?? []
@@ -193,6 +257,17 @@ async function route(phone: string, name: string, msg: string): Promise<BotReply
 
   if (PERSON_RE.test(msg)) return { text: '', handoff: true }
   if (GREETING_RE.test(msg)) return welcome(phone)
+
+  // "Hi PepcoLab, I have a question…" — answer what follows the opener, and
+  // welcome the customer when nothing does.
+  const opener = parseOpener(msg)
+  if (opener) {
+    if (opener.handoff) return { text: '', handoff: true }
+    if (!opener.rest) return welcome(phone, opener)
+    msg = opener.rest
+    if (PERSON_RE.test(msg)) return { text: '', handoff: true }
+  }
+  const unmatched = () => (opener ? welcome(phone) : noMatch(phone))
 
   // The email for an order lookup that asked for one.
   const pending = await redis.get<LookupRequest>(K.pending(phone))
@@ -230,7 +305,7 @@ async function route(phone: string, name: string, msg: string): Promise<BotReply
         await redis.set(K.pending(phone), result.request, { ex: PENDING_TTL })
       }
       if (result.request.intent === 'product-guess' && answer.lines.join(' ') === NO_MATCH_ANSWER.join(' ')) {
-        return noMatch(phone)
+        return unmatched()
       }
       return answerLookup(phone, answer)
     }
@@ -247,7 +322,7 @@ async function route(phone: string, name: string, msg: string): Promise<BotReply
     }
 
     default:
-      return noMatch(phone)
+      return unmatched()
   }
 }
 
